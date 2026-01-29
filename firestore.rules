@@ -1,0 +1,152 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper function to check admin status
+    function isAdmin(uid) {
+      return uid != null && exists(/databases/$(database)/documents/admins/$(uid));
+    }
+
+    // Public read access to restaurants for browsing and email validation
+    match /restaurants/{restaurantId} {
+      allow read: if true;
+      allow list: if true; // Allow queries for email validation
+      allow create: if request.auth.uid != null && request.auth.uid == restaurantId;
+      allow update, delete: if request.auth.uid != null && (isAdmin(request.auth.uid) || request.auth.uid == resource.data.ownerId);
+    }
+
+    // Public read access to menu items
+    match /restaurants/{restaurantId}/menuItems/{itemId} {
+      allow read: if true;
+      allow write: if request.auth.uid != null && (isAdmin(request.auth.uid) || request.auth.uid == get(/databases/$(database)/documents/restaurants/$(restaurantId)).data.ownerId);
+    }
+
+    // Alternative menu items collection (if stored flat)
+    match /menuItems/{itemId} {
+      allow read: if true; // Public can read all items
+      allow create: if request.auth.uid != null && request.resource.data.restaurantId == request.auth.uid;
+      allow update: if request.auth.uid != null && (
+        isAdmin(request.auth.uid) || 
+        request.auth.uid == resource.data.restaurantId
+      );
+      allow delete: if request.auth.uid != null && (
+        isAdmin(request.auth.uid) || 
+        request.auth.uid == resource.data.restaurantId
+      );
+    }
+
+    // Customer profiles - users can read/write their own + allow email validation queries
+    match /customers/{customerId} {
+      allow read: if request.auth.uid == customerId || isAdmin(request.auth.uid);
+      allow list: if true; // Allow queries for email validation during signup
+      allow create: if request.auth.uid != null && request.auth.uid == customerId;
+      allow update, delete: if request.auth.uid == customerId || isAdmin(request.auth.uid);
+    }
+
+    // Orders - users can read their own, restaurants can read assigned orders
+    match /orders/{orderId} {
+      allow read: if request.auth.uid == resource.data.customerId 
+                   || request.auth.uid == resource.data.restaurantId
+                   || request.auth.uid == resource.data.deliveryPersonId
+                   || isAdmin(request.auth.uid);
+      allow create: if request.auth.uid != null && request.auth.uid == request.resource.data.customerId;
+      allow update: if request.auth.uid == resource.data.restaurantId
+                     || request.auth.uid == resource.data.deliveryPersonId
+                     || isAdmin(request.auth.uid);
+      allow delete: if request.auth.uid == resource.data.restaurantId || isAdmin(request.auth.uid);
+    }
+
+    // Admin collection for role management
+    match /admins/{adminId} {
+      allow read: if request.auth.uid == adminId;
+      allow write: if isAdmin(request.auth.uid);
+    }
+
+    // Delivery Partners (Matches code: 'delivery_partners')
+    match /delivery_partners/{partnerId} {
+      allow read: if request.auth.uid == partnerId || isAdmin(request.auth.uid);
+      allow write: if request.auth.uid == partnerId || isAdmin(request.auth.uid);
+    }
+
+    // Unified Delivery Persons access
+    match /deliveryPersons/{partnerId} {
+      allow read: if request.auth.uid == partnerId || isAdmin(request.auth.uid);
+      allow write: if request.auth.uid == partnerId || isAdmin(request.auth.uid);
+    }
+    
+    // Support Tickets (Unified)
+    match /support_tickets/{ticketId} {
+      allow read: if request.auth.uid != null && (resource.data.userId == request.auth.uid || isAdmin(request.auth.uid));
+      allow list: if request.auth.uid != null && isAdmin(request.auth.uid); // Allow admins to list all tickets
+      allow create: if request.auth.uid != null && request.resource.data.userId == request.auth.uid;
+      allow update: if isAdmin(request.auth.uid);
+      allow delete: if isAdmin(request.auth.uid);
+    }
+    
+    // Alternative collection name for support tickets
+    match /supportTickets/{ticketId} {
+      allow read: if request.auth.uid != null && (resource.data.userId == request.auth.uid || isAdmin(request.auth.uid));
+      allow list: if request.auth.uid != null && isAdmin(request.auth.uid); // Allow admins to list all tickets
+      allow create: if request.auth.uid != null && request.resource.data.userId == request.auth.uid;
+      allow update: if isAdmin(request.auth.uid);
+      allow delete: if isAdmin(request.auth.uid);
+    }
+
+    // Payout Requests
+    match /payout_requests/{requestId} {
+      allow read: if request.auth.uid != null && (resource.data.userId == request.auth.uid || isAdmin(request.auth.uid));
+      allow create: if request.auth.uid != null && request.resource.data.userId == request.auth.uid;
+      allow update: if isAdmin(request.auth.uid);
+    }
+
+    // Notifications
+    match /notifications/{notifId} {
+      allow read, update: if request.auth.uid != null && resource.data.userId == request.auth.uid;
+      allow create: if request.auth.uid != null || isAdmin(request.auth.uid);
+    }
+
+    // Reviews
+    match /reviews/{reviewId} {
+      allow read: if true;
+      allow create: if request.auth.uid != null;
+      allow update, delete: if request.auth.uid != null && (
+        resource.data.customerId == request.auth.uid ||
+        isAdmin(request.auth.uid)
+      );
+    }
+
+    // Ad Campaigns
+    match /adCampaigns/{campaignId} {
+      allow read: if request.auth.uid != null;
+      allow create, update: if request.auth.uid != null && request.resource.data.restaurantId == request.auth.uid;
+      allow delete: if request.auth.uid != null && (resource.data.restaurantId == request.auth.uid || isAdmin(request.auth.uid));
+    }
+
+    // Ad Clicks
+    match /adClicks/{clickId} {
+      allow read: if request.auth.uid != null && (
+        resource.data.restaurantId == request.auth.uid ||
+        isAdmin(request.auth.uid)
+      );
+      allow create: if request.auth.uid != null;
+    }
+
+    // Points Accounts
+    match /pointsAccounts/{accountId} {
+      allow read, update: if request.auth.uid != null && (accountId == request.auth.uid || isAdmin(request.auth.uid));
+      allow create: if request.auth.uid != null && request.resource.id == request.auth.uid;
+    }
+
+    // Points Transactions
+    match /pointsTransactions/{transId} {
+      allow read: if request.auth.uid != null && (resource.data.userId == request.auth.uid || isAdmin(request.auth.uid));
+      allow create: if request.auth.uid != null;
+    }
+
+    // Payments
+    match /payments/{paymentId} {
+      allow read: if request.auth.uid != null && (resource.data.userId == request.auth.uid || isAdmin(request.auth.uid));
+      allow create: if request.auth.uid != null && request.resource.data.userId == request.auth.uid;
+      allow update: if isAdmin(request.auth.uid);
+    }
+  }
+}
