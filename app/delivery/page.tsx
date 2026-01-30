@@ -84,6 +84,8 @@ export default function DeliveryDashboard() {
     }
   };
 
+  const lastAlertedOrderId = React.useRef<string | null>(null);
+
   // Listen for available CONFIRMED orders (when online)
   useEffect(() => {
     if (!user || !isOnline) {
@@ -114,18 +116,25 @@ export default function DeliveryDashboard() {
       }
 
       setAvailableOrders(orders);
-
-      // Show dialog for first available order
-      if (orders.length > 0 && !showAcceptDialog) {
-        setSelectedOrder(orders[0]);
-        setShowAcceptDialog(true);
-      }
     }, (error) => {
       console.error("Error fetching available orders:", error);
     });
 
     return () => unsubscribe();
-  }, [user, isOnline, showAcceptDialog]);
+  }, [user, isOnline]);
+
+  // Handle New Order Alert Logic
+  useEffect(() => {
+    if (availableOrders.length > 0) {
+      const topOrder = availableOrders[0];
+      // Only show dialog if it's a NEW order we haven't alerted for yet
+      if (topOrder.id !== lastAlertedOrderId.current) {
+        setSelectedOrder(topOrder);
+        setShowAcceptDialog(true);
+        lastAlertedOrderId.current = topOrder.id || null;
+      }
+    }
+  }, [availableOrders]);
 
   // Listen for my assigned orders
   useEffect(() => {
