@@ -44,8 +44,8 @@ export default function AvailableOrdersPage() {
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const fetchedOrders = snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
+                ...doc.data(),
+                id: doc.id
             })) as Order[];
 
             // Filter locally for unassigned orders to be safe and flexible
@@ -72,17 +72,24 @@ export default function AvailableOrdersPage() {
     }, [user]);
 
     const acceptOrder = async (orderId: string) => {
-        if (!user) return;
+        if (!user) {
+            toast.error("You must be logged in to accept orders");
+            return;
+        }
 
-        // confirm
-        // if (!confirm("Are you sure you want to accept this delivery?")) return; // Optional
+        if (!orderId) {
+            toast.error("Invalid order ID");
+            return;
+        }
 
         try {
             await updateDoc(doc(db, 'orders', orderId), {
                 deliveryPersonId: user.uid,
-                // Optionally update status to 'out_for_delivery' immediately or keep it 'ready' until they pickup?
-                // Usually they accept first, then pick up. Let's keep status as is or change to 'driver_assigned' if we had that status.
-                // For simplistic flow, we just assign.
+                deliveryPersonName: deliveryPartner?.name || 'Assigned Partner',
+                deliveryPersonPhone: deliveryPartner?.phone || '',
+                deliveryVehicle: deliveryPartner?.vehicle || 'Vehicle',
+                status: 'ready', // Keep status ready until pickup
+                deliveryStatus: 'going_to_restaurant',
                 updatedAt: serverTimestamp()
             });
             toast.success("Order accepted! Go to Dashboard to start.");

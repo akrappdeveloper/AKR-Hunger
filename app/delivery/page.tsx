@@ -99,8 +99,8 @@ export default function DeliveryDashboard() {
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       let orders = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
+        ...doc.data(),
+        id: doc.id
       })) as Order[];
 
       // Client-side filtering for targeted broadcasts
@@ -141,8 +141,8 @@ export default function DeliveryDashboard() {
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const orders = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
+        ...doc.data(),
+        id: doc.id
       })) as Order[];
 
       setMyOrders(orders);
@@ -160,6 +160,13 @@ export default function DeliveryDashboard() {
   const acceptOrder = async (order: Order) => {
     if (!user) {
       toast.error("You must be logged in to accept orders");
+      return;
+    }
+
+    console.log('Accepting Order Data:', order); // Debug Log
+    if (!order.id) {
+      console.error("Order ID is missing", order);
+      toast.error("Invalid order data. Cannot accept.");
       return;
     }
 
@@ -199,6 +206,10 @@ export default function DeliveryDashboard() {
 
   // Mark as picked up
   const markPickedUp = async (orderId: string) => {
+    if (!orderId) {
+      toast.error("Invalid order ID");
+      return;
+    }
     try {
       await updateDoc(doc(db, 'orders', orderId), {
         status: 'out_for_delivery',
@@ -214,6 +225,10 @@ export default function DeliveryDashboard() {
 
   // Mark as delivered
   const markDelivered = async (orderId: string) => {
+    if (!orderId) {
+      toast.error("Invalid order ID");
+      return;
+    }
     try {
       await updateDoc(doc(db, 'orders', orderId), {
         status: 'delivered',
@@ -339,20 +354,20 @@ export default function DeliveryDashboard() {
             </div>
           )}
 
-          <DialogFooter className="gap-2">
+          <DialogFooter className="flex flex-col sm:flex-row gap-3 sm:gap-2">
             <Button
               variant="outline"
               onClick={denyOrder}
-              className="border-gray-700 text-gray-300 hover:bg-gray-800"
+              className="w-full sm:w-auto border-gray-700 text-gray-300 hover:bg-gray-800 py-6 sm:py-2"
             >
               <X className="w-4 h-4 mr-2" />
               Deny
             </Button>
             <Button
               onClick={() => selectedOrder && acceptOrder(selectedOrder)}
-              className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white"
+              className="w-full sm:w-auto bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold py-6 sm:py-2 shadow-lg shadow-green-900/20"
             >
-              <CheckCircle className="w-4 h-4 mr-2" />
+              <CheckCircle className="w-5 h-5 mr-2" />
               Accept Order
             </Button>
           </DialogFooter>
@@ -503,9 +518,9 @@ export default function DeliveryDashboard() {
                         </a>
                         <Button
                           onClick={() => markDelivered(order.id!)}
-                          className="w-full bg-green-600 hover:bg-green-700 text-white font-bold"
+                          className="w-full bg-green-600 hover:bg-green-700 text-white font-bold h-12 text-lg shadow-lg shadow-green-900/20"
                         >
-                          <CheckCircle className="w-4 h-4 mr-2" />
+                          <CheckCircle className="w-5 h-5 mr-2" />
                           Mark as Delivered
                         </Button>
                       </div>
@@ -532,6 +547,6 @@ export default function DeliveryDashboard() {
           )}
         </div>
       </div>
-    </div>
+    </div >
   );
 }
