@@ -2,10 +2,27 @@ import { NextRequest, NextResponse } from 'next/server';
 import Razorpay from 'razorpay';
 import { getRazorpayKeyId, getRazorpayKeySecret } from '@/lib/razorpay-config'; // Import from config
 
-const razorpay = new Razorpay({
-  key_id: getRazorpayKeyId(),
-  key_secret: getRazorpayKeySecret(),
-});
+// Initialize safely to prevent build errors if env vars are missing
+let razorpay: Razorpay;
+try {
+  const key_id = getRazorpayKeyId();
+  const key_secret = getRazorpayKeySecret();
+
+  if (key_id && key_secret) {
+    razorpay = new Razorpay({
+      key_id,
+      key_secret,
+    });
+  } else {
+    // Dummy instance for build time or missing config
+    // @ts-ignore
+    razorpay = { orders: { create: async () => { throw new Error('Razorpay not configured'); } } };
+  }
+} catch (e) {
+  console.warn('Failed to initialize Razorpay:', e);
+  // @ts-ignore
+  razorpay = { orders: { create: async () => { throw new Error('Razorpay failed to init'); } } };
+}
 
 export async function POST(request: NextRequest) {
   try {

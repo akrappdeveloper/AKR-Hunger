@@ -18,7 +18,14 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase (singleton pattern)
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+// Handle missing config gracefully during build/SSR if env vars are not set
+const isConfigValid = firebaseConfig.apiKey && firebaseConfig.authDomain;
+
+const app = getApps().length === 0 ? initializeApp(isConfigValid ? firebaseConfig : {
+  apiKey: "dummy",
+  authDomain: "dummy",
+  projectId: "dummy"
+}) : getApps()[0];
 
 // Export Firebase services
 export const auth = getAuth(app);
