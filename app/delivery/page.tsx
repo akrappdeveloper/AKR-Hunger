@@ -32,7 +32,8 @@ import {
   updateDoc,
   doc,
   serverTimestamp,
-  or
+  or,
+  getDoc
 } from 'firebase/firestore';
 import { toast } from 'sonner';
 import {
@@ -84,6 +85,7 @@ export default function DeliveryDashboard() {
     }
   };
 
+  const [deniedOrderIds, setDeniedOrderIds] = useState<string[]>([]);
   const lastAlertedOrderId = React.useRef<string | null>(null);
 
   // Listen for available CONFIRMED orders (when online)
@@ -105,6 +107,12 @@ export default function DeliveryDashboard() {
         id: doc.id
       })) as Order[];
 
+      // Filter out orders that are already assigned (to anyone)
+      orders = orders.filter(o => !o.deliveryPersonId);
+
+      // Filter out locally denied orders
+      orders = orders.filter(o => !deniedOrderIds.includes(o.id || ''));
+
       // Client-side filtering for targeted broadcasts
       if (user) {
         orders = orders.filter(order => {
@@ -121,7 +129,7 @@ export default function DeliveryDashboard() {
     });
 
     return () => unsubscribe();
-  }, [user, isOnline]);
+  }, [user, isOnline, deniedOrderIds]);
 
   // Handle New Order Alert Logic
   useEffect(() => {
@@ -132,6 +140,11 @@ export default function DeliveryDashboard() {
         setSelectedOrder(topOrder);
         setShowAcceptDialog(true);
         lastAlertedOrderId.current = topOrder.id || null;
+      }
+    } else {
+      // If no available orders, close dialog just in case (e.g. taken by someone else)
+      if (showAcceptDialog && !selectedOrder) { // Don't close if viewing specific one? actually safer to close if list empty
+        setShowAcceptDialog(false);
       }
     }
   }, [availableOrders]);
@@ -180,11 +193,31 @@ export default function DeliveryDashboard() {
     }
 
     try {
+      let currentRestaurantAddress = order.restaurantAddress;
+
+      // If address is missing, fetch it from restaurant profile
+      if (!currentRestaurantAddress && order.restaurantId) {
+        try {
+          const restaurantDoc = await getDoc(doc(db, 'restaurants', order.restaurantId));
+          if (restaurantDoc.exists()) {
+            const data = restaurantDoc.data();
+            // Assuming address is stored as 'address' field (string or object)
+            // If it's an object, we might need to format it, but user said 'restaurantAddress'
+            // The screenshot implies a string string address or formatted one.
+            // Let's grab 'address' from restaurant doc.
+            currentRestaurantAddress = data.address || '';
+          }
+        } catch (fetchErr) {
+          console.error("Error fetching restaurant address:", fetchErr);
+        }
+      }
+
       await updateDoc(doc(db, 'orders', order.id!), {
         deliveryPersonId: user.uid,
-        deliveryPersonName: deliveryPartner?.name || 'Assigned Partner', // Fallback
-        deliveryPersonPhone: deliveryPartner?.phone || '', // Fallback
-        deliveryVehicle: deliveryPartner?.vehicle || 'Vehicle', // Fallback
+        deliveryPersonName: deliveryPartner?.name || 'Assigned Partner',
+        deliveryPersonPhone: deliveryPartner?.phone || '',
+        deliveryVehicle: deliveryPartner?.vehicle || 'Vehicle',
+        restaurantAddress: currentRestaurantAddress || order.restaurantName || 'Unknown Location', // Save it!
         status: 'ready',
         deliveryStatus: 'going_to_restaurant',
         updatedAt: serverTimestamp()
@@ -201,16 +234,11 @@ export default function DeliveryDashboard() {
 
   // Deny order
   const denyOrder = () => {
+    if (selectedOrder?.id) {
+      setDeniedOrderIds(prev => [...prev, selectedOrder.id!]);
+    }
     setShowAcceptDialog(false);
     setSelectedOrder(null);
-
-    // Show next available order if any
-    if (availableOrders.length > 1) {
-      setTimeout(() => {
-        setSelectedOrder(availableOrders[1]);
-        setShowAcceptDialog(true);
-      }, 500);
-    }
   };
 
   // Mark as picked up
@@ -232,12 +260,30 @@ export default function DeliveryDashboard() {
     }
   };
 
-  // Mark as delivered
-  const markDelivered = async (orderId: string) => {
+  const [showOtpDialog, setShowOtpDialog] = useState(false);
+  const [otpInput, setOtpInput] = useState('');
+  const [verifyingOrderId, setVerifyingOrderId] = useState<string | null>(null);
+
+  // Mark as delivered (Initiate Verification)
+  const markDelivered = (orderId: string, orderOtp?: string) => {
     if (!orderId) {
       toast.error("Invalid order ID");
       return;
     }
+
+    // If order has an OTP, require verification
+    if (orderOtp) {
+      setVerifyingOrderId(orderId);
+      setOtpInput('');
+      setShowOtpDialog(true);
+      return;
+    }
+
+    // Legacy fallback for orders without OTP
+    completeDelivery(orderId);
+  };
+
+  const completeDelivery = async (orderId: string) => {
     try {
       await updateDoc(doc(db, 'orders', orderId), {
         status: 'delivered',
@@ -246,9 +292,22 @@ export default function DeliveryDashboard() {
         updatedAt: serverTimestamp()
       });
       toast.success('Order delivered! Great job!');
+      setShowOtpDialog(false);
+      setVerifyingOrderId(null);
     } catch (error) {
       console.error("Error marking delivered:", error);
       toast.error("Failed to mark delivered");
+    }
+  };
+
+  const verifyAndCompleteDelivery = () => {
+    const targetOrder = activeOrders.find(o => o.id === verifyingOrderId);
+    if (!targetOrder) return;
+
+    if (otpInput === targetOrder.deliveryOtp) {
+      completeDelivery(verifyingOrderId!);
+    } else {
+      toast.error("Incorrect OTP. Please ask customer.");
     }
   };
 
@@ -274,7 +333,7 @@ export default function DeliveryDashboard() {
 
   const totalEarnings = myOrders
     .filter(o => o.status === 'delivered')
-    .reduce((acc, curr) => acc + ((curr.deliveryCharge || 0) * 0.30), 0);
+    .reduce((acc, curr) => acc + ((curr.deliveryCharge || 0) * 0.40), 0);
 
   // Format address helper
   const formatAddress = (addr: any): string => {
@@ -526,7 +585,7 @@ export default function DeliveryDashboard() {
                           <span className="underline">{order.customerPhone}</span>
                         </a>
                         <Button
-                          onClick={() => markDelivered(order.id!)}
+                          onClick={() => markDelivered(order.id!, order.deliveryOtp)}
                           className="w-full bg-green-600 hover:bg-green-700 text-white font-bold h-12 text-lg shadow-lg shadow-green-900/20"
                         >
                           <CheckCircle className="w-5 h-5 mr-2" />
@@ -556,6 +615,43 @@ export default function DeliveryDashboard() {
           )}
         </div>
       </div>
-    </div >
+      <Dialog open={showOtpDialog} onOpenChange={setShowOtpDialog}>
+        <DialogContent className="bg-gray-900 border-gray-800 text-white">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold flex items-center gap-2">
+              <Smartphone className="w-6 h-6 text-blue-500" />
+              Enter Delivery OTP
+            </DialogTitle>
+            <DialogDescription className="text-gray-400">
+              Ask customer for the 4-digit verification code.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="py-6 flex justify-center">
+            <input
+              type="text"
+              maxLength={4}
+              value={otpInput}
+              onChange={(e) => setOtpInput(e.target.value.replace(/[^0-9]/g, ''))}
+              placeholder="0000"
+              className="bg-black border border-gray-700 rounded-2xl text-center text-4xl font-mono tracking-[0.5em] w-full p-4 text-white focus:outline-none focus:border-blue-500 transition-colors"
+            />
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowOtpDialog(false)} className="border-gray-700 text-gray-300">
+              Cancel
+            </Button>
+            <Button
+              onClick={verifyAndCompleteDelivery}
+              disabled={otpInput.length !== 4}
+              className="bg-green-600 hover:bg-green-700 text-white font-bold px-8"
+            >
+              Verify & Complete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 }

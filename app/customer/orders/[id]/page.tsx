@@ -259,6 +259,17 @@ export default function OrderTrackingPage() {
               )
             )}
 
+            {/* Delivery OTP Display */}
+            {order.deliveryOtp && order.status !== 'delivered' && order.status !== 'cancelled' && (
+              <div className="bg-gradient-to-r from-blue-900/40 to-purple-900/40 backdrop-blur-md border border-blue-500/30 rounded-3xl p-6 text-center">
+                <h3 className="text-blue-200 uppercase text-xs font-bold tracking-widest mb-2">Delivery Verification Code</h3>
+                <div className="text-4xl font-black text-white tracking-[0.5em] font-mono">
+                  {order.deliveryOtp}
+                </div>
+                <p className="text-blue-300/60 text-xs mt-2">Share this code with delivery partner upon arrival</p>
+              </div>
+            )}
+
             {/* Order Items */}
             <div className="bg-gray-900/40 backdrop-blur-md border border-white/5 rounded-3xl overflow-hidden">
               <div className="p-6 border-b border-white/5 bg-white/5">

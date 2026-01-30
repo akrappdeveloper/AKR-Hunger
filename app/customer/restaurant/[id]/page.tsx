@@ -7,7 +7,7 @@ import { Restaurant, MenuItem, CartItem } from '@/lib/types';
 import { useCart } from '@/context/CartContext';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Star, Clock, MapPin, ArrowLeft, Heart, Search, Share2, Plus, Minus, CheckCircle, Info } from 'lucide-react';
+import { Star, Clock, MapPin, ArrowLeft, Heart, Search, Share2, Plus, Minus, CheckCircle, Info, ShoppingBag } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
@@ -15,7 +15,7 @@ import { toast } from 'sonner';
 export default function RestaurantPage() {
   const params = useParams();
   const router = useRouter();
-  const { addItem, items: cartItems } = useCart();
+  const { addItem, items: cartItems, total } = useCart();
   const restaurantId = params.id as string;
 
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
@@ -30,15 +30,28 @@ export default function RestaurantPage() {
   // Custom scroll listener for sticky header effect
   useEffect(() => {
     const handleScroll = () => {
-      if (window.scrollY > 200) {
+      // Header stickiness
+      if (window.scrollY > 300) {
         setIsHeaderSticky(true);
       } else {
         setIsHeaderSticky(false);
       }
+
+      // Active category detection on scroll
+      const scrollPosition = window.scrollY + 200;
+      for (const category of categories) {
+        const element = categoryRefs.current[category];
+        if (element) {
+          const { offsetTop, offsetHeight } = element;
+          if (scrollPosition >= offsetTop && scrollPosition < offsetTop + offsetHeight) {
+            setActiveCategory(category);
+          }
+        }
+      }
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  }, [categories]);
 
   useEffect(() => {
     const fetchRestaurantData = async () => {
@@ -97,6 +110,7 @@ export default function RestaurantPage() {
       image: item.image,
       addedAt: new Date(),
     });
+    // Create a smooth flying animation effect conceptually (toast for now)
     toast.success(`Added ${item.name} to cart`);
   };
 
@@ -108,10 +122,12 @@ export default function RestaurantPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-black text-white p-4 space-y-8 animate-pulse">
-        <div className="h-64 bg-gray-900 rounded-3xl" />
-        <div className="h-8 w-1/2 bg-gray-900 rounded" />
-        <div className="space-y-4">
-          {[1, 2, 3].map(i => <div key={i} className="h-32 bg-gray-900 rounded-2xl" />)}
+        <div className="h-80 bg-gray-900 rounded-b-3xl" />
+        <div className="max-w-7xl mx-auto px-4 space-y-8 -mt-20">
+          <div className="h-40 bg-gray-800 rounded-3xl" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {[1, 2, 3, 4].map(i => <div key={i} className="h-40 bg-gray-900 rounded-2xl" />)}
+          </div>
         </div>
       </div>
     );
@@ -120,32 +136,38 @@ export default function RestaurantPage() {
   if (!restaurant) return null;
 
   return (
-    <div className="min-h-screen bg-black text-white pb-24 font-sans selection:bg-orange-500/30">
+    <div className="min-h-screen bg-[#050505] text-white pb-32 font-sans selection:bg-orange-500/30">
 
       {/* 1. Header Actions (Back/Share) */}
-      <div className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isHeaderSticky ? 'bg-black/90 backdrop-blur-md shadow-lg py-3' : 'bg-transparent py-4'}`}>
-        <div className="max-w-3xl mx-auto px-4 flex justify-between items-center">
-          <Button variant="ghost" size="icon" onClick={() => router.back()} className="rounded-full bg-black/40 hover:bg-black/60 text-white backdrop-blur-sm border border-white/10">
+      <div className={`fixed top-16 md:top-20 left-0 right-0 z-40 transition-all duration-300 ${isHeaderSticky ? 'bg-black/80 backdrop-blur-xl shadow-2xl py-2 border-b border-white/5' : 'bg-transparent py-4'}`}>
+        <div className="max-w-7xl mx-auto px-4 flex justify-between items-center">
+          <Button variant="ghost" size="icon" onClick={() => router.back()} className="rounded-full bg-black/40 hover:bg-black/60 text-white backdrop-blur-md border border-white/10 w-10 h-10 transition-transform hover:scale-105 active:scale-95">
             <ArrowLeft className="w-5 h-5" />
           </Button>
-          <div className="flex gap-2">
-            <Button variant="ghost" size="icon" className="rounded-full bg-black/40 hover:bg-black/60 text-white backdrop-blur-sm border border-white/10">
+
+          {/* Title in sticky header */}
+          <div className={`transition-all duration-500 transform ${isHeaderSticky ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'} font-bold text-lg`}>
+            {restaurant.name}
+          </div>
+
+          <div className="flex gap-3">
+            <Button variant="ghost" size="icon" className="rounded-full bg-black/40 hover:bg-black/60 text-white backdrop-blur-md border border-white/10 w-10 h-10 transition-transform hover:scale-105 active:scale-95">
               <Search className="w-5 h-5" />
             </Button>
-            <Button variant="ghost" size="icon" className="rounded-full bg-black/40 hover:bg-black/60 text-white backdrop-blur-sm border border-white/10">
+            <Button variant="ghost" size="icon" className="rounded-full bg-black/40 hover:bg-black/60 text-white backdrop-blur-md border border-white/10 w-10 h-10 transition-transform hover:scale-105 active:scale-95">
               <Share2 className="w-5 h-5" />
             </Button>
           </div>
         </div>
 
         {/* Sticky Category Bar */}
-        <div className={`mt-2 overflow-x-auto scrollbar-hide border-b border-gray-800 transition-all duration-500 ${isHeaderSticky ? 'opacity-100 max-h-20' : 'opacity-0 max-h-0'}`}>
-          <div className="max-w-3xl mx-auto px-4 flex gap-4 pb-2">
+        <div className={`mt-2 overflow-x-auto scrollbar-hide transition-all duration-500 ease-in-out ${isHeaderSticky ? 'opacity-100 max-h-20 translate-y-0' : 'opacity-0 max-h-0 -translate-y-4 pointer-events-none'}`}>
+          <div className="max-w-7xl mx-auto px-4 flex gap-3 pb-3 pt-1">
             {categories.map((cat) => (
               <button
                 key={cat}
                 onClick={() => scrollToCategory(cat)}
-                className={`text-sm font-medium whitespace-nowrap px-4 py-1.5 rounded-full transition-all ${activeCategory === cat ? 'bg-white text-black' : 'text-gray-400 hover:text-white'}`}
+                className={`text-sm font-semibold whitespace-nowrap px-5 py-2 rounded-full transition-all duration-300 shadow-lg ${activeCategory === cat ? 'bg-white text-black scale-105 shadow-white/10' : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'}`}
               >
                 {cat}
               </button>
@@ -154,55 +176,79 @@ export default function RestaurantPage() {
         </div>
       </div>
 
-      {/* 2. Parallax Cover & Info Card */}
-      <div className="relative w-full h-80 md:h-96">
+      {/* 2. Hero Section */}
+      <div className="relative w-full h-[400px] md:h-[500px] group">
         <Image
           src={restaurant.image || "/placeholder.svg"}
           alt={restaurant.name}
           fill
-          className="object-cover opacity-80"
+          className="object-cover transition-transform duration-700 group-hover:scale-105"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-black/60 to-black/30" />
 
-        <div className="absolute bottom-0 left-0 right-0 p-4 pb-8 max-w-3xl mx-auto">
-          <div className="bg-gray-900/40 backdrop-blur-xl border border-white/10 rounded-3xl p-6 shadow-2xl relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-500 to-red-500" />
+        {/* Info Card - Overlay */}
+        <div className="absolute bottom-0 left-0 right-0 p-4 pb-12 z-10">
+          <div className="max-w-4xl mx-auto">
+            <div className="bg-white/5 backdrop-blur-2xl border border-white/10 rounded-[2rem] p-6 md:p-8 shadow-2xl relative overflow-hidden group hover:bg-white/10 transition-all duration-500">
+              {/* Glow Effect */}
+              <div className="absolute -top-20 -right-20 w-64 h-64 bg-orange-500/20 rounded-full blur-3xl pointer-events-none" />
 
-            <div className="flex justify-between items-start mb-2">
-              <h1 className="text-2xl md:text-4xl font-extrabold text-white leading-tight">{restaurant.name}</h1>
-              <div className="bg-green-600 text-white px-2 py-1 rounded-lg text-sm font-bold flex items-center gap-1 shadow-lg shadow-green-900/20">
-                {(restaurant.rating || 4.2).toFixed(1)} <Star className="w-3 h-3 fill-white" />
+              <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+                <div className="flex-1">
+                  <div className="flex items-center gap-3 mb-3">
+                    <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight">{restaurant.name}</h1>
+                    <div className="bg-green-600/90 backdrop-blur text-white px-3 py-1 rounded-xl text-sm font-bold flex items-center gap-1 shadow-lg shadow-green-900/30">
+                      {(restaurant.rating || restaurant.averageRating || 4.2).toFixed(1)} <Star className="w-3.5 h-3.5 fill-white" />
+                    </div>
+                  </div>
+                  <p className="text-gray-300 text-base mb-6 font-medium line-clamp-2 max-w-2xl">{restaurant.description || 'Experience the finest culinary delights crafted with passion and served with love.'}</p>
+
+                  <div className="flex flex-wrap items-center gap-4 md:gap-8 text-sm font-semibold text-gray-300">
+                    <div className="flex items-center gap-2 bg-black/30 px-3 py-1.5 rounded-lg border border-white/5">
+                      <Clock className="w-4 h-4 text-orange-400" />
+                      <span>{restaurant.deliveryTime || '30-40'} mins</span>
+                    </div>
+                    <div className="flex items-center gap-2 bg-black/30 px-3 py-1.5 rounded-lg border border-white/5">
+                      <MapPin className="w-4 h-4 text-orange-400" />
+                      <span>2.5 km</span>
+                    </div>
+                    <div className="flex items-center gap-2 bg-black/30 px-3 py-1.5 rounded-lg border border-white/5">
+                      <ShoppingBag className="w-4 h-4 text-orange-400" />
+                      <span>Min ₹{restaurant.minimumOrder || 100}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex gap-3 w-full md:w-auto">
+                  <Button className="flex-1 md:flex-none bg-orange-600 hover:bg-orange-700 text-white font-bold rounded-xl h-12 px-8 shadow-lg shadow-orange-900/40 transform hover:translate-y-[-2px] transition-all">
+                    Review
+                  </Button>
+                  <Button variant="outline" className="flex-1 md:flex-none border-white/20 text-white hover:bg-white/10 rounded-xl h-12 px-6">
+                    <Heart className="w-5 h-5 mr-2" /> Favorite
+                  </Button>
+                </div>
               </div>
-            </div>
-
-            <p className="text-gray-300 text-sm mb-4 line-clamp-2">{restaurant.description || 'Serving delicious food with love.'}</p>
-
-            <div className="flex items-center gap-4 text-xs font-medium text-gray-400 border-t border-white/10 pt-4 border-dashed">
-              <span className="flex items-center gap-1.5"><Clock className="w-4 h-4 text-orange-400" /> {restaurant.deliveryTime} mins</span>
-              <span className="w-1 h-1 bg-gray-600 rounded-full" />
-              <span className="flex items-center gap-1.5"><MapPin className="w-4 h-4 text-orange-400" /> 2.5 km</span>
-              <span className="w-1 h-1 bg-gray-600 rounded-full" />
-              <span className="text-gray-300">Min Order ₹{restaurant.minimumOrder}</span>
             </div>
           </div>
         </div>
       </div>
 
       {/* 3. Menu Content */}
-      <div className="max-w-3xl mx-auto px-4 pt-4 relative z-10">
+      <div className="max-w-4xl mx-auto px-4 pt-8 relative z-10">
 
-        {/* Categories (Static) */}
+        {/* Categories (Static - visible when header not sticky) */}
         {!isHeaderSticky && (
-          <div className="mb-8">
-            <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-hide">
+          <div className="mb-12">
+            <h3 className="text-lg font-bold text-gray-400 mb-4 uppercase tracking-wider text-xs px-2">Browse Menu</h3>
+            <div className="flex gap-4 overflow-x-auto pb-6 scrollbar-hide snap-x">
               {categories.map((cat) => (
                 <button
                   key={cat}
                   onClick={() => scrollToCategory(cat)}
-                  className={`flex flex-col items-center gap-2 min-w-[5rem] p-3 rounded-2xl border transition-all ${activeCategory === cat ? 'bg-gray-800 border-gray-700 text-white' : 'bg-gray-900/50 border-gray-800 text-gray-500'}`}
+                  className={`flex flex-col items-center justify-center gap-3 min-w-[6rem] p-4 rounded-[1.5rem] border transition-all duration-300 snap-start group ${activeCategory === cat ? 'bg-gradient-to-br from-orange-500/20 to-orange-600/5 border-orange-500/50 shadow-orange-500/10' : 'bg-[#111] border-white/5 hover:bg-[#1a1a1a] hover:border-white/10'}`}
                 >
-                  <span className="text-2xl">🍽️</span>
-                  <span className="text-xs font-bold">{cat}</span>
+                  <span className="text-3xl bg-black/40 w-12 h-12 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">🍽️</span>
+                  <span className={`text-sm font-bold ${activeCategory === cat ? 'text-orange-400' : 'text-gray-400 group-hover:text-white'}`}>{cat}</span>
                 </button>
               ))}
             </div>
@@ -210,78 +256,85 @@ export default function RestaurantPage() {
         )}
 
         {/* Menu Items List */}
-        <div className="space-y-8">
+        <div className="space-y-12">
           {categories.map((category) => {
             const categoryItems = filteredItems.filter(item => item.category === category);
             if (categoryItems.length === 0) return null;
 
             return (
-              <div key={category} ref={(el) => (categoryRefs.current[category] = el)} className="scroll-mt-40">
-                <h2 className="text-xl font-bold mb-4 text-gray-200 flex items-center gap-2">
-                  {category} <span className="text-sm font-normal text-gray-600">({categoryItems.length})</span>
-                </h2>
+              <div key={category} ref={(el) => (categoryRefs.current[category] = el)} className="scroll-mt-48">
+                <div className="flex items-center gap-4 mb-6">
+                  <h2 className="text-2xl font-black text-white">{category}</h2>
+                  <span className="h-[1px] flex-1 bg-gradient-to-r from-white/10 to-transparent"></span>
+                  <span className="text-sm font-bold text-gray-500 bg-white/5 px-3 py-1 rounded-full">{categoryItems.length} items</span>
+                </div>
 
-                <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {categoryItems.map(item => (
-                    <div key={item.id} className="group relative bg-transparent border-b border-gray-800/50 pb-6 mb-6 last:border-0 last:mb-0 flex gap-4">
+                    <div key={item.id} className="group relative bg-[#111] border border-white/5 hover:border-white/10 rounded-2xl p-4 transition-all duration-300 hover:bg-[#161616] hover:shadow-2xl hover:shadow-black/50 flex gap-4">
+
                       {/* Text Info */}
-                      <div className="flex-1 space-y-2">
-                        <div className="flex items-start gap-2">
-                          {item.vegetarian ? (
-                            <Badge variant="outline" className="border-green-500/50 bg-green-500/10 text-green-500 h-5 w-5 p-0 flex items-center justify-center rounded-sm">
-                              <div className="w-2 h-2 bg-green-500 rounded-full" />
-                            </Badge>
-                          ) : (
-                            <Badge variant="outline" className="border-red-500/50 bg-red-500/10 text-red-500 h-5 w-5 p-0 flex items-center justify-center rounded-sm">
-                              <div className="w-2 h-2 bg-red-500 rounded-full" />
-                            </Badge>
-                          )}
-                          {item.isBestSeller && (
-                            <span className="text-[10px] font-bold text-yellow-500 flex items-center gap-0.5">
-                              <Star className="w-3 h-3 fill-yellow-500" /> Bestseller
-                            </span>
-                          )}
+                      <div className="flex-1 flex flex-col">
+                        <div className="flex items-start justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            {item.vegetarian ? (
+                              <div className="border border-green-500/50 bg-green-500/10 rounded-md p-0.5" title="Vegetarian">
+                                <div className="w-2.5 h-2.5 bg-green-500 rounded-full" />
+                              </div>
+                            ) : (
+                              <div className="border border-red-500/50 bg-red-500/10 rounded-md p-0.5" title="Non-Vegetarian">
+                                <div className="w-2.5 h-2.5 bg-red-500 rounded-full" />
+                              </div>
+                            )}
+                            {item.isBestSeller && (
+                              <span className="text-[10px] font-bold bg-yellow-500/10 text-yellow-500 px-2 py-0.5 rounded-full flex items-center gap-1 border border-yellow-500/20">
+                                <Star className="w-3 h-3 fill-yellow-500" /> Bestseller
+                              </span>
+                            )}
+                          </div>
                         </div>
 
-                        <h3 className="font-bold text-gray-100 text-lg group-hover:text-orange-400 transition-colors">{item.name}</h3>
-                        <div className="font-medium text-white">₹{item.price}</div>
+                        <h3 className="font-bold text-gray-100 text-lg leading-tight mb-1 group-hover:text-orange-400 transition-colors">{item.name}</h3>
+                        <div className="font-bold text-white text-lg mb-2">₹{item.price}</div>
 
-                        <div className="flex items-center gap-1">
-                          {[1, 2, 3, 4, 5].map((star) => (
-                            <Star key={star} className={`w-3 h-3 ${star <= (item.averageRating || 4) ? 'fill-yellow-500 text-yellow-500' : 'text-gray-700'}`} />
-                          ))}
-                          <span className="text-xs text-gray-500 ml-1">({Math.floor(Math.random() * 50) + 10})</span>
+                        <p className="text-sm text-gray-500 line-clamp-2 mb-3 flex-1">{item.description}</p>
+
+                        <div className="flex items-center gap-1 mt-auto">
+                          <div className="flex">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                              <Star key={star} className={`w-3 h-3 ${star <= (item.averageRating || 4) ? 'fill-yellow-500 text-yellow-500' : 'fill-gray-800 text-gray-800'}`} />
+                            ))}
+                          </div>
+                          <span className="text-xs text-gray-600 ml-2 font-medium">102 ratings</span>
                         </div>
-
-                        <p className="text-sm text-gray-500 line-clamp-2">{item.description}</p>
                       </div>
 
                       {/* Image & Add Button */}
-                      <div className="relative w-36 h-32 flex-shrink-0">
-                        <div className="w-full h-full rounded-2xl overflow-hidden bg-gray-900 shadow-md">
+                      <div className="relative w-32 h-32 md:w-40 md:h-40 flex-shrink-0">
+                        <div className="w-full h-full rounded-xl overflow-hidden bg-gray-900 shadow-inner relative">
                           <Image
                             src={item.image}
                             alt={item.name}
                             fill
-                            className="object-cover group-hover:scale-105 transition-transform duration-500"
+                            className="object-cover group-hover:scale-110 transition-transform duration-700"
                           />
                         </div>
 
-                        <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2">
+                        <div className="absolute -bottom-4 left-1/2 transform -translate-x-1/2 w-full flex justify-center drops-shadow-xl z-10">
                           {getQuantityInCart(item.id) > 0 ? (
-                            <div className="flex items-center bg-gray-900 border border-gray-700 rounded-lg shadow-xl shadow-black/50 overflow-hidden">
-                              <button className="p-2 hover:bg-gray-800 text-white" onClick={() => {/* Decrease logic */ }}>
-                                <Minus className="w-4 h-4" />
+                            <div className="flex items-center bg-gray-900 border border-gray-700 rounded-xl shadow-xl overflow-hidden h-9">
+                              <button className="px-3 hover:bg-gray-800 text-white transition-colors" onClick={() => {/* Decrease logic */ }}>
+                                <Minus className="w-3.5 h-3.5" />
                               </button>
-                              <span className="text-green-500 font-bold px-1">{getQuantityInCart(item.id)}</span>
-                              <button className="p-2 hover:bg-gray-800 text-white" onClick={() => handleAddToCart(item)}>
-                                <Plus className="w-4 h-4" />
+                              <span className="text-green-500 font-bold px-2 text-sm">{getQuantityInCart(item.id)}</span>
+                              <button className="px-3 hover:bg-gray-800 text-white transition-colors" onClick={() => handleAddToCart(item)}>
+                                <Plus className="w-3.5 h-3.5" />
                               </button>
                             </div>
                           ) : (
                             <Button
                               onClick={() => handleAddToCart(item)}
-                              className="bg-white text-green-600 hover:bg-gray-100 font-extrabold uppercase text-xs h-9 px-6 shadow-xl shadow-black/20"
+                              className="bg-white text-green-700 hover:bg-gray-100 font-extrabold uppercase text-xs h-9 px-6 rounded-xl shadow-xl border border-gray-200 transform group-hover:translate-y-[-2px] transition-all"
                             >
                               ADD
                             </Button>
@@ -295,8 +348,23 @@ export default function RestaurantPage() {
             );
           })}
         </div>
-
       </div>
+
+      {/* 4. Floating Cart Bar (Mobile/Standard) */}
+      {cartItems.length > 0 && (
+        <div className="fixed bottom-4 left-4 right-4 z-40 max-w-4xl mx-auto animate-in slide-in-from-bottom-5 fade-in duration-300">
+          <div className="bg-green-600 rounded-2xl p-4 shadow-2xl flex justify-between items-center cursor-pointer hover:bg-green-700 transition-colors group" onClick={() => router.push('/customer/cart')}>
+            <div className="flex flex-col">
+              <span className="text-xs font-medium text-green-100 uppercase tracking-wider">{cartItems.length} Items</span>
+              <span className="font-black text-xl text-white">₹{total + 40 + 10} <span className="text-xs font-normal opacity-80 decoration-slice ml-1">plus taxes</span></span>
+            </div>
+            <div className="flex items-center gap-2 font-bold text-white group-hover:translate-x-1 transition-transform">
+              View Cart <ShoppingBag className="w-5 h-5 fill-white/20" />
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

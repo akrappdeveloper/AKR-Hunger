@@ -51,7 +51,16 @@ export default function InvoiceButton({ order, customer }: InvoiceButtonProps) {
                 margin: 10,
                 filename: `Invoice_${order.id?.slice(-6).toUpperCase() || 'Order'}.pdf`,
                 image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2, useCORS: true, logging: false },
+                html2canvas: {
+                    scale: 2,
+                    useCORS: true,
+                    logging: false,
+                    backgroundColor: '#ffffff',
+                    // Prevent looking up variables that use oklch/lab
+                    ignoreElements: (element) => {
+                        return false;
+                    }
+                },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
             };
 
@@ -136,11 +145,12 @@ function generateInvoiceHTML(order: Order, customer: Customer | null, restaurant
     // Styles
     const styles = `
     font-family: 'Inter', system-ui, sans-serif;
-    color: #1f2937;
-    background: #ffffff;
+    color: #1f2937 !important;
+    background: #ffffff !important;
     padding: 40px;
     max-width: 800px;
     margin: 0 auto;
+    border: 1px solid #eee; /* For visibility in PDF if needed, but clean is better */
   `;
 
     return `

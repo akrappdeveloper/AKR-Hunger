@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
-import { getRazorpayKeySecret } from '@/lib/razorpay-server';
+import { getRazorpayKeySecret } from '@/lib/razorpay-config';
 
 export async function POST(request: NextRequest) {
   try {

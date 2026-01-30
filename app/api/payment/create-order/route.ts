@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Razorpay from 'razorpay';
-import { getRazorpayKeyId, getRazorpayKeySecret } from '@/lib/razorpay-server';
+import { getRazorpayKeyId, getRazorpayKeySecret } from '@/lib/razorpay-config'; // Import from config
 
 const razorpay = new Razorpay({
   key_id: getRazorpayKeyId(),

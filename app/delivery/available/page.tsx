@@ -10,7 +10,7 @@ import { Loader } from '@/components/ui/spinner';
 import { MapPin, Clock, ArrowRight, DollarSign, Bike, RefreshCw } from 'lucide-react';
 import { Order } from '@/lib/types';
 import { db } from '@/lib/firebase';
-import { collection, query, where, onSnapshot, orderBy, updateDoc, doc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, orderBy, updateDoc, doc, serverTimestamp, getDoc } from 'firebase/firestore';
 import { toast } from 'sonner';
 
 export default function AvailableOrdersPage() {
@@ -83,11 +83,35 @@ export default function AvailableOrdersPage() {
         }
 
         try {
+            // Fetch restaurant address if missing
+            // Similar logic to dashboard page to ensure consistency
+            // check if we have the order in state
+            let currentRestaurantAddress = '';
+
+            const targetOrder = orders.find(o => o.id === orderId);
+
+            if (targetOrder) {
+                currentRestaurantAddress = targetOrder.restaurantAddress || '';
+                if (!currentRestaurantAddress && targetOrder.restaurantId) {
+                    try {
+                        const restaurantDoc = await getDoc(doc(db, 'restaurants', targetOrder.restaurantId));
+                        if (restaurantDoc.exists()) {
+                            const data = restaurantDoc.data();
+                            currentRestaurantAddress = data.address || '';
+                        }
+                    } catch (err) {
+                        console.error("Error fetching restaurant address", err);
+                    }
+                }
+            }
+
+
             await updateDoc(doc(db, 'orders', orderId), {
                 deliveryPersonId: user.uid,
                 deliveryPersonName: deliveryPartner?.name || 'Assigned Partner',
                 deliveryPersonPhone: deliveryPartner?.phone || '',
                 deliveryVehicle: deliveryPartner?.vehicle || 'Vehicle',
+                restaurantAddress: currentRestaurantAddress || 'Unknown Location',
                 status: 'ready', // Keep status ready until pickup
                 deliveryStatus: 'going_to_restaurant',
                 updatedAt: serverTimestamp()
@@ -152,7 +176,7 @@ export default function AvailableOrdersPage() {
                                         <MapPin className="w-6 h-6 text-blue-500" />
                                     </div>
                                     <Badge className="bg-green-500/10 text-green-400 hover:bg-green-500/20 border-green-500/20">
-                                        ₹{((order.deliveryCharge || 0) * 0.30).toFixed(2)} Earnings
+                                        ₹{((order.deliveryCharge || 0) * 0.40).toFixed(2)} Earnings
                                     </Badge>
                                 </div>
 

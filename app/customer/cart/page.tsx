@@ -130,7 +130,8 @@ export default function CartPage() {
         updatedAt: new Date(),
         customerName: realtimeCustomer?.name || 'Guest',
         customerPhone: realtimeCustomer?.phone || '',
-        restaurantName: restaurant?.name || 'Unknown Restaurant'
+        restaurantName: restaurant?.name || 'Unknown Restaurant',
+        deliveryOtp: Math.floor(1000 + Math.random() * 9000).toString() // Generate 4-digit OTP
       };
 
       const docRef = await addDoc(collection(db, 'orders'), {

@@ -25,6 +25,7 @@ export interface Address {
   longitude: number;
   isDefault: boolean;
   createdAt: Date;
+  plusCode?: string;
 }
 
 export interface Restaurant {
@@ -150,6 +151,7 @@ export interface Order {
   restaurantLocation?: { lat: number; lng: number };
   deliveredAt?: Date | any;
   targetDeliveryIds?: string[]; // IDs of specific delivery partners this order is broadcast to
+  deliveryOtp?: string; // OTP for delivery verification
 }
 
 export interface OrderItem {

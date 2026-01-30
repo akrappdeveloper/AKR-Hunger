@@ -102,8 +102,12 @@ export default function EarningsPage() {
 
     // Calculations
     // 30% of Delivery Charge
-    const totalEarnings = orders.reduce((acc, curr) => acc + ((curr.deliveryCharge || 0) * 0.30), 0);
+    const totalEarnings = orders.reduce((acc, curr) => acc + ((curr.deliveryCharge || 0) * 0.40), 0);
     const mockTips = 0; // Removing mock tips as per request to focus on delivery charge
+    // const totalTips = orders.length * 2.50; 
+    // ...
+    // ...
+    <p className="text-gray-400 text-sm uppercase font-bold tracking-wider">Total Earnings (40%)</p>
     // const totalTips = orders.length * 2.50; 
     const totalBonus = 0;
     const grandTotal = totalEarnings + mockTips + totalBonus;
@@ -257,7 +261,7 @@ export default function EarningsPage() {
                             </div>
                             <Badge variant="secondary" className="bg-green-500/10 text-green-400">+12% this week</Badge>
                         </div>
-                        <p className="text-gray-400 text-sm uppercase font-bold tracking-wider">Total Earnings (30%)</p>
+                        <p className="text-gray-400 text-sm uppercase font-bold tracking-wider">Total Earnings (40%)</p>
                         <h2 className="text-4xl font-bold text-white mt-1">₹{grandTotal.toFixed(2)}</h2>
                     </CardContent>
                 </Card>
