@@ -279,7 +279,7 @@ export default function OrderTrackingPage() {
               </div>
               <div className="p-6 space-y-4">
                 {order.items?.map((item, idx) => (
-                  <div key={idx} className="flex gap-4 items-center">
+                  <div key={`${item.menuItemId}-${idx}`} className="flex gap-4 items-center">
                     <div className="w-16 h-16 rounded-xl bg-gray-800 relative overflow-hidden border border-white/5 flex-shrink-0">
                       <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
                     </div>

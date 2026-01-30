@@ -41,8 +41,8 @@ export default function OrdersPage() {
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const ordersList = snapshot.docs.map(doc => ({
-        id: doc.id,
         ...doc.data(),
+        id: doc.id,
         createdAt: doc.data().createdAt?.toDate ? doc.data().createdAt.toDate() : new Date(doc.data().createdAt),
       })) as Order[];
 
@@ -385,20 +385,32 @@ function CancelOrderDialog({ order, isOpen, onClose }: { order: Order | null, is
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="bg-gray-900 border-gray-800 text-white sm:max-w-md">
+      <DialogContent className="bg-gray-900 border-gray-800 text-white w-[90vw] max-w-[400px] rounded-2xl p-6 gap-6">
         <DialogHeader>
-          <DialogTitle className="text-xl font-bold text-red-500">Cancel Order?</DialogTitle>
+          <DialogTitle className="text-xl sm:text-2xl font-bold text-red-500 text-center">Cancel Order?</DialogTitle>
         </DialogHeader>
-        <div className="py-4 text-center">
-          <p className="text-gray-300 mb-4">Are you sure you want to cancel Order #{order.id.slice(-6).toUpperCase()}?</p>
-          <p className="text-sm text-gray-500">This action cannot be undone.</p>
+
+        <div className="text-center space-y-2">
+          <p className="text-gray-300 text-sm sm:text-base">
+            Are you sure you want to cancel Order <span className="font-bold text-white">#{order.id.slice(-6).toUpperCase()}</span>?
+          </p>
+          <p className="text-xs sm:text-sm text-gray-500">
+            This action cannot be undone.
+          </p>
         </div>
-        <div className="flex gap-3">
-          <Button variant="ghost" onClick={onClose} className="flex-1 hover:bg-white/10 text-white">No, Keep Order</Button>
+
+        <div className="flex flex-col-reverse sm:flex-row gap-3 mt-2">
+          <Button
+            variant="ghost"
+            onClick={onClose}
+            className="flex-1 h-11 sm:h-12 rounded-xl text-gray-400 hover:text-white hover:bg-white/10 text-sm sm:text-base font-medium transition-colors"
+          >
+            No, Keep Order
+          </Button>
           <Button
             onClick={handleCancel}
             disabled={loading}
-            className="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold"
+            className="flex-1 h-11 sm:h-12 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold text-sm sm:text-base shadow-lg shadow-red-900/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
           >
             {loading ? 'Cancelling...' : 'Yes, Cancel Order'}
           </Button>

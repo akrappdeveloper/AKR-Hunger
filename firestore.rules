@@ -53,7 +53,8 @@ service cloud.firestore {
       allow update: if request.auth.uid == resource.data.restaurantId
                      || ("deliveryPersonId" in resource.data && resource.data.deliveryPersonId == request.auth.uid)
                      || (request.auth.uid != null && (!("deliveryPersonId" in resource.data) || resource.data.deliveryPersonId == null) && request.resource.data.deliveryPersonId == request.auth.uid)
-                     || isAdmin(request.auth.uid);
+                     || isAdmin(request.auth.uid)
+                     || (request.auth.uid == resource.data.customerId && request.resource.data.status == 'cancelled');
       allow delete: if request.auth.uid == resource.data.restaurantId || isAdmin(request.auth.uid);
     }
 
