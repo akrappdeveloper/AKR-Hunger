@@ -5,7 +5,29 @@
             "queryScope": "COLLECTION",
             "fields": [
                 {
-                    "fieldPath": "restaurantId",
+                    "fieldPath": "deliveryPersonId",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "status",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "createdAt",
+                    "order": "DESCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "reviews",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "targetId",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "type",
                     "order": "ASCENDING"
                 },
                 {
@@ -19,11 +41,39 @@
             "queryScope": "COLLECTION",
             "fields": [
                 {
-                    "fieldPath": "restaurantId",
+                    "fieldPath": "deliveryPersonId",
                     "order": "ASCENDING"
                 },
                 {
                     "fieldPath": "status",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "createdAt",
+                    "order": "ASCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "payout_requests",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "userId",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "createdAt",
+                    "order": "DESCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "orders",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "deliveryPersonId",
                     "order": "ASCENDING"
                 },
                 {

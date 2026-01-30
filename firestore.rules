@@ -47,7 +47,8 @@ service cloud.firestore {
       allow read: if request.auth.uid == resource.data.customerId 
                    || request.auth.uid == resource.data.restaurantId
                    || request.auth.uid == resource.data.deliveryPersonId
-                   || isAdmin(request.auth.uid);
+                   || isAdmin(request.auth.uid)
+                   || (request.auth.uid != null && (resource.data.status == 'confirmed' || resource.data.status == 'preparing' || resource.data.status == 'ready'));
       allow create: if request.auth.uid != null && request.auth.uid == request.resource.data.customerId;
       allow update: if request.auth.uid == resource.data.restaurantId
                      || request.auth.uid == resource.data.deliveryPersonId
@@ -69,7 +70,7 @@ service cloud.firestore {
 
     // Unified Delivery Persons access
     match /deliveryPersons/{partnerId} {
-      allow read: if request.auth.uid == partnerId || isAdmin(request.auth.uid);
+      allow read: if request.auth.uid != null;
       allow write: if request.auth.uid == partnerId || isAdmin(request.auth.uid);
     }
     
@@ -91,10 +92,17 @@ service cloud.firestore {
       allow delete: if isAdmin(request.auth.uid);
     }
 
-    // Payout Requests
+    // Payout Requests (Legacy)
     match /payout_requests/{requestId} {
       allow read: if request.auth.uid != null && (resource.data.userId == request.auth.uid || isAdmin(request.auth.uid));
       allow create: if request.auth.uid != null && request.resource.data.userId == request.auth.uid;
+      allow update: if isAdmin(request.auth.uid);
+    }
+
+    // Withdrawal Requests (Restaurant)
+    match /withdrawalRequests/{requestId} {
+      allow read: if request.auth.uid != null && (resource.data.restaurantId == request.auth.uid || isAdmin(request.auth.uid));
+      allow create: if request.auth.uid != null && request.resource.data.restaurantId == request.auth.uid;
       allow update: if isAdmin(request.auth.uid);
     }
 

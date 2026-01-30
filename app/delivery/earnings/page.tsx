@@ -101,10 +101,12 @@ export default function EarningsPage() {
     }, [user]);
 
     // Calculations
-    const totalEarnings = orders.reduce((acc, curr) => acc + (curr.total || 0), 0);
-    const totalTips = orders.length * 2.50; // Mock Tips
-    const totalBonus = orders.length > 10 ? 50 : 0; // Mock Bonus
-    const grandTotal = totalEarnings + totalTips + totalBonus;
+    // 30% of Delivery Charge
+    const totalEarnings = orders.reduce((acc, curr) => acc + ((curr.deliveryCharge || 0) * 0.30), 0);
+    const mockTips = 0; // Removing mock tips as per request to focus on delivery charge
+    // const totalTips = orders.length * 2.50; 
+    const totalBonus = 0;
+    const grandTotal = totalEarnings + mockTips + totalBonus;
 
     // Calculate Withdrawn/Pending Amount
     const totalRequested = payouts.reduce((acc, curr) => {
@@ -132,7 +134,7 @@ export default function EarningsPage() {
         }
 
         if (amount > availableBalance) {
-            toast.error(`Insufficient balance. Max withdrawable: $${availableBalance.toFixed(2)}`);
+            toast.error(`Insufficient balance. Max withdrawable: ₹${availableBalance.toFixed(2)}`);
             return;
         }
 
@@ -192,7 +194,7 @@ export default function EarningsPage() {
                         <div className="py-4 space-y-4">
                             <div className="bg-gray-800/50 p-4 rounded-lg border border-gray-700">
                                 <p className="text-sm text-gray-400 mb-1">Available Balance</p>
-                                <p className="text-2xl font-bold text-green-400">${availableBalance.toFixed(2)}</p>
+                                <p className="text-2xl font-bold text-green-400">₹{availableBalance.toFixed(2)}</p>
                             </div>
 
                             {!deliveryPartner?.bankDetails ? (
@@ -255,8 +257,8 @@ export default function EarningsPage() {
                             </div>
                             <Badge variant="secondary" className="bg-green-500/10 text-green-400">+12% this week</Badge>
                         </div>
-                        <p className="text-gray-400 text-sm uppercase font-bold tracking-wider">Total Earnings</p>
-                        <h2 className="text-4xl font-bold text-white mt-1">${grandTotal.toFixed(2)}</h2>
+                        <p className="text-gray-400 text-sm uppercase font-bold tracking-wider">Total Earnings (30%)</p>
+                        <h2 className="text-4xl font-bold text-white mt-1">₹{grandTotal.toFixed(2)}</h2>
                     </CardContent>
                 </Card>
                 <Card className="bg-gray-900 border-gray-800 text-white shadow-xl">

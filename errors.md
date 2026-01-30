@@ -1,0 +1,11 @@
+Console FirebaseError
+
+
+The query requires an index. You can create it here: https://console.firebase.google.com/v1/r/project/akr-ride/firestore/indexes?create_composite=Ckdwcm9qZWN0cy9ha3ItcmlkZS9kYXRhYmFzZXMvKGRlZmF1bHQpL2NvbGxlY3Rpb25Hcm91cHMvb3JkZXJzL2luZGV4ZXMvXxABGhQKEGRlbGl2ZXJ5UGVyc29uSWQQARoNCgljcmVhdGVkQXQQAhoMCghfX25hbWVfXxAC
+
+// 
+
+Console FirebaseError
+
+
+The query requires an index. You can create it here: https://console.firebase.google.com/v1/r/project/akr-ride/firestore/indexes?create_composite=Ckdwcm9qZWN0cy9ha3ItcmlkZS9kYXRhYmFzZXMvKGRlZmF1bHQpL2NvbGxlY3Rpb25Hcm91cHMvb3JkZXJzL2luZGV4ZXMvXxABGhQKEGRlbGl2ZXJ5UGVyc29uSWQQARoKCgZzdGF0dXMQARoNCgljcmVhdGVkQXQQARoMCghfX25hbWVfXxAB

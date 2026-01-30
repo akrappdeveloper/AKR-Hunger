@@ -28,7 +28,7 @@ export default function DeliveryBottomNav() {
         <div className="md:hidden fixed bottom-0 left-0 right-0 bg-black/95 backdrop-blur-xl border-t border-gray-800 flex justify-around items-center h-16 z-50 px-2 pb-safe shadow-[0_-5px_20px_rgba(0,0,0,0.5)]">
             {mainLinks.map(({ href, label, icon: Icon }) => {
                 const isActive = pathname === href || pathname.startsWith(href) && href !== '/delivery';
-                // Enhanced check: 'startsWith' for sub-routes, but exact for dashboard to avoid matching everything
+                // Enhanced check: Exact match for dashboard, startsWith for others
                 const isExactActive = href === '/delivery' ? pathname === href : pathname.startsWith(href);
 
                 return (

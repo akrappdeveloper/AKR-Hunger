@@ -93,16 +93,25 @@ export default function DeliveryDashboard() {
 
     const q = query(
       collection(db, 'orders'),
-      where('status', '==', 'confirmed'),
-      where('deliveryPersonId', '==', null),
+      where('status', 'in', ['confirmed', 'preparing', 'ready']),
       orderBy('createdAt', 'asc')
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const orders = snapshot.docs.map(doc => ({
+      let orders = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       })) as Order[];
+
+      // Client-side filtering for targeted broadcasts
+      if (user) {
+        orders = orders.filter(order => {
+          // If no target list, it's public (or legacy) -> show it
+          if (!order.targetDeliveryIds || order.targetDeliveryIds.length === 0) return true;
+          // If target list exists, must include current user
+          return order.targetDeliveryIds.includes(user.uid);
+        });
+      }
 
       setAvailableOrders(orders);
 
@@ -147,15 +156,19 @@ export default function DeliveryDashboard() {
   }, [user]);
 
   // Accept order
+  // Accept order
   const acceptOrder = async (order: Order) => {
-    if (!user || !deliveryPartner) return;
+    if (!user) {
+      toast.error("You must be logged in to accept orders");
+      return;
+    }
 
     try {
       await updateDoc(doc(db, 'orders', order.id!), {
         deliveryPersonId: user.uid,
-        deliveryPersonName: deliveryPartner.name,
-        deliveryPersonPhone: deliveryPartner.phone,
-        deliveryVehicle: deliveryPartner.vehicle,
+        deliveryPersonName: deliveryPartner?.name || 'Assigned Partner', // Fallback
+        deliveryPersonPhone: deliveryPartner?.phone || '', // Fallback
+        deliveryVehicle: deliveryPartner?.vehicle || 'Vehicle', // Fallback
         status: 'ready',
         deliveryStatus: 'going_to_restaurant',
         updatedAt: serverTimestamp()
@@ -166,7 +179,7 @@ export default function DeliveryDashboard() {
       setSelectedOrder(null);
     } catch (error) {
       console.error("Error accepting order:", error);
-      toast.error("Failed to accept order");
+      toast.error("Failed to accept order. Please try again.");
     }
   };
 
@@ -237,7 +250,7 @@ export default function DeliveryDashboard() {
 
   const totalEarnings = myOrders
     .filter(o => o.status === 'delivered')
-    .reduce((acc, curr) => acc + (curr.total || 0), 0);
+    .reduce((acc, curr) => acc + ((curr.deliveryCharge || 0) * 0.30), 0);
 
   // Format address helper
   const formatAddress = (addr: any): string => {
@@ -347,43 +360,47 @@ export default function DeliveryDashboard() {
       </Dialog>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="bg-gray-900/50 border-gray-800 backdrop-blur text-white hover:bg-gray-900/80 transition-colors">
-          <CardContent className="p-6 flex flex-col items-center justify-center text-center">
-            <div className="p-3 bg-blue-600/20 rounded-full mb-3 text-blue-400">
+      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="bg-gray-900/50 border-gray-800 backdrop-blur text-white hover:bg-gray-900/80 transition-colors relative overflow-hidden group">
+          <div className="absolute inset-0 bg-blue-600/5 group-hover:bg-blue-600/10 transition-colors" />
+          <CardContent className="p-4 md:p-6 flex flex-col items-center justify-center text-center relative z-10">
+            <div className="p-3 bg-blue-600/20 rounded-full mb-3 text-blue-400 group-hover:scale-110 transition-transform">
               <ShoppingBag className="w-6 h-6" />
             </div>
-            <p className="text-3xl font-bold text-white mb-1">{activeOrders.length}</p>
-            <p className="text-xs text-gray-400 uppercase tracking-widest">Active Orders</p>
+            <p className="text-2xl md:text-3xl font-bold text-white mb-1">{activeOrders.length}</p>
+            <p className="text-[10px] md:text-xs text-gray-400 uppercase tracking-widest">Active Orders</p>
           </CardContent>
         </Card>
 
-        <Card className="bg-gray-900/50 border-gray-800 backdrop-blur text-white hover:bg-gray-900/80 transition-colors">
-          <CardContent className="p-6 flex flex-col items-center justify-center text-center">
-            <div className="p-3 bg-green-600/20 rounded-full mb-3 text-green-400">
+        <Card className="bg-gray-900/50 border-gray-800 backdrop-blur text-white hover:bg-gray-900/80 transition-colors relative overflow-hidden group">
+          <div className="absolute inset-0 bg-green-600/5 group-hover:bg-green-600/10 transition-colors" />
+          <CardContent className="p-4 md:p-6 flex flex-col items-center justify-center text-center relative z-10">
+            <div className="p-3 bg-green-600/20 rounded-full mb-3 text-green-400 group-hover:scale-110 transition-transform">
               <CheckCircle className="w-6 h-6" />
             </div>
-            <p className="text-3xl font-bold text-white mb-1">{deliveredToday}</p>
-            <p className="text-xs text-gray-400 uppercase tracking-widest">Delivered Today</p>
+            <p className="text-2xl md:text-3xl font-bold text-white mb-1">{deliveredToday}</p>
+            <p className="text-[10px] md:text-xs text-gray-400 uppercase tracking-widest">Delivered Today</p>
           </CardContent>
         </Card>
 
-        <Card className="bg-gray-900/50 border-gray-800 backdrop-blur text-white hover:bg-gray-900/80 transition-colors">
-          <CardContent className="p-6 flex flex-col items-center justify-center text-center">
-            <div className="p-3 bg-yellow-600/20 rounded-full mb-3 text-yellow-400">
+        <Card className="bg-gray-900/50 border-gray-800 backdrop-blur text-white hover:bg-gray-900/80 transition-colors relative overflow-hidden group">
+          <div className="absolute inset-0 bg-yellow-600/5 group-hover:bg-yellow-600/10 transition-colors" />
+          <CardContent className="p-4 md:p-6 flex flex-col items-center justify-center text-center relative z-10">
+            <div className="p-3 bg-yellow-600/20 rounded-full mb-3 text-yellow-400 group-hover:scale-110 transition-transform">
               <DollarSign className="w-6 h-6" />
             </div>
-            <p className="text-3xl font-bold text-white mb-1">₹{totalEarnings.toFixed(2)}</p>
-            <p className="text-xs text-gray-400 uppercase tracking-widest">Earnings (Total)</p>
+            <p className="text-2xl md:text-3xl font-bold text-white mb-1">₹{totalEarnings.toFixed(2)}</p>
+            <p className="text-[10px] md:text-xs text-gray-400 uppercase tracking-widest">Earnings (Total)</p>
           </CardContent>
         </Card>
 
-        <Card className="bg-gray-900/50 border-gray-800 backdrop-blur text-white hover:bg-gray-900/80 transition-colors">
-          <CardContent className="p-6 flex flex-col items-center justify-center text-center">
-            <div className="w-16 h-16 rounded-full border-4 border-blue-500 mb-2 flex items-center justify-center bg-gray-900 relative">
+        <Card className="bg-gray-900/50 border-gray-800 backdrop-blur text-white hover:bg-gray-900/80 transition-colors relative overflow-hidden group">
+          <div className="absolute inset-0 bg-purple-600/5 group-hover:bg-purple-600/10 transition-colors" />
+          <CardContent className="p-4 md:p-6 flex flex-col items-center justify-center text-center relative z-10">
+            <div className="w-16 h-16 rounded-full border-4 border-blue-500 mb-2 flex items-center justify-center bg-gray-900 relative group-hover:border-blue-400 transition-colors">
               <span className="text-xl font-bold text-white">{deliveryPartner?.rating || '5.0'}</span>
             </div>
-            <p className="text-xs text-gray-400 uppercase tracking-widest">Rating</p>
+            <p className="text-[10px] md:text-xs text-gray-400 uppercase tracking-widest">Rating</p>
           </CardContent>
         </Card>
       </div>

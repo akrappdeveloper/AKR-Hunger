@@ -3,6 +3,7 @@ import { RestaurantAuthProvider } from '@/context/RestaurantAuthContext';
 import { NotificationProvider } from '@/context/NotificationContext';
 import RestaurantSidebar from '@/components/restaurant/RestaurantSidebar';
 import RestaurantBottomNav from '@/components/restaurant/RestaurantBottomNav';
+import { Toaster } from '@/components/ui/sonner';
 
 export default function RestaurantLayout({
   children,
@@ -21,6 +22,7 @@ export default function RestaurantLayout({
           </main>
           <RestaurantBottomNav />
         </div>
+        <Toaster theme="dark" position="top-right" />
       </NotificationProvider>
     </RestaurantAuthProvider>
   );

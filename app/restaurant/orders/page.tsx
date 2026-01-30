@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { useRestaurantAuth } from '@/context/RestaurantAuthContext';
 import { Card } from '@/components/ui/card';
@@ -13,8 +14,18 @@ import { Order } from '@/lib/types';
 import {
   Clock, CheckCircle, Truck, AlertCircle, ShoppingCart,
   TrendingUp, Search, Phone, MapPin, Printer, Package,
-  ChefHat, ArrowRight, Calendar, Timer, Bike, User
+  ChefHat, ArrowRight, Calendar, Timer, Bike, User, Users, Radio
 } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 type OrderStatus = 'pending' | 'confirmed' | 'preparing' | 'ready' | 'out_for_delivery' | 'delivered' | 'cancelled';
 
@@ -30,6 +41,12 @@ export default function RestaurantOrdersPage() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [deliveryPartner, setDeliveryPartner] = useState<any>(null);
+
+  // Broadcast Dialog
+  const [openBroadcastDialog, setOpenBroadcastDialog] = useState(false);
+  const [availablePartners, setAvailablePartners] = useState<any[]>([]);
+  const [selectedPartnerIds, setSelectedPartnerIds] = useState<string[]>([]);
+  const [loadingPartners, setLoadingPartners] = useState(false);
 
   // Statistics
   const [todayOrders, setTodayOrders] = useState(0);
@@ -122,7 +139,7 @@ export default function RestaurantOrdersPage() {
       fetchOrders();
     } catch (error) {
       console.error('[Orders] Error updating order:', error);
-      alert('Failed to update order status');
+      toast.error('Failed to update order status');
     }
   };
 
@@ -400,6 +417,69 @@ export default function RestaurantOrdersPage() {
     }
   }, [selectedOrder]);
 
+  const openBroadcastModal = async () => {
+    setOpenBroadcastDialog(true);
+    setLoadingPartners(true);
+    try {
+      const q = query(collection(db, 'deliveryPersons'));
+      const snapshot = await getDocs(q);
+      const partners = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setAvailablePartners(partners);
+      // Default to select all available (online) partners
+      const onlineIds = partners.filter((p: any) => p.isAvailable).map((p: any) => p.id);
+      setSelectedPartnerIds(onlineIds);
+    } catch (error) {
+      console.error("Error fetching partners:", error);
+      toast.error("Failed to load delivery partners");
+    } finally {
+      setLoadingPartners(false);
+    }
+  };
+
+  const handleBroadcast = async () => {
+    if (!selectedOrder) return;
+
+    // logic: if ALL selected or specific selected
+    // If selectedPartnerIds matches all available partners, we can treat it as 'broadcast to all' 
+    // or we just save the list. saving list is safer for targeting.
+    // If list is empty -> select all (fallback) or error? Let's error if none selected.
+
+    if (selectedPartnerIds.length === 0) {
+      toast.warning("Please select at least one delivery partner");
+      return;
+    }
+
+    try {
+      await updateDoc(doc(db, 'orders', selectedOrder.id!), {
+        status: 'ready', // Ensure listening apps pick it up
+        targetDeliveryIds: selectedPartnerIds,
+        broadcastVerified: true, // Internal flag
+        updatedAt: new Date()
+      });
+
+      setOpenBroadcastDialog(false);
+      toast.success(`Order broadcasted to ${selectedPartnerIds.length} partners!`);
+      fetchOrders();
+    } catch (error) {
+      console.error("Error broadcasting:", error);
+      toast.error("Failed to broadcast order");
+    }
+  };
+
+  const togglePartnerSelection = (id: string) => {
+    setSelectedPartnerIds(prev =>
+      prev.includes(id) ? prev.filter(pid => pid !== id) : [...prev, id]
+    );
+  };
+
+  const selectAllPartners = (onlineOnly: boolean) => {
+    if (onlineOnly) {
+      setSelectedPartnerIds(availablePartners.filter((p: any) => p.isAvailable).map((p: any) => p.id));
+    } else {
+      setSelectedPartnerIds(availablePartners.map(p => p.id));
+    }
+  };
+
   if (authLoading || loading) {
     return (
       <div className="p-8">
@@ -507,79 +587,189 @@ export default function RestaurantOrdersPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Orders List */}
-        <div className="lg:col-span-2 space-y-3">
-          {filteredOrders.length === 0 ? (
-            <Card className="p-12 text-center bg-gray-900/50 border-gray-800 backdrop-blur-sm">
-              <ShoppingCart className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-              <p className="text-gray-300 text-lg font-semibold">No orders found</p>
-              <p className="text-gray-400 text-sm mt-2 font-medium">
-                {searchQuery ? 'Try a different search term' : 'Orders will appear here once customers place them'}
-              </p>
-            </Card>
-          ) : (
-            filteredOrders.map((order) => (
-              <Card
-                key={order.id}
-                className={`p-5 cursor-pointer transition-all bg-gray-800/50 border-gray-700 hover:bg-gray-800/70 hover:border-gray-600 shadow-lg hover:shadow-xl ${selectedOrder?.id === order.id ? 'ring-2 ring-blue-500 bg-gray-800/70' : ''
-                  }`}
-                onClick={() => setSelectedOrder(order)}
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      {getStatusIcon(order.status)}
-                      <div>
-                        <p className="font-bold text-white text-lg">
-                          Order #{order.id?.slice(0, 8).toUpperCase()}
-                        </p>
-                        <p className="text-sm text-gray-300 font-medium">
-                          {order.customerName || 'Customer'} • {order.items?.length || 0} items
-                        </p>
+        {/* Orders List & Quick Actions */}
+        <div className="lg:col-span-2 space-y-4">
+          <div className="space-y-3">
+            {filteredOrders.length === 0 ? (
+              <Card className="p-12 text-center bg-gray-900/50 border-gray-800 backdrop-blur-sm">
+                <ShoppingCart className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+                <p className="text-gray-300 text-lg font-semibold">No orders found</p>
+                <p className="text-gray-400 text-sm mt-2 font-medium">
+                  {searchQuery ? 'Try a different search term' : 'Orders will appear here once customers place them'}
+                </p>
+              </Card>
+            ) : (
+              filteredOrders.map((order) => (
+                <Card
+                  key={order.id}
+                  className={`p-5 cursor-pointer transition-all bg-gray-800/50 border-gray-700 hover:bg-gray-800/70 hover:border-gray-600 shadow-lg hover:shadow-xl ${selectedOrder?.id === order.id ? 'ring-2 ring-blue-500 bg-gray-800/70' : ''
+                    }`}
+                  onClick={() => setSelectedOrder(order)}
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        {getStatusIcon(order.status)}
+                        <div>
+                          <p className="font-bold text-white text-lg">
+                            Order #{order.id?.slice(0, 8).toUpperCase()}
+                          </p>
+                          <p className="text-sm text-gray-300 font-medium">
+                            {order.customerName || 'Customer'} • {order.items?.length || 0} items
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-gray-400 font-medium">
+                        <Timer className="w-3 h-3" />
+                        {getTimeSince(order.createdAt)}
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 text-xs text-gray-400 font-medium">
-                      <Timer className="w-3 h-3" />
-                      {getTimeSince(order.createdAt)}
+                    <div className="text-right">
+                      <p className="font-bold text-white text-xl mb-2">₹{order.total}</p>
+                      <Badge className={`${getStatusColor(order.status)} font-bold px-3 py-1 border`}>
+                        {order.status?.replace('_', ' ')}
+                      </Badge>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="font-bold text-white text-xl mb-2">₹{order.total}</p>
-                    <Badge className={`${getStatusColor(order.status)} font-bold px-3 py-1 border`}>
-                      {order.status?.replace('_', ' ')}
-                    </Badge>
-                  </div>
-                </div>
-              </Card>
-            ))
+                </Card>
+              ))
+            )}
+          </div>
+
+          {/* Quick Status Actions - Now inside the main column */}
+          {selectedOrder && selectedOrder.status !== 'delivered' && selectedOrder.status !== 'cancelled' && (
+            <Card className="p-5 bg-gray-900/50 border-gray-800 backdrop-blur-sm sticky bottom-4 shadow-2xl ring-1 ring-white/10">
+              <h3 className="text-white font-bold mb-4 text-lg flex items-center gap-2">
+                <ArrowRight className="w-5 h-5 text-blue-400" />
+                Quick Status Actions
+              </h3>
+              <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3 mb-4">
+                {statusSteps.map((status) => (
+                  <Button
+                    key={status}
+                    onClick={() => handleStatusUpdate(selectedOrder.id || '', status)}
+                    disabled={selectedOrder.status === status}
+                    size="sm"
+                    className={`${selectedOrder.status === status
+                      ? getStatusColor(status) + ' text-white ring-2 ring-white/30'
+                      : 'bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white border-gray-700'
+                      } font-semibold transition-all flex items-center justify-center gap-2 h-12`}
+                  >
+                    {getStatusIcon(status)}
+                    <span className="text-xs capitalize">{status.replace('_', ' ')}</span>
+                  </Button>
+                ))}
+              </div>
+
+              {/* Broadcast Button */}
+              {selectedOrder.status !== 'delivered' && selectedOrder.status !== 'cancelled' && !selectedOrder.deliveryPersonId && (
+                <Button
+                  onClick={openBroadcastModal}
+                  className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold shadow-lg shadow-purple-500/30 h-12"
+                >
+                  <Users className="w-5 h-5 mr-2" />
+                  Broadcast to Delivery Partners
+                </Button>
+              )}
+            </Card>
           )}
         </div>
 
-        {/* Quick Status Actions - Moved Below Orders */}
-        {selectedOrder && selectedOrder.status !== 'delivered' && selectedOrder.status !== 'cancelled' && (
-          <Card className="p-5 bg-gray-900/50 border-gray-800 backdrop-blur-sm lg:col-span-2">
-            <h3 className="text-white font-bold mb-4 text-lg flex items-center gap-2">
-              <ArrowRight className="w-5 h-5 text-blue-400" />
-              Quick Status Actions
-            </h3>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-              {statusSteps.map((status) => (
+        {/* Broadcast Dialog */}
+        <Dialog open={openBroadcastDialog} onOpenChange={setOpenBroadcastDialog}>
+          <DialogContent className="bg-gray-900 border-gray-800 text-white max-w-md">
+            <DialogHeader>
+              <DialogTitle>Broadcast Order</DialogTitle>
+              <DialogDescription className="text-gray-400">
+                Select delivery partners to receive this order request.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4 py-4">
+              <div className="flex gap-2">
                 <Button
-                  key={status}
-                  onClick={() => handleStatusUpdate(selectedOrder.id || '', status)}
-                  disabled={selectedOrder.status === status}
+                  variant="outline"
                   size="sm"
-                  className={`${selectedOrder.status === status
-                    ? getStatusColor(status) + ' text-white ring-2 ring-white/30'
-                    : 'bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white border-gray-700'
-                    } font-semibold transition-all flex items-center justify-center gap-2 h-12`}
+                  onClick={() => selectAllPartners(true)}
+                  className="flex-1 bg-gray-800 border-gray-700 hover:bg-gray-700 text-white"
                 >
-                  {getStatusIcon(status)}
-                  <span className="text-xs capitalize">{status.replace('_', ' ')}</span>
+                  Select Online ({availablePartners.filter((p: any) => p.isAvailable).length})
                 </Button>
-              ))}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => selectAllPartners(false)}
+                  className="flex-1 bg-gray-800 border-gray-700 hover:bg-gray-700 text-white"
+                >
+                  Select All ({availablePartners.length})
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSelectedPartnerIds([])}
+                  className="bg-gray-800 border-gray-700 hover:bg-gray-700 text-white"
+                >
+                  Clear
+                </Button>
+              </div>
+
+              <ScrollArea className="h-[300px] rounded-md border border-gray-800 bg-gray-900/50 p-4">
+                {loadingPartners ? (
+                  <div className="flex justify-center items-center h-full text-gray-400">Loading partners...</div>
+                ) : availablePartners.length === 0 ? (
+                  <div className="flex justify-center items-center h-full text-gray-400">No delivery partners found</div>
+                ) : (
+                  <div className="space-y-2">
+                    {availablePartners.map((partner: any) => (
+                      <div
+                        key={partner.id}
+                        className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer transition-colors ${selectedPartnerIds.includes(partner.id)
+                          ? 'bg-blue-900/20 border-blue-500/50'
+                          : 'bg-gray-800/30 border-gray-800 hover:bg-gray-800'
+                          }`}
+                        onClick={() => togglePartnerSelection(partner.id)}
+                      >
+                        <Checkbox
+                          checked={selectedPartnerIds.includes(partner.id)}
+                          // onClick handled by parent div for better UX
+                          className="border-gray-500 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
+                        />
+                        <div className="flex-1">
+                          <div className="flex justify-between items-center">
+                            <p className="font-medium text-white">{partner.name || 'Unnamed Partner'}</p>
+                            <Badge className={`text-[10px] px-2 py-0 h-5 ${partner.isAvailable
+                              ? 'bg-green-500/20 text-green-400 hover:bg-green-500/20'
+                              : 'bg-gray-700 text-gray-400 hover:bg-gray-700'
+                              }`}>
+                              {partner.isAvailable ? 'ONLINE' : 'OFFLINE'}
+                            </Badge>
+                          </div>
+                          <p className="text-xs text-gray-400">{partner.vehicle || 'Unknown Vehicle'} • {partner.phone || 'No Phone'}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </ScrollArea>
+
+              <div className="flex justify-between items-center text-sm text-gray-400 px-1">
+                <span>Selected: <span className="text-white font-bold">{selectedPartnerIds.length}</span></span>
+              </div>
             </div>
-          </Card>
-        )}
+
+            <DialogFooter>
+              <Button variant="ghost" onClick={() => setOpenBroadcastDialog(false)} className="text-gray-400 hover:text-white">Cancel</Button>
+              <Button
+                onClick={handleBroadcast}
+                disabled={selectedPartnerIds.length === 0}
+                className="bg-blue-600 hover:bg-blue-700 text-white font-bold"
+              >
+                <Radio className={`w-4 h-4 mr-2 ${selectedPartnerIds.length > 0 ? 'animate-pulse' : ''}`} />
+                Broadcast Request
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {/* Order Details */}
         {selectedOrder ? (
@@ -736,14 +926,29 @@ export default function RestaurantOrdersPage() {
             )}
 
             {/* Show message if no delivery partner assigned yet */}
-            {!deliveryPartner && (selectedOrder.status === 'out_for_delivery' || selectedOrder.status === 'ready') && (
+            {!deliveryPartner && (selectedOrder.status === 'out_for_delivery' || selectedOrder.status === 'ready' || selectedOrder.status === 'developing' || selectedOrder.status === 'prepared' || selectedOrder.status === 'preparing' || selectedOrder.status === 'confirmed') && (
               <div className="mb-6 pb-6 border-b border-gray-700">
-                <div className="flex items-start gap-3 bg-yellow-900/20 rounded-lg p-3 border border-yellow-500/30">
-                  <AlertCircle className="w-5 h-5 text-yellow-400 mt-0.5" />
-                  <div className="flex-1">
-                    <p className="text-sm text-yellow-300 font-semibold">Delivery Partner</p>
-                    <p className="text-gray-300 text-sm">No delivery partner assigned yet</p>
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-start gap-3 bg-yellow-900/20 rounded-lg p-3 border border-yellow-500/30">
+                    <AlertCircle className="w-5 h-5 text-yellow-400 mt-0.5" />
+                    <div className="flex-1">
+                      <p className="text-sm text-yellow-300 font-semibold">Delivery Partner</p>
+                      <p className="text-gray-300 text-sm">No delivery partner assigned yet</p>
+                    </div>
                   </div>
+
+                  <Button
+                    onClick={() => {
+                      // Broadcast Logic: Ensure status is ready/preparing which delivery partners listen to
+                      // We'll set it to 'ready' if it's confirmed or preparing, or just re-trigger update to refresh timestamps
+                      handleStatusUpdate(selectedOrder.id || '', 'ready');
+                      alert("Order broadcasted to all online delivery partners!");
+                    }}
+                    className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold shadow-lg shadow-purple-500/30"
+                  >
+                    <Truck className="w-4 h-4 mr-2" />
+                    Send to Delivery Partners
+                  </Button>
                 </div>
               </div>
             )}

@@ -13,6 +13,8 @@ import { Loader } from '@/components/ui/spinner';
 
 type TimeFilter = 'all' | 'today' | 'week' | 'month';
 
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+
 export default function DeliveryHistoryPage() {
     const { user, loading: authLoading } = useDeliveryAuth();
     const [orders, setOrders] = useState<Order[]>([]);
@@ -70,6 +72,10 @@ export default function DeliveryHistoryPage() {
         }
         return true;
     });
+
+    // Order Details Dialog State
+    const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+    const [detailsOpen, setDetailsOpen] = useState(false);
 
     if (authLoading || loading) {
         return <div className="flex justify-center items-center h-screen bg-black text-white"><Loader /></div>;
@@ -148,10 +154,15 @@ export default function DeliveryHistoryPage() {
                                     {/* Amount & Action */}
                                     <div className="text-right w-full md:w-auto flex flex-row md:flex-col justify-between items-center md:items-end border-t md:border-t-0 border-gray-800 pt-4 md:pt-0 mt-2 md:mt-0">
                                         <div>
-                                            <p className="font-bold text-xl text-white">${(order.total || 0).toFixed(2)}</p>
-                                            <p className="text-xs text-green-500 font-medium">+ $2.50 Tip</p>
+                                            <p className="font-bold text-xl text-white">₹{((order.deliveryCharge || 0) * 0.30).toFixed(2)}</p>
+                                            <p className="text-xs text-green-500 font-medium">Earning</p>
                                         </div>
-                                        <Button variant="ghost" size="sm" className="text-blue-400 hover:text-white hover:bg-blue-600/20 -mr-3 hidden md:flex">
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => { setSelectedOrder(order); setDetailsOpen(true); }}
+                                            className="text-blue-400 hover:text-white hover:bg-blue-600/20 -mr-3"
+                                        >
                                             Details <ChevronRight className="w-4 h-4 ml-1" />
                                         </Button>
                                     </div>
@@ -161,6 +172,76 @@ export default function DeliveryHistoryPage() {
                     ))
                 )}
             </div>
+
+            {/* Order Details Dialog */}
+            <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
+                <DialogContent className="bg-gray-900 border-gray-800 text-white max-w-2xl">
+                    <DialogHeader>
+                        <DialogTitle>Order Details</DialogTitle>
+                        <DialogDescription className="text-gray-400">
+                            Complete breakdown of Order #{selectedOrder?.id?.slice(0, 8)}
+                        </DialogDescription>
+                    </DialogHeader>
+                    {selectedOrder && (
+                        <div className="space-y-6 pt-4">
+                            {/* Status & Times */}
+                            <div className="flex flex-wrap gap-4 p-4 bg-gray-800/50 rounded-lg border border-gray-700">
+                                <div className="flex items-center gap-2">
+                                    <Clock className="w-4 h-4 text-gray-500" />
+                                    <div>
+                                        <p className="text-[10px] text-gray-500 uppercase">Placed At</p>
+                                        <p className="text-sm font-medium">{selectedOrder.createdAt?.toDate ? selectedOrder.createdAt.toDate().toLocaleString() : 'N/A'}</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <CheckCircle className="w-4 h-4 text-green-500" />
+                                    <div>
+                                        <p className="text-[10px] text-gray-500 uppercase">Delivered At</p>
+                                        <p className="text-sm font-medium">{selectedOrder.deliveredAt?.toDate ? selectedOrder.deliveredAt.toDate().toLocaleString() : 'N/A'}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Addresses */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <h4 className="text-sm font-bold text-gray-400 uppercase mb-2">Restaurant</h4>
+                                    <div className="space-y-1">
+                                        <p className="font-bold text-white text-lg">{selectedOrder.restaurantName}</p>
+                                        <p className="text-sm text-gray-400">{selectedOrder.restaurantAddress}</p>
+                                    </div>
+                                </div>
+                                <div>
+                                    <h4 className="text-sm font-bold text-gray-400 uppercase mb-2">Customer</h4>
+                                    <div className="space-y-1">
+                                        <p className="font-bold text-white text-lg">{selectedOrder.customerName || 'Guest'}</p>
+                                        <p className="text-sm text-gray-400">{typeof selectedOrder.deliveryAddress === 'string' ? selectedOrder.deliveryAddress : 'Address N/A'}</p>
+                                        <p className="text-sm text-blue-400">{selectedOrder.customerPhone || 'N/A'}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Totals */}
+                            <div className="border-t border-gray-800 pt-4 flex justify-end">
+                                <div className="w-full md:w-1/2 space-y-2">
+                                    <div className="flex justify-between text-sm text-gray-400">
+                                        <span>Order Total</span>
+                                        <span>₹{(selectedOrder.total || 0).toFixed(2)}</span>
+                                    </div>
+                                    <div className="flex justify-between text-sm text-gray-400">
+                                        <span>Delivery Charge (Total)</span>
+                                        <span>₹{(selectedOrder.deliveryCharge || 0).toFixed(2)}</span>
+                                    </div>
+                                    <div className="flex justify-between text-lg font-bold text-white pt-2 border-t border-gray-800">
+                                        <span>Your Earnings (30%)</span>
+                                        <span className="text-green-400">₹{((selectedOrder.deliveryCharge || 0) * 0.30).toFixed(2)}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

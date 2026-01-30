@@ -22,7 +22,7 @@ interface Transaction {
     orderId: string;
     amount: number;
     type: 'earning' | 'withdrawal';
-    status: 'completed' | 'pending';
+    status: 'completed' | 'pending' | 'rejected';
     date: Date;
     customerName?: string;
 }
@@ -35,12 +35,20 @@ export default function RestaurantWalletPage() {
     const [totalEarnings, setTotalEarnings] = useState(0);
     const [availableBalance, setAvailableBalance] = useState(0);
     const [pendingWithdrawals, setPendingWithdrawals] = useState(0);
+    const [totalWithdrawn, setTotalWithdrawn] = useState(0);
     const [transactions, setTransactions] = useState<Transaction[]>([]);
 
     // Withdrawal Dialog
     const [withdrawalDialog, setWithdrawalDialog] = useState(false);
     const [withdrawAmount, setWithdrawAmount] = useState('');
     const [submittingWithdrawal, setSubmittingWithdrawal] = useState(false);
+
+    // Feedback Dialogs
+    const [feedback, setFeedback] = useState<{ type: 'success' | 'error', message: string, open: boolean }>({
+        type: 'success',
+        message: '',
+        open: false
+    });
 
     useEffect(() => {
         if (authLoading) return;
@@ -55,50 +63,86 @@ export default function RestaurantWalletPage() {
         try {
             setLoading(true);
             const ordersRef = collection(db, 'orders');
+            const withdrawalsRef = collection(db, 'withdrawalRequests');
 
-            // Get all delivered orders - simplified query
-            const q = query(
+            // 1. Get all delivered orders (Earnings)
+            const qOrders = query(
                 ordersRef,
                 where('restaurantId', '==', user!.uid),
                 where('status', '==', 'delivered')
             );
+            const snapshotOrders = await getDocs(qOrders);
 
-            const snapshot = await getDocs(q);
-            let orders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            let totalEarned = 0;
+            const orderTrans: Transaction[] = [];
 
-            // Sort by date
-            orders = orders.sort((a: any, b: any) => {
-                const dateA = a.createdAt?.toDate?.() || new Date(0);
-                const dateB = b.createdAt?.toDate?.() || new Date(0);
-                return dateB.getTime() - dateA.getTime();
-            });
-
-            // Calculate earnings (only Subtotal - items total, exclude delivery)
-            let total = 0;
-            const trans: Transaction[] = [];
-
-            orders.forEach((order: any) => {
-                // Calculate items subtotal (excluding delivery charge and tax)
-                const subtotal = order.items?.reduce((sum: number, item: any) => {
+            snapshotOrders.docs.forEach(doc => {
+                const data = doc.data();
+                // Calculate items subtotal
+                const subtotal = data.items?.reduce((sum: number, item: any) => {
                     return sum + (item.price * item.quantity);
                 }, 0) || 0;
 
-                total += subtotal;
+                totalEarned += subtotal;
 
-                trans.push({
-                    id: order.id,
-                    orderId: order.id,
+                orderTrans.push({
+                    id: doc.id,
+                    orderId: doc.id,
                     amount: subtotal,
                     type: 'earning',
                     status: 'completed',
-                    date: order.createdAt?.toDate() || new Date(),
-                    customerName: order.customerName || 'Customer',
+                    date: data.createdAt?.toDate() || new Date(),
+                    customerName: data.customerName || 'Customer',
                 });
             });
 
-            setTotalEarnings(total);
-            setAvailableBalance(total);
-            setTransactions(trans);
+            // 2. Get all withdrawal requests
+            const qWithdrawals = query(
+                withdrawalsRef,
+                where('restaurantId', '==', user!.uid)
+            );
+            const snapshotWithdrawals = await getDocs(qWithdrawals);
+
+            let totalPending = 0;
+            let totalWithdrawn = 0;
+            const withdrawalTrans: Transaction[] = [];
+
+            snapshotWithdrawals.docs.forEach(doc => {
+                const data = doc.data();
+                const amount = data.amount || 0;
+
+                if (data.status === 'pending') {
+                    totalPending += amount;
+                } else if (data.status === 'completed') {
+                    totalWithdrawn += amount;
+                }
+
+                withdrawalTrans.push({
+                    id: doc.id,
+                    orderId: `WD-${doc.id.slice(0, 6)}`,
+                    amount: amount,
+                    type: 'withdrawal',
+                    status: data.status,
+                    date: data.requestedAt?.toDate() || new Date(),
+                    customerName: 'Bank Transfer'
+                });
+            });
+
+            // 3. Calculate Final Balances
+            // Available = Total Earnings - (Pending + Completed Withdrawals)
+            const currentAvailable = totalEarned - (totalPending + totalWithdrawn);
+
+            setTotalEarnings(totalEarned);
+            setAvailableBalance(currentAvailable);
+            setPendingWithdrawals(totalPending);
+            setTotalWithdrawn(totalWithdrawn); // Need to add this state
+
+            // Merge and sort transactions
+            const allTrans = [...orderTrans, ...withdrawalTrans].sort((a, b) =>
+                b.date.getTime() - a.date.getTime()
+            );
+            setTransactions(allTrans);
+
         } catch (error) {
             console.error('[Wallet] Error loading data:', error);
         } finally {
@@ -142,15 +186,23 @@ export default function RestaurantWalletPage() {
                 createdAt: new Date(),
             });
 
-            alert('Withdrawal request submitted successfully!');
             setWithdrawalDialog(false);
             setWithdrawAmount('');
+            setFeedback({
+                type: 'success',
+                message: 'Your withdrawal request has been submitted successfully to the admin.',
+                open: true
+            });
 
             // Reload wallet data
             loadWalletData();
         } catch (error) {
             console.error('[Wallet] Error submitting withdrawal:', error);
-            alert('Failed to submit withdrawal request');
+            setFeedback({
+                type: 'error',
+                message: 'Failed to submit withdrawal request. Please try again later or contact support.',
+                open: true
+            });
         } finally {
             setSubmittingWithdrawal(false);
         }
@@ -184,7 +236,7 @@ export default function RestaurantWalletPage() {
             </div>
 
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {/* Total Earnings */}
                 <Card className="p-6 relative overflow-hidden group hover:shadow-2xl transition-all bg-gray-800/50 border-green-700/30">
                     <div className="flex items-center justify-between mb-4">
@@ -226,6 +278,20 @@ export default function RestaurantWalletPage() {
                     <p className="text-sm text-gray-400 mt-2 font-medium">Being processed</p>
                     <div className="absolute bottom-0 right-0 w-32 h-32 bg-gradient-to-br from-orange-500/20 to-transparent rounded-tl-full" />
                 </Card>
+
+                {/* Total Withdrawn (Bank Cart) */}
+                <Card className="p-6 relative overflow-hidden group hover:shadow-2xl transition-all bg-gray-800/50 border-purple-700/30">
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="p-3 bg-purple-500/20 rounded-xl border border-purple-500/30">
+                            <Landmark className="w-6 h-6 text-purple-400" />
+                        </div>
+                        <Badge className="bg-purple-500/20 text-purple-300 border-purple-500/30 font-bold">Processed</Badge>
+                    </div>
+                    <p className="text-sm text-gray-300 font-semibold uppercase tracking-wide">Bank Received</p>
+                    <p className="text-4xl font-bold text-white mt-2">₹{totalWithdrawn.toFixed(2)}</p>
+                    <p className="text-sm text-gray-400 mt-2 font-medium">Successfully transferred</p>
+                    <div className="absolute bottom-0 right-0 w-32 h-32 bg-gradient-to-br from-purple-500/20 to-transparent rounded-tl-full" />
+                </Card>
             </div>
 
             {/* Bank Account Info */}
@@ -239,11 +305,11 @@ export default function RestaurantWalletPage() {
                             <div>
                                 <p className="text-white font-bold text-lg">Linked Bank Account</p>
                                 <p className="text-gray-300 text-sm font-medium mt-1">
-                                    {restaurant.bankDetails.accountHolderName} • {restaurant.bankDetails.bankName}
+                                    {restaurant?.bankDetails?.accountHolderName} • {restaurant?.bankDetails?.bankName}
                                 </p>
                                 <p className="text-gray-400 text-sm font-mono">
-                                    {restaurant.bankDetails.accountNumber.replace(/./g, (c: string, i: number) =>
-                                        i < restaurant.bankDetails.accountNumber.length - 4 ? '•' : c
+                                    {restaurant?.bankDetails?.accountNumber.replace(/./g, (c: string, i: number) =>
+                                        i < (restaurant?.bankDetails?.accountNumber.length || 0) - 4 ? '•' : c
                                     )}
                                 </p>
                             </div>
@@ -319,8 +385,10 @@ export default function RestaurantWalletPage() {
                                         {transaction.type === 'earning' ? '+' : '-'}₹{transaction.amount.toFixed(2)}
                                     </p>
                                     <Badge className={`mt-1 ${transaction.status === 'completed'
-                                        ? 'bg-green-500/20 text-green-300 border-green-500/30'
-                                        : 'bg-orange-500/20 text-orange-300 border-orange-500/30'
+                                            ? 'bg-green-500/20 text-green-300 border-green-500/30'
+                                            : transaction.status === 'rejected'
+                                                ? 'bg-red-500/20 text-red-300 border-red-500/30'
+                                                : 'bg-orange-500/20 text-orange-300 border-orange-500/30'
                                         }`}>
                                         {transaction.status}
                                     </Badge>
@@ -393,11 +461,11 @@ export default function RestaurantWalletPage() {
                         {restaurant?.bankDetails && (
                             <div className="p-4 bg-gray-800/50 rounded-xl border border-gray-700">
                                 <p className="text-sm text-gray-400 font-semibold mb-2">Withdrawal will be sent to:</p>
-                                <p className="text-white font-bold">{restaurant.bankDetails.accountHolderName}</p>
-                                <p className="text-gray-300 text-sm">{restaurant.bankDetails.bankName}</p>
+                                <p className="text-white font-bold">{restaurant?.bankDetails?.accountHolderName}</p>
+                                <p className="text-gray-300 text-sm">{restaurant?.bankDetails?.bankName}</p>
                                 <p className="text-gray-400 text-sm font-mono">
-                                    {restaurant.bankDetails.accountNumber.replace(/./g, (c: string, i: number) =>
-                                        i < restaurant.bankDetails.accountNumber.length - 4 ? '•' : c
+                                    {restaurant?.bankDetails?.accountNumber.replace(/./g, (c: string, i: number) =>
+                                        i < (restaurant?.bankDetails?.accountNumber.length || 0) - 4 ? '•' : c
                                     )}
                                 </p>
                             </div>
@@ -422,6 +490,37 @@ export default function RestaurantWalletPage() {
                         >
                             {submittingWithdrawal && <Spinner className="mr-2 h-4 w-4" />}
                             Submit Withdrawal
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Feedback Dialog */}
+            <Dialog open={feedback.open} onOpenChange={(open) => setFeedback(prev => ({ ...prev, open }))}>
+                <DialogContent className="bg-gray-900 border-gray-800 text-white max-w-sm text-center">
+                    <div className="flex justify-center mb-4">
+                        {feedback.type === 'success' ? (
+                            <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center border-2 border-green-500">
+                                <CheckCircle className="w-8 h-8 text-green-500" />
+                            </div>
+                        ) : (
+                            <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center border-2 border-red-500">
+                                <ArrowDownCircle className="w-8 h-8 text-red-500" />
+                            </div>
+                        )}
+                    </div>
+                    <DialogTitle className="text-xl font-bold mb-2">
+                        {feedback.type === 'success' ? 'Success!' : 'Error'}
+                    </DialogTitle>
+                    <DialogDescription className="text-gray-300 text-base">
+                        {feedback.message}
+                    </DialogDescription>
+                    <DialogFooter className="mt-6 flex justify-center">
+                        <Button
+                            onClick={() => setFeedback(prev => ({ ...prev, open: false }))}
+                            className={feedback.type === 'success' ? "bg-green-600 hover:bg-green-700 w-full" : "bg-red-600 hover:bg-red-700 w-full"}
+                        >
+                            {feedback.type === 'success' ? 'Great!' : 'Close'}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

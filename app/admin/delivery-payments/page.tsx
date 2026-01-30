@@ -153,8 +153,8 @@ export default function DeliveryPaymentsPage() {
                 <div className="flex flex-col md:flex-row justify-between gap-4">
                     <div className="flex items-start gap-4 flex-1">
                         <div className={`p-3 rounded-xl transition-all duration-300 ${req.status === 'pending' ? 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30' :
-                                req.status === 'accepted' ? 'bg-green-500/20 text-green-300 border border-green-500/30' :
-                                    'bg-red-500/20 text-red-300 border border-red-500/30'
+                            req.status === 'accepted' ? 'bg-green-500/20 text-green-300 border border-green-500/30' :
+                                'bg-red-500/20 text-red-300 border border-red-500/30'
                             }`}>
                             <DollarSign className="w-6 h-6" />
                         </div>
@@ -169,8 +169,8 @@ export default function DeliveryPaymentsPage() {
                                     <h3 className="text-lg font-bold text-white">{req.userName}</h3>
                                 </div>
                                 <Badge variant="outline" className={`capitalize font-bold ${req.status === 'pending' ? 'border-yellow-500/50 text-yellow-300 bg-yellow-500/10' :
-                                        req.status === 'accepted' ? 'border-green-500/50 text-green-300 bg-green-500/10' :
-                                            'border-red-500/50 text-red-300 bg-red-500/10'
+                                    req.status === 'accepted' ? 'border-green-500/50 text-green-300 bg-green-500/10' :
+                                        'border-red-500/50 text-red-300 bg-red-500/10'
                                     }`}>
                                     {req.status}
                                 </Badge>
@@ -352,73 +352,75 @@ export default function DeliveryPaymentsPage() {
                 </Card>
             </div>
 
-            <Card className="bg-gray-900/70 border-gray-800 backdrop-blur-sm shadow-2xl">
-                <CardHeader className="pb-3 border-b border-gray-800">
-                    <div className="flex flex-col md:flex-row gap-4 justify-between items-center">
-                        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full md:w-auto">
-                            <TabsList className="bg-gray-950 border border-gray-800 h-10 p-1">
-                                <TabsTrigger value="pending" className="data-[state=active]:bg-yellow-600 data-[state=active]:text-white text-gray-200 font-medium">
-                                    Pending
-                                    <Badge className="ml-2 bg-yellow-500/20 text-yellow-300 border-0">{pendingRequests.length}</Badge>
-                                </TabsTrigger>
-                                <TabsTrigger value="accepted" className="data-[state=active]:bg-green-600 data-[state=active]:text-white text-gray-200 font-medium">
-                                    Accepted
-                                    <Badge className="ml-2 bg-green-500/20 text-green-300 border-0">{acceptedRequests.length}</Badge>
-                                </TabsTrigger>
-                                <TabsTrigger value="rejected" className="data-[state=active]:bg-red-600 data-[state=active]:text-white text-gray-200 font-medium">
-                                    Rejected
-                                    <Badge className="ml-2 bg-red-500/20 text-red-300 border-0">{rejectedRequests.length}</Badge>
-                                </TabsTrigger>
-                            </TabsList>
-                        </Tabs>
-                        <div className="relative w-full md:w-64">
-                            <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-                            <Input
-                                placeholder="Search requests..."
-                                className="bg-gray-950 border-gray-700 text-white pl-10 placeholder:text-gray-500 focus-visible:ring-blue-500 focus-visible:border-blue-500 h-10"
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                            />
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                <Card className="bg-gray-900/70 border-gray-800 backdrop-blur-sm shadow-2xl">
+                    <CardHeader className="pb-3 border-b border-gray-800">
+                        <div className="flex flex-col md:flex-row gap-4 justify-between items-center">
+                            <div className="w-full md:w-auto">
+                                <TabsList className="bg-gray-950 border border-gray-800 h-10 p-1">
+                                    <TabsTrigger value="pending" className="data-[state=active]:bg-yellow-600 data-[state=active]:text-white text-gray-200 font-medium">
+                                        Pending
+                                        <Badge className="ml-2 bg-yellow-500/20 text-yellow-300 border-0">{pendingRequests.length}</Badge>
+                                    </TabsTrigger>
+                                    <TabsTrigger value="accepted" className="data-[state=active]:bg-green-600 data-[state=active]:text-white text-gray-200 font-medium">
+                                        Accepted
+                                        <Badge className="ml-2 bg-green-500/20 text-green-300 border-0">{acceptedRequests.length}</Badge>
+                                    </TabsTrigger>
+                                    <TabsTrigger value="rejected" className="data-[state=active]:bg-red-600 data-[state=active]:text-white text-gray-200 font-medium">
+                                        Rejected
+                                        <Badge className="ml-2 bg-red-500/20 text-red-300 border-0">{rejectedRequests.length}</Badge>
+                                    </TabsTrigger>
+                                </TabsList>
+                            </div>
+                            <div className="relative w-full md:w-64">
+                                <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+                                <Input
+                                    placeholder="Search requests..."
+                                    className="bg-gray-950 border-gray-700 text-white pl-10 placeholder:text-gray-500 focus-visible:ring-blue-500 focus-visible:border-blue-500 h-10"
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                />
+                            </div>
                         </div>
-                    </div>
-                </CardHeader>
-                <CardContent className="p-0">
-                    <ScrollArea className="h-[600px] p-6">
-                        <TabsContent value="pending" className="mt-0 space-y-4">
-                            {pendingRequests.length === 0 ? (
-                                <div className="text-center py-12 text-gray-400">
-                                    <Clock className="h-12 w-12 mx-auto mb-3 opacity-30" />
-                                    <p className="font-medium">No pending requests found.</p>
-                                </div>
-                            ) : (
-                                pendingRequests.map(req => <RequestCard key={req.id} req={req} />)
-                            )}
-                        </TabsContent>
+                    </CardHeader>
+                    <CardContent className="p-0">
+                        <ScrollArea className="h-[600px] p-6">
+                            <TabsContent value="pending" className="mt-0 space-y-4">
+                                {pendingRequests.length === 0 ? (
+                                    <div className="text-center py-12 text-gray-400">
+                                        <Clock className="h-12 w-12 mx-auto mb-3 opacity-30" />
+                                        <p className="font-medium">No pending requests found.</p>
+                                    </div>
+                                ) : (
+                                    pendingRequests.map(req => <RequestCard key={req.id} req={req} />)
+                                )}
+                            </TabsContent>
 
-                        <TabsContent value="accepted" className="mt-0 space-y-4">
-                            {acceptedRequests.length === 0 ? (
-                                <div className="text-center py-12 text-gray-400">
-                                    <CheckCircle className="h-12 w-12 mx-auto mb-3 opacity-30" />
-                                    <p className="font-medium">No accepted requests found.</p>
-                                </div>
-                            ) : (
-                                acceptedRequests.map(req => <RequestCard key={req.id} req={req} />)
-                            )}
-                        </TabsContent>
+                            <TabsContent value="accepted" className="mt-0 space-y-4">
+                                {acceptedRequests.length === 0 ? (
+                                    <div className="text-center py-12 text-gray-400">
+                                        <CheckCircle className="h-12 w-12 mx-auto mb-3 opacity-30" />
+                                        <p className="font-medium">No accepted requests found.</p>
+                                    </div>
+                                ) : (
+                                    acceptedRequests.map(req => <RequestCard key={req.id} req={req} />)
+                                )}
+                            </TabsContent>
 
-                        <TabsContent value="rejected" className="mt-0 space-y-4">
-                            {rejectedRequests.length === 0 ? (
-                                <div className="text-center py-12 text-gray-400">
-                                    <XCircle className="h-12 w-12 mx-auto mb-3 opacity-30" />
-                                    <p className="font-medium">No rejected requests found.</p>
-                                </div>
-                            ) : (
-                                rejectedRequests.map(req => <RequestCard key={req.id} req={req} />)
-                            )}
-                        </TabsContent>
-                    </ScrollArea>
-                </CardContent>
-            </Card>
+                            <TabsContent value="rejected" className="mt-0 space-y-4">
+                                {rejectedRequests.length === 0 ? (
+                                    <div className="text-center py-12 text-gray-400">
+                                        <XCircle className="h-12 w-12 mx-auto mb-3 opacity-30" />
+                                        <p className="font-medium">No rejected requests found.</p>
+                                    </div>
+                                ) : (
+                                    rejectedRequests.map(req => <RequestCard key={req.id} req={req} />)
+                                )}
+                            </TabsContent>
+                        </ScrollArea>
+                    </CardContent>
+                </Card>
+            </Tabs>
 
             {/* Request Details Dialog */}
             <Dialog open={!!selectedRequest} onOpenChange={() => setSelectedRequest(null)}>
@@ -427,8 +429,8 @@ export default function DeliveryPaymentsPage() {
                         <DialogTitle className="text-2xl font-bold text-white flex items-center gap-2">
                             Payment Request Details
                             <Badge variant="outline" className={`capitalize ${selectedRequest?.status === 'pending' ? 'border-yellow-500 text-yellow-300' :
-                                    selectedRequest?.status === 'accepted' ? 'border-green-500 text-green-300' :
-                                        'border-red-500 text-red-300'
+                                selectedRequest?.status === 'accepted' ? 'border-green-500 text-green-300' :
+                                    'border-red-500 text-red-300'
                                 }`}>
                                 {selectedRequest?.status}
                             </Badge>

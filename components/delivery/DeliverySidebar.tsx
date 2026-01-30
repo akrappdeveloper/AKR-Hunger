@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useDeliveryAuth } from '@/context/DeliveryAuthContext';
 import { Button } from '@/components/ui/button';
-import { Package, TrendingUp, Settings, LogOut, MapPin, Clock, Phone, Home, ShoppingBag, LayoutDashboard } from 'lucide-react';
+import { Package, TrendingUp, Settings, LogOut, MapPin, Clock, Phone, Home, ShoppingBag, LayoutDashboard, Bell, Star } from 'lucide-react';
 import NotificationBell from '@/components/notifications/NotificationBell';
 
 interface DeliverySidebarProps {
@@ -40,6 +40,8 @@ export default function DeliverySidebar({ isMobile = false, onClose }: DeliveryS
     { href: '/delivery/history', label: 'History', icon: Clock },
     { href: '/delivery/earnings', label: 'Earnings', icon: TrendingUp },
     { href: '/delivery/settings', label: 'Settings', icon: Settings },
+    { href: '/delivery/notifications', label: 'Notifications', icon: Bell },
+    { href: '/delivery/reviews', label: 'My Reviews', icon: Star },
     { href: '/delivery/support', label: 'Help & Support', icon: Phone },
   ];
 
@@ -70,8 +72,8 @@ export default function DeliverySidebar({ isMobile = false, onClose }: DeliveryS
               <Button
                 variant="ghost"
                 className={`w-full justify-start gap-3 h-12 rounded-xl text-sm font-medium transition-all duration-200 ${isActive
-                    ? 'bg-blue-600/10 text-blue-400 border border-blue-600/20 shadow-[0_0_15px_rgba(37,99,235,0.1)]'
-                    : 'text-gray-400 hover:text-white hover:bg-white/5'
+                  ? 'bg-blue-600/10 text-blue-400 border border-blue-600/20 shadow-[0_0_15px_rgba(37,99,235,0.1)]'
+                  : 'text-gray-400 hover:text-white hover:bg-white/5'
                   }`}
               >
                 <Icon className={`w-5 h-5 ${isActive ? 'text-blue-500' : 'text-gray-500'}`} />

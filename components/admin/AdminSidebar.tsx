@@ -19,7 +19,8 @@ import {
   LifeBuoy,
   Wallet,
   ShoppingBag,
-  DollarSign
+  DollarSign,
+  Bell
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -48,9 +49,11 @@ const AdminSidebar = ({ isMobile = false, onClose }: AdminSidebarProps) => {
     { href: '/admin/menu-approvals', label: 'Menu Approvals', icon: UtensilsCrossed },
     { href: '/admin/delivery', label: 'Delivery Partners', icon: Truck },
     { href: '/admin/orders', label: 'Orders', icon: ShoppingBag },
+    { href: '/admin/payments', label: 'Restaurant Payments', icon: Wallet },
     { href: '/admin/delivery-payments', label: 'Delivery Payments', icon: DollarSign },
     { href: '/admin/points', label: 'Points / Wallet', icon: Wallet },
     { href: '/admin/support', label: 'Support', icon: LifeBuoy },
+    { href: '/admin/notifications', label: 'Notifications', icon: Bell },
     { href: '/admin/settings', label: 'Settings', icon: Settings },
   ];
 

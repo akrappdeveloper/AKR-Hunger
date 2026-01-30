@@ -149,6 +149,7 @@ export interface Order {
   restaurantAddress?: string;
   restaurantLocation?: { lat: number; lng: number };
   deliveredAt?: Date | any;
+  targetDeliveryIds?: string[]; // IDs of specific delivery partners this order is broadcast to
 }
 
 export interface OrderItem {
@@ -170,6 +171,7 @@ export interface DeliveryPerson {
   vehicle: string;
   vehicleNumber: string;
   status: 'online' | 'offline' | 'on_delivery';
+  isAvailable?: boolean; // Helper sync with status
   currentLocation?: {
     latitude: number;
     longitude: number;
@@ -180,6 +182,12 @@ export interface DeliveryPerson {
   rejectionReason?: string;
   vehicleImage?: string;
   drivingLicense?: string;
+  bankDetails?: {
+    bankName: string;
+    holderName: string;
+    accountNumber: string;
+    ifscCode: string;
+  };
 }
 
 // Alias for admin panel

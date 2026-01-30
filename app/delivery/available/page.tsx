@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Loader } from '@/components/ui/spinner';
-import { MapPin, Clock, ArrowRight, DollarSign, Bike } from 'lucide-react';
+import { MapPin, Clock, ArrowRight, DollarSign, Bike, RefreshCw } from 'lucide-react';
 import { Order } from '@/lib/types';
 import { db } from '@/lib/firebase';
 import { collection, query, where, onSnapshot, orderBy, updateDoc, doc, serverTimestamp } from 'firebase/firestore';
@@ -38,7 +38,7 @@ export default function AvailableOrdersPage() {
         // For this implementation, let's assume unassigned orders have deliveryPersonId as null or empty string.
         const q = query(
             collection(db, 'orders'),
-            where('status', 'in', ['preparing', 'ready']),
+            where('status', 'in', ['confirmed', 'preparing', 'ready']),
             orderBy('createdAt', 'desc')
         );
 
@@ -49,7 +49,17 @@ export default function AvailableOrdersPage() {
             })) as Order[];
 
             // Filter locally for unassigned orders to be safe and flexible
-            const availableOrders = fetchedOrders.filter(o => !o.deliveryPersonId);
+            let availableOrders = fetchedOrders.filter(o => !o.deliveryPersonId);
+
+            // Client-side filtering for targeted broadcasts
+            if (user) {
+                availableOrders = availableOrders.filter(order => {
+                    // If no target list, it's public (or legacy) -> show it
+                    if (!order.targetDeliveryIds || order.targetDeliveryIds.length === 0) return true;
+                    // If target list exists, must include current user
+                    return order.targetDeliveryIds.includes(user.uid);
+                });
+            }
 
             setOrders(availableOrders);
             setLoading(false);
@@ -101,8 +111,18 @@ export default function AvailableOrdersPage() {
                         Pick up available orders near you and start earning.
                     </p>
                 </div>
-                <div className="bg-blue-600/10 px-4 py-2 rounded-full border border-blue-600/20 text-blue-400 text-sm font-medium">
-                    {orders.length} Orders Available
+                <div className="flex items-center gap-3">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        className="bg-blue-600/10 border-blue-600/20 text-blue-400 hover:bg-blue-600/20"
+                        onClick={() => window.location.reload()}
+                    >
+                        <RefreshCw className="w-4 h-4 mr-2" /> Refresh
+                    </Button>
+                    <div className="bg-blue-600/10 px-4 py-2 rounded-full border border-blue-600/20 text-blue-400 text-sm font-medium">
+                        {orders.length} Orders Available
+                    </div>
                 </div>
             </div>
 
@@ -125,7 +145,7 @@ export default function AvailableOrdersPage() {
                                         <MapPin className="w-6 h-6 text-blue-500" />
                                     </div>
                                     <Badge className="bg-green-500/10 text-green-400 hover:bg-green-500/20 border-green-500/20">
-                                        ${(order.total || 0).toFixed(2)} Earnings
+                                        ₹{((order.deliveryCharge || 0) * 0.30).toFixed(2)} Earnings
                                     </Badge>
                                 </div>
 

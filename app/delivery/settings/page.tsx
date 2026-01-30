@@ -10,7 +10,7 @@ import { updateDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { toast } from 'sonner';
 import { Loader } from '@/components/ui/spinner';
-import { User, Car, Phone, Mail, Save, FileText, Smartphone, Wallet, Plus, X } from 'lucide-react';
+import { User, Car, Phone, Mail, Save, FileText, Smartphone, Wallet, Plus, X, CheckCircle, Info } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 
@@ -249,8 +249,8 @@ export default function DeliverySettingsPage() {
           </CardContent>
         </Card>
 
-        {/* Docs (Read Only for now) */}
-        <Card className="bg-gray-900 border-gray-800 text-white shadow-xl opacity-80">
+        {/* Documents Management */}
+        <Card className="bg-gray-900 border-gray-800 text-white shadow-xl">
           <CardHeader>
             <div className="flex items-center gap-3 mb-2">
               <div className="p-2 bg-purple-600/10 rounded-lg text-purple-500">
@@ -258,24 +258,55 @@ export default function DeliverySettingsPage() {
               </div>
               <div>
                 <CardTitle className="text-lg">Documents</CardTitle>
-                <CardDescription className="text-gray-400">Documents submitted during registration.</CardDescription>
+                <CardDescription className="text-gray-400">Manage your verified documents.</CardDescription>
               </div>
             </div>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex gap-4">
+          <CardContent className="space-y-6">
+            {/* License */}
+            <div className="flex items-center justify-between p-4 bg-gray-800/50 rounded-lg border border-gray-700">
+              <div className="flex items-center gap-4">
+                <div className="p-2 bg-gray-700 rounded text-gray-300">
+                  <FileText className="w-6 h-6" />
+                </div>
+                <div>
+                  <p className="font-medium text-white">Driving License</p>
+                  <p className="text-xs text-green-400 flex items-center gap-1">
+                    <CheckCircle className="w-3 h-3" /> Verified
+                  </p>
+                </div>
+              </div>
               {deliveryPartner?.drivingLicense && (
-                <a href={deliveryPartner.drivingLicense} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 text-sm flex items-center gap-2">
-                  <FileText className="w-4 h-4" /> Driving License
-                </a>
-              )}
-              {deliveryPartner?.vehicleImage && (
-                <a href={deliveryPartner.vehicleImage} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 text-sm flex items-center gap-2">
-                  <Car className="w-4 h-4" /> RC / Vehicle Image
-                </a>
+                <Button variant="outline" size="sm" className="h-8 text-xs border-gray-600 text-gray-300 hover:text-white" onClick={() => window.open(deliveryPartner.drivingLicense, '_blank')}>
+                  View
+                </Button>
               )}
             </div>
-            <p className="text-xs text-gray-500 mt-2">To update documents, please contact support.</p>
+
+            {/* Vehicle Image */}
+            <div className="flex items-center justify-between p-4 bg-gray-800/50 rounded-lg border border-gray-700">
+              <div className="flex items-center gap-4">
+                <div className="p-2 bg-gray-700 rounded text-gray-300">
+                  <Car className="w-6 h-6" />
+                </div>
+                <div>
+                  <p className="font-medium text-white">Vehicle RC / Image</p>
+                  <p className="text-xs text-green-400 flex items-center gap-1">
+                    <CheckCircle className="w-3 h-3" /> Verified
+                  </p>
+                </div>
+              </div>
+              {deliveryPartner?.vehicleImage && (
+                <Button variant="outline" size="sm" className="h-8 text-xs border-gray-600 text-gray-300 hover:text-white" onClick={() => window.open(deliveryPartner.vehicleImage, '_blank')}>
+                  View
+                </Button>
+              )}
+            </div>
+
+            <div className="bg-blue-900/20 border border-blue-900/40 rounded p-3 flex gap-3 text-sm text-blue-200">
+              <Info className="w-5 h-5 shrink-0" />
+              <p>To update your documents, please raise a ticket in "Help & Support" or contact admin directly to ensure verification safety.</p>
+            </div>
           </CardContent>
         </Card>
 
