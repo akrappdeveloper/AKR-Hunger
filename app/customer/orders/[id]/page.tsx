@@ -219,6 +219,39 @@ export default function OrderTrackingPage() {
               </div>
             </div>
 
+            {/* Mobile Bill Summary (Visible only on mobile) */}
+            <div className="lg:hidden bg-gray-900/40 backdrop-blur-md border border-white/5 rounded-3xl p-6">
+              <h3 className="text-gray-500 font-bold uppercase text-xs tracking-wider mb-4">Payment Summary</h3>
+              <div className="space-y-3 text-sm">
+                <div className="flex justify-between text-gray-400">
+                  <span>Item Total</span>
+                  <span className="text-white">₹{order.subtotal}</span>
+                </div>
+                <div className="flex justify-between text-gray-400">
+                  <span>Delivery Fee</span>
+                  <span className="text-white">₹{order.deliveryCharge}</span>
+                </div>
+                <div className="flex justify-between text-gray-400">
+                  <span>Taxes</span>
+                  <span className="text-white">₹{order.taxes}</span>
+                </div>
+
+                <div className="h-px bg-white/10 my-2" />
+
+                <div className="flex justify-between items-center">
+                  <span className="font-bold text-lg text-white">Total Pay</span>
+                  <span className="font-black text-2xl text-orange-500">₹{order.total}</span>
+                </div>
+
+                <div className={`mt-4 p-3 rounded-xl border text-center font-bold text-xs uppercase tracking-wide ${order.paymentStatus === 'completed'
+                  ? 'bg-green-500/10 border-green-500/20 text-green-500'
+                  : 'bg-yellow-500/10 border-yellow-500/20 text-yellow-500'
+                  }`}>
+                  Payment {order.paymentStatus}
+                </div>
+              </div>
+            </div>
+
             {/* Delivery Person Card */}
             {deliveryPerson ? (
               <div className="bg-gray-900/40 backdrop-blur-md border border-white/5 rounded-3xl p-6 flex flex-col sm:flex-row items-center gap-6">
@@ -337,7 +370,7 @@ export default function OrderTrackingPage() {
                     </div>
                   </div>
                   <a href={`tel:${restaurant.phone}`}>
-                    <Button variant="outline" className="w-full border-gray-700 hover:bg-white/5 text-gray-300 hover:text-white rounded-xl">
+                    <Button className="w-full bg-white text-black hover:bg-gray-200 border-none font-bold rounded-xl shadow-lg shadow-white/10">
                       <Phone className="w-4 h-4 mr-2" /> Call Restaurant
                     </Button>
                   </a>
@@ -345,8 +378,8 @@ export default function OrderTrackingPage() {
               </div>
             )}
 
-            {/* Bill Summary */}
-            <div className="bg-gray-900/40 backdrop-blur-md border border-white/5 rounded-3xl p-6">
+            {/* Bill Summary (Hidden on mobile, visible on desktop) */}
+            <div className="hidden lg:block bg-gray-900/40 backdrop-blur-md border border-white/5 rounded-3xl p-6">
               <h3 className="text-gray-500 font-bold uppercase text-xs tracking-wider mb-4">Payment Summary</h3>
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between text-gray-400">
