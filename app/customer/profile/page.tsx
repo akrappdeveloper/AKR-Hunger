@@ -13,6 +13,7 @@ import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Camera, MapPin, Phone, Mail, User, Save, Edit2, Plus, Home, Briefcase, Trash2, LogOut, ChevronRight } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
+import { uploadToImgBB } from '@/lib/imgbb';
 import ImageUploadDialog from '@/components/ImageUploadDialog';
 import {
   Dialog,
@@ -87,11 +88,13 @@ export default function ProfilePage() {
     if (!user) return;
     try {
       setUploadingImage(true);
-      setImageUploadOpen(false); // Close dialog immediately or keep open with spinner? Let's close and show toast loading
+      setImageUploadOpen(false);
 
-      const storageRef = ref(storage, `profile_images/${user.uid}_${Date.now()}.jpg`);
-      await uploadBytes(storageRef, croppedImageBlob);
-      const downloadURL = await getDownloadURL(storageRef);
+      // Convert Blob to File
+      const file = new File([croppedImageBlob], `profile_${user.uid}_${Date.now()}.jpg`, { type: 'image/jpeg' });
+
+      // Upload to ImgBB
+      const downloadURL = await uploadToImgBB(file);
 
       // Update Firestore
       await updateDoc(doc(db, 'customers', user.uid), {
@@ -102,7 +105,6 @@ export default function ProfilePage() {
       // Update Local State
       setProfile(prev => prev ? { ...prev, avatar: downloadURL } : null);
 
-      // Ideally trigger auth update if context allows, but local state profile is what we display mostly.
       toast.success("Profile picture updated!");
 
     } catch (error) {
