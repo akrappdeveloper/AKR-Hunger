@@ -24,10 +24,7 @@ service cloud.firestore {
     match /menuItems/{itemId} {
       allow read: if true; // Public can read all items
       allow create: if request.auth.uid != null && request.resource.data.restaurantId == request.auth.uid;
-      allow update: if request.auth.uid != null && (
-        isAdmin(request.auth.uid) || 
-        request.auth.uid == resource.data.restaurantId
-      );
+      allow update: if request.auth.uid != null; // Allow all auth users to update (for ratings)
       allow delete: if request.auth.uid != null && (
         isAdmin(request.auth.uid) || 
         request.auth.uid == resource.data.restaurantId

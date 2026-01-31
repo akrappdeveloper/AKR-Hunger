@@ -14,7 +14,7 @@ import { db } from '@/lib/firebase';
 import { collection, query, where, onSnapshot, orderBy, addDoc, serverTimestamp } from 'firebase/firestore';
 import { Order } from '@/lib/types';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
-import { DollarSign, TrendingUp, Calendar, CreditCard, Wallet, AlertCircle } from 'lucide-react';
+import { IndianRupee, TrendingUp, Calendar, CreditCard, Wallet, AlertCircle, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function EarningsPage() {
@@ -101,22 +101,29 @@ export default function EarningsPage() {
     }, [user]);
 
     // Calculations
-    // 30% of Delivery Charge
-    const totalEarnings = orders.reduce((acc, curr) => acc + ((curr.deliveryCharge || 0) * 0.40), 0);
+    // 70% of Delivery Charge
+    const totalEarnings = orders.reduce((acc, curr) => acc + ((curr.deliveryCharge || 0) * 0.70), 0);
     const mockTips = 0; // Removing mock tips as per request to focus on delivery charge
     // const totalTips = orders.length * 2.50; 
     // ...
     // ...
-    <p className="text-gray-400 text-sm uppercase font-bold tracking-wider">Total Earnings (40%)</p>
+    <p className="text-gray-400 text-sm uppercase font-bold tracking-wider">Total Earnings (70%)</p>
     // const totalTips = orders.length * 2.50; 
     const totalBonus = 0;
     const grandTotal = totalEarnings + mockTips + totalBonus;
 
     // Calculate Withdrawn/Pending Amount
-    const totalRequested = payouts.reduce((acc, curr) => {
-        if (curr.status !== 'rejected') return acc + (parseFloat(curr.amount) || 0);
+    const totalWithdrawn = payouts.reduce((acc, curr) => {
+        if (curr.status === 'accepted') return acc + (parseFloat(curr.amount) || 0);
         return acc;
     }, 0);
+
+    const totalPending = payouts.reduce((acc, curr) => {
+        if (curr.status === 'pending') return acc + (parseFloat(curr.amount) || 0);
+        return acc;
+    }, 0);
+
+    const totalRequested = totalWithdrawn + totalPending;
 
     const availableBalance = grandTotal - totalRequested;
 
@@ -221,7 +228,7 @@ export default function EarningsPage() {
                                     <div className="space-y-2">
                                         <Label htmlFor="amount" className="text-gray-300">Amount to Withdraw</Label>
                                         <div className="relative">
-                                            <DollarSign className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
+                                            <IndianRupee className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
                                             <Input
                                                 id="amount"
                                                 type="number"
@@ -252,16 +259,16 @@ export default function EarningsPage() {
             </div>
 
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 <Card className="bg-gray-900 border-gray-800 text-white shadow-xl bg-gradient-to-br from-gray-900 to-gray-900">
                     <CardContent className="p-6">
                         <div className="flex justify-between items-start mb-4">
                             <div className="p-2 bg-blue-600/10 rounded-lg text-blue-500">
-                                <DollarSign className="w-6 h-6" />
+                                <IndianRupee className="w-6 h-6" />
                             </div>
                             <Badge variant="secondary" className="bg-green-500/10 text-green-400">+12% this week</Badge>
                         </div>
-                        <p className="text-gray-400 text-sm uppercase font-bold tracking-wider">Total Earnings (40%)</p>
+                        <p className="text-gray-400 text-sm uppercase font-bold tracking-wider">Total Earnings (70%)</p>
                         <h2 className="text-4xl font-bold text-white mt-1">₹{grandTotal.toFixed(2)}</h2>
                     </CardContent>
                 </Card>
@@ -272,8 +279,19 @@ export default function EarningsPage() {
                                 <CreditCard className="w-6 h-6" />
                             </div>
                         </div>
-                        <p className="text-gray-400 text-sm uppercase font-bold tracking-wider">Withdrawn / Pending</p>
-                        <h2 className="text-4xl font-bold text-purple-400 mt-1">${totalRequested.toFixed(2)}</h2>
+                        <p className="text-gray-400 text-sm uppercase font-bold tracking-wider">Total Withdrawn</p>
+                        <h2 className="text-4xl font-bold text-purple-400 mt-1">₹{totalWithdrawn.toFixed(2)}</h2>
+                    </CardContent>
+                </Card>
+                <Card className="bg-gray-900 border-gray-800 text-white shadow-xl">
+                    <CardContent className="p-6">
+                        <div className="flex justify-between items-start mb-4">
+                            <div className="p-2 bg-yellow-600/10 rounded-lg text-yellow-500">
+                                <Clock className="w-6 h-6" />
+                            </div>
+                        </div>
+                        <p className="text-gray-400 text-sm uppercase font-bold tracking-wider">Pending Requests</p>
+                        <h2 className="text-4xl font-bold text-yellow-400 mt-1">₹{totalPending.toFixed(2)}</h2>
                     </CardContent>
                 </Card>
                 <Card className="bg-gray-900 border-gray-800 text-white shadow-xl">
@@ -284,7 +302,7 @@ export default function EarningsPage() {
                             </div>
                         </div>
                         <p className="text-gray-400 text-sm uppercase font-bold tracking-wider">Available Balance</p>
-                        <h2 className="text-4xl font-bold text-orange-400 mt-1">${availableBalance.toFixed(2)}</h2>
+                        <h2 className="text-4xl font-bold text-orange-400 mt-1">₹{availableBalance.toFixed(2)}</h2>
                     </CardContent>
                 </Card>
             </div>
@@ -311,7 +329,7 @@ export default function EarningsPage() {
                                 </defs>
                                 <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" vertical={false} />
                                 <XAxis dataKey="name" stroke="#6b7280" tick={{ fontSize: 12 }} axisLine={false} tickLine={false} />
-                                <YAxis stroke="#6b7280" tick={{ fontSize: 12 }} axisLine={false} tickLine={false} tickFormatter={(value) => `$${value}`} />
+                                <YAxis stroke="#6b7280" tick={{ fontSize: 12 }} axisLine={false} tickLine={false} tickFormatter={(value) => `₹${value}`} />
                                 <Tooltip
                                     contentStyle={{ backgroundColor: '#111827', borderColor: '#374151', borderRadius: '8px', color: '#fff' }}
                                     itemStyle={{ color: '#60a5fa' }}
@@ -338,7 +356,7 @@ export default function EarningsPage() {
                                             <div className={`w-10 h-10 rounded-full flex items-center justify-center ${req.status === 'accepted' ? 'bg-green-900/20 text-green-500' :
                                                 req.status === 'rejected' ? 'bg-red-900/20 text-red-500' : 'bg-yellow-900/20 text-yellow-500'
                                                 }`}>
-                                                <DollarSign className="w-5 h-5" />
+                                                <IndianRupee className="w-5 h-5" />
                                             </div>
                                             <div>
                                                 <p className="font-medium text-sm">Withdrawal</p>
@@ -346,7 +364,7 @@ export default function EarningsPage() {
                                             </div>
                                         </div>
                                         <div className="text-right">
-                                            <p className="font-bold text-white">${(parseFloat(req.amount) || 0).toFixed(2)}</p>
+                                            <p className="font-bold text-white">₹{(parseFloat(req.amount) || 0).toFixed(2)}</p>
                                             <Badge className={`text-[10px] px-1.5 py-0.5 rounded capitalize ${req.status === 'accepted' ? 'bg-green-500/10 text-green-400 hover:bg-green-500/20' :
                                                 req.status === 'rejected' ? 'bg-red-500/10 text-red-400 hover:bg-red-500/20' : 'bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500/20'
                                                 }`}>

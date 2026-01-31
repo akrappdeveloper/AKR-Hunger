@@ -37,7 +37,7 @@ export default function RestaurantOrdersPage() {
 
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<'all' | 'active' | 'completed'>('active');
+  const [filter, setFilter] = useState<'all' | 'active' | 'shipped' | 'completed'>('active');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [deliveryPartner, setDeliveryPartner] = useState<any>(null);
@@ -102,9 +102,14 @@ export default function RestaurantOrdersPage() {
       setCompletedToday(todayOrdersList.filter(o => o.status === 'delivered').length);
 
       // Filter based on selected filter
+      // Filter based on selected filter
       if (filter === 'active') {
         allOrders = allOrders.filter(order =>
-          ['pending', 'confirmed', 'preparing', 'ready', 'out_for_delivery'].includes(order.status)
+          ['pending', 'confirmed', 'preparing', 'ready'].includes(order.status) && !order.deliveryPersonId
+        );
+      } else if (filter === 'shipped') {
+        allOrders = allOrders.filter(order =>
+          order.status === 'out_for_delivery' || (['ready', 'confirmed'].includes(order.status) && !!order.deliveryPersonId)
         );
       } else if (filter === 'completed') {
         allOrders = allOrders.filter(order =>
@@ -570,7 +575,7 @@ export default function RestaurantOrdersPage() {
           />
         </div>
         <div className="flex gap-3">
-          {(['all', 'active', 'completed'] as const).map((f) => (
+          {(['all', 'active', 'shipped', 'completed'] as const).map((f) => (
             <Button
               key={f}
               variant={filter === f ? 'default' : 'outline'}
@@ -637,42 +642,46 @@ export default function RestaurantOrdersPage() {
           </div>
 
           {/* Quick Status Actions - Now inside the main column */}
-          {selectedOrder && selectedOrder.status !== 'delivered' && selectedOrder.status !== 'cancelled' && (
-            <Card className="p-5 bg-gray-900/50 border-gray-800 backdrop-blur-sm sticky bottom-4 shadow-2xl ring-1 ring-white/10">
-              <h3 className="text-white font-bold mb-4 text-lg flex items-center gap-2">
-                <ArrowRight className="w-5 h-5 text-blue-400" />
-                Quick Status Actions
-              </h3>
-              <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3 mb-4">
-                {statusSteps.map((status) => (
-                  <Button
-                    key={status}
-                    onClick={() => handleStatusUpdate(selectedOrder.id || '', status)}
-                    disabled={selectedOrder.status === status}
-                    size="sm"
-                    className={`${selectedOrder.status === status
-                      ? getStatusColor(status) + ' text-white ring-2 ring-white/30'
-                      : 'bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white border-gray-700'
-                      } font-semibold transition-all flex items-center justify-center gap-2 h-12`}
-                  >
-                    {getStatusIcon(status)}
-                    <span className="text-xs capitalize">{status.replace('_', ' ')}</span>
-                  </Button>
-                ))}
-              </div>
+          {selectedOrder &&
+            selectedOrder.status !== 'delivered' &&
+            selectedOrder.status !== 'cancelled' &&
+            selectedOrder.status !== 'out_for_delivery' &&
+            !selectedOrder.deliveryPersonId && (
+              <Card className="p-5 bg-gray-900/50 border-gray-800 backdrop-blur-sm sticky bottom-4 shadow-2xl ring-1 ring-white/10">
+                <h3 className="text-white font-bold mb-4 text-lg flex items-center gap-2">
+                  <ArrowRight className="w-5 h-5 text-blue-400" />
+                  Quick Status Actions
+                </h3>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+                  {statusSteps.filter(s => !['out_for_delivery', 'delivered'].includes(s)).map((status) => (
+                    <Button
+                      key={status}
+                      onClick={() => handleStatusUpdate(selectedOrder.id || '', status)}
+                      disabled={selectedOrder.status === status}
+                      size="sm"
+                      className={`${selectedOrder.status === status
+                        ? getStatusColor(status) + ' text-white ring-2 ring-white/30'
+                        : 'bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white border-gray-700'
+                        } font-semibold transition-all flex items-center justify-center gap-2 h-12`}
+                    >
+                      {getStatusIcon(status)}
+                      <span className="text-xs capitalize">{status.replace('_', ' ')}</span>
+                    </Button>
+                  ))}
+                </div>
 
-              {/* Broadcast Button */}
-              {selectedOrder.status !== 'delivered' && selectedOrder.status !== 'cancelled' && !selectedOrder.deliveryPersonId && (
-                <Button
-                  onClick={openBroadcastModal}
-                  className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold shadow-lg shadow-purple-500/30 h-12"
-                >
-                  <Users className="w-5 h-5 mr-2" />
-                  Broadcast to Delivery Partners
-                </Button>
-              )}
-            </Card>
-          )}
+                {/* Broadcast Button */}
+                {selectedOrder.status !== 'delivered' && selectedOrder.status !== 'cancelled' && !selectedOrder.deliveryPersonId && (
+                  <Button
+                    onClick={openBroadcastModal}
+                    className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold shadow-lg shadow-purple-500/30 h-12"
+                  >
+                    <Users className="w-5 h-5 mr-2" />
+                    Broadcast to Delivery Partners
+                  </Button>
+                )}
+              </Card>
+            )}
         </div>
 
         {/* Broadcast Dialog */}
@@ -825,11 +834,12 @@ export default function RestaurantOrdersPage() {
               </div>
             )}
 
-            {/* Quick Status Update */}
-            {selectedOrder.status !== 'delivered' && selectedOrder.status !== 'cancelled' && (
-              <div className="mb-6 pb-6 border-b border-gray-700">
-                <h3 className="text-white font-bold mb-3 text-lg">Quick Actions</h3>
-                {getNextStatus(selectedOrder.status as OrderStatus) && (
+            {/* Quick Status Update - conditioned to hide if next status is restricted or not available */}
+            {selectedOrder.status !== 'delivered' && selectedOrder.status !== 'cancelled' &&
+              getNextStatus(selectedOrder.status as OrderStatus) &&
+              !['out_for_delivery', 'delivered'].includes(getNextStatus(selectedOrder.status as OrderStatus)!) && (
+                <div className="mb-6 pb-6 border-b border-gray-700">
+                  <h3 className="text-white font-bold mb-3 text-lg">Quick Actions</h3>
                   <Button
                     onClick={() => handleStatusUpdate(selectedOrder.id || '', getNextStatus(selectedOrder.status as OrderStatus)!)}
                     className="w-full bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 font-bold shadow-lg shadow-blue-500/30 mb-2"
@@ -837,9 +847,8 @@ export default function RestaurantOrdersPage() {
                     <ArrowRight className="w-4 h-4 mr-2" />
                     Move to {getNextStatus(selectedOrder.status as OrderStatus)?.replace('_', ' ')}
                   </Button>
-                )}
-              </div>
-            )}
+                </div>
+              )}
 
             {/* Items */}
             <div className="mb-6 pb-6 border-b border-gray-700">

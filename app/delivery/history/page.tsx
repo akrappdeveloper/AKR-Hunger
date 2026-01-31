@@ -81,6 +81,16 @@ export default function DeliveryHistoryPage() {
         return <div className="flex justify-center items-center h-screen bg-black text-white"><Loader /></div>;
     }
 
+    const formatAddress = (addr: any): string => {
+        if (!addr) return 'N/A';
+        if (typeof addr === 'string') return addr;
+        if (typeof addr === 'object') {
+            const parts = [addr.street, addr.city, addr.state, addr.pincode].filter(Boolean);
+            return parts.join(', ');
+        }
+        return 'N/A';
+    };
+
     return (
         <div className="p-4 md:p-8 space-y-8 max-w-7xl mx-auto">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -114,8 +124,8 @@ export default function DeliveryHistoryPage() {
                         <p className="text-gray-500 text-sm">Try changing the filter or complete more orders.</p>
                     </div>
                 ) : (
-                    filteredOrders.map(order => (
-                        <Card key={order.id} className="bg-gray-900 border-gray-800 text-white hover:border-gray-700 transition-all hover:bg-gray-900/80 group">
+                    filteredOrders.map((order, index) => (
+                        <Card key={order.id || index} className="bg-gray-900 border-gray-800 text-white hover:border-gray-700 transition-all hover:bg-gray-900/80 group">
                             <CardContent className="p-5">
                                 <div className="flex flex-col md:flex-row gap-5 items-center">
                                     {/* Date Box */}
@@ -142,7 +152,7 @@ export default function DeliveryHistoryPage() {
 
                                         <div className="flex items-center gap-3 text-sm text-gray-400">
                                             <MapPin className="w-4 h-4 text-gray-500" />
-                                            <span className="truncate">{order.deliveryAddress as string}</span>
+                                            <span className="truncate">{formatAddress(order.deliveryAddress)}</span>
                                         </div>
 
                                         <div className="flex items-center gap-4 text-xs text-gray-500 pt-1">
@@ -154,7 +164,7 @@ export default function DeliveryHistoryPage() {
                                     {/* Amount & Action */}
                                     <div className="text-right w-full md:w-auto flex flex-row md:flex-col justify-between items-center md:items-end border-t md:border-t-0 border-gray-800 pt-4 md:pt-0 mt-2 md:mt-0">
                                         <div>
-                                            <p className="font-bold text-xl text-white">₹{((order.deliveryCharge || 0) * 0.30).toFixed(2)}</p>
+                                            <p className="font-bold text-xl text-white">₹{((order.deliveryCharge || 0) * 0.70).toFixed(2)}</p>
                                             <p className="text-xs text-green-500 font-medium">Earning</p>
                                         </div>
                                         <Button
@@ -208,14 +218,14 @@ export default function DeliveryHistoryPage() {
                                     <h4 className="text-sm font-bold text-gray-400 uppercase mb-2">Restaurant</h4>
                                     <div className="space-y-1">
                                         <p className="font-bold text-white text-lg">{selectedOrder.restaurantName}</p>
-                                        <p className="text-sm text-gray-400">{selectedOrder.restaurantAddress}</p>
+                                        <p className="text-sm text-gray-400">{formatAddress(selectedOrder.restaurantAddress)}</p>
                                     </div>
                                 </div>
                                 <div>
                                     <h4 className="text-sm font-bold text-gray-400 uppercase mb-2">Customer</h4>
                                     <div className="space-y-1">
                                         <p className="font-bold text-white text-lg">{selectedOrder.customerName || 'Guest'}</p>
-                                        <p className="text-sm text-gray-400">{typeof selectedOrder.deliveryAddress === 'string' ? selectedOrder.deliveryAddress : 'Address N/A'}</p>
+                                        <p className="text-sm text-gray-400">{formatAddress(selectedOrder.deliveryAddress)}</p>
                                         <p className="text-sm text-blue-400">{selectedOrder.customerPhone || 'N/A'}</p>
                                     </div>
                                 </div>
@@ -233,8 +243,8 @@ export default function DeliveryHistoryPage() {
                                         <span>₹{(selectedOrder.deliveryCharge || 0).toFixed(2)}</span>
                                     </div>
                                     <div className="flex justify-between text-lg font-bold text-white pt-2 border-t border-gray-800">
-                                        <span>Your Earnings (30%)</span>
-                                        <span className="text-green-400">₹{((selectedOrder.deliveryCharge || 0) * 0.30).toFixed(2)}</span>
+                                        <span>Your Earnings (70%)</span>
+                                        <span className="text-green-400">₹{((selectedOrder.deliveryCharge || 0) * 0.70).toFixed(2)}</span>
                                     </div>
                                 </div>
                             </div>

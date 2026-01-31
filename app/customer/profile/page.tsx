@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { doc, getDoc, updateDoc, arrayUnion } from 'firebase/firestore';
+import { doc, updateDoc, onSnapshot } from 'firebase/firestore'; // Added onSnapshot, removed getDoc, arrayUnion
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '@/lib/firebase';
 import { Customer, Address } from '@/lib/types';
@@ -11,10 +11,11 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Camera, MapPin, Phone, Mail, User, Save, Edit2, Plus, Home, Briefcase, Trash2, LogOut, ChevronRight } from 'lucide-react';
+import { Camera, MapPin, Phone, Mail, User, Save, Edit2, Plus, Home, Briefcase, Trash2, LogOut, ChevronRight, CheckCircle2, Loader2 } from 'lucide-react'; // Added CheckCircle2, Loader2
 import { Spinner } from '@/components/ui/spinner';
 import { uploadToImgBB } from '@/lib/imgbb';
 import ImageUploadDialog from '@/components/ImageUploadDialog';
+import MembershipCard from '@/components/customer/MembershipCard';
 import {
   Dialog,
   DialogContent,
@@ -25,14 +26,12 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { toast } from 'sonner';
-import { useRef } from 'react';
 
 export default function ProfilePage() {
   const { user, customer, logout } = useAuth();
   const [profile, setProfile] = useState<Customer | null>(null);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'error'>('saved'); // Replaced 'saving' state
 
   // Image Upload State
   const [imageUploadOpen, setImageUploadOpen] = useState(false);
@@ -59,9 +58,74 @@ export default function ProfilePage() {
     email: '',
   });
 
+  // Real-time Profile Listener
   useEffect(() => {
-    if (user) loadProfile();
+    if (!user) return;
+    setLoading(true);
+
+    const unsub = onSnapshot(doc(db, 'customers', user.uid), (docSnippet) => {
+      if (docSnippet.exists()) {
+        const data = docSnippet.data() as Customer;
+        setProfile(data);
+
+        // Only update local form data if it's the first load or if we are not currently editing (to avoid separate cursor)
+        // Ideally, for auto-save, we can just sync. But to keep it simple and responsive:
+        // We update formData only if it is empty (initial load) to avoid overwriting user typing if latency.
+        // Actually, let's trust the user input primarily.
+        setFormData(prev => {
+          // If previous name is empty, it's likely first load.
+          if (!prev.name) {
+            return {
+              name: data.name || '',
+              phone: data.phone || '',
+              email: data.email || user.email || '',
+            };
+          }
+          return prev;
+        });
+
+        // Ensure email is always synced
+        setFormData(prev => ({ ...prev, email: data.email || user.email || '' }));
+      }
+      setLoading(false);
+    }, (error) => {
+      console.error("Snapshot error:", error);
+      toast.error("Error connecting to live profile");
+      setLoading(false);
+    });
+
+    return () => unsub();
   }, [user]);
+
+  // Auto-Save Effect (Debounced)
+  useEffect(() => {
+    if (!profile || !user) return;
+
+    // Check if changes exist
+    const hasChanges = formData.name !== (profile.name || '') || formData.phone !== (profile.phone || '');
+
+    if (hasChanges) {
+      setSaveStatus('saving');
+      const handler = setTimeout(async () => {
+        try {
+          await updateDoc(doc(db, 'customers', user.uid), {
+            name: formData.name,
+            phone: formData.phone,
+            updatedAt: new Date(),
+          });
+          setSaveStatus('saved');
+          // No toast for auto-save to allow smooth typing
+        } catch (error) {
+          console.error("Auto-save error:", error);
+          setSaveStatus('error');
+        }
+      }, 1000); // 1 second debounce
+
+      return () => clearTimeout(handler);
+    } else {
+      setSaveStatus('saved');
+    }
+  }, [formData, profile, user]);
 
   // Image Upload Handlers
   const handleImageClick = () => {
@@ -102,9 +166,7 @@ export default function ProfilePage() {
         updatedAt: new Date()
       });
 
-      // Update Local State
-      setProfile(prev => prev ? { ...prev, avatar: downloadURL } : null);
-
+      // onSnapshot will update local state automatically
       toast.success("Profile picture updated!");
 
     } catch (error) {
@@ -141,45 +203,9 @@ export default function ProfilePage() {
     }
   };
 
-  const loadProfile = async () => {
-    try {
-      setLoading(true);
-      const docRef = doc(db, 'customers', user!.uid);
-      const snapshot = await getDoc(docRef);
-      if (snapshot.exists()) {
-        const data = snapshot.data() as Customer;
-        setProfile(data);
-        setFormData({
-          name: data.name || '',
-          phone: data.phone || '',
-          email: data.email || user!.email || '',
-        });
-      }
-    } catch (error) {
-      console.error('Error loading profile:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Removed loadProfile function
 
-  const handleSave = async () => {
-    try {
-      setSaving(true);
-      await updateDoc(doc(db, 'customers', user!.uid), {
-        name: formData.name,
-        phone: formData.phone,
-        updatedAt: new Date(),
-      });
-      setIsEditing(false);
-      await loadProfile();
-      toast.success('Profile updated successfully');
-    } catch (error) {
-      console.error('Error saving:', error);
-      toast.error('Failed to update profile');
-    } finally {
-      setSaving(false);
-    }
-  };
+  // Removed handleSave function
 
   const openAddAddress = () => {
     setEditingAddressId(null);
@@ -245,7 +271,7 @@ export default function ProfilePage() {
       setIsAddressDialogOpen(false);
       setNewAddress({ street: '', city: '', state: '', pincode: '', plusCode: '', type: 'home' });
       setEditingAddressId(null);
-      await loadProfile(); // Reload to sync state
+      // No need to call loadProfile, onSnapshot will update state
       toast.success(editingAddressId ? 'Address updated' : 'Address added');
     } catch (error) {
       console.error("Error saving address:", error);
@@ -270,12 +296,12 @@ export default function ProfilePage() {
     } catch (err) {
       console.error("Error deleting address:", err);
       toast.error('Failed to remove address');
-      await loadProfile(); // Revert
+      // No need to call loadProfile, onSnapshot will update state
     }
   };
 
 
-  if (loading) {
+  if (loading && !profile) { // Modified loading check
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin" />
@@ -293,39 +319,45 @@ export default function ProfilePage() {
         <div className="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-black to-transparent" />
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 relative -mt-24 z-10">
+      <div className="max-w-7xl mx-auto px-4 relative -mt-24 z-10">
 
         {/* Profile Card */}
         <div className="flex flex-col md:flex-row gap-6 items-end md:items-center mb-8">
           <div className="relative group">
+            <div className="w-40 h-40 rounded-3xl border-4 border-black bg-gray-800 shadow-2xl overflow-hidden relative">
+              {profile?.avatar ? (
+                <img src={profile.avatar} alt="Profile" className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center bg-gray-800 text-gray-600">
+                  <User className="w-16 h-16" />
+                </div>
+              )}
+              {/* Overlay for Image Edit */}
+              <div
+                onClick={handleImageClick}
+                className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center cursor-pointer backdrop-blur-sm"
+              >
+                <Camera className="w-8 h-8 text-white mb-2" />
+                <span className="text-xs font-bold text-white uppercase tracking-wider">Change</span>
+              </div>
+            </div>
+            {uploadingImage && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-3xl z-20">
+                <Spinner className="w-8 h-8 text-orange-500" />
+              </div>
+            )}
+            {/* Hidden Input */}
             <input
               type="file"
               ref={imageInputRef}
-              onChange={handleFileSelect}
-              accept="image/*"
               className="hidden"
+              accept="image/*"
+              onChange={handleFileSelect}
             />
-            <Avatar className="w-32 h-32 border-4 border-black rounded-3xl shadow-2xl">
-              <AvatarImage src={profile?.avatar || user?.photoURL || ''} className="object-cover" />
-              <AvatarFallback className="bg-gray-800 text-3xl font-bold text-gray-400 rounded-3xl">
-                {user?.email?.[0].toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-            <div
-              onClick={handleImageClick}
-              className="absolute bottom-2 right-2 bg-white/10 backdrop-blur-md p-2 rounded-xl text-white opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer border border-white/20 hover:bg-white/20"
-            >
-              <Camera className="w-4 h-4" />
-            </div>
-            {uploadingImage && (
-              <div className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-3xl">
-                <Spinner className="w-8 h-8" />
-              </div>
-            )}
           </div>
 
           <ImageUploadDialog
-            isOpen={imageUploadOpen}
+            open={imageUploadOpen} // Changed isOpen to open
             onClose={() => setImageUploadOpen(false)}
             imageSrc={selectedImageSrc}
             onCropComplete={handleCropSave}
@@ -350,18 +382,25 @@ export default function ProfilePage() {
                 <h2 className="text-xl font-bold flex items-center gap-2">
                   <User className="w-5 h-5 text-orange-500" /> Personal Information
                 </h2>
-                {!isEditing ? (
-                  <Button variant="ghost" size="sm" onClick={() => setIsEditing(true)} className="text-orange-400 hover:text-orange-300 hover:bg-orange-500/10">
-                    <Edit2 className="w-4 h-4 mr-2" /> Edit
-                  </Button>
-                ) : (
-                  <div className="flex gap-2">
-                    <Button variant="ghost" size="sm" onClick={() => setIsEditing(false)} className="text-gray-400">Cancel</Button>
-                    <Button size="sm" onClick={handleSave} disabled={saving} className="bg-orange-600 hover:bg-orange-700 font-bold">
-                      {saving ? <Spinner className="w-4 h-4" /> : 'Save Changes'}
-                    </Button>
-                  </div>
-                )}
+
+                {/* Auto-save Status Indicator */}
+                <div className="flex items-center gap-2">
+                  {saveStatus === 'saving' && (
+                    <div className="flex items-center gap-2 text-orange-400 text-sm animate-pulse">
+                      <Loader2 className="w-4 h-4 animate-spin" /> Saving...
+                    </div>
+                  )}
+                  {saveStatus === 'saved' && (
+                    <div className="flex items-center gap-2 text-green-400 text-sm">
+                      <CheckCircle2 className="w-4 h-4" /> Saved
+                    </div>
+                  )}
+                  {saveStatus === 'error' && (
+                    <div className="flex items-center gap-2 text-red-400 text-sm font-bold">
+                      <Loader2 className="w-4 h-4" /> Save Failed
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="space-y-4">
@@ -372,8 +411,8 @@ export default function ProfilePage() {
                     <Input
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      disabled={!isEditing}
                       className="pl-11 bg-black/40 border-gray-800 text-white focus:border-orange-500 h-12 rounded-xl"
+                      placeholder="Enter your name"
                     />
                   </div>
                 </div>
@@ -397,7 +436,6 @@ export default function ProfilePage() {
                     <Input
                       value={formData.phone}
                       onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      disabled={!isEditing}
                       className="pl-11 bg-black/40 border-gray-800 text-white focus:border-orange-500 h-12 rounded-xl"
                       placeholder="+91 00000 00000"
                     />
@@ -532,6 +570,20 @@ export default function ProfilePage() {
                 </Button>
               </div>
               <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl transform translate-x-10 -translate-y-10" />
+            </div>
+
+            {/* Membership Card Section */}
+            <div className='mt-8 mb-20 md:mb-0'>
+              <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+                <span className="text-orange-500">◆</span> Membership Card
+              </h3>
+              <MembershipCard
+                customerName={formData.name || 'Valued Customer'}
+                cardNumber={user?.uid ? user.uid.replace(/\D/g, '').padEnd(10, '0').slice(0, 10) : '0000 0000 00'}
+                expiryDate="12/28"
+                akrNumber={user?.uid ? user.uid.slice(-4).toUpperCase() : 'AKR1'}
+                userImage={profile?.avatar || user?.photoURL || undefined}
+              />
             </div>
           </div>
 

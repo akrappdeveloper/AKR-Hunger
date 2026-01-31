@@ -145,8 +145,15 @@ export default function OrdersPage() {
         });
       }
 
-      // 3. Mark Order Item as rated (optional logic - locally or by updating order)
-      // Currently just closing dialog
+      // 3. Mark Order Item as rated by updating the order document
+      await updateDoc(doc(db, 'orders', ratingOrder.id), {
+        [`ratings.${ratingItem.id}`]: {
+          rating: ratingValue,
+          comment: ratingComment,
+          ratedAt: new Date() // Use client date or serverTimestamp() if needed, but date is fine for display
+        }
+      });
+
       toast.success("Thanks for your feedback!");
       setRatingOrder(null);
       setRatingItem(null);
@@ -229,12 +236,21 @@ export default function OrdersPage() {
                           <div className="flex flex-col">
                             <span className="text-gray-300">{item.name}</span>
                             {order.status === 'delivered' && (
-                              <button
-                                onClick={() => openRatingDialog(order, { id: item.menuItemId, name: item.name, image: item.image })}
-                                className="text-[10px] text-blue-400 hover:text-blue-300 text-left flex items-center gap-1 mt-0.5"
-                              >
-                                <Star className="w-3 h-3" /> Rate Item
-                              </button>
+                              <div className="mt-1">
+                                {(order as any).ratings?.[item.menuItemId] ? (
+                                  <div className="flex items-center gap-1 text-yellow-500 text-xs font-bold bg-yellow-500/10 px-2 py-1 rounded-md w-fit">
+                                    <Star className="w-3 h-3 fill-yellow-500" />
+                                    <span>{(order as any).ratings[item.menuItemId].rating}/5</span>
+                                  </div>
+                                ) : (
+                                  <button
+                                    onClick={() => openRatingDialog(order, { id: item.menuItemId, name: item.name, image: item.image })}
+                                    className="text-[10px] text-blue-400 hover:text-blue-300 text-left flex items-center gap-1"
+                                  >
+                                    <Star className="w-3 h-3" /> Rate Item
+                                  </button>
+                                )}
+                              </div>
                             )}
                           </div>
                         </div>

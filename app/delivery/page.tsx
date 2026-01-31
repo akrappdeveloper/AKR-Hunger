@@ -288,10 +288,11 @@ export default function DeliveryDashboard() {
       await updateDoc(doc(db, 'orders', orderId), {
         status: 'delivered',
         deliveryStatus: 'delivered',
+        paymentStatus: 'paid', // Auto-mark as paid
         deliveredAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       });
-      toast.success('Order delivered! Great job!');
+      toast.success('Order delivered & Payment marked as Paid!');
       setShowOtpDialog(false);
       setVerifyingOrderId(null);
     } catch (error) {
@@ -333,7 +334,7 @@ export default function DeliveryDashboard() {
 
   const totalEarnings = myOrders
     .filter(o => o.status === 'delivered')
-    .reduce((acc, curr) => acc + ((curr.deliveryCharge || 0) * 0.40), 0);
+    .reduce((acc, curr) => acc + ((curr.deliveryCharge || 0) * 0.70), 0);
 
   // Format address helper
   const formatAddress = (addr: any): string => {
