@@ -11,13 +11,13 @@ service cloud.firestore {
       allow read: if true;
       allow list: if true; // Allow queries for email validation
       allow create: if request.auth.uid != null && request.auth.uid == restaurantId;
-      allow update, delete: if request.auth.uid != null && (isAdmin(request.auth.uid) || request.auth.uid == resource.data.ownerId);
+      allow update, delete: if request.auth.uid != null && (isAdmin(request.auth.uid) || request.auth.uid == restaurantId || request.auth.uid == resource.data.ownerId);
     }
 
     // Public read access to menu items
     match /restaurants/{restaurantId}/menuItems/{itemId} {
       allow read: if true;
-      allow write: if request.auth.uid != null && (isAdmin(request.auth.uid) || request.auth.uid == get(/databases/$(database)/documents/restaurants/$(restaurantId)).data.ownerId);
+      allow write: if request.auth.uid != null && (isAdmin(request.auth.uid) || request.auth.uid == restaurantId || request.auth.uid == get(/databases/$(database)/documents/restaurants/$(restaurantId)).data.ownerId);
     }
 
     // Alternative menu items collection (if stored flat)
@@ -78,7 +78,7 @@ service cloud.firestore {
       allow read: if request.auth.uid != null && (resource.data.userId == request.auth.uid || isAdmin(request.auth.uid));
       allow list: if request.auth.uid != null && isAdmin(request.auth.uid); // Allow admins to list all tickets
       allow create: if request.auth.uid != null && request.resource.data.userId == request.auth.uid;
-      allow update: if isAdmin(request.auth.uid);
+      allow update: if request.auth.uid != null && (isAdmin(request.auth.uid) || resource.data.userId == request.auth.uid);
       allow delete: if isAdmin(request.auth.uid);
     }
     
@@ -87,7 +87,7 @@ service cloud.firestore {
       allow read: if request.auth.uid != null && (resource.data.userId == request.auth.uid || isAdmin(request.auth.uid));
       allow list: if request.auth.uid != null && isAdmin(request.auth.uid); // Allow admins to list all tickets
       allow create: if request.auth.uid != null && request.resource.data.userId == request.auth.uid;
-      allow update: if isAdmin(request.auth.uid);
+      allow update: if request.auth.uid != null && (isAdmin(request.auth.uid) || resource.data.userId == request.auth.uid);
       allow delete: if isAdmin(request.auth.uid);
     }
 
@@ -155,5 +155,30 @@ service cloud.firestore {
       allow create: if request.auth.uid != null && request.resource.data.userId == request.auth.uid;
       allow update: if isAdmin(request.auth.uid);
     }
+
+    // Customer Withdrawal Requests
+    match /customerWithdrawals/{requestId} {
+      allow read: if request.auth.uid != null && (resource.data.customerId == request.auth.uid || isAdmin(request.auth.uid));
+      allow create: if request.auth.uid != null && request.resource.data.customerId == request.auth.uid;
+      allow update: if isAdmin(request.auth.uid);
+    }
+
+    // Membership Requests
+    match /membershipRequests/{requestId} {
+      allow read: if request.auth.uid != null && (resource.data.customerId == request.auth.uid || isAdmin(request.auth.uid));
+      allow create: if request.auth.uid != null && request.resource.data.customerId == request.auth.uid;
+      allow update: if isAdmin(request.auth.uid);
+    }
+
+    // Customer Wallet Transactions (Subcollection)
+    match /customers/{customerId}/walletTransactions/{transactionId} {
+      allow read: if request.auth.uid == customerId || isAdmin(request.auth.uid);
+      allow create: if isAdmin(request.auth.uid); // Only admin/system actions should create these directly usually, but for now strict
+    }
+
+    // Temporary: Allow server actions (which might run as client SDK if not using admin SDK) to write.
+    // Ideally, wallet mutations happen via backend using Admin SDK.
+    // Since we are using client SDK in some places, we might need broader permissions or Cloud Functions.
+    // For this prototype, we'll assume "system" actions authenticated as admin or careful client side logic.
   }
 }

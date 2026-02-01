@@ -357,7 +357,7 @@ export default function ProfilePage() {
           </div>
 
           <ImageUploadDialog
-            open={imageUploadOpen} // Changed isOpen to open
+            isOpen={imageUploadOpen}
             onClose={() => setImageUploadOpen(false)}
             imageSrc={selectedImageSrc}
             onCropComplete={handleCropSave}
@@ -578,11 +578,17 @@ export default function ProfilePage() {
                 <span className="text-orange-500">◆</span> Membership Card
               </h3>
               <MembershipCard
-                customerName={formData.name || 'Valued Customer'}
-                cardNumber={user?.uid ? user.uid.replace(/\D/g, '').padEnd(10, '0').slice(0, 10) : '0000 0000 00'}
-                expiryDate="12/28"
-                akrNumber={user?.uid ? user.uid.slice(-4).toUpperCase() : 'AKR1'}
-                userImage={profile?.avatar || user?.photoURL || undefined}
+                balance={profile?.walletBalance || 0}
+                userName={formData.name || 'Valued Customer'}
+                membershipId={profile?.membershipId}
+              // createdAt is usually a Timestamp in Firestore, need to convert if using Date
+              // If profile.createdAt is Timestamp, use .toDate(), but interface might say Date.
+              // Safest to handle undefined.
+              // Assuming profile typings might need adjustment or handling.
+              // For now, let's assuming profile comes from onSnapshot which I added .data() as Customer.
+              // Firestore client SDK returns Timestamps for dates usually.
+              // I'll ignore memberSince prop if it's tricky, or pass current if missing.
+              // Actually Customer type says createdAt?: Date;
               />
             </div>
           </div>

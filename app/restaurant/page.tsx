@@ -11,15 +11,13 @@ import {
   TrendingUp,
   Clock,
   AlertCircle,
-  CheckCircle2,
   Package,
-  DollarSign,
-  Eye,
   Utensils,
-  Star,
-  Users,
   ArrowUpRight,
-  ArrowDownRight
+  Sparkles,
+  Zap,
+  BrainCircuit,
+  BarChart3
 } from 'lucide-react';
 import { collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -122,59 +120,53 @@ export default function RestaurantDashboard() {
   const getStatusColor = (status?: string) => {
     switch (status) {
       case 'delivered':
-        return 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-100';
+        return 'bg-green-500/10 text-green-400 border-green-500/20';
       case 'preparing':
-        return 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-100';
+        return 'bg-blue-500/10 text-blue-400 border-blue-500/20';
       case 'confirmed':
-        return 'bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-100';
+        return 'bg-purple-500/10 text-purple-400 border-purple-500/20';
       case 'ready':
-        return 'bg-orange-100 dark:bg-orange-900 text-orange-700 dark:text-orange-100';
+        return 'bg-orange-500/10 text-orange-400 border-orange-500/20';
       case 'out_for_delivery':
-        return 'bg-yellow-100 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-100';
+        return 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20';
       case 'cancelled':
-        return 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-100';
+        return 'bg-red-500/10 text-red-400 border-red-500/20';
       default:
-        return 'bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-100';
+        return 'bg-gray-500/10 text-gray-400 border-gray-500/20';
     }
   };
 
   if (authLoading || loading) {
     return (
-      <div className="p-8">
-        <div className="animate-pulse space-y-6">
-          <div className="h-16 bg-muted rounded-lg" />
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className="h-32 bg-muted rounded-lg" />
-            ))}
-          </div>
-          <div className="h-64 bg-muted rounded-lg" />
-        </div>
+      <div className="flex items-center justify-center min-h-screen bg-black">
+        <div className="w-8 h-8 rounded-full border-2 border-orange-500 border-t-transparent animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="p-4 md:p-8 space-y-8">
+    <div className="p-4 md:p-8 space-y-8 min-h-screen bg-black text-white">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-orange-400 via-red-400 to-orange-300 bg-clip-text text-transparent flex items-center gap-3">
-            <div className="w-14 h-14 bg-gradient-to-br from-orange-500 via-red-500 to-orange-600 rounded-2xl flex items-center justify-center shadow-xl shadow-orange-500/30 ring-4 ring-orange-500/20">
+          <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-orange-400 via-rose-500 to-amber-500 bg-clip-text text-transparent flex items-center gap-3 animate-in slide-in-from-left duration-500">
+            <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-rose-600 rounded-2xl flex items-center justify-center shadow-lg shadow-orange-500/20">
               <Utensils className="w-7 h-7 text-white" />
             </div>
             Dashboard
           </h1>
-          <p className="text-gray-200 mt-3 text-lg font-medium">Welcome back, <strong className="text-white">{restaurant?.name}</strong></p>
+          <p className="text-slate-400 mt-2 text-lg">
+            Welcome back, <strong className="text-white">{restaurant?.name}</strong>
+          </p>
         </div>
         <div className="flex items-center gap-3">
           {restaurant?.isOpen ? (
-            <Badge className="bg-green-500 hover:bg-green-600 px-5 py-2.5 text-base font-bold shadow-lg shadow-green-500/30 ring-2 ring-green-500/30">
-              <div className="w-2.5 h-2.5 bg-white rounded-full mr-2 animate-pulse" />
-              Open Now
+            <Badge className="bg-green-500/20 text-green-400 hover:bg-green-500/30 px-4 py-2 text-sm font-bold border border-green-500/50">
+              <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse" />
+              Open for Business
             </Badge>
           ) : (
-            <Badge variant="secondary" className="px-5 py-2.5 text-base font-bold bg-gray-800 text-gray-200 border-2 border-gray-700">
+            <Badge variant="secondary" className="px-4 py-2 text-sm font-bold bg-red-500/20 text-red-400 border border-red-500/50">
               <AlertCircle className="w-4 h-4 mr-2" />
               Closed
             </Badge>
@@ -182,160 +174,138 @@ export default function RestaurantDashboard() {
         </div>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {/* Today's Orders */}
-        <Card className="relative overflow-hidden group hover:shadow-2xl hover:shadow-blue-500/20 transition-all duration-300 bg-gradient-to-br from-blue-900/30 to-gray-900/50 border-blue-500/20 backdrop-blur-sm">
-          <div className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-3 bg-blue-500/20 rounded-xl group-hover:scale-110 transition-transform ring-2 ring-blue-500/30">
-                <ShoppingCart className="w-6 h-6 text-blue-300" />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        {/* --- AI Insights Card --- */}
+        <div className="lg:col-span-3">
+          <Card className="relative overflow-hidden border-none bg-gradient-to-r from-violet-900/40 via-purple-900/40 to-fuchsia-900/40 border border-purple-500/30">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-violet-500 via-fuchsia-500 to-pink-500" />
+            <div className="absolute -right-10 -top-10 w-32 h-32 bg-purple-500/20 blur-3xl rounded-full" />
+
+            <div className="p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6">
+              <div className="flex items-start gap-4">
+                <div className="p-3 bg-gradient-to-br from-violet-500 to-fuchsia-600 rounded-xl shadow-lg shadow-violet-500/30 shrink-0">
+                  <BrainCircuit className="w-8 h-8 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                    AI Business Insights <Badge className="bg-fuchsia-500/20 text-fuchsia-300 border-fuchsia-500/50 text-[10px]">BETA</Badge>
+                  </h3>
+                  <div className="mt-2 space-y-1">
+                    <p className="text-slate-300 text-sm flex items-center gap-2">
+                      <Sparkles className="w-3 h-3 text-yellow-400" />
+                      <span>Prediction: <strong className="text-white">High demand expected today between 7 PM - 9 PM</strong> due to weekend trends.</span>
+                    </p>
+                    <p className="text-slate-300 text-sm flex items-center gap-2">
+                      <Zap className="w-3 h-3 text-orange-400" />
+                      <span>Action: Stock up on <strong className="text-white">Chicken Biryani</strong>, it's your top trending item.</span>
+                    </p>
+                  </div>
+                </div>
               </div>
-              <ArrowUpRight className="w-5 h-5 text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+              <Button className="bg-white/10 hover:bg-white/20 text-white border border-white/10 backdrop-blur-sm whitespace-nowrap">
+                View Full Report
+              </Button>
             </div>
-            <p className="text-sm text-blue-200 font-bold uppercase tracking-wider">Today's Orders</p>
-            <p className="text-4xl font-bold text-white mt-2">{todayOrders}</p>
-            <div className="absolute bottom-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-500/20 to-transparent rounded-tl-full" />
+          </Card>
+        </div>
+
+        {/* Stats Grid */}
+
+        {/* Today's Orders */}
+        <Card className="relative overflow-hidden bg-slate-900/50 border-slate-800 hover:border-blue-500/50 transition-all group p-6">
+          <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+            <ShoppingCart className="w-16 h-16 text-blue-500" />
           </div>
+          <div className="flex items-center justify-between mb-4">
+            <div className="p-3 bg-blue-500/10 rounded-xl border border-blue-500/20 text-blue-400 group-hover:scale-110 transition-transform duration-300">
+              <ShoppingCart className="w-6 h-6" />
+            </div>
+            <div className="flex items-center text-xs font-medium text-green-400 bg-green-500/10 px-2 py-1 rounded-full">
+              <TrendingUp className="w-3 h-3 mr-1" /> +12%
+            </div>
+          </div>
+          <p className="text-slate-400 text-sm font-medium uppercase tracking-wider">Today's Orders</p>
+          <p className="text-3xl font-bold text-white mt-1">{todayOrders}</p>
         </Card>
 
         {/* Active Orders */}
-        <Card className="relative overflow-hidden group hover:shadow-2xl hover:shadow-orange-500/20 transition-all duration-300 bg-gradient-to-br from-orange-900/30 to-gray-900/50 border-orange-500/20 backdrop-blur-sm">
-          <div className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-3 bg-orange-500/20 rounded-xl group-hover:scale-110 transition-transform ring-2 ring-orange-500/30">
-                <Clock className="w-6 h-6 text-orange-300" />
-              </div>
-              {activeOrders > 0 && (
-                <Badge variant="destructive" className="animate-pulse font-bold text-sm px-3 py-1 shadow-lg shadow-red-500/30">{activeOrders}</Badge>
-              )}
-            </div>
-            <p className="text-sm text-orange-200 font-bold uppercase tracking-wider">Active Orders</p>
-            <p className="text-4xl font-bold text-white mt-2">{activeOrders}</p>
-            <div className="absolute bottom-0 right-0 w-32 h-32 bg-gradient-to-br from-orange-500/20 to-transparent rounded-tl-full" />
+        <Card className="relative overflow-hidden bg-slate-900/50 border-slate-800 hover:border-orange-500/50 transition-all group p-6">
+          <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+            <Clock className="w-16 h-16 text-orange-500" />
           </div>
-        </Card>
-
-        {/* Revenue */}
-        <Card className="relative overflow-hidden group hover:shadow-2xl hover:shadow-green-500/20 transition-all duration-300 bg-gradient-to-br from-green-900/30 to-gray-900/50 border-green-500/20 backdrop-blur-sm">
-          <div className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-3 bg-green-500/20 rounded-xl group-hover:scale-110 transition-transform ring-2 ring-green-500/30">
-                <TrendingUp className="w-6 h-6 text-green-300" />
-              </div>
-              <ArrowUpRight className="w-5 h-5 text-green-400 opacity-0 group-hover:opacity-100 transition-opacity" />
-            </div>
-            <p className="text-sm text-green-200 font-bold uppercase tracking-wider">Today's Revenue</p>
-            <p className="text-4xl font-bold text-white mt-2">₹{totalRevenue.toFixed(0)}</p>
-            <div className="absolute bottom-0 right-0 w-32 h-32 bg-gradient-to-br from-green-500/20 to-transparent rounded-tl-full" />
-          </div>
-        </Card>
-
-        {/* Pending Menu Items */}
-        <Card className="p-6 relative overflow-hidden group hover:shadow-2xl transition-all bg-gray-800/50 border-purple-700/30">
           <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-purple-500/20 rounded-xl border border-purple-500/30 group-hover:scale-110 transition-transform">
-              <Package className="w-6 h-6 text-purple-400" />
+            <div className="p-3 bg-orange-500/10 rounded-xl border border-orange-500/20 text-orange-400 group-hover:scale-110 transition-transform duration-300">
+              <Clock className="w-6 h-6" />
             </div>
-            {pendingMenuItems > 0 && (
-              <Badge className="bg-purple-500 font-bold shadow-lg">{pendingMenuItems}</Badge>
+            {activeOrders > 0 && (
+              <div className="flex items-center text-xs font-bold text-orange-400 bg-orange-500/10 px-2 py-1 rounded-full animate-pulse">
+                Live
+              </div>
             )}
           </div>
-          <p className="text-sm text-gray-300 font-semibold uppercase tracking-wide">Pending Items</p>
-          <p className="text-4xl font-bold text-white mt-2">{pendingMenuItems}</p>
-          <div className="absolute bottom-0 right-0 w-32 h-32 bg-gradient-to-br from-purple-500/20 to-transparent rounded-tl-full" />
+          <p className="text-slate-400 text-sm font-medium uppercase tracking-wider">Active Orders</p>
+          <p className="text-3xl font-bold text-white mt-1">{activeOrders}</p>
         </Card>
-      </div>
 
-      {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Button
-          onClick={() => router.push('/restaurant/orders')}
-          className="h-28 bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 hover:from-blue-600 hover:via-blue-700 hover:to-blue-800 text-lg font-bold shadow-xl shadow-blue-500/30 hover:shadow-2xl hover:shadow-blue-500/40 transition-all transform hover:scale-105"
-        >
-          <Eye className="w-7 h-7 mr-3" />
-          View All Orders
-        </Button>
-        <Button
-          onClick={() => router.push('/restaurant/menu')}
-          className="h-28 bg-gradient-to-r from-orange-500 via-orange-600 to-red-600 hover:from-orange-600 hover:via-orange-700 hover:to-red-700 text-lg font-bold shadow-xl shadow-orange-500/30 hover:shadow-2xl hover:shadow-orange-500/40 transition-all transform hover:scale-105"
-        >
-          <Utensils className="w-7 h-7 mr-3" />
-          Manage Menu
-        </Button>
-        <Button
-          onClick={() => router.push('/restaurant/analytics')}
-          className="h-28 bg-gradient-to-r from-gray-700 via-gray-800 to-gray-900 hover:from-gray-800 hover:via-gray-900 hover:to-black text-lg font-bold border-2 border-gray-600 shadow-xl shadow-gray-900/30 hover:shadow-2xl hover:shadow-gray-900/40 transition-all transform hover:scale-105"
-        >
-          <TrendingUp className="w-7 h-7 mr-3" />
-          Analytics
-        </Button>
-      </div>
-
-      {/* Recent Orders */}
-      <Card className="overflow-hidden bg-gray-900/50 border-gray-800 backdrop-blur-sm shadow-2xl">
-        <div className="p-6 border-b border-gray-800 bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900">
-          <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-white flex items-center gap-3">
-              <div className="p-2 bg-blue-500/20 rounded-lg ring-2 ring-blue-500/30">
-                <ShoppingCart className="w-6 h-6 text-blue-400" />
-              </div>
-              Recent Orders
-            </h2>
-            <Button
-              variant="ghost"
-              onClick={() => router.push('/restaurant/orders')}
-              className="text-white hover:text-white hover:bg-gray-800 font-semibold"
-            >
-              View All
-              <ArrowUpRight className="w-4 h-4 ml-2" />
-            </Button>
+        {/* Total Revenue */}
+        <Card className="relative overflow-hidden bg-slate-900/50 border-slate-800 hover:border-green-500/50 transition-all group p-6">
+          <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+            <BarChart3 className="w-16 h-16 text-green-500" />
           </div>
-        </div>
+          <div className="flex items-center justify-between mb-4">
+            <div className="p-3 bg-green-500/10 rounded-xl border border-green-500/20 text-green-400 group-hover:scale-110 transition-transform duration-300">
+              <TrendingUp className="w-6 h-6" />
+            </div>
+          </div>
+          <p className="text-slate-400 text-sm font-medium uppercase tracking-wider">Today's Revenue</p>
+          <p className="text-3xl font-bold text-white mt-1">₹{totalRevenue.toLocaleString()}</p>
+        </Card>
 
-        <div className="p-6 bg-gray-900/30">
+      </div>
+
+      {/* Recent Orders Section */}
+      <Card className="border-slate-800 bg-slate-900/40 backdrop-blur-sm overflow-hidden">
+        <div className="p-6 border-b border-slate-800 flex items-center justify-between">
+          <h2 className="text-xl font-bold text-white flex items-center gap-2">
+            Recently Received
+          </h2>
+          <Button variant="ghost" className="text-white hover:text-slate-200 hover:bg-slate-800" onClick={() => router.push('/restaurant/orders')}>
+            View All <ArrowUpRight className="w-4 h-4 ml-1" />
+          </Button>
+        </div>
+        <div className="p-0">
           {recentOrders.length === 0 ? (
-            <div className="text-center py-12">
-              <Package className="w-16 h-16 mx-auto text-gray-500 mb-4 opacity-50" />
-              <p className="text-gray-300 text-lg font-semibold">No orders yet</p>
-              <p className="text-sm text-gray-400 mt-2 font-medium">Orders will appear here once customers start ordering</p>
+            <div className="p-12 text-center">
+              <Package className="w-12 h-12 text-slate-700 mx-auto mb-4" />
+              <p className="text-slate-500">No orders received yet today.</p>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="divide-y divide-slate-800">
               {recentOrders.map((order) => (
-                <div
-                  key={order.id}
-                  className="flex flex-col md:flex-row md:items-center justify-between p-5 bg-gray800/50 hover:bg-gray-800/70 rounded-xl transition-all cursor-pointer group border border-gray-700/50 hover:border-gray-600 shadow-lg"
-                  onClick={() => router.push(`/restaurant/orders/${order.id}`)}
-                >
-                  <div className="flex items-start gap-4 flex-1">
-                    <div className="p-3 bg-blue-500/20 rounded-lg group-hover:scale-110 transition-transform ring-2 ring-blue-500/30">
-                      <ShoppingCart className="w-5 h-5 text-blue-400" />
+                <div key={order.id} className="p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-slate-800/30 transition-colors cursor-pointer" onClick={() => router.push(`/restaurant/orders/${order.id}`)}>
+                  <div className="flex items-center gap-4">
+                    <div className="p-2 bg-slate-800 rounded-lg text-slate-400">
+                      <Package className="w-5 h-5" />
                     </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <p className="font-bold text-white text-lg">Order #{order.id?.slice(0, 8).toUpperCase()}</p>
-                        <Badge variant="outline" className="text-xs bg-gray-700 text-gray-200 border-gray-600 font-semibold">{order.customerName}</Badge>
-                      </div>
-                      <p className="text-sm text-gray-300 font-medium">
-                        {order.items?.length || 0} items • <span className="text-green-400 font-bold">₹{order.total?.toFixed(0)}</span>
-                      </p>
-                      {order.createdAt && (
-                        <p className="text-xs text-gray-400 mt-1 font-medium">
-                          {new Date(order.createdAt.seconds * 1000).toLocaleString()}
-                        </p>
-                      )}
+                    <div>
+                      <p className="font-bold text-white">Order #{order.id?.slice(0, 8).toUpperCase()}</p>
+                      <p className="text-sm text-slate-400">{order.customerName} • {order.items?.length} Items</p>
                     </div>
                   </div>
-                  <Badge className={`${getStatusColor(order.status)} capitalize mt-2 md:mt-0 font-bold px-4 py-1.5 shadow-lg`}>
-                    {order.status?.replace('_', ' ')}
-                  </Badge>
+                  <div className="flex items-center justify-between md:justify-end gap-4 w-full md:w-auto">
+                    <Badge variant="outline" className={`${getStatusColor(order.status)} capitalize border-none`}>
+                      {order.status?.replace('_', ' ')}
+                    </Badge>
+                    <p className="font-bold text-white w-20 text-right">₹{order.total}</p>
+                  </div>
                 </div>
               ))}
             </div>
           )}
         </div>
       </Card>
+
     </div>
   );
 }

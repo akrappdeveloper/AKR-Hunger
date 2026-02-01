@@ -256,10 +256,6 @@ export default function LoginPage() {
                 <Link href="/delivery/login" className="text-orange-500 hover:underline">
                   Delivery
                 </Link>
-                {' · '}
-                <Link href="/admin/login" className="text-orange-500 hover:underline">
-                  Admin
-                </Link>
               </p>
             </div>
           </div>

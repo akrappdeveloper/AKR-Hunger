@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
   Search, Bell, ShoppingCart, User, Menu, X, LogOut,
-  Heart, Package, MapPin, LifeBuoy, Settings, ChevronDown, ChevronRight, Home, Briefcase
+  Heart, Package, MapPin, LifeBuoy, Settings, ChevronDown, ChevronRight, Home, Briefcase, Wallet
 } from 'lucide-react';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
@@ -224,6 +224,10 @@ export default function CustomerNavbar() {
                   <DropdownMenuItem onClick={() => router.push('/customer/profile')} className="cursor-pointer focus:bg-white/10 focus:text-white rounded-lg my-0.5">
                     <User className="w-4 h-4 mr-2 text-gray-400" />
                     Profile
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => router.push('/customer/wallet')} className="cursor-pointer focus:bg-white/10 focus:text-white rounded-lg my-0.5">
+                    <Wallet className="w-4 h-4 mr-2 text-gray-400" />
+                    Wallet
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => router.push('/customer/notifications')} className="cursor-pointer focus:bg-white/10 focus:text-white rounded-lg my-0.5">
                     <Bell className="w-4 h-4 mr-2 text-gray-400" />

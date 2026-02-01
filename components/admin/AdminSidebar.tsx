@@ -20,7 +20,8 @@ import {
   Wallet,
   ShoppingBag,
   DollarSign,
-  Bell
+  Bell,
+  CreditCard // Added CreditCard icon
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -46,15 +47,17 @@ const AdminSidebar = ({ isMobile = false, onClose }: AdminSidebarProps) => {
     { href: '/admin', label: 'Dashboard', icon: BarChart3 },
     { href: '/admin/customers', label: 'Customers', icon: Users },
     { href: '/admin/restaurants', label: 'Restaurants', icon: Store },
+    { href: '/admin/customer-wallet', label: 'Customer Wallet', icon: Wallet },
+    { href: '/admin/card-requests', label: 'Card Requests', icon: CreditCard }, // Added link
     { href: '/admin/menu-approvals', label: 'Menu Approvals', icon: UtensilsCrossed },
     { href: '/admin/delivery', label: 'Delivery Partners', icon: Truck },
     { href: '/admin/orders', label: 'Orders', icon: ShoppingBag },
     { href: '/admin/payments', label: 'Restaurant Payments', icon: Wallet },
     { href: '/admin/delivery-payments', label: 'Delivery Payments', icon: DollarSign },
     { href: '/admin/points', label: 'Points / Wallet', icon: Wallet },
-    { href: '/admin/support', label: 'Support', icon: LifeBuoy },
     { href: '/admin/notifications', label: 'Notifications', icon: Bell },
     { href: '/admin/settings', label: 'Settings', icon: Settings },
+    { href: '/admin/support', label: 'Support', icon: LifeBuoy },
   ];
 
   return (

@@ -15,7 +15,8 @@ import {
   Utensils,
   Bell,
   Star,
-  Wallet
+  Wallet,
+  HelpCircle
 } from 'lucide-react';
 import NotificationBell from '@/components/notifications/NotificationBell';
 import { useEffect, useState } from 'react';
@@ -130,6 +131,11 @@ export default function RestaurantSidebar({ isMobile = false, onClose }: Restaur
       href: '/restaurant/settings',
       label: 'Settings',
       icon: Settings
+    },
+    {
+      href: '/restaurant/support',
+      label: 'Support',
+      icon: HelpCircle
     },
   ];
 

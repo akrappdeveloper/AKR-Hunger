@@ -11,6 +11,9 @@ export interface Customer {
   updatedAt?: Date;
   orders?: string[];
   favorites?: string[]; // Array of MenuItem Ids
+  walletBalance?: number;
+  membershipId?: string;
+  membershipStatus?: 'none' | 'pending' | 'approved' | 'rejected';
 }
 
 export interface Address {
@@ -65,6 +68,7 @@ export interface Restaurant {
     ifscCode: string;
     updatedAt?: Date;
   };
+  servicePincodes?: string[];
 }
 
 export interface MenuItem {
@@ -427,6 +431,49 @@ export interface Payment {
 }
 
 
+
+export interface WalletTransaction {
+  id: string;
+  customerId: string;
+  amount: number;
+  type: 'deposit' | 'withdrawal' | 'payment' | 'refund' | 'bonus';
+  status: 'pending' | 'completed' | 'failed';
+  referenceId?: string; // Order ID or Payment ID
+  description: string;
+  createdAt: Date;
+}
+
+export interface CustomerWithdrawalRequest {
+  id: string;
+  customerId: string;
+  customerName: string;
+  customerEmail: string;
+  amount: number;
+  status: 'pending' | 'approved' | 'rejected';
+  bankDetails: {
+    accountHolderName: string;
+    accountNumber: string;
+    bankName: string;
+    ifscCode: string;
+  };
+  rejectionReason?: string;
+  createdAt: Date;
+  processedAt?: Date;
+}
+
+export interface MembershipRequest {
+  id: string;
+  customerId: string;
+  customerName: string;
+  customerEmail: string;
+  contactNumber: string;
+  status: 'pending' | 'approved' | 'rejected';
+  createdAt: Date;
+  approvedAt?: Date;
+  rejectedAt?: Date;
+  rejectionReason?: string;
+  address?: Address; // Optional snapshot of address
+}
 
 export interface Cart {
   items: CartItem[];

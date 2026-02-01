@@ -5,9 +5,10 @@ import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Restaurant, MenuItem, CartItem } from '@/lib/types';
 import { useCart } from '@/context/CartContext';
+import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Star, Clock, MapPin, ArrowLeft, Heart, Search, Share2, Plus, Minus, CheckCircle, Info, ShoppingBag } from 'lucide-react';
+import { Star, Clock, MapPin, ArrowLeft, Heart, Search, Share2, Plus, Minus, CheckCircle, Info, ShoppingBag, AlertTriangle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
@@ -16,6 +17,7 @@ export default function RestaurantPage() {
   const params = useParams();
   const router = useRouter();
   const { addItem, items: cartItems, total } = useCart();
+  const { user } = useAuth();
   const restaurantId = params.id as string;
 
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
@@ -25,6 +27,7 @@ export default function RestaurantPage() {
   const [categories, setCategories] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isHeaderSticky, setIsHeaderSticky] = useState(false);
+  const [isServiceable, setIsServiceable] = useState(true);
   const categoryRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
   // Custom scroll listener for sticky header effect
@@ -62,7 +65,24 @@ export default function RestaurantPage() {
 
         if (!response.ok) throw new Error(data.error || 'Failed to fetch restaurant');
 
-        setRestaurant(data.restaurant as Restaurant);
+        const fetchedRestaurant = data.restaurant as Restaurant;
+        setRestaurant(fetchedRestaurant);
+
+        // Check servicability immediately after fetching
+        if (user && user.addresses && fetchedRestaurant.servicePincodes && fetchedRestaurant.servicePincodes.length > 0) {
+          const defaultAddress = user.addresses.find(a => a.isDefault) || user.addresses[0];
+          if (defaultAddress) {
+            const canServe = fetchedRestaurant.servicePincodes.includes(defaultAddress.pincode);
+            setIsServiceable(canServe);
+            if (!canServe) {
+              toast.error("This restaurant does not deliver to your default location.", { duration: 5000 });
+            }
+          }
+        } else if (fetchedRestaurant.servicePincodes && fetchedRestaurant.servicePincodes.length > 0 && (!user || !user.addresses || user.addresses.length === 0)) {
+          // If user has no address, we don't block yet, but maybe show a warning?
+          // For now, let's assume serviceable until they try to order or sign in.
+          // Or strictly: setIsServiceable(true); 
+        }
 
         const rawItems = data.menuItems as MenuItem[];
         const items = rawItems.filter(item => item.approvalStatus === 'approved' && item.isLive);
@@ -80,7 +100,7 @@ export default function RestaurantPage() {
     };
 
     if (restaurantId) fetchRestaurantData();
-  }, [restaurantId]);
+  }, [restaurantId, user]);
 
   const scrollToCategory = (category: string) => {
     setActiveCategory(category);
@@ -100,6 +120,10 @@ export default function RestaurantPage() {
   };
 
   const handleAddToCart = (item: MenuItem) => {
+    if (!isServiceable) {
+      toast.error("Sorry, this restaurant does not deliver to your location.");
+      return;
+    }
     addItem({
       id: `${item.id}-${Date.now()}`,
       menuItemId: item.id,
@@ -228,6 +252,17 @@ export default function RestaurantPage() {
                   </Button>
                 </div>
               </div>
+
+              {/* Not Serviceable Warning */}
+              {!isServiceable && (
+                <div className="mt-4 bg-red-500/10 border border-red-500/40 rounded-xl p-3 flex items-start gap-3 animate-in slide-in-from-top-2 fade-in">
+                  <AlertTriangle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+                  <div>
+                    <h4 className="font-bold text-red-500 text-sm">Not Serviceable</h4>
+                    <p className="text-xs text-red-400/90">This restaurant does not deliver to your current location ({user?.addresses?.find(a => a.isDefault)?.pincode}).</p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -271,7 +306,7 @@ export default function RestaurantPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {categoryItems.map(item => (
-                    <div key={item.id} className="group relative bg-[#111] border border-white/5 hover:border-white/10 rounded-2xl p-4 transition-all duration-300 hover:bg-[#161616] hover:shadow-2xl hover:shadow-black/50 flex gap-4">
+                    <div key={item.id} className={`group relative bg-[#111] border border-white/5 hover:border-white/10 rounded-2xl p-4 transition-all duration-300 hover:bg-[#161616] hover:shadow-2xl hover:shadow-black/50 flex gap-4 ${!isServiceable ? 'opacity-50 grayscale-[0.5]' : ''}`}>
 
                       {/* Text Info */}
                       <div className="flex-1 flex flex-col">
@@ -323,18 +358,19 @@ export default function RestaurantPage() {
                         <div className="absolute -bottom-4 left-1/2 transform -translate-x-1/2 w-full flex justify-center drops-shadow-xl z-10">
                           {getQuantityInCart(item.id) > 0 ? (
                             <div className="flex items-center bg-gray-900 border border-gray-700 rounded-xl shadow-xl overflow-hidden h-9">
-                              <button className="px-3 hover:bg-gray-800 text-white transition-colors" onClick={() => {/* Decrease logic */ }}>
+                              <button className="px-3 hover:bg-gray-800 text-white transition-colors" onClick={() => {/* Decrease logic */ }} disabled={!isServiceable}>
                                 <Minus className="w-3.5 h-3.5" />
                               </button>
                               <span className="text-green-500 font-bold px-2 text-sm">{getQuantityInCart(item.id)}</span>
-                              <button className="px-3 hover:bg-gray-800 text-white transition-colors" onClick={() => handleAddToCart(item)}>
+                              <button className="px-3 hover:bg-gray-800 text-white transition-colors" onClick={() => handleAddToCart(item)} disabled={!isServiceable}>
                                 <Plus className="w-3.5 h-3.5" />
                               </button>
                             </div>
                           ) : (
                             <Button
                               onClick={() => handleAddToCart(item)}
-                              className="bg-white text-green-700 hover:bg-gray-100 font-extrabold uppercase text-xs h-9 px-6 rounded-xl shadow-xl border border-gray-200 transform group-hover:translate-y-[-2px] transition-all"
+                              disabled={!isServiceable}
+                              className={`bg-white text-green-700 hover:bg-gray-100 font-extrabold uppercase text-xs h-9 px-6 rounded-xl shadow-xl border border-gray-200 transform group-hover:translate-y-[-2px] transition-all ${!isServiceable ? 'bg-gray-400 text-gray-600 border-gray-500 cursor-not-allowed' : ''}`}
                             >
                               ADD
                             </Button>

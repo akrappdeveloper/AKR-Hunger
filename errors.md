@@ -1,40 +1,80 @@
 Console Error
 
+A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
 
-Encountered two children with the same key, ``. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
-app/delivery/history/page.tsx (118:25) @ <unknown>
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
 
-
-  116 |                 ) : (
-  117 |                     filteredOrders.map(order => (
-> 118 |                         <Card key={order.id} className="bg-gray-900 border-gray-800 text-white hover:border-gray-700 transition-all hover:bg-gray-900/80 group">
-      |                         ^
-  119 |                             <CardContent className="p-5">
-  120 |                                 <div className="flex flex-col md:flex-row gap-5 items-center">
-  121 |                                     {/* Date Box */}
+See more info here: https://nextjs.org/docs/messages/react-hydration-error
 
 
-and 
+  ...
+    <script>
+    <script>
+    <script>
+    <CustomerLayout>
+      <div className="min-h-scre...">
+        <CustomerNavbar>
+          <header className="sticky top...">
+            <div className="max-w-7xl ...">
+              <div className="flex items...">
+                <LinkComponent>
+                <Dialog open={false} onOpenChange={function bound dispatchSetState}>
+                  <Dialog data-slot="dialog" open={false} onOpenChange={function bound dispatchSetState}>
+                    <DialogProvider scope={undefined} triggerRef={{current:null}} contentRef={{current:null}} ...>
+                      <DialogTrigger asChild={true}>
+                        <DialogTrigger data-slot="dialog-tri..." asChild={true}>
+                          <Primitive.button type="button" aria-haspopup="dialog" aria-expanded={false} ...>
+                            <Slot type="button" aria-haspopup="dialog" aria-expanded={false} ...>
+                              <SlotClone type="button" aria-haspopup="dialog" aria-expanded={false} ...>
+                                <button
+                                  className="hidden md:flex flex-col items-start text-left cursor-pointer hover:bg-whi..."
+                                  type="button"
+                                  aria-haspopup="dialog"
+                                  aria-expanded={false}
++                                 aria-controls="radix-_R_9kndlb_"
+-                                 aria-controls="radix-_R_15kndlb_"
+                                  data-state="closed"
+                                  data-slot="dialog-trigger"
+                                  onClick={function handleEvent}
+                                  ref={function}
+                                >
+                      ...
+              <div>
+              ...
+                <Dialog data-slot="sheet">
+                  <DialogProvider scope={undefined} triggerRef={{current:null}} contentRef={{current:null}} ...>
+                    <SheetTrigger asChild={true}>
+                      <DialogTrigger data-slot="sheet-trigger" asChild={true}>
+                        <Primitive.button type="button" aria-haspopup="dialog" aria-expanded={false} ...>
+                          <Slot type="button" aria-haspopup="dialog" aria-expanded={false} aria-controls="radix-_R_j..." ...>
+                            <SlotClone type="button" aria-haspopup="dialog" aria-expanded={false} ...>
+                              <Button variant="ghost" size="icon" className="md:hidden ..." type="button" ...>
+                                <button
+                                  data-slot="sheet-trigger"
+                                  className={"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded..."}
+                                  type="button"
+                                  aria-haspopup="dialog"
+                                  aria-expanded={false}
++                                 aria-controls="radix-_R_jkndlb_"
+-                                 aria-controls="radix-_R_2dkndlb_"
+                                  data-state="closed"
+                                  onClick={function handleEvent}
+                                  ref={function}
+                                >
+                    ...
+        ...
+components/customer/CustomerNavbar.tsx (113:17) @ CustomerNavbar
 
-Console Error
 
-
-Encountered two children with the same key, ``. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
-app/delivery/history/page.tsx (118:25) @ <unknown>
-
-
-  116 |                 ) : (
-  117 |                     filteredOrders.map(order => (
-> 118 |                         <Card key={order.id} className="bg-gray-900 border-gray-800 text-white hover:border-gray-700 transition-all hover:bg-gray-900/80 group">
-      |                         ^
-  119 |                             <CardContent className="p-5">
-  120 |                                 <div className="flex flex-col md:flex-row gap-5 items-center">
-  121 |                                     {/* Date Box */}
-
-
-and 
-
-Runtime Error
-
-
-Objects are not valid as a React child (found: object with keys {id, updatedAt, state, type, city, isDefault, plusCode, street, pincode, country}). If you meant to render a collection of children, use an array instead.
+  111 |             <Dialog open={isAddressDialogOpen} onOpenChange={setIsAddressDialogOpen}>
+  112 |               <DialogTrigger asChild>
+> 113 |                 <button className="hidden md:flex flex-col items-start text-left cursor-pointer hover:bg-white/5 p-2 rounded-lg transition-colors group">
+      |                 ^
+  114 |                   <span className="text-[10px] text-orange-500 font-bold uppercase tracking-wider flex items-center gap-1 group-hover:text-orange-400">
+  115 |                     <MapPin className="w-3 h-3" /> Delivery Location
+  116 |                   </span>

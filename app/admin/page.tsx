@@ -69,11 +69,9 @@ export default function AdminDashboard() {
     const qOrders = query(collection(db, 'orders'), orderBy('createdAt', 'desc'));
     const unsubOrders = onSnapshot(qOrders, (snap) => {
       let revenue = 0;
-      const orders = snap.docs.map(doc => {
-        const data = doc.data();
-        revenue += data.total || 0;
-        return { id: doc.id, ...data } as OrderData;
-      });
+      const data = doc.data();
+      revenue += data.total || 0;
+      return { ...data, id: doc.id } as OrderData;
 
       setStats(prev => ({ ...prev, totalOrders: snap.size, totalRevenue: revenue }));
       setRecentOrders(orders.slice(0, 5)); // Top 5 recent orders
