@@ -2,6 +2,12 @@ import React from "react"
 import CustomerNavbar from '@/components/customer/CustomerNavbar';
 import CustomerMobileNav from '@/components/customer/MobileNav';
 
+export const metadata = {
+  verification: {
+    google: "K8s0MzX1Az9Dc3Mh9SeLVJFVcqQH_LsLdlXgWLhbvHw",
+  },
+};
+
 export default function CustomerLayout({
   children,
 }: {

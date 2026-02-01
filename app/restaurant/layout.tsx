@@ -5,6 +5,12 @@ import RestaurantSidebar from '@/components/restaurant/RestaurantSidebar';
 import RestaurantBottomNav from '@/components/restaurant/RestaurantBottomNav';
 import { Toaster } from '@/components/ui/sonner';
 
+export const metadata = {
+  verification: {
+    google: "K8s0MzX1Az9Dc3Mh9SeLVJFVcqQH_LsLdlXgWLhbvHw",
+  },
+};
+
 export default function RestaurantLayout({
   children,
 }: {
