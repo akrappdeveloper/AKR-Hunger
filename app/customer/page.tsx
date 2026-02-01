@@ -138,7 +138,7 @@ export default function CustomerHomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white pb-24 font-sans selection:bg-blue-500/30">
+    <div className="min-h-screen bg-black text-white pb-40 sm:pb-24 font-sans selection:bg-blue-500/30">
 
       {/* 
          REMOVED HEADER: 
@@ -146,20 +146,20 @@ export default function CustomerHomePage() {
          which provides Search, Location, and User controls properly.
       */}
 
-      <div className="max-w-7xl mx-auto px-4 space-y-8 mt-6">
+      <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-4 space-y-6 sm:space-y-8 mt-4 sm:mt-6">
 
         {/* Category Scroller */}
         <div>
-          <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
+          <h2 className="text-base sm:text-lg font-bold mb-3 sm:mb-4 flex items-center gap-2">
             Eat what makes you happy
             <Flame className="w-4 h-4 text-orange-500" />
           </h2>
-          <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide snap-x">
+          <div className="flex gap-3 sm:gap-4 overflow-x-auto pb-4 scrollbar-hide snap-x">
             <div
               onClick={() => setCategoryFilter('all')}
-              className={`snap-start flex flex-col items-center gap-2 min-w-[70px] cursor-pointer group`}
+              className={`snap-start flex flex-col items-center gap-1.5 sm:gap-2 min-w-[60px] sm:min-w-[70px] cursor-pointer group`}
             >
-              <div className={`w-16 h-16 rounded-full flex items-center justify-center text-2xl transition-all duration-300 border ${categoryFilter === 'all' ? 'bg-white text-black border-white scale-110 shadow-lg shadow-white/20' : 'bg-gray-900 text-gray-400 border-gray-800 group-hover:bg-gray-800 group-hover:border-gray-700'}`}>
+              <div className={`w-12 h-12 sm:w-16 sm:h-16 rounded-full flex items-center justify-center text-xl sm:text-2xl transition-all duration-300 border ${categoryFilter === 'all' ? 'bg-white text-black border-white scale-110 shadow-lg shadow-white/20' : 'bg-gray-900 text-gray-400 border-gray-800 group-hover:bg-gray-800 group-hover:border-gray-700'}`}>
                 ♾️
               </div>
               <span className={`text-xs font-medium ${categoryFilter === 'all' ? 'text-white' : 'text-gray-500 group-hover:text-gray-300'}`}>All</span>
@@ -168,9 +168,9 @@ export default function CustomerHomePage() {
               <div
                 key={cat.id}
                 onClick={() => setCategoryFilter(cat.name)}
-                className="snap-start flex flex-col items-center gap-2 min-w-[70px] cursor-pointer group"
+                className="snap-start flex flex-col items-center gap-1.5 sm:gap-2 min-w-[60px] sm:min-w-[70px] cursor-pointer group"
               >
-                <div className={`w-16 h-16 rounded-full flex items-center justify-center text-2xl transition-all duration-300 border ${categoryFilter === cat.name ? 'start-color border-transparent scale-110 shadow-lg' : 'bg-gray-900 border-gray-800 group-hover:bg-gray-800 group-hover:border-gray-700'} ${categoryFilter === cat.name ? cat.color.replace('text-', 'bg-').replace('/10', '') + ' text-white' : ''}`}>
+                <div className={`w-12 h-12 sm:w-16 sm:h-16 rounded-full flex items-center justify-center text-xl sm:text-2xl transition-all duration-300 border ${categoryFilter === cat.name ? 'start-color border-transparent scale-110 shadow-lg' : 'bg-gray-900 border-gray-800 group-hover:bg-gray-800 group-hover:border-gray-700'} ${categoryFilter === cat.name ? cat.color.replace('text-', 'bg-').replace('/10', '') + ' text-white' : ''}`}>
                   {cat.icon}
                 </div>
                 <span className={`text-xs font-medium ${categoryFilter === cat.name ? 'text-white' : 'text-gray-500 group-hover:text-gray-300'}`}>{cat.name}</span>
@@ -181,28 +181,28 @@ export default function CustomerHomePage() {
 
         {/* Hero Banner (Offers) */}
         {!searchQuery && (
-          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-blue-900 via-indigo-900 to-purple-900 shadow-2xl shadow-blue-900/20">
-            <div className="absolute top-0 right-0 p-12 opacity-10">
-              <ChefHatIcon className="w-64 h-64 text-white" />
+          <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-r from-blue-900 via-indigo-900 to-purple-900 shadow-2xl shadow-blue-900/20">
+            <div className="absolute top-0 right-0 p-8 sm:p-12 opacity-10">
+              <ChefHatIcon className="w-48 h-48 sm:w-64 sm:h-64 text-white" />
             </div>
-            <div className="p-8 md:p-12 relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
-              <div className="space-y-4 text-center md:text-left">
+            <div className="p-6 sm:p-8 md:p-12 relative z-10 flex flex-col md:flex-row items-center justify-between gap-4 sm:gap-6">
+              <div className="space-y-3 sm:space-y-4 text-center md:text-left">
                 <Badge className="bg-blue-500/20 text-blue-300 border-blue-500/30 px-3 py-1">Limited Time Offer</Badge>
-                <h2 className="text-3xl md:text-5xl font-extrabold text-white leading-tight">
+                <h2 className="text-2xl sm:text-3xl md:text-5xl font-extrabold text-white leading-tight">
                   50% OFF<br />
-                  <span className="text-blue-300 text-2xl md:text-3xl font-bold">On Your First Order</span>
+                  <span className="text-blue-300 text-xl sm:text-2xl md:text-3xl font-bold">On Your First Order</span>
                 </h2>
-                <p className="text-blue-200/80 max-w-sm">
+                <p className="text-blue-200/80 max-w-sm text-sm sm:text-base">
                   Use code <span className="font-mono text-white font-bold bg-white/10 px-2 rounded">TASTY50</span> at checkout. Valid on orders above $30.
                 </p>
-                <Button className="bg-white text-blue-900 hover:bg-blue-50 font-bold rounded-xl px-8 shadow-lg shadow-black/20 transform transition hover:scale-105">
+                <Button className="bg-white text-blue-900 hover:bg-blue-50 font-bold rounded-xl px-6 sm:px-8 shadow-lg shadow-black/20 transform transition hover:scale-105 w-full sm:w-auto">
                   Order Now
                 </Button>
               </div>
               <div className="w-full md:w-1/3 flex justify-center">
                 {/* Placeholder illustration/image */}
                 <div className="w-48 h-48 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full blur-3xl opacity-50 absolute"></div>
-                <div className="relative text-9xl transform md:rotate-12 hover:rotate-0 transition-all duration-500 cursor-pointer drop-shadow-2xl">
+                <div className="relative text-7xl sm:text-9xl transform md:rotate-12 hover:rotate-0 transition-all duration-500 cursor-pointer drop-shadow-2xl">
                   🍔
                 </div>
               </div>
@@ -212,15 +212,15 @@ export default function CustomerHomePage() {
 
         {/* Featured Restaurants Section */}
         {!searchQuery && categoryFilter === 'all' && (
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             <div className="flex justify-between items-end">
-              <h2 className="text-xl font-bold">Featured Restaurants</h2>
+              <h2 className="text-lg sm:text-xl font-bold">Featured Restaurants</h2>
               <Button variant="link" className="text-blue-400 p-0 h-auto text-sm">View all</Button>
             </div>
-            <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide snap-x">
+            <div className="flex gap-3 sm:gap-4 overflow-x-auto pb-4 scrollbar-hide snap-x">
               {featuredRestaurants.map((restaurant) => (
-                <Link key={restaurant.id} href={`/customer/restaurant/${restaurant.id}`} className="snap-center min-w-[280px] group">
-                  <div className="h-64 rounded-2xl overflow-hidden relative shadow-lg bg-gray-900">
+                <Link key={restaurant.id} href={`/customer/restaurant/${restaurant.id}`} className="snap-center min-w-[240px] sm:min-w-[280px] group">
+                  <div className="h-56 sm:h-64 rounded-2xl overflow-hidden relative shadow-lg bg-gray-900">
                     <SafeImage
                       src={restaurant.image}
                       fallbackType="restaurant"
@@ -229,14 +229,14 @@ export default function CustomerHomePage() {
                       alt={restaurant.name}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-90" />
-                    <div className="absolute bottom-0 left-0 right-0 p-4">
-                      <h3 className="text-lg font-bold text-white mb-1 shadow-sm">{restaurant.name}</h3>
-                      <div className="flex items-center gap-2 text-sm text-gray-300 mb-2">
+                    <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4">
+                      <h3 className="text-base sm:text-lg font-bold text-white mb-1 shadow-sm">{restaurant.name}</h3>
+                      <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-300 mb-2">
                         <span className="bg-green-500/20 text-green-400 px-1.5 py-0.5 rounded text-xs font-bold flex items-center gap-0.5">
                           <Star className="w-3 h-3 fill-green-400" /> {restaurant.rating || '4.5'}
                         </span>
                         <span className="w-1 h-1 bg-gray-500 rounded-full" />
-                        <span>{restaurant.cuisineType?.join(', ') || 'Multi-cuisine'}</span>
+                        <span className="line-clamp-1">{restaurant.cuisineType?.join(', ') || 'Multi-cuisine'}</span>
                       </div>
                     </div>
                     {/* Promo Badge */}
@@ -249,7 +249,7 @@ export default function CustomerHomePage() {
               {/* Skeleton/Placeholder if no restaurants */}
               {featuredRestaurants.length === 0 && (
                 [1, 2, 3].map(i => (
-                  <div key={i} className="snap-center min-w-[280px] h-64 bg-gray-900/50 rounded-2xl animate-pulse border border-gray-800" />
+                  <div key={i} className="snap-center min-w-[240px] sm:min-w-[280px] h-56 sm:h-64 bg-gray-900/50 rounded-2xl animate-pulse border border-gray-800" />
                 ))
               )}
             </div>
@@ -257,8 +257,8 @@ export default function CustomerHomePage() {
         )}
 
         {/* Popular Items Grid */}
-        <div className="space-y-4">
-          <h2 className="text-xl font-bold flex items-center gap-2">
+        <div className="space-y-3 sm:space-y-4">
+          <h2 className="text-lg sm:text-xl font-bold flex flex-wrap items-center gap-2">
             {searchQuery ? 'Search Results' : (categoryFilter !== 'all' ? `${categoryFilter} Items` : 'Popular Near You')}
             {!searchQuery && categoryFilter === 'all' && <Badge variant="outline" className="text-xs border-green-500/50 text-green-500 bg-green-500/10">Free Delivery</Badge>}
             {deliveryAddress && (
@@ -269,7 +269,7 @@ export default function CustomerHomePage() {
           </h2>
 
           {filteredItems.length === 0 && (
-            <div className="text-center py-20 bg-gray-900/30 rounded-3xl border border-dashed border-gray-800">
+            <div className="text-center py-12 sm:py-20 bg-gray-900/30 rounded-2xl sm:rounded-3xl border border-dashed border-gray-800">
               <p className="text-gray-500">No items found matching your criteria.</p>
               <Button
                 variant="link"
@@ -281,12 +281,12 @@ export default function CustomerHomePage() {
             </div>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
             {filteredItems.map((item) => (
               <Link key={item.id} href={`/customer/product/${item.id}`} className="group">
-                <div className="bg-gray-900/50 border border-gray-800 rounded-2xl overflow-hidden hover:border-gray-700 hover:bg-gray-900 transition-all duration-300 relative h-full flex flex-col">
+                <div className="bg-gray-900/50 border border-gray-800 rounded-xl sm:rounded-2xl overflow-hidden hover:border-gray-700 hover:bg-gray-900 transition-all duration-300 relative h-full flex flex-col">
                   {/* Image Section */}
-                  <div className="h-48 relative overflow-hidden">
+                  <div className="h-40 sm:h-48 relative overflow-hidden">
                     <img
                       src={item.image}
                       alt={item.name}
@@ -294,29 +294,29 @@ export default function CustomerHomePage() {
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-gray-900 to-transparent opacity-60" />
                     {item.isBestSeller && (
-                      <div className="absolute top-3 left-3 bg-yellow-500/90 backdrop-blur-sm text-black text-[10px] font-bold px-2 py-1 rounded shadow-lg uppercase tracking-wide">
+                      <div className="absolute top-2 sm:top-3 left-2 sm:left-3 bg-yellow-500/90 backdrop-blur-sm text-black text-[10px] font-bold px-2 py-1 rounded shadow-lg uppercase tracking-wide">
                         Bestseller
                       </div>
                     )}
-                    <div className="absolute bottom-3 right-3 bg-black/60 backdrop-blur-md px-2 py-1 rounded-lg text-white font-bold text-sm border border-white/10">
+                    <div className="absolute bottom-2 sm:bottom-3 right-2 sm:right-3 bg-black/60 backdrop-blur-md px-2 py-1 rounded-lg text-white font-bold text-sm border border-white/10">
                       ₹{item.price}
                     </div>
                   </div>
 
                   {/* Content */}
-                  <div className="p-4 flex-1 flex flex-col justify-between">
+                  <div className="p-3 sm:p-4 flex-1 flex flex-col justify-between">
                     <div>
                       <div className="flex justify-between items-start mb-2">
-                        <h3 className="font-bold text-white text-lg leading-tight group-hover:text-blue-400 transition-colors line-clamp-1">{item.name}</h3>
+                        <h3 className="font-bold text-white text-base sm:text-lg leading-tight group-hover:text-blue-400 transition-colors line-clamp-1">{item.name}</h3>
                         <div className={`w-4 h-4 rounded-sm border flex items-center justify-center p-0.5 shrink-0 ${item.vegetarian ? 'border-green-500' : 'border-red-500'}`}>
                           <div className={`w-full h-full rounded-full ${item.vegetarian ? 'bg-green-500' : 'bg-red-500'}`} />
                         </div>
                       </div>
-                      <p className="text-sm text-gray-400 line-clamp-2 mb-3 h-10">{item.description || 'No description available.'}</p>
+                      <p className="text-xs sm:text-sm text-gray-400 line-clamp-2 mb-2 sm:mb-3">{item.description || 'No description available.'}</p>
                     </div>
 
-                    <div className="flex items-center justify-between mt-2 pt-3 border-t border-gray-800/50">
-                      <div className="flex items-center gap-2 text-xs text-gray-500">
+                    <div className="flex items-center justify-between mt-2 pt-2 sm:pt-3 border-t border-gray-800/50">
+                      <div className="flex items-center gap-1.5 sm:gap-2 text-xs text-gray-500">
                         <Clock className="w-3 h-3" /> {item.preparationTime || '20-30'} min
                       </div>
                       <div className="flex items-center gap-1 text-xs font-bold text-gray-300">

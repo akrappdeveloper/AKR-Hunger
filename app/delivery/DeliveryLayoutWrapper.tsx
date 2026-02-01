@@ -10,7 +10,7 @@ export function DeliveryLayoutWrapper({ children }: { children: React.ReactNode 
     return (
         <DeliveryAuthProvider>
             <NotificationProvider>
-                <div className="flex min-h-screen bg-black pb-16 md:pb-0">
+                <div className="flex min-h-screen bg-black pb-40 md:pb-0">
                     <DeliverySidebar />
                     <main className="flex-1 overflow-auto">{children}</main>
                     <DeliveryBottomNav />

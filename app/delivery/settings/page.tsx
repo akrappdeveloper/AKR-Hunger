@@ -92,9 +92,12 @@ export default function DeliverySettingsPage() {
 
   return (
     <div className="p-4 md:p-8 space-y-8 max-w-4xl mx-auto">
-      <div>
-        <h1 className="text-3xl font-bold text-white tracking-tight">Settings</h1>
-        <p className="text-gray-400 mt-1">Manage your profile and vehicle information.</p>
+      <div className="relative overflow-hidden bg-gradient-to-br from-pink-600 via-rose-600 to-red-600 p-4 sm:p-6 rounded-3xl shadow-2xl shadow-pink-900/30 mb-6">
+        <div className="absolute inset-0 bg-gradient-to-tr from-pink-500/20 via-transparent to-red-500/20 animate-pulse" />
+        <div className="relative z-10">
+          <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight drop-shadow-lg">⚙️ Settings</h1>
+          <p className="text-white/90 mt-1 font-medium">Manage your profile and vehicle information.</p>
+        </div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">

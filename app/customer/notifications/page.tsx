@@ -22,7 +22,7 @@ export default function NotificationsPage() {
     };
 
     return (
-        <div className="min-h-screen bg-black text-white pb-24 font-sans selection:bg-orange-500/30">
+        <div className="min-h-screen bg-black text-white pb-40 sm:pb-24 font-sans selection:bg-orange-500/30">
             {/* Background Decoration */}
             <div className="fixed inset-0 pointer-events-none">
                 <div className="absolute top-[-20%] right-[-10%] w-[500px] h-[500px] bg-orange-600/10 rounded-full blur-[100px]" />
@@ -64,8 +64,8 @@ export default function NotificationsPage() {
                                 <div className="flex gap-5 relative z-10">
                                     {/* Icon */}
                                     <div className={`w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0 border shadow-inner ${n.type === 'order' ? 'bg-blue-500/10 border-blue-500/20 text-blue-400' :
-                                            n.type === 'promo' ? 'bg-orange-500/10 border-orange-500/20 text-orange-400' :
-                                                'bg-purple-500/10 border-purple-500/20 text-purple-400'
+                                        n.type === 'promo' ? 'bg-orange-500/10 border-orange-500/20 text-orange-400' :
+                                            'bg-purple-500/10 border-purple-500/20 text-purple-400'
                                         }`}>
                                         {n.type === 'order' && <Package className="w-6 h-6" />}
                                         {n.type === 'promo' && <Tag className="w-6 h-6" />}

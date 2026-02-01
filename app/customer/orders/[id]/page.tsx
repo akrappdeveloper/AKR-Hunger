@@ -135,7 +135,7 @@ export default function OrderTrackingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white pb-24 font-sans selection:bg-orange-500/30">
+    <div className="min-h-screen bg-black text-white pb-32 sm:pb-24 font-sans selection:bg-orange-500/30">
 
       {/* Background Gradients */}
       <div className="fixed inset-0 pointer-events-none">

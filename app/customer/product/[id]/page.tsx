@@ -132,7 +132,7 @@ export default function ProductDetailsPage({ params }: { params: Promise<{ id: s
     const images = product.images && product.images.length > 0 ? product.images : [product.image];
 
     return (
-        <div className="min-h-screen bg-black text-white font-sans selection:bg-blue-500/30 pb-24">
+        <div className="min-h-screen bg-black text-white font-sans selection:bg-blue-500/30 pb-32 sm:pb-24">
 
             {/* Background Gradients */}
             <div className="fixed inset-0 pointer-events-none overflow-hidden">

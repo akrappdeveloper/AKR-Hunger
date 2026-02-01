@@ -52,9 +52,12 @@ export default function DeliverySupportPage() {
     return (
         <div className="p-4 md:p-8 space-y-8 max-w-5xl mx-auto">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div>
-                    <h1 className="text-3xl font-bold text-white tracking-tight">Help & Support</h1>
-                    <p className="text-gray-400 mt-1">Get assistance with your delivery account or orders.</p>
+                <div className="relative overflow-hidden bg-gradient-to-br from-indigo-600 via-purple-600 to-violet-600 p-4 sm:p-6 rounded-3xl shadow-2xl shadow-purple-900/30 mb-6">
+                    <div className="absolute inset-0 bg-gradient-to-tr from-indigo-500/20 via-transparent to-violet-500/20 animate-pulse" />
+                    <div className="relative z-10">
+                        <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight drop-shadow-lg">💬 Help & Support</h1>
+                        <p className="text-white/90 mt-1 font-medium">Get assistance with your delivery account or orders.</p>
+                    </div>
                 </div>
                 <Button variant="outline" className="border-gray-700 text-gray-300 hover:text-white hover:bg-gray-800 gap-2">
                     <Phone className="w-4 h-4" /> Call Hotline

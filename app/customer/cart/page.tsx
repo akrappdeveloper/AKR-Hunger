@@ -15,6 +15,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Trash2, Plus, Minus, CreditCard, Wallet, MapPin, ChefHat, ShoppingBag, ShoppingCart, Home, Briefcase, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
+import SafeImage from '@/components/ui/safe-image';
 import {
   Dialog,
   DialogContent,
@@ -257,7 +258,7 @@ export default function CartPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white pb-24 font-sans max-w-7xl mx-auto px-4 py-8 relative selection:bg-orange-500/30">
+    <div className="min-h-screen bg-black text-white pb-40 sm:pb-24 font-sans max-w-7xl mx-auto px-2 sm:px-4 py-4 sm:py-8 relative selection:bg-orange-500/30">
 
       {/* Ambient Background */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
@@ -266,25 +267,25 @@ export default function CartPage() {
       </div>
 
       {/* Header */}
-      <div className="flex items-center gap-4 mb-8">
+      <div className="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-8">
         <Button variant="ghost" size="icon" onClick={() => router.back()} className="rounded-full bg-gray-900 hover:bg-gray-800 text-white">
           <ArrowLeft className="w-5 h-5" />
         </Button>
-        <h1 className="text-3xl font-bold">Checkout</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold">Checkout</h1>
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-8">
+      <div className="grid lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
 
         {/* Left Column */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-2 space-y-4 sm:space-y-6">
 
           {/* 1. Address Section */}
-          <div className="bg-gray-900/50 backdrop-blur-md rounded-3xl p-6 border border-white/5">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-full bg-orange-500/20 flex items-center justify-center">
-                <MapPin className="w-5 h-5 text-orange-500" />
+          <div className="bg-gray-900/50 backdrop-blur-md rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-white/5">
+            <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-orange-500/20 flex items-center justify-center">
+                <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-orange-500" />
               </div>
-              <h3 className="font-bold text-lg">Delivery Address</h3>
+              <h3 className="font-bold text-base sm:text-lg">Delivery Address</h3>
             </div>
 
             {deliveryAddress ? (
@@ -391,21 +392,21 @@ export default function CartPage() {
           </div>
 
           {/* 2. Items Section */}
-          <div className="bg-gray-900/40 backdrop-blur-xl rounded-3xl p-6 border border-white/5 hover:border-white/10 transition-colors relative z-10 group">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500/20 to-indigo-500/20 flex items-center justify-center border border-blue-500/10 group-hover:scale-105 transition-transform">
-                <ShoppingBag className="w-5 h-5 text-blue-500" />
+          <div className="bg-gray-900/40 backdrop-blur-xl rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-white/5 hover:border-white/10 transition-colors relative z-10 group">
+            <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-gradient-to-br from-blue-500/20 to-indigo-500/20 flex items-center justify-center border border-blue-500/10 group-hover:scale-105 transition-transform">
+                <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500" />
               </div>
               <div>
-                <h3 className="font-bold text-xl text-white">Order Summary</h3>
+                <h3 className="font-bold text-lg sm:text-xl text-white">Order Summary</h3>
                 <p className="text-xs text-gray-500 uppercase tracking-widest font-bold">{items.length} Items in Cart</p>
               </div>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               {items.map((item, idx) => (
-                <div key={idx} className="flex gap-4 p-4 rounded-2xl bg-black/40 border border-white/5 hover:bg-black/60 transition-colors group/item">
-                  <div className="w-24 h-24 rounded-xl overflow-hidden flex-shrink-0 bg-gray-800 relative">
+                <div key={idx} className="flex gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-black/40 border border-white/5 hover:bg-black/60 transition-colors group/item">
+                  <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl overflow-hidden flex-shrink-0 bg-gray-800 relative">
                     <SafeImage
                       src={item.image}
                       alt={item.name}
@@ -416,10 +417,10 @@ export default function CartPage() {
                   <div className="flex-1 flex flex-col justify-between py-1">
                     <div className="flex justify-between items-start">
                       <div>
-                        <h4 className="font-bold text-white text-lg line-clamp-1">{item.name}</h4>
+                        <h4 className="font-bold text-white text-base sm:text-lg line-clamp-1">{item.name}</h4>
                         <p className="text-xs text-gray-400">{item.restaurantName}</p>
                       </div>
-                      <span className="font-bold text-orange-400 text-lg">₹{item.price * item.quantity}</span>
+                      <span className="font-bold text-orange-400 text-base sm:text-lg">₹{item.price * item.quantity}</span>
                     </div>
 
                     <div className="flex items-center justify-between mt-2">
@@ -441,13 +442,13 @@ export default function CartPage() {
           </div>
 
           {/* 3. Payment Method */}
-          <div className="bg-gray-900/40 backdrop-blur-xl rounded-3xl p-6 border border-white/5 hover:border-white/10 transition-colors relative z-10 group">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-green-500/20 to-emerald-500/20 flex items-center justify-center border border-green-500/10 group-hover:scale-105 transition-transform">
-                <Wallet className="w-5 h-5 text-green-500" />
+          <div className="bg-gray-900/40 backdrop-blur-xl rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-white/5 hover:border-white/10 transition-colors relative z-10 group">
+            <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-gradient-to-br from-green-500/20 to-emerald-500/20 flex items-center justify-center border border-green-500/10 group-hover:scale-105 transition-transform">
+                <Wallet className="w-4 h-4 sm:w-5 sm:h-5 text-green-500" />
               </div>
               <div>
-                <h3 className="font-bold text-xl text-white">Payment Method</h3>
+                <h3 className="font-bold text-lg sm:text-xl text-white">Payment Method</h3>
                 <p className="text-xs text-gray-500 uppercase tracking-widest font-bold">Secure Transactions</p>
               </div>
             </div>
@@ -478,11 +479,11 @@ export default function CartPage() {
 
         {/* Right Column - Summary */}
         <div className="lg:col-span-1">
-          <div className="sticky top-24 space-y-4">
-            <div className="bg-gray-900 border border-gray-800 rounded-3xl p-6 shadow-xl">
-              <div className="flex items-center gap-2 mb-6 pb-4 border-b border-gray-800">
-                <ChefHat className="w-5 h-5 text-orange-500" />
-                <h3 className="font-bold text-lg">Bill Details</h3>
+          <div className="sticky top-20 sm:top-24 space-y-3 sm:space-y-4">
+            <div className="bg-gray-900 border border-gray-800 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-xl">
+              <div className="flex items-center gap-2 mb-4 sm:mb-6 pb-3 sm:pb-4 border-b border-gray-800">
+                <ChefHat className="w-4 h-4 sm:w-5 sm:h-5 text-orange-500" />
+                <h3 className="font-bold text-base sm:text-lg">Bill Details</h3>
               </div>
 
               <div className="space-y-3 text-sm">
@@ -498,7 +499,7 @@ export default function CartPage() {
                   <span>Taxes & Charges</span>
                   <span className="text-white font-medium">₹{taxes}</span>
                 </div>
-                <div className="border-t border-gray-800 pt-3 flex justify-between items-center text-lg">
+                <div className="border-t border-gray-800 pt-3 flex justify-between items-center text-base sm:text-lg">
                   <span className="font-bold text-white">To Pay</span>
                   <span className="font-bold text-orange-500">₹{total}</span>
                 </div>
@@ -507,25 +508,25 @@ export default function CartPage() {
               <Button
                 onClick={handlePlaceOrder}
                 disabled={loading || items.length === 0}
-                className="w-full mt-6 h-16 rounded-2xl text-lg font-bold bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 shadow-xl shadow-orange-900/30 transition-all active:scale-[0.98] border border-orange-500/20"
+                className="w-full mt-4 sm:mt-6 h-14 sm:h-16 rounded-xl sm:rounded-2xl text-base sm:text-lg font-bold bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 shadow-xl shadow-orange-900/30 transition-all active:scale-[0.98] border border-orange-500/20"
               >
                 {loading ? <Spinner className="w-6 h-6 text-white" /> : (paymentMethod === 'cod' ? 'Tap to Place Order' : 'Proceed to Payment')}
               </Button>
             </div>
 
-            <div className="bg-gray-900/50 rounded-3xl p-4 border border-white/5">
+            <div className="bg-gray-900/50 rounded-2xl sm:rounded-3xl p-3 sm:p-4 border border-white/5">
               <label className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 block">Cooking Instructions</label>
               <textarea
                 value={specialInstructions}
                 onChange={(e) => setSpecialInstructions(e.target.value)}
                 placeholder="e.g. Less spicy, no onions..."
-                className="w-full bg-black/50 border border-gray-800 rounded-xl p-3 text-sm text-white placeholder:text-gray-600 focus:outline-none focus:border-orange-500 transition-colors h-24 resize-none"
+                className="w-full bg-black/50 border border-gray-800 rounded-xl p-3 text-sm text-white placeholder:text-gray-600 focus:outline-none focus:border-orange-500 transition-colors h-20 sm:h-24 resize-none"
               />
             </div>
           </div>
         </div>
-
       </div>
+
     </div>
   );
 }

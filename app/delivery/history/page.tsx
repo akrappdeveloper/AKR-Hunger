@@ -94,9 +94,12 @@ export default function DeliveryHistoryPage() {
     return (
         <div className="p-4 md:p-8 space-y-8 max-w-7xl mx-auto">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div>
-                    <h1 className="text-3xl font-bold text-white tracking-tight">Delivery History</h1>
-                    <p className="text-gray-400 mt-1">View your past completed deliveries.</p>
+                <div className="relative overflow-hidden bg-gradient-to-br from-teal-600 via-cyan-600 to-blue-600 p-4 sm:p-6 rounded-3xl shadow-2xl shadow-cyan-900/30 mb-6">
+                    <div className="absolute inset-0 bg-gradient-to-tr from-teal-500/20 via-transparent to-blue-500/20 animate-pulse" />
+                    <div className="relative z-10">
+                        <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight drop-shadow-lg">📋 Delivery History</h1>
+                        <p className="text-white/90 mt-1 font-medium">View your past completed deliveries.</p>
+                    </div>
                 </div>
 
                 <div className="flex bg-gray-900 p-1 rounded-lg border border-gray-800">
@@ -125,55 +128,59 @@ export default function DeliveryHistoryPage() {
                     </div>
                 ) : (
                     filteredOrders.map((order, index) => (
-                        <Card key={order.id || index} className="bg-gray-900 border-gray-800 text-white hover:border-gray-700 transition-all hover:bg-gray-900/80 group">
-                            <CardContent className="p-5">
-                                <div className="flex flex-col md:flex-row gap-5 items-center">
+                        <Card key={order.id || index} className="bg-gradient-to-br from-gray-900 via-gray-900 to-gray-800/50 border-gray-700/50 text-white hover:border-gray-600 transition-all duration-500 hover:bg-gray-900/90 group backdrop-blur-sm shadow-xl hover:shadow-2xl hover:shadow-teal-900/10 animate-[fadeIn_0.5s_ease-out]" style={{ animationDelay: `${index * 0.05}s` }}>
+                            <CardContent className="p-5 relative">
+                                <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-teal-500/5 to-cyan-500/5 rounded-full blur-2xl group-hover:opacity-100 opacity-0 transition-opacity duration-500" />
+                                <div className="flex flex-col md:flex-row gap-5 items-start md:items-center relative z-10">
                                     {/* Date Box */}
-                                    <div className="flex flex-col items-center justify-center bg-gray-800 rounded-lg p-3 w-full md:w-20 text-center border border-gray-700">
-                                        <span className="text-xs text-gray-400 uppercase font-bold">
+                                    <div className="flex flex-col items-center justify-center bg-gradient-to-br from-gray-800/90 to-gray-800/50 backdrop-blur-sm rounded-xl p-4 w-full md:w-24 text-center border border-gray-700/70 shadow-lg">
+                                        <span className="text-xs text-gray-500 uppercase font-bold tracking-wider">
                                             {order.createdAt?.toDate ? order.createdAt.toDate().toLocaleDateString('en-US', { month: 'short' }) : 'N/A'}
                                         </span>
-                                        <span className="text-2xl font-bold text-white">
+                                        <span className="text-3xl font-black text-white my-1">
                                             {order.createdAt?.toDate ? order.createdAt.toDate().getDate() : '-'}
                                         </span>
-                                        <span className="text-[10px] text-gray-500">
+                                        <span className="text-[10px] text-gray-500 font-semibold">
                                             {order.createdAt?.toDate ? order.createdAt.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
                                         </span>
                                     </div>
 
                                     {/* Info */}
-                                    <div className="flex-1 space-y-2 w-full">
-                                        <div className="flex justify-between items-start">
-                                            <h3 className="font-bold text-lg">{order.restaurantName}</h3>
-                                            <Badge variant="secondary" className="bg-green-900/30 text-green-400 border-green-900/50">
+                                    <div className="flex-1 space-y-2.5 w-full">
+                                        <div className="flex justify-between items-start gap-3">
+                                            <h3 className="font-black text-lg text-white group-hover:text-teal-300 transition-colors">{order.restaurantName}</h3>
+                                            <Badge variant="secondary" className="bg-gradient-to-r from-green-900/40 to-emerald-900/40 text-green-300 border-green-900/60 backdrop-blur-sm shadow-sm">
                                                 <CheckCircle className="w-3 h-3 mr-1" /> Delivered
                                             </Badge>
                                         </div>
 
-                                        <div className="flex items-center gap-3 text-sm text-gray-400">
-                                            <MapPin className="w-4 h-4 text-gray-500" />
+                                        <div className="flex items-center gap-2 text-sm text-gray-400">
+                                            <MapPin className="w-4 h-4 text-teal-500" />
                                             <span className="truncate">{formatAddress(order.deliveryAddress)}</span>
                                         </div>
 
                                         <div className="flex items-center gap-4 text-xs text-gray-500 pt-1">
-                                            <span>Order #{order.id?.slice(0, 8)}</span>
-                                            <span className="truncate">• {order.items?.length || 1} Items</span>
+                                            <span className="font-mono">Order #{order.id?.slice(0, 8)}</span>
+                                            <span className="flex items-center gap-1">
+                                                <div className="w-1 h-1 rounded-full bg-gray-600"></div>
+                                                {order.items?.length || 1} Items
+                                            </span>
                                         </div>
                                     </div>
 
                                     {/* Amount & Action */}
-                                    <div className="text-right w-full md:w-auto flex flex-row md:flex-col justify-between items-center md:items-end border-t md:border-t-0 border-gray-800 pt-4 md:pt-0 mt-2 md:mt-0">
+                                    <div className="text-right w-full md:w-auto flex flex-row md:flex-col justify-between items-center md:items-end border-t md:border-t-0 border-gray-700/50 pt-4 md:pt-0 mt-3 md:mt-0 gap-3">
                                         <div>
-                                            <p className="font-bold text-xl text-white">₹{((order.deliveryCharge || 0) * 0.70).toFixed(2)}</p>
-                                            <p className="text-xs text-green-500 font-medium">Earning</p>
+                                            <p className="font-black text-2xl bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">₹{((order.deliveryCharge || 0) * 0.70).toFixed(2)}</p>
+                                            <p className="text-xs text-green-500 font-bold tracking-wide">Earning</p>
                                         </div>
                                         <Button
                                             variant="ghost"
                                             size="sm"
                                             onClick={() => { setSelectedOrder(order); setDetailsOpen(true); }}
-                                            className="text-blue-400 hover:text-white hover:bg-blue-600/20 -mr-3"
+                                            className="text-teal-400 hover:text-white hover:bg-teal-900/20 -mr-2 md:-mr-3 transition-all duration-300 group/btn"
                                         >
-                                            Details <ChevronRight className="w-4 h-4 ml-1" />
+                                            Details <ChevronRight className="w-4 h-4 ml-1 group-hover/btn:translate-x-1 transition-transform" />
                                         </Button>
                                     </div>
                                 </div>

@@ -76,7 +76,7 @@ export default function SearchPage() {
     });
 
     return (
-        <div className="min-h-screen bg-black text-white pb-24 font-sans selection:bg-orange-500/30">
+        <div className="min-h-screen bg-black text-white pb-40 sm:pb-24 font-sans selection:bg-orange-500/30">
             {/* Background Gradients */}
             <div className="fixed inset-0 pointer-events-none">
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[500px] bg-gradient-to-b from-blue-900/10 to-transparent blur-[80px]" />

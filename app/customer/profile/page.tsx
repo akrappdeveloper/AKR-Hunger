@@ -336,7 +336,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white pb-20 font-sans selection:bg-orange-500/30">
+    <div className="min-h-screen bg-black text-white pb-40 sm:pb-20 font-sans selection:bg-orange-500/30">
 
       {/* Header Banner */}
       <div className="h-64 relative overflow-hidden">

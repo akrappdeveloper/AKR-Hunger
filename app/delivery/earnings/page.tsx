@@ -181,11 +181,13 @@ export default function EarningsPage() {
     }
 
     return (
-        <div className="p-4 md:p-8 space-y-8 max-w-7xl mx-auto">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div>
-                    <h1 className="text-3xl font-bold text-white tracking-tight">Earnings</h1>
-                    <p className="text-gray-400 mt-1">Track your income and financial growth.</p>
+        <div className="p-2 sm:p-4 md:p-8 space-y-6 sm:space-y-8 max-w-7xl mx-auto">
+            <div className="relative overflow-hidden flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-gradient-to-br from-green-600 via-emerald-600 to-teal-600 p-4 sm:p-6 rounded-3xl shadow-2xl shadow-emerald-900/30">
+                <div className="absolute inset-0 bg-gradient-to-tr from-green-500/20 via-transparent to-teal-500/20 animate-pulse" />
+
+                <div className="relative z-10">
+                    <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight drop-shadow-lg">💰 Earnings</h1>
+                    <p className="text-white/90 mt-1 font-medium">Track your income and financial growth.</p>
                 </div>
 
                 <Dialog open={withdrawOpen} onOpenChange={setWithdrawOpen}>
@@ -259,50 +261,58 @@ export default function EarningsPage() {
             </div>
 
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                <Card className="bg-gray-900 border-gray-800 text-white shadow-xl bg-gradient-to-br from-gray-900 to-gray-900">
-                    <CardContent className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                <Card className="bg-gradient-to-br from-blue-600 via-blue-700 to-blue-900 border-blue-400/30 text-white shadow-2xl shadow-blue-500/30 hover:shadow-blue-500/50 transition-all duration-500 hover:scale-[1.03] relative overflow-hidden group animate-[fadeIn_0.5s_ease-out]">
+                    <div className="absolute inset-0 bg-gradient-to-tr from-blue-300/20 via-transparent to-blue-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                    <div className="absolute -top-10 -right-10 w-32 h-32 bg-white/5 rounded-full blur-3xl group-hover:bg-white/10 transition-all duration-500" />
+                    <CardContent className="p-6 relative z-10">
                         <div className="flex justify-between items-start mb-4">
-                            <div className="p-2 bg-blue-600/10 rounded-lg text-blue-500">
+                            <div className="p-3 bg-white/20 rounded-2xl text-white shadow-lg backdrop-blur-sm group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
                                 <IndianRupee className="w-6 h-6" />
                             </div>
-                            <Badge variant="secondary" className="bg-green-500/10 text-green-400">+12% this week</Badge>
+                            <Badge variant="secondary" className="bg-white/20 text-white backdrop-blur-sm font-bold">+12%</Badge>
                         </div>
-                        <p className="text-gray-400 text-sm uppercase font-bold tracking-wider">Total Earnings (70%)</p>
-                        <h2 className="text-4xl font-bold text-white mt-1">₹{grandTotal.toFixed(2)}</h2>
+                        <p className="text-blue-100 text-sm uppercase font-bold tracking-wider">Total Earnings (70%)</p>
+                        <h2 className="text-4xl font-black text-white mt-1 drop-shadow-lg group-hover:scale-105 transition-transform">₹{grandTotal.toFixed(2)}</h2>
                     </CardContent>
                 </Card>
-                <Card className="bg-gray-900 border-gray-800 text-white shadow-xl">
-                    <CardContent className="p-6">
+                <Card className="bg-gradient-to-br from-purple-600 via-purple-700 to-purple-900 border-purple-400/30 text-white shadow-2xl shadow-purple-500/30 hover:shadow-purple-500/50 transition-all duration-500 hover:scale-[1.03] relative overflow-hidden group animate-[fadeIn_0.5s_ease-out_0.1s]">
+                    <div className="absolute inset-0 bg-gradient-to-tr from-purple-300/20 via-transparent to-purple-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                    <div className="absolute -top-10 -right-10 w-32 h-32 bg-white/5 rounded-full blur-3xl group-hover:bg-white/10 transition-all duration-500" />
+                    <CardContent className="p-6 relative z-10">
                         <div className="flex justify-between items-start mb-4">
-                            <div className="p-2 bg-purple-600/10 rounded-lg text-purple-500">
+                            <div className="p-3 bg-white/20 rounded-2xl text-white shadow-lg backdrop-blur-sm group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
                                 <CreditCard className="w-6 h-6" />
                             </div>
                         </div>
-                        <p className="text-gray-400 text-sm uppercase font-bold tracking-wider">Total Withdrawn</p>
-                        <h2 className="text-4xl font-bold text-purple-400 mt-1">₹{totalWithdrawn.toFixed(2)}</h2>
+                        <p className="text-purple-100 text-sm uppercase font-bold tracking-wider">Total Withdrawn</p>
+                        <h2 className="text-4xl font-black text-white mt-1 drop-shadow-lg group-hover:scale-105 transition-transform">₹{totalWithdrawn.toFixed(2)}</h2>
                     </CardContent>
                 </Card>
-                <Card className="bg-gray-900 border-gray-800 text-white shadow-xl">
-                    <CardContent className="p-6">
+                <Card className="bg-gradient-to-br from-yellow-600 via-orange-700 to-orange-900 border-yellow-400/30 text-white shadow-2xl shadow-yellow-500/30 hover:shadow-yellow-500/50 transition-all duration-500 hover:scale-[1.03] relative overflow-hidden group animate-[fadeIn_0.5s_ease-out_0.2s]">
+                    <div className="absolute inset-0 bg-gradient-to-tr from-yellow-300/20 via-transparent to-yellow-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                    <div className="absolute -top-10 -right-10 w-32 h-32 bg-white/5 rounded-full blur-3xl group-hover:bg-white/10 transition-all duration-500" />
+                    <CardContent className="p-6 relative z-10">
                         <div className="flex justify-between items-start mb-4">
-                            <div className="p-2 bg-yellow-600/10 rounded-lg text-yellow-500">
+                            <div className="p-3 bg-white/20 rounded-2xl text-white shadow-lg backdrop-blur-sm group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
                                 <Clock className="w-6 h-6" />
                             </div>
                         </div>
-                        <p className="text-gray-400 text-sm uppercase font-bold tracking-wider">Pending Requests</p>
-                        <h2 className="text-4xl font-bold text-yellow-400 mt-1">₹{totalPending.toFixed(2)}</h2>
+                        <p className="text-yellow-100 text-sm uppercase font-bold tracking-wider">Pending Requests</p>
+                        <h2 className="text-4xl font-black text-white mt-1 drop-shadow-lg group-hover:scale-105 transition-transform">₹{totalPending.toFixed(2)}</h2>
                     </CardContent>
                 </Card>
-                <Card className="bg-gray-900 border-gray-800 text-white shadow-xl">
-                    <CardContent className="p-6">
+                <Card className="bg-gradient-to-br from-green-600 via-emerald-700 to-emerald-900 border-green-400/30 text-white shadow-2xl shadow-green-500/30 hover:shadow-green-500/50 transition-all duration-500 hover:scale-[1.03] relative overflow-hidden group animate-[fadeIn_0.5s_ease-out_0.3s]">
+                    <div className="absolute inset-0 bg-gradient-to-tr from-green-300/20 via-transparent to-green-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                    <div className="absolute -top-10 -right-10 w-32 h-32 bg-white/5 rounded-full blur-3xl group-hover:bg-white/10 transition-all duration-500" />
+                    <CardContent className="p-6 relative z-10">
                         <div className="flex justify-between items-start mb-4">
-                            <div className="p-2 bg-orange-600/10 rounded-lg text-orange-500">
+                            <div className="p-3 bg-white/20 rounded-2xl text-white shadow-lg backdrop-blur-sm group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
                                 <TrendingUp className="w-6 h-6" />
                             </div>
                         </div>
-                        <p className="text-gray-400 text-sm uppercase font-bold tracking-wider">Available Balance</p>
-                        <h2 className="text-4xl font-bold text-orange-400 mt-1">₹{availableBalance.toFixed(2)}</h2>
+                        <p className="text-green-100 text-sm uppercase font-bold tracking-wider">Available Balance</p>
+                        <h2 className="text-4xl font-black text-white mt-1 drop-shadow-lg group-hover:scale-105 transition-transform">₹{availableBalance.toFixed(2)}</h2>
                     </CardContent>
                 </Card>
             </div>

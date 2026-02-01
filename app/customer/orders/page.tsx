@@ -175,7 +175,7 @@ export default function OrdersPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white pb-24 font-sans selection:bg-orange-500/30">
+    <div className="min-h-screen bg-black text-white pb-40 sm:pb-24 font-sans selection:bg-orange-500/30">
       <div className="max-w-4xl mx-auto px-4 py-8">
 
         {/* Header */}

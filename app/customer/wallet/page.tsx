@@ -316,7 +316,7 @@ export default function WalletPage() {
     };
 
     return (
-        <div className="min-h-screen bg-black text-white p-4 md:p-8 pb-24">
+        <div className="min-h-screen bg-black text-white p-4 md:p-8 pb-40 sm:pb-24">
             <Script src="https://checkout.razorpay.com/v1/checkout.js" />
 
             <div className="max-w-6xl mx-auto space-y-8">
