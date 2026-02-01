@@ -33,8 +33,8 @@ service cloud.firestore {
 
     // Customer profiles - Public read for reviews (name/avatar), Write: Owner only
     match /customers/{customerId} {
-      allow read: if true; // Allow public read for reviews/profiles
-      allow list: if true;
+      allow read: if request.auth.uid == customerId || isAdmin(request.auth.uid);
+      allow list: if isAdmin(request.auth.uid);
       allow create: if request.auth.uid != null && request.auth.uid == customerId;
       allow update, delete: if request.auth.uid == customerId || isAdmin(request.auth.uid);
     }
@@ -168,6 +168,12 @@ service cloud.firestore {
       allow read: if request.auth.uid != null && (resource.data.customerId == request.auth.uid || isAdmin(request.auth.uid));
       allow create: if request.auth.uid != null && request.resource.data.customerId == request.auth.uid;
       allow update: if isAdmin(request.auth.uid);
+    }
+
+    // Issued Cards (New)
+    match /issuedCards/{cardId} {
+      allow read: if request.auth.uid != null && (resource.data.customerId == request.auth.uid || isAdmin(request.auth.uid));
+      allow create, update, delete: if isAdmin(request.auth.uid);
     }
 
     // Customer Wallet Transactions (Subcollection)

@@ -8,7 +8,8 @@ import { Badge } from '@/components/ui/badge';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Order, Review, MenuItem } from '@/lib/types';
-import { TrendingUp, AlertCircle, CheckCircle, Star, Target, Award } from 'lucide-react';
+import { TrendingUp, AlertCircle, CheckCircle, Star, Target, Award, ArrowUpRight, ArrowDownRight, Zap } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 interface ItemQuality {
     menuItemId: string;
@@ -133,17 +134,24 @@ export default function QualityAnalyticsPage() {
     };
 
     const getQualityColor = (score: number) => {
-        if (score >= 80) return 'text-green-500';
-        if (score >= 60) return 'text-yellow-500';
-        if (score >= 40) return 'text-orange-500';
-        return 'text-red-500';
+        if (score >= 80) return 'text-emerald-400';
+        if (score >= 60) return 'text-yellow-400';
+        if (score >= 40) return 'text-orange-400';
+        return 'text-red-400';
+    };
+
+    const getQualityGradient = (score: number) => {
+        if (score >= 80) return 'from-emerald-500 to-green-600';
+        if (score >= 60) return 'from-yellow-500 to-amber-600';
+        if (score >= 40) return 'from-orange-500 to-red-500';
+        return 'from-red-500 to-pink-600';
     };
 
     const getQualityBadge = (score: number) => {
-        if (score >= 80) return { label: 'Excellent', color: 'bg-green-500' };
-        if (score >= 60) return { label: 'Good', color: 'bg-yellow-500' };
-        if (score >= 40) return { label: 'Fair', color: 'bg-orange-500' };
-        return { label: 'Needs Improvement', color: 'bg-red-500' };
+        if (score >= 80) return { label: 'Excellent', color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' };
+        if (score >= 60) return { label: 'Good', color: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' };
+        if (score >= 40) return { label: 'Fair', color: 'bg-orange-500/10 text-orange-400 border-orange-500/20' };
+        return { label: 'Needs Improvement', color: 'bg-red-500/10 text-red-400 border-red-500/20' };
     };
 
     const avgQualityScore = qualityMetrics.length > 0
@@ -152,183 +160,214 @@ export default function QualityAnalyticsPage() {
 
     if (authLoading || loading) {
         return (
-            <div className="p-8">
-                <div className="animate-pulse space-y-4">
-                    {[...Array(3)].map((_, i) => (
-                        <div key={i} className="h-32 bg-muted rounded-lg" />
-                    ))}
+            <div className="p-8 flex items-center justify-center h-[calc(100vh-100px)]">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="w-16 h-16 border-4 border-t-green-500 border-r-emerald-500 border-b-teal-500 border-l-cyan-500 rounded-full animate-spin"></div>
+                    <p className="text-gray-400 animate-pulse">Analyzing quality metrics...</p>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="p-4 md:p-8 space-y-6">
+        <div className="p-4 md:p-8 space-y-8 min-h-screen bg-[#0B0F17]/50">
             {/* Header */}
             <div>
-                <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-green-400 via-emerald-400 to-green-300 bg-clip-text text-transparent flex items-center gap-3">
-                    <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-blue-500 rounded-xl flex items-center justify-center shadow-lg shadow-green-500/30">
-                        <Target className="w-7 h-7 text-white" />
-                    </div>
-                    Quality Analytics
-                </h1>
-                <p className="text-gray-200 mt-2 text-lg font-medium">Automatic quality scoring based on performance</p>
+                <motion.div
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5 }}
+                >
+                    <h1 className="text-4xl md:text-5xl font-extrabold bg-gradient-to-r from-emerald-400 via-green-400 to-teal-400 bg-clip-text text-transparent flex items-center gap-3 drop-shadow-xl">
+                        Quality Analytics
+                    </h1>
+                    <p className="text-gray-400 mt-2 text-lg font-light tracking-wide flex items-center gap-2">
+                        <Zap className="w-4 h-4 text-emerald-400" />
+                        AI-driven performance scoring & insights
+                    </p>
+                </motion.div>
             </div>
 
-            {/* Overall Score */}
-            <Card className="p-6 bg-gradient-to-r from-green-900/30 to-blue-900/30 border-green-500/30 backdrop-blur-sm shadow-xl">
-                <div className="flex items-center justify-between">
+            {/* Overall Score Card */}
+            <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="relative overflow-hidden group"
+            >
+                <div className="absolute inset-0 bg-gradient-to-r from-emerald-900/40 via-blue-900/20 to-purple-900/40 blur-xl transition-all duration-500 group-hover:blur-2xl" />
+                <Card className="relative p-8 bg-gray-900/40 border-gray-800 backdrop-blur-md shadow-2xl flex flex-col md:flex-row items-center justify-between gap-8">
                     <div>
-                        <h2 className="text-xl font-bold text-white mb-2">Overall Restaurant Quality</h2>
-                        <p className="text-sm text-gray-300 font-medium">Average across all menu items</p>
-                    </div>
-                    <div className="text-center">
-                        <div className={`text-6xl font-bold ${getQualityColor(avgQualityScore)}`}>
-                            {avgQualityScore}
+                        <h2 className="text-2xl font-bold text-white mb-2 flex items-center gap-2">
+                            <Award className="w-6 h-6 text-yellow-400" />
+                            Overall Restaurant Score
+                        </h2>
+                        <p className="text-gray-400 max-w-md">
+                            Aggregated score based on order success rate, customer satisfaction, and consistency across all menu items.
+                        </p>
+                        <div className="flex gap-4 mt-6">
+                            <div className="flex items-center gap-2 bg-gray-800/50 px-3 py-1.5 rounded-lg border border-gray-700">
+                                <div className="w-2 h-2 bg-blue-500 rounded-full" />
+                                <span className="text-xs text-gray-300">Success Rate</span>
+                            </div>
+                            <div className="flex items-center gap-2 bg-gray-800/50 px-3 py-1.5 rounded-lg border border-gray-700">
+                                <div className="w-2 h-2 bg-emerald-500 rounded-full" />
+                                <span className="text-xs text-gray-300">Satisfaction</span>
+                            </div>
+                            <div className="flex items-center gap-2 bg-gray-800/50 px-3 py-1.5 rounded-lg border border-gray-700">
+                                <div className="w-2 h-2 bg-purple-500 rounded-full" />
+                                <span className="text-xs text-gray-300">Consistency</span>
+                            </div>
                         </div>
-                        <Badge className={`${getQualityBadge(avgQualityScore).color} mt-2 font-bold`}>
-                            {getQualityBadge(avgQualityScore).label}
-                        </Badge>
                     </div>
-                </div>
-            </Card>
 
-            {/* Formula Explanation */}
-            <Card className="p-6">
-                <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2">
-                    <Award className="w-5 h-5" />
-                    Quality Score Calculation
-                </h3>
-                <div className="space-y-2 text-sm">
-                    <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 bg-blue-500 rounded-full" />
-                        <span className="text-muted-foreground">
-                            <strong>40%</strong> Order Success Rate (Delivered vs Cancelled)
-                        </span>
+                    <div className="relative text-center shrink-0">
+                        <svg className="w-48 h-48 transform -rotate-90">
+                            <circle cx="96" cy="96" r="88" className="stroke-gray-800" strokeWidth="12" fill="none" />
+                            <motion.circle
+                                cx="96" cy="96" r="88"
+                                className={`stroke-current ${getQualityColor(avgQualityScore)}`}
+                                strokeWidth="12"
+                                fill="none"
+                                strokeDasharray="553"
+                                initial={{ strokeDashoffset: 553 }}
+                                animate={{ strokeDashoffset: 553 - (553 * avgQualityScore) / 100 }}
+                                transition={{ duration: 1.5, ease: "easeOut" }}
+                                strokeLinecap="round"
+                            />
+                        </svg>
+                        <div className="absolute inset-0 flex flex-col items-center justify-center">
+                            <span className={`text-5xl font-bold ${getQualityColor(avgQualityScore)} drop-shadow-lg`}>
+                                {avgQualityScore}
+                            </span>
+                            <Badge variant="outline" className={`${getQualityBadge(avgQualityScore).color} mt-2`}>
+                                {getQualityBadge(avgQualityScore).label}
+                            </Badge>
+                        </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 bg-green-500 rounded-full" />
-                        <span className="text-muted-foreground">
-                            <strong>40%</strong> Customer Satisfaction (Average Rating)
-                        </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 bg-purple-500 rounded-full" />
-                        <span className="text-muted-foreground">
-                            <strong>20%</strong> Consistency Score (Rating Variance)
-                        </span>
-                    </div>
-                </div>
-            </Card>
+                </Card>
+            </motion.div>
 
-            {/* Menu Items Quality */}
+            {/* Menu Items Quality Grid */}
             <div>
-                <h2 className="text-xl font-bold text-foreground mb-4">Menu Item Quality Scores</h2>
-                <div className="space-y-3">
+                <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2 border-l-4 border-emerald-500 pl-3">
+                    Menu Performance Metrics
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                     {qualityMetrics.length === 0 ? (
-                        <Card className="p-12 text-center">
-                            <Target className="w-16 h-16 mx-auto text-muted-foreground mb-4 opacity-50" />
-                            <h3 className="text-lg font-semibold text-foreground mb-2">No quality data yet</h3>
-                            <p className="text-muted-foreground">
-                                Quality scores will appear once you have orders and reviews
-                            </p>
-                        </Card>
+                        <div className="col-span-full p-16 text-center border border-gray-800 rounded-3xl bg-gray-900/30">
+                            <Target className="w-20 h-20 mx-auto text-gray-700 mb-6" />
+                            <h3 className="text-2xl font-bold text-white mb-2">No Data Available</h3>
+                            <p className="text-gray-500">Performance metrics will appear once you have orders.</p>
+                        </div>
                     ) : (
-                        qualityMetrics.map((metric) => {
+                        qualityMetrics.map((metric, index) => {
                             const qualityBadge = getQualityBadge(metric.qualityScore);
+                            const gradient = getQualityGradient(metric.qualityScore);
 
                             return (
-                                <Card key={metric.menuItemId} className="p-6 bg-gray-800/50 border-gray-700 backdrop-blur-sm shadow-lg">
-                                    <div className="flex items-start justify-between mb-4">
-                                        <div>
-                                            <h3 className="font-semibold text-foreground text-lg">{metric.menuItemName}</h3>
-                                            <div className="flex items-center gap-2 mt-1">
-                                                <Badge className={qualityBadge.color}>{qualityBadge.label}</Badge>
-                                                <span className="text-sm text-muted-foreground">
-                                                    {metric.totalReviews} reviews • {metric.totalOrders} orders
-                                                </span>
-                                            </div>
-                                        </div>
-                                        <div className={`text-4xl font-bold ${getQualityColor(metric.qualityScore)}`}>
-                                            {metric.qualityScore}
-                                        </div>
-                                    </div>
+                                <motion.div
+                                    key={metric.menuItemId}
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: index * 0.1 }}
+                                >
+                                    <Card className="h-full bg-gray-900/40 border-gray-800 backdrop-blur-sm overflow-hidden hover:bg-gray-900/60 transition-colors group relative">
+                                        <div className={`absolute top-0 w-full h-1 bg-gradient-to-r ${gradient}`} />
 
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                        {/* Success Rate */}
-                                        <div>
-                                            <div className="flex items-center justify-between mb-2">
-                                                <span className="text-sm font-medium text-muted-foreground">Order Success Rate</span>
-                                                <span className="font-bold">{metric.orderSuccessRate}%</span>
+                                        <div className="p-6">
+                                            <div className="flex justify-between items-start mb-4">
+                                                <div>
+                                                    <h3 className="font-bold text-white text-lg line-clamp-1" title={metric.menuItemName}>{metric.menuItemName}</h3>
+                                                    <div className="flex items-center gap-2 mt-1.5">
+                                                        <Badge variant="outline" className={qualityBadge.color}>{qualityBadge.label}</Badge>
+                                                        <span className="text-xs text-gray-500 font-mono">
+                                                            {metric.totalOrders} orders
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <div className={`text-4xl font-bold ${getQualityColor(metric.qualityScore)}`}>
+                                                    {metric.qualityScore}
+                                                </div>
                                             </div>
-                                            <div className="h-2 bg-secondary rounded-full overflow-hidden">
-                                                <div
-                                                    className="h-full bg-blue-500"
-                                                    style={{ width: `${metric.orderSuccessRate}%` }}
-                                                />
-                                            </div>
-                                            <p className="text-xs text-muted-foreground mt-1">
-                                                {metric.successfulOrders} delivered / {metric.cancelledOrders} cancelled
-                                            </p>
-                                        </div>
 
-                                        {/* Customer Satisfaction */}
-                                        <div>
-                                            <div className="flex items-center justify-between mb-2">
-                                                <span className="text-sm font-medium text-muted-foreground">Customer Satisfaction</span>
-                                                <span className="font-bold">{metric.customerSatisfaction}%</span>
-                                            </div>
-                                            <div className="h-2 bg-secondary rounded-full overflow-hidden">
-                                                <div
-                                                    className="h-full bg-green-500"
-                                                    style={{ width: `${metric.customerSatisfaction}%` }}
-                                                />
-                                            </div>
-                                            <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-                                                <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                                                {metric.averageRating.toFixed(1)} avg rating
-                                            </p>
-                                        </div>
+                                            <div className="space-y-4">
+                                                {/* Success Rate */}
+                                                <div>
+                                                    <div className="flex justify-between text-xs mb-1 text-gray-400">
+                                                        <span>Success Rate</span>
+                                                        <span className="text-white">{metric.orderSuccessRate}%</span>
+                                                    </div>
+                                                    <div className="h-1.5 bg-gray-800 rounded-full overflow-hidden">
+                                                        <motion.div
+                                                            initial={{ width: 0 }}
+                                                            animate={{ width: `${metric.orderSuccessRate}%` }}
+                                                            className="h-full bg-blue-500 rounded-full"
+                                                        />
+                                                    </div>
+                                                </div>
 
-                                        {/* Consistency */}
-                                        <div>
-                                            <div className="flex items-center justify-between mb-2">
-                                                <span className="text-sm font-medium text-muted-foreground">Consistency</span>
-                                                <span className="font-bold">{metric.consistencyScore}%</span>
-                                            </div>
-                                            <div className="h-2 bg-secondary rounded-full overflow-hidden">
-                                                <div
-                                                    className="h-full bg-purple-500"
-                                                    style={{ width: `${metric.consistencyScore}%` }}
-                                                />
-                                            </div>
-                                            <p className="text-xs text-muted-foreground mt-1">
-                                                {metric.consistencyScore >= 80 ? 'Very consistent' :
-                                                    metric.consistencyScore >= 60 ? 'Fairly consistent' : 'Needs consistency'}
-                                            </p>
-                                        </div>
-                                    </div>
+                                                {/* Satisfaction */}
+                                                <div>
+                                                    <div className="flex justify-between text-xs mb-1 text-gray-400">
+                                                        <span>Satisfaction</span>
+                                                        <span className="text-white flex items-center gap-1">
+                                                            <Star className="w-3 h-3 fill-yellow-500 text-yellow-500" />
+                                                            {metric.averageRating.toFixed(1)}
+                                                        </span>
+                                                    </div>
+                                                    <div className="h-1.5 bg-gray-800 rounded-full overflow-hidden">
+                                                        <motion.div
+                                                            initial={{ width: 0 }}
+                                                            animate={{ width: `${metric.customerSatisfaction}%` }}
+                                                            className="h-full bg-emerald-500 rounded-full"
+                                                        />
+                                                    </div>
+                                                </div>
 
-                                    {/* Recommendations */}
-                                    {metric.qualityScore < 60 && (
-                                        <div className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-950 border-l-4 border-yellow-500 rounded">
-                                            <p className="text-sm font-medium text-yellow-900 dark:text-yellow-100 mb-1">
-                                                💡 Recommendations:
-                                            </p>
-                                            <ul className="text-sm text-yellow-800 dark:text-yellow-200 space-y-1">
-                                                {metric.orderSuccessRate < 70 && (
-                                                    <li>• Reduce cancellations by improving availability and communication</li>
-                                                )}
-                                                {metric.averageRating < 3.5 && (
-                                                    <li>• Improve recipe quality based on customer feedback</li>
-                                                )}
-                                                {metric.consistencyScore < 60 && (
-                                                    <li>• Standardize preparation to maintain consistent quality</li>
-                                                )}
-                                            </ul>
+                                                {/* Consistency */}
+                                                <div>
+                                                    <div className="flex justify-between text-xs mb-1 text-gray-400">
+                                                        <span>Consistency</span>
+                                                        <span className="text-white">{metric.consistencyScore}%</span>
+                                                    </div>
+                                                    <div className="h-1.5 bg-gray-800 rounded-full overflow-hidden">
+                                                        <motion.div
+                                                            initial={{ width: 0 }}
+                                                            animate={{ width: `${metric.consistencyScore}%` }}
+                                                            className="h-full bg-purple-500 rounded-full"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Smart Recommendations */}
+                                            {metric.qualityScore < 70 && (
+                                                <div className="mt-6 pt-4 border-t border-gray-800">
+                                                    <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-2">
+                                                        <Zap className="w-3 h-3 text-yellow-500" /> Improvement Tips
+                                                    </h4>
+                                                    <ul className="space-y-1.5">
+                                                        {metric.orderSuccessRate < 60 && (
+                                                            <li className="text-xs text-red-300 flex items-start gap-1.5">
+                                                                <ArrowDownRight className="w-3 h-3 shrink-0 mt-0.5" /> High cancellations. Check inventory.
+                                                            </li>
+                                                        )}
+                                                        {metric.customerSatisfaction < 60 && (
+                                                            <li className="text-xs text-orange-300 flex items-start gap-1.5">
+                                                                <ArrowUpRight className="w-3 h-3 shrink-0 mt-0.5" /> Ratings dropping. Review recipe/portion.
+                                                            </li>
+                                                        )}
+                                                        {metric.consistencyScore < 60 && (
+                                                            <li className="text-xs text-purple-300 flex items-start gap-1.5">
+                                                                <Target className="w-3 h-3 shrink-0 mt-0.5" /> Inconsistent ratings. Standardize prep.
+                                                            </li>
+                                                        )}
+                                                    </ul>
+                                                </div>
+                                            )}
                                         </div>
-                                    )}
-                                </Card>
+                                    </Card>
+                                </motion.div>
                             );
                         })
                     )}

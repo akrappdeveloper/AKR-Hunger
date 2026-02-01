@@ -1,4 +1,4 @@
-'use server';
+
 
 import { db } from '@/lib/firebase';
 import {
@@ -11,7 +11,7 @@ import {
     increment,
     runTransaction
 } from 'firebase/firestore';
-import { MembershipRequest, Customer } from '@/lib/types';
+import { MembershipRequest, Customer, IssuedCard } from '@/lib/types';
 
 // Request Membership
 export async function requestMembership(
@@ -39,6 +39,11 @@ export async function requestMembership(
             return { success: false, error: 'You are already a member.' };
         }
 
+        // Check for bank details
+        if (!customerData.bankDetails || !customerData.bankDetails.accountNumber) {
+            return { success: false, error: 'Please add your bank details in the wallet section first.' };
+        }
+
         // 2. Create Request
         const requestRef = await addDoc(collection(db, 'membershipRequests'), {
             customerId,
@@ -47,7 +52,7 @@ export async function requestMembership(
             contactNumber,
             status: 'pending',
             createdAt: serverTimestamp(),
-            // We could ideally snapshot address here if needed, but for now we fetch live on admin side
+            bankDetails: customerData.bankDetails || null, // Snapshot bank details
         });
 
         // 3. Update Customer Status
@@ -102,6 +107,33 @@ export async function approveMembership(requestId: string, adminName: string = '
                 updatedAt: serverTimestamp()
             });
 
+            // Generate Card Details
+            const cardNumber = '4' + Math.floor(Math.random() * 1000000000000000).toString().padStart(15, '0'); // Simple 16 digit generation starting with 4
+            const cvv = Math.floor(Math.random() * 900 + 100).toString(); // 3 digit CVV
+            const expiryDate = new Date();
+            expiryDate.setFullYear(expiryDate.getFullYear() + 5); // 5 years expiry
+
+            // Create Issued Card Document
+            const cardRef = doc(collection(db, 'issuedCards')); // Generate ID automatically
+            const newCard: IssuedCard = {
+                id: cardRef.id,
+                customerId: requestData.customerId,
+                customerName: requestData.customerName,
+                cardNumber: cardNumber,
+                expiryDate: expiryDate,
+                cvv: cvv,
+                status: 'active',
+                issuedAt: new Date(), // using client date for transaction object, Firestore will convert or we can use generic object if strictly needed for specific fields avoiding serverTimestamp inside object if not top level
+                issuedBy: adminName
+            };
+
+            // We need to use set() for custom ID or doc() with collection
+            transaction.set(cardRef, {
+                ...newCard,
+                issuedAt: serverTimestamp(),
+                expiryDate: expiryDate // Keep Date object, Firestore handles it
+            });
+
             // Optional: Add notification for customer
             const notifRef = doc(collection(db, 'notifications'));
             transaction.set(notifRef, {
@@ -109,7 +141,7 @@ export async function approveMembership(requestId: string, adminName: string = '
                 userType: 'customer',
                 type: 'system',
                 title: 'Membership Approved!',
-                message: `Congratulations! Your membership request has been approved. Your Member ID is ${newMembershipId}.`,
+                message: `Congratulations! Your membership request has been approved. Your Member ID is ${newMembershipId}. Your Virtual Card is now active in your wallet.`,
                 isRead: false,
                 createdAt: serverTimestamp()
             });

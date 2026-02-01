@@ -11,9 +11,16 @@ export interface Customer {
   updatedAt?: Date;
   orders?: string[];
   favorites?: string[]; // Array of MenuItem Ids
+  favoriteRestaurants?: string[]; // Array of Restaurant Ids
   walletBalance?: number;
   membershipId?: string;
   membershipStatus?: 'none' | 'pending' | 'approved' | 'rejected';
+  bankDetails?: {
+    bankName: string;
+    accountNumber: string;
+    ifscCode: string;
+    accountHolderName: string;
+  };
 }
 
 export interface Address {
@@ -473,6 +480,12 @@ export interface MembershipRequest {
   rejectedAt?: Date;
   rejectionReason?: string;
   address?: Address; // Optional snapshot of address
+  bankDetails?: {
+    bankName: string;
+    accountNumber: string;
+    ifscCode: string;
+    accountHolderName: string;
+  };
 }
 
 export interface Cart {
@@ -480,4 +493,16 @@ export interface Cart {
   subtotal: number;
   deliveryFee: number;
   total: number;
+}
+
+export interface IssuedCard {
+  id: string;
+  customerId: string;
+  customerName: string;
+  cardNumber: string;
+  expiryDate: Date;
+  cvv: string;
+  status: 'active' | 'blocked' | 'expired';
+  issuedAt: Date;
+  issuedBy?: string;
 }
