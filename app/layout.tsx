@@ -13,8 +13,17 @@ const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'AKR Hunger Food - Food Delivery',
-  description: 'Order food online from your favorite restaurants with AKR Hunger Food',
+  title: 'AKR Hunger - Food Delivery, Restaurant & Delivery Partner Platform',
+  description: 'AKR Hunger connects customers, restaurants, and delivery partners. Order food online, grow your restaurant business, or earn as a delivery partner.',
+  keywords: [
+    'AKR Hunger',
+    'food delivery',
+    'restaurant partner',
+    'delivery partner',
+    'order food online',
+    'food delivery platform',
+  ],
+  metadataBase: new URL('https://akrhunger.vercel.app'),
   generator: 'v0.app',
   icons: {
     icon: '/akrhunger.png',

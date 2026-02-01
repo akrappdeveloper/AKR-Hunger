@@ -1,8 +1,47 @@
 import React from "react"
 import CustomerNavbar from '@/components/customer/CustomerNavbar';
 import CustomerMobileNav from '@/components/customer/MobileNav';
+import { Metadata } from 'next';
+import { generateFoodDeliverySchema, generateWebSiteSchema, generateOrganizationSchema } from '@/lib/seo/schemas';
 
-export const metadata = {
+export const metadata: Metadata = {
+  title: 'AKR Hunger - Order Food Online | Fast Delivery from Best Restaurants',
+  description: 'Order delicious food online from your favorite restaurants with AKR Hunger. Fast delivery, great prices, wide selection of cuisines. Download now!',
+  keywords: [
+    'food delivery',
+    'order food online',
+    'AKR Hunger',
+    'restaurant delivery',
+    'online food order',
+    'food delivery app',
+    'fast food delivery',
+    'best restaurants near me',
+  ],
+  alternates: {
+    canonical: 'https://akrhunger.vercel.app/customer',
+  },
+  openGraph: {
+    type: 'website',
+    locale: 'en_IN',
+    url: 'https://akrhunger.vercel.app/customer',
+    title: 'AKR Hunger - Order Food Online | Fast Delivery',
+    description: 'Order delicious food online from your favorite restaurants. Fast delivery, great prices, wide selection.',
+    siteName: 'AKR Hunger',
+    images: [
+      {
+        url: 'https://akrhunger.vercel.app/akrhunger.png',
+        width: 1200,
+        height: 630,
+        alt: 'AKR Hunger Food Delivery',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'AKR Hunger - Order Food Online | Fast Delivery',
+    description: 'Order delicious food online from your favorite restaurants',
+    images: ['https://akrhunger.vercel.app/akrhunger.png'],
+  },
   verification: {
     google: "K8s0MzX1Az9Dc3Mh9SeLVJFVcqQH_LsLdlXgWLhbvHw",
   },
@@ -13,11 +52,29 @@ export default function CustomerLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const organizationSchema = generateOrganizationSchema();
+  const websiteSchema = generateWebSiteSchema();
+  const foodDeliverySchema = generateFoodDeliverySchema();
+
   return (
     <div className="min-h-screen bg-black text-white selection:bg-blue-500/30">
       <CustomerNavbar />
       <main className="pt-0 mb-16 md:mb-0">{children}</main>
       <CustomerMobileNav />
+
+      {/* JSON-LD Schema for SEO */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(foodDeliverySchema) }}
+      />
     </div>
   );
 }

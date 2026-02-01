@@ -12,20 +12,24 @@ export default function sitemap(): MetadataRoute.Sitemap {
             priority: 1,
         },
 
-        // Sub-sitemaps
+        // Sub-sitemaps for each panel
         {
             url: `${baseUrl}/customer/sitemap.xml`,
             lastModified: new Date(),
             changeFrequency: 'daily',
             priority: 1,
         },
-
-        // Restaurant Pages
-        { url: `${baseUrl}/restaurant/menu`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.8 },
-        { url: `${baseUrl}/restaurant/quality`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.8 },
-        { url: `${baseUrl}/restaurant/reviews`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.8 },
-
-        // Delivery Pages
-        { url: `${baseUrl}/delivery/register`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.8 },
+        {
+            url: `${baseUrl}/restaurant/sitemap.xml`,
+            lastModified: new Date(),
+            changeFrequency: 'daily',
+            priority: 1,
+        },
+        {
+            url: `${baseUrl}/delivery/sitemap.xml`,
+            lastModified: new Date(),
+            changeFrequency: 'daily',
+            priority: 1,
+        },
     ]
 }
