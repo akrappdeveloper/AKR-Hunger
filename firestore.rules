@@ -31,10 +31,10 @@ service cloud.firestore {
       );
     }
 
-    // Customer profiles - users can read/write their own + allow email validation queries
+    // Customer profiles - Public read for reviews (name/avatar), Write: Owner only
     match /customers/{customerId} {
-      allow read: if request.auth.uid == customerId || isAdmin(request.auth.uid);
-      allow list: if true; // Allow queries for email validation during signup
+      allow read: if true; // Allow public read for reviews/profiles
+      allow list: if true;
       allow create: if request.auth.uid != null && request.auth.uid == customerId;
       allow update, delete: if request.auth.uid == customerId || isAdmin(request.auth.uid);
     }

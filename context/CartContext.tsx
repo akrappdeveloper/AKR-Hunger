@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import { CartItem } from '@/lib/types';
+import { CartItem, Address } from '@/lib/types';
 import { useAuth } from '@/context/AuthContext';
 import { db } from '@/lib/firebase';
 import { doc, getDoc, updateDoc, setDoc, onSnapshot } from 'firebase/firestore';
@@ -9,11 +9,14 @@ import { doc, getDoc, updateDoc, setDoc, onSnapshot } from 'firebase/firestore';
 interface CartContextType {
   items: CartItem[];
   restaurantId: string | null;
+  deliveryAddress: Address | null;
+  setDeliveryAddress: (address: Address | null) => void;
   addItem: (item: CartItem) => void;
   removeItem: (itemId: string) => void;
   updateQuantity: (itemId: string, quantity: number) => void;
   clearCart: () => void;
   getSubtotal: () => number;
+  total: number;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -22,6 +25,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const { user, customer } = useAuth();
   const [items, setItems] = useState<CartItem[]>([]);
   const [restaurantId, setRestaurantId] = useState<string | null>(null);
+  const [deliveryAddress, setDeliveryAddressState] = useState<Address | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
 
   // 1. Load from Firestore on mount/user change
@@ -51,22 +55,54 @@ export function CartProvider({ children }: { children: ReactNode }) {
           // Let's use a simpler strategy for this task:
           // Load once on mount.
           // Save on change.
-          if (!isLoaded) { // Only force load on first connect to avoid overwriting user active work
+          if (!isLoaded) { // Only force load on first connect
             setItems(data.cartItems as CartItem[] || []);
             if (data.cartRestaurantId) setRestaurantId(data.cartRestaurantId);
+
+            // Address Initialization Logic
+            const savedAddress = localStorage.getItem('deliveryAddress');
+            let initialAddress = null;
+
+            if (savedAddress) {
+              initialAddress = JSON.parse(savedAddress);
+            }
+
+            // If no saved address or it's invalid, fallback to profile default
+            if (!initialAddress && data.addresses && data.addresses.length > 0) {
+              initialAddress = data.addresses.find((a: any) => a.isDefault) || data.addresses[0];
+            }
+
+            if (initialAddress) {
+              setDeliveryAddressState(initialAddress);
+              // Ensure local storage is synced if we fell back to default
+              if (!savedAddress) {
+                localStorage.setItem('deliveryAddress', JSON.stringify(initialAddress));
+              }
+            }
+
             setIsLoaded(true);
           }
         } else {
+          // No cart items, but check address
+          if (!deliveryAddress && data.addresses && data.addresses.length > 0) {
+            const savedAddress = localStorage.getItem('deliveryAddress');
+            if (savedAddress) {
+              setDeliveryAddressState(JSON.parse(savedAddress));
+            } else {
+              const defaultAddr = data.addresses.find((a: any) => a.isDefault) || data.addresses[0];
+              setDeliveryAddressState(defaultAddr);
+              localStorage.setItem('deliveryAddress', JSON.stringify(defaultAddr));
+            }
+          }
           setIsLoaded(true);
         }
       } else {
-        // Document doesn't exist (e.g. restaurant user or new customer)
         setIsLoaded(true);
       }
     });
 
     return () => unsub();
-  }, [user, isLoaded]); // Added isLoaded to dependencies to allow re-checking? No.
+  }, [user, isLoaded]); // dependencies
 
   // 2. Save to Firestore on change
   useEffect(() => {
@@ -87,6 +123,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
     const timeout = setTimeout(saveCart, 1000); // 1s debounce
     return () => clearTimeout(timeout);
   }, [items, restaurantId, user, isLoaded, customer]);
+
+  const setDeliveryAddress = useCallback((address: Address | null) => {
+    setDeliveryAddressState(address);
+    if (address) {
+      localStorage.setItem('deliveryAddress', JSON.stringify(address));
+    } else {
+      localStorage.removeItem('deliveryAddress');
+    }
+  }, []);
 
   const addItem = useCallback((item: CartItem) => {
     setItems((prevItems) => {
@@ -146,11 +191,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
       value={{
         items,
         restaurantId,
+        deliveryAddress,
+        setDeliveryAddress,
         addItem,
         removeItem,
         updateQuantity,
         clearCart,
         getSubtotal,
+        total: getSubtotal(),
       }}
     >
       {children}

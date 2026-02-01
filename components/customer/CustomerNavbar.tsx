@@ -16,7 +16,7 @@ import {
   DropdownMenuSeparator, DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
 import {
   Dialog,
   DialogContent,
@@ -34,22 +34,20 @@ export default function CustomerNavbar() {
   const router = useRouter();
   const pathname = usePathname();
   const { user, customer, logout } = useAuth();
-  const { items } = useCart();
+  const { items, deliveryAddress, setDeliveryAddress } = useCart();
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
 
   const [isScrolled, setIsScrolled] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isAddressDialogOpen, setIsAddressDialogOpen] = useState(false);
-  const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
 
-  // Set initial address from profile
+  // Auto-select default address
   useEffect(() => {
-    if (customer?.addresses && customer.addresses.length > 0) {
-      // Try to find default or pick first
+    if (!deliveryAddress && customer?.addresses && customer.addresses.length > 0) {
       const defaultAddr = customer.addresses.find(a => a.isDefault) || customer.addresses[0];
-      setSelectedAddress(defaultAddr);
+      setDeliveryAddress(defaultAddr);
     }
-  }, [customer]);
+  }, [customer, deliveryAddress, setDeliveryAddress]);
 
   // Handle scroll effect
   useEffect(() => {
@@ -77,10 +75,8 @@ export default function CustomerNavbar() {
   };
 
   const handleSelectAddress = async (address: Address) => {
-    setSelectedAddress(address);
+    setDeliveryAddress(address);
     setIsAddressDialogOpen(false);
-    // Optionally update backend if we want to persist "current session address" logic
-    // For now, local state is fine for UI, but context might be better for Cart.
     toast.success(`Location set to ${address.type}`);
   };
 
@@ -110,12 +106,14 @@ export default function CustomerNavbar() {
             {/* Location Selector Dialog */}
             <Dialog open={isAddressDialogOpen} onOpenChange={setIsAddressDialogOpen}>
               <DialogTrigger asChild>
-                <button className="hidden md:flex flex-col items-start text-left cursor-pointer hover:bg-white/5 p-2 rounded-lg transition-colors group">
-                  <span className="text-[10px] text-orange-500 font-bold uppercase tracking-wider flex items-center gap-1 group-hover:text-orange-400">
+                <button className="flex flex-col items-start text-left cursor-pointer hover:bg-white/5 p-1 md:p-2 rounded-lg transition-colors group max-w-[140px] md:max-w-[200px]">
+                  <span className="hidden md:flex text-[10px] text-orange-500 font-bold uppercase tracking-wider items-center gap-1 group-hover:text-orange-400">
                     <MapPin className="w-3 h-3" /> Delivery Location
                   </span>
-                  <span className="text-sm font-bold text-gray-200 flex items-center gap-1 group-hover:text-white truncate max-w-[200px]">
-                    {selectedAddress ? `${selectedAddress.street}, ${selectedAddress.city}` : 'Select Location'} <ChevronDown className="w-3 h-3 text-gray-500" />
+                  <span className="text-xs md:text-sm font-bold text-gray-200 flex items-center gap-1 group-hover:text-white truncate w-full">
+                    <MapPin className="w-3 h-3 md:hidden text-orange-500 flex-shrink-0" />
+                    <span className="truncate">{deliveryAddress ? `${deliveryAddress.street}, ${deliveryAddress.city}` : 'Select Location'}</span>
+                    <ChevronDown className="w-3 h-3 text-gray-500 flex-shrink-0" />
                   </span>
                 </button>
               </DialogTrigger>
@@ -132,12 +130,12 @@ export default function CustomerNavbar() {
                       <div
                         key={addr.id}
                         onClick={() => handleSelectAddress(addr)}
-                        className={`p-4 rounded-xl border cursor-pointer transition-all flex items-center gap-3 ${selectedAddress?.id === addr.id ? 'bg-orange-900/20 border-orange-500/50' : 'bg-gray-800/50 border-gray-700 hover:bg-gray-800'}`}
+                        className={`p-4 rounded-xl border cursor-pointer transition-all flex items-center gap-3 ${deliveryAddress?.id === addr.id ? 'bg-orange-900/20 border-orange-500/50' : 'bg-gray-800/50 border-gray-700 hover:bg-gray-800'}`}
                       >
-                        <div className={`p-2 rounded-full ${addr.type === 'Home' ? 'bg-blue-500/20 text-blue-400' : addr.type === 'Work' ? 'bg-purple-500/20 text-purple-400' : 'bg-gray-700 text-gray-400'}`}>
-                          {addr.type === 'Home' && <Home className="w-4 h-4" />}
-                          {addr.type === 'Work' && <Briefcase className="w-4 h-4" />}
-                          {addr.type === 'Other' && <MapPin className="w-4 h-4" />}
+                        <div className={`p-2 rounded-full ${addr.type === 'home' ? 'bg-blue-500/20 text-blue-400' : addr.type === 'work' ? 'bg-purple-500/20 text-purple-400' : 'bg-gray-700 text-gray-400'}`}>
+                          {addr.type === 'home' && <Home className="w-4 h-4" />}
+                          {addr.type === 'work' && <Briefcase className="w-4 h-4" />}
+                          {addr.type === 'other' && <MapPin className="w-4 h-4" />}
                         </div>
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
@@ -146,7 +144,7 @@ export default function CustomerNavbar() {
                           </div>
                           <p className="text-xs text-gray-400 line-clamp-1">{addr.street}, {addr.city}</p>
                         </div>
-                        {selectedAddress?.id === addr.id && <div className="w-3 h-3 bg-orange-500 rounded-full" />}
+                        {deliveryAddress?.id === addr.id && <div className="w-3 h-3 bg-orange-500 rounded-full" />}
                       </div>
                     ))
                   ) : (
@@ -270,15 +268,26 @@ export default function CustomerNavbar() {
               <SheetContent side="right" className="w-[300px] border-l-gray-800 bg-black text-white p-0">
                 {/* Checking Auth State in Sidebar */}
                 <div className="flex flex-col h-full bg-black">
+                  {/* Accessibility Fix: SheetTitle is required */}
+                  <div className="sr-only">
+                    <SheetTitle>Mobile Menu</SheetTitle>
+                  </div>
+
                   <div className="p-6 border-b border-gray-800 bg-gray-900/50">
                     {user ? (
                       <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-full flex items-center justify-center text-white text-lg font-bold shadow-lg shadow-blue-900/20">
-                          {user.email?.[0].toUpperCase()}
+                        <div className="w-12 h-12 rounded-full flex items-center justify-center text-white text-lg font-bold shadow-lg shadow-blue-900/20 overflow-hidden bg-gray-800 border-2 border-white/10">
+                          {customer?.avatar ? (
+                            <img src={customer.avatar} alt="Profile" className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center bg-gradient-to-tr from-blue-600 to-indigo-600">
+                              {user.displayName?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase()}
+                            </div>
+                          )}
                         </div>
-                        <div>
-                          <h3 className="font-bold text-lg">{user.displayName || 'User'}</h3>
-                          <p className="text-xs text-gray-500">{user.email}</p>
+                        <div className="overflow-hidden">
+                          <h3 className="font-bold text-lg text-white truncate">{customer?.name || user.displayName || 'User'}</h3>
+                          <p className="text-xs text-gray-500 truncate">{user.email}</p>
                         </div>
                       </div>
                     ) : (

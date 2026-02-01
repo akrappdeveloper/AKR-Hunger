@@ -300,6 +300,32 @@ export default function ProfilePage() {
     }
   };
 
+  const handleSetDefault = async (addressId: string) => {
+    if (!profile || !profile.addresses) return;
+
+    // Optimistic update
+    const updatedAddresses = profile.addresses.map(addr => ({
+      ...addr,
+      isDefault: addr.id === addressId
+    }));
+    setProfile({ ...profile, addresses: updatedAddresses });
+
+    try {
+      await updateDoc(doc(db, 'customers', user!.uid), {
+        addresses: updatedAddresses
+      });
+      toast.success("Default address updated");
+      // Also update local storage if this matches current logic
+      const newDefault = updatedAddresses.find(a => a.id === addressId);
+      if (newDefault) {
+        localStorage.setItem('deliveryAddress', JSON.stringify(newDefault));
+      }
+    } catch (error) {
+      console.error("Error setting default:", error);
+      toast.error("Failed to update default address");
+    }
+  };
+
 
   if (loading && !profile) { // Modified loading check
     return (
@@ -541,6 +567,11 @@ export default function ProfilePage() {
                         </div>
                       </div>
                       <div className="flex gap-2">
+                        {!addr.isDefault && (
+                          <Button variant="ghost" size="icon" onClick={() => handleSetDefault(addr.id)} className="text-gray-600 hover:text-yellow-500 hover:bg-yellow-500/10" title="Set as Default">
+                            <CheckCircle2 className="w-4 h-4" />
+                          </Button>
+                        )}
                         <Button variant="ghost" size="icon" onClick={() => openEditAddress(addr)} className="text-gray-400 hover:text-blue-500 hover:bg-blue-500/10">
                           <Edit2 className="w-4 h-4" />
                         </Button>

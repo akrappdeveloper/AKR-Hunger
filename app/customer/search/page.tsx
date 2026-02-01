@@ -131,8 +131,8 @@ export default function SearchPage() {
                                         key={tab}
                                         onClick={() => setActiveTab(tab as any)}
                                         className={`px-4 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${activeTab === tab
-                                                ? 'bg-gray-800 text-white shadow-lg'
-                                                : 'text-gray-500 hover:text-gray-300'
+                                            ? 'bg-gray-800 text-white shadow-lg'
+                                            : 'text-gray-500 hover:text-gray-300'
                                             }`}
                                     >
                                         {tab}
@@ -146,9 +146,17 @@ export default function SearchPage() {
                                 <Link key={item.id} href={`/customer/product/${item.id}`} className="group block">
                                     <div className="flex p-4 rounded-3xl bg-gray-900/40 border border-white/5 hover:bg-gray-900/80 hover:border-orange-500/30 transition-all duration-300 relative overflow-hidden backdrop-blur-md">
 
+                                        import SafeImage from '@/components/ui/safe-image'; // Add to imports
+
+                                        // ...
                                         {/* Image */}
                                         <div className="w-28 h-28 flex-shrink-0 rounded-2xl overflow-hidden relative">
-                                            <img src={item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                                            <SafeImage
+                                                src={item.image}
+                                                alt={item.name}
+                                                className="bg-gray-800 object-cover group-hover:scale-105 transition-transform duration-500"
+                                                fill
+                                            />
                                             <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors" />
                                         </div>
 

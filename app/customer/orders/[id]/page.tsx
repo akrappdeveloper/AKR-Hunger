@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
+import SafeImage from '@/components/ui/safe-image';
 
 const orderStatusSteps = [
   { key: 'pending', label: 'Order Confirmed', icon: ShoppingBag, description: 'We have received your order.' },
@@ -257,7 +258,7 @@ export default function OrderTrackingPage() {
               <div className="bg-gray-900/40 backdrop-blur-md border border-white/5 rounded-3xl p-6 flex flex-col sm:flex-row items-center gap-6">
                 <div className="w-16 h-16 rounded-full bg-gray-800 relative overflow-hidden border-2 border-green-500 shadow-lg shadow-green-900/20">
                   {deliveryPerson.avatar ? (
-                    <img src={deliveryPerson.avatar} alt={deliveryPerson.name} className="w-full h-full object-cover" />
+                    <SafeImage src={deliveryPerson.avatar} alt={deliveryPerson.name} className="object-cover" fallbackType="avatar" fill />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center bg-gray-700 text-gray-400 text-xl font-bold">
                       {deliveryPerson.name[0]}
@@ -314,7 +315,7 @@ export default function OrderTrackingPage() {
                 {order.items?.map((item, idx) => (
                   <div key={`${item.menuItemId}-${idx}`} className="flex gap-4 items-center">
                     <div className="w-16 h-16 rounded-xl bg-gray-800 relative overflow-hidden border border-white/5 flex-shrink-0">
-                      <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                      <SafeImage src={item.image} alt={item.name} className="object-cover" fill />
                     </div>
                     <div className="flex-1">
                       <h4 className="font-bold text-gray-200">{item.name}</h4>
@@ -361,8 +362,8 @@ export default function OrderTrackingPage() {
                 </h3>
                 <div className="space-y-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-xl bg-gray-800 overflow-hidden border border-white/5">
-                      <img src={restaurant.image} alt={restaurant.name} className="w-full h-full object-cover" />
+                    <div className="w-12 h-12 rounded-xl bg-gray-800 overflow-hidden border border-white/5 relative">
+                      <SafeImage src={restaurant.image} alt={restaurant.name} className="object-cover" fill />
                     </div>
                     <div>
                       <h4 className="font-bold text-white">{restaurant.name}</h4>

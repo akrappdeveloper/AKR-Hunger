@@ -2,21 +2,30 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import Image from 'next/image';
+import SafeImage from '@/components/ui/safe-image';
 import { Restaurant, MenuItem, CartItem } from '@/lib/types';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Star, Clock, MapPin, ArrowLeft, Heart, Search, Share2, Plus, Minus, CheckCircle, Info, ShoppingBag, AlertTriangle } from 'lucide-react';
+import { Star, Clock, MapPin, ArrowLeft, Heart, Search, Share2, Plus, Minus, CheckCircle, Info, ShoppingBag, AlertTriangle, X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
+import { Switch } from '@/components/ui/switch';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogClose
+} from '@/components/ui/dialog';
 
 export default function RestaurantPage() {
   const params = useParams();
   const router = useRouter();
-  const { addItem, items: cartItems, total } = useCart();
+  const { addItem, items: cartItems, removeItem, updateQuantity, total } = useCart();
   const { user } = useAuth();
   const restaurantId = params.id as string;
 
@@ -28,9 +37,15 @@ export default function RestaurantPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isHeaderSticky, setIsHeaderSticky] = useState(false);
   const [isServiceable, setIsServiceable] = useState(true);
+
+  // New State for Advanced Features
+  const [activeFilter, setActiveFilter] = useState<'all' | 'veg' | 'non-veg'>('all');
+  const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   const categoryRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
-  // Custom scroll listener for sticky header effect
+  // ... (scroll listener stays same)
   useEffect(() => {
     const handleScroll = () => {
       // Header stickiness
@@ -56,6 +71,7 @@ export default function RestaurantPage() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [categories]);
 
+  // ... (fetch logic stays same)
   useEffect(() => {
     const fetchRestaurantData = async () => {
       try {
@@ -119,7 +135,9 @@ export default function RestaurantPage() {
       .reduce((sum, item) => sum + item.quantity, 0);
   };
 
-  const handleAddToCart = (item: MenuItem) => {
+  const handleAddToCart = (item: MenuItem, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation(); // Prevent opening modal when clicking Add
+
     if (!isServiceable) {
       toast.error("Sorry, this restaurant does not deliver to your location.");
       return;
@@ -134,14 +152,26 @@ export default function RestaurantPage() {
       image: item.image,
       addedAt: new Date(),
     });
-    // Create a smooth flying animation effect conceptually (toast for now)
     toast.success(`Added ${item.name} to cart`);
   };
 
-  const filteredItems = menuItems.filter(item =>
-    item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.description?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const openItemModal = (item: MenuItem) => {
+    setSelectedItem(item);
+    setIsModalOpen(true);
+  };
+
+  const filteredItems = menuItems.filter(item => {
+    const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.description?.toLowerCase().includes(searchQuery.toLowerCase());
+
+    const matchesFilter = activeFilter === 'all'
+      ? true
+      : activeFilter === 'veg'
+        ? item.vegetarian
+        : !item.vegetarian; // 'non-veg'
+
+    return matchesSearch && matchesFilter;
+  });
 
   if (loading) {
     return (
@@ -184,34 +214,59 @@ export default function RestaurantPage() {
           </div>
         </div>
 
-        {/* Sticky Category Bar */}
+        {/* Sticky Category Bar with Filters */}
         <div className={`mt-2 overflow-x-auto scrollbar-hide transition-all duration-500 ease-in-out ${isHeaderSticky ? 'opacity-100 max-h-20 translate-y-0' : 'opacity-0 max-h-0 -translate-y-4 pointer-events-none'}`}>
-          <div className="max-w-7xl mx-auto px-4 flex gap-3 pb-3 pt-1">
-            {categories.map((cat) => (
-              <button
-                key={cat}
-                onClick={() => scrollToCategory(cat)}
-                className={`text-sm font-semibold whitespace-nowrap px-5 py-2 rounded-full transition-all duration-300 shadow-lg ${activeCategory === cat ? 'bg-white text-black scale-105 shadow-white/10' : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'}`}
-              >
-                {cat}
-              </button>
-            ))}
+          <div className="max-w-7xl mx-auto px-4 flex items-center justify-between pb-3 pt-1 gap-4">
+
+            {/* Filters (Sticky) */}
+            <div className="flex gap-2 flex-shrink-0">
+              <div className="bg-black/40 backdrop-blur-md rounded-full p-1 border border-white/10 flex items-center">
+                <button
+                  onClick={() => setActiveFilter('veg')}
+                  className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${activeFilter === 'veg' ? 'bg-green-600 text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
+                  title="Veg Only"
+                >
+                  <div className="w-2.5 h-2.5 bg-green-400 rounded-full border border-green-200/50" />
+                </button>
+                <button
+                  onClick={() => setActiveFilter('non-veg')}
+                  className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${activeFilter === 'non-veg' ? 'bg-red-600 text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
+                  title="Non-Veg Only"
+                >
+                  <div className="w-2.5 h-2.5 bg-red-400 rounded-full border border-red-200/50" />
+                </button>
+                {activeFilter !== 'all' && (
+                  <button onClick={() => setActiveFilter('all')} className="ml-2 text-[10px] font-bold text-gray-400 hover:text-white uppercase px-1">Clear</button>
+                )}
+              </div>
+            </div>
+
+            <div className="flex gap-3 overflow-x-auto scrollbar-hide">
+              {categories.map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => scrollToCategory(cat)}
+                  className={`text-sm font-semibold whitespace-nowrap px-5 py-2 rounded-full transition-all duration-300 shadow-lg ${activeCategory === cat ? 'bg-white text-black scale-105 shadow-white/10' : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'}`}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </div>
 
-      {/* 2. Hero Section */}
-      <div className="relative w-full h-[400px] md:h-[500px] group">
-        <Image
-          src={restaurant.image || "/placeholder.svg"}
-          alt={restaurant.name}
-          fill
-          className="object-cover transition-transform duration-700 group-hover:scale-105"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-black/60 to-black/30" />
+      {/* 2. Hero Section - Redesigned without Background Image */}
+      <div className="relative w-full h-[350px] md:h-[450px] group bg-gradient-to-br from-gray-900 via-black to-gray-950 overflow-hidden">
+        {/* Ambient Background Effects */}
+        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-orange-600/5 rounded-full blur-[120px] pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-blue-600/5 rounded-full blur-[120px] pointer-events-none" />
+
+        {/* Pattern Overlay */}
+        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5 pointer-events-none" />
 
         {/* Info Card - Overlay */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 pb-12 z-10">
+        <div className="absolute bottom-0 left-0 right-0 p-4 pb-8 z-10">
           <div className="max-w-4xl mx-auto">
             <div className="bg-white/5 backdrop-blur-2xl border border-white/10 rounded-[2rem] p-6 md:p-8 shadow-2xl relative overflow-hidden group hover:bg-white/10 transition-all duration-500">
               {/* Glow Effect */}
@@ -219,15 +274,30 @@ export default function RestaurantPage() {
 
               <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
                 <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-3">
-                    <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight">{restaurant.name}</h1>
-                    <div className="bg-green-600/90 backdrop-blur text-white px-3 py-1 rounded-xl text-sm font-bold flex items-center gap-1 shadow-lg shadow-green-900/30">
-                      {(restaurant.rating || restaurant.averageRating || 4.2).toFixed(1)} <Star className="w-3.5 h-3.5 fill-white" />
+                  <div className="flex flex-col md:flex-row md:items-center gap-6 mb-4">
+                    {/* Restaurant Logo */}
+                    <div className="w-20 h-20 md:w-24 md:h-24 rounded-2xl overflow-hidden border-2 border-white/20 shadow-2xl bg-black flex-shrink-0 relative">
+                      <SafeImage
+                        src={restaurant.image}
+                        alt={restaurant.name}
+                        fallbackType="restaurant"
+                        className="object-cover"
+                        fill
+                      />
+                    </div>
+
+                    <div className="animate-in slide-in-from-bottom-8 fade-in duration-700 delay-100 fill-mode-forwards">
+                      <div className="flex items-center gap-3 mb-1">
+                        <h1 className="text-2xl md:text-5xl font-black text-white tracking-tight break-words">{restaurant.name}</h1>
+                        <div className="bg-green-600/90 backdrop-blur text-white px-3 py-1 rounded-xl text-sm font-bold flex items-center gap-1 shadow-lg shadow-green-900/30">
+                          {(restaurant.rating || restaurant.averageRating || 4.2).toFixed(1)} <Star className="w-3.5 h-3.5 fill-white" />
+                        </div>
+                      </div>
+                      <p className="text-gray-300 text-sm md:text-base font-medium line-clamp-2 max-w-xl">{restaurant.description || 'Experience the finest culinary delights crafted with passion and served with love.'}</p>
                     </div>
                   </div>
-                  <p className="text-gray-300 text-base mb-6 font-medium line-clamp-2 max-w-2xl">{restaurant.description || 'Experience the finest culinary delights crafted with passion and served with love.'}</p>
 
-                  <div className="flex flex-wrap items-center gap-4 md:gap-8 text-sm font-semibold text-gray-300">
+                  <div className="flex flex-wrap items-center gap-4 md:gap-8 text-sm font-semibold text-gray-300 animate-in slide-in-from-bottom-8 fade-in duration-700 delay-200 fill-mode-forwards">
                     <div className="flex items-center gap-2 bg-black/30 px-3 py-1.5 rounded-lg border border-white/5">
                       <Clock className="w-4 h-4 text-orange-400" />
                       <span>{restaurant.deliveryTime || '30-40'} mins</span>
@@ -274,7 +344,35 @@ export default function RestaurantPage() {
         {/* Categories (Static - visible when header not sticky) */}
         {!isHeaderSticky && (
           <div className="mb-12">
-            <h3 className="text-lg font-bold text-gray-400 mb-4 uppercase tracking-wider text-xs px-2">Browse Menu</h3>
+            {/* Filters & Search */}
+            <div className="flex flex-col md:flex-row gap-4 justify-between items-center mb-8">
+              <h3 className="text-lg font-bold text-gray-400 uppercase tracking-wider text-xs px-2 self-start md:self-auto">Browse Menu</h3>
+
+              <div className="flex gap-4 w-full md:w-auto overflow-x-auto scrollbar-hide pb-2 md:pb-0">
+                {/* Veg Toggle */}
+                <div
+                  onClick={() => setActiveFilter(activeFilter === 'veg' ? 'all' : 'veg')}
+                  className={`cursor-pointer px-4 py-2 rounded-xl border transition-all flex items-center gap-2 whitespace-nowrap ${activeFilter === 'veg' ? 'bg-green-500/10 border-green-500 text-green-500' : 'bg-gray-900 border-white/5 text-gray-400 hover:border-white/20'}`}
+                >
+                  <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${activeFilter === 'veg' ? 'border-green-500' : 'border-gray-500'}`}>
+                    <div className={`w-2 h-2 rounded-full ${activeFilter === 'veg' ? 'bg-green-500' : 'bg-gray-500'}`} />
+                  </div>
+                  <span className="font-bold text-sm">Veg Only</span>
+                </div>
+
+                {/* Non-Veg Toggle */}
+                <div
+                  onClick={() => setActiveFilter(activeFilter === 'non-veg' ? 'all' : 'non-veg')}
+                  className={`cursor-pointer px-4 py-2 rounded-xl border transition-all flex items-center gap-2 whitespace-nowrap ${activeFilter === 'non-veg' ? 'bg-red-500/10 border-red-500 text-red-500' : 'bg-gray-900 border-white/5 text-gray-400 hover:border-white/20'}`}
+                >
+                  <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${activeFilter === 'non-veg' ? 'border-red-500' : 'border-gray-500'}`}>
+                    <div className={`w-2 h-2 rounded-full ${activeFilter === 'non-veg' ? 'bg-red-500' : 'bg-gray-500'}`} />
+                  </div>
+                  <span className="font-bold text-sm">Non-Veg</span>
+                </div>
+              </div>
+            </div>
+
             <div className="flex gap-4 overflow-x-auto pb-6 scrollbar-hide snap-x">
               {categories.map((cat) => (
                 <button
@@ -305,8 +403,13 @@ export default function RestaurantPage() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {categoryItems.map(item => (
-                    <div key={item.id} className={`group relative bg-[#111] border border-white/5 hover:border-white/10 rounded-2xl p-4 transition-all duration-300 hover:bg-[#161616] hover:shadow-2xl hover:shadow-black/50 flex gap-4 ${!isServiceable ? 'opacity-50 grayscale-[0.5]' : ''}`}>
+                  {categoryItems.map((item, index) => (
+                    <div
+                      key={item.id}
+                      className={`group relative bg-[#111] border border-white/5 hover:border-white/10 rounded-2xl p-4 transition-all duration-300 hover:bg-[#161616] hover:shadow-2xl hover:shadow-black/50 flex gap-4 ${!isServiceable ? 'opacity-50 grayscale-[0.5]' : ''} animate-in fade-in zoom-in-95 duration-500 cursor-pointer`}
+                      style={{ animationDelay: `${index * 50}ms` }}
+                      onClick={() => openItemModal(item)}
+                    >
 
                       {/* Text Info */}
                       <div className="flex-1 flex flex-col">
@@ -329,7 +432,7 @@ export default function RestaurantPage() {
                           </div>
                         </div>
 
-                        <h3 className="font-bold text-gray-100 text-lg leading-tight mb-1 group-hover:text-orange-400 transition-colors">{item.name}</h3>
+                        <h3 className="font-bold text-gray-100 text-lg leading-tight mb-1 group-hover:text-orange-400 transition-colors line-clamp-2">{item.name}</h3>
                         <div className="font-bold text-white text-lg mb-2">₹{item.price}</div>
 
                         <p className="text-sm text-gray-500 line-clamp-2 mb-3 flex-1">{item.description}</p>
@@ -347,30 +450,46 @@ export default function RestaurantPage() {
                       {/* Image & Add Button */}
                       <div className="relative w-32 h-32 md:w-40 md:h-40 flex-shrink-0">
                         <div className="w-full h-full rounded-xl overflow-hidden bg-gray-900 shadow-inner relative">
-                          <Image
+                          <SafeImage
                             src={item.image}
                             alt={item.name}
                             fill
                             className="object-cover group-hover:scale-110 transition-transform duration-700"
+                            fallbackType="food"
                           />
                         </div>
 
-                        <div className="absolute -bottom-4 left-1/2 transform -translate-x-1/2 w-full flex justify-center drops-shadow-xl z-10">
+                        <div className="absolute -bottom-4 left-1/2 transform -translate-x-1/2 w-full flex justify-center drops-shadow-xl z-10 transition-transform duration-300 group-hover:-translate-y-1" onClick={(e) => e.stopPropagation()}>
                           {getQuantityInCart(item.id) > 0 ? (
                             <div className="flex items-center bg-gray-900 border border-gray-700 rounded-xl shadow-xl overflow-hidden h-9">
-                              <button className="px-3 hover:bg-gray-800 text-white transition-colors" onClick={() => {/* Decrease logic */ }} disabled={!isServiceable}>
+                              {/* Decrease Logic Implemented */}
+                              <button
+                                className="px-3 hover:bg-gray-800 text-white transition-colors"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  const currentQty = getQuantityInCart(item.id);
+                                  const cartItem = cartItems.find(ci => ci.menuItemId === item.id);
+                                  if (currentQty === 1 && cartItem) removeItem(cartItem.menuItemId);
+                                  else if (cartItem) updateQuantity(cartItem.menuItemId, currentQty - 1);
+                                }}
+                                disabled={!isServiceable}
+                              >
                                 <Minus className="w-3.5 h-3.5" />
                               </button>
-                              <span className="text-green-500 font-bold px-2 text-sm">{getQuantityInCart(item.id)}</span>
-                              <button className="px-3 hover:bg-gray-800 text-white transition-colors" onClick={() => handleAddToCart(item)} disabled={!isServiceable}>
+                              <span className="text-green-500 font-bold px-2 text-sm tabular-nums">{getQuantityInCart(item.id)}</span>
+                              <button
+                                className="px-3 hover:bg-gray-800 text-white transition-colors"
+                                onClick={(e) => { e.stopPropagation(); handleAddToCart(item); }}
+                                disabled={!isServiceable}
+                              >
                                 <Plus className="w-3.5 h-3.5" />
                               </button>
                             </div>
                           ) : (
                             <Button
-                              onClick={() => handleAddToCart(item)}
+                              onClick={(e) => handleAddToCart(item, e)}
                               disabled={!isServiceable}
-                              className={`bg-white text-green-700 hover:bg-gray-100 font-extrabold uppercase text-xs h-9 px-6 rounded-xl shadow-xl border border-gray-200 transform group-hover:translate-y-[-2px] transition-all ${!isServiceable ? 'bg-gray-400 text-gray-600 border-gray-500 cursor-not-allowed' : ''}`}
+                              className={`bg-white text-green-700 hover:bg-gray-100 font-extrabold uppercase text-xs h-9 px-6 rounded-xl shadow-xl border border-gray-200 active:scale-95 transition-all ${!isServiceable ? 'bg-gray-400 text-gray-600 border-gray-500 cursor-not-allowed' : ''}`}
                             >
                               ADD
                             </Button>
@@ -400,6 +519,94 @@ export default function RestaurantPage() {
           </div>
         </div>
       )}
+
+      {/* 5. Food Detail Modal */}
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogContent className="bg-black/95 border-white/10 text-white max-w-md p-0 overflow-hidden md:max-w-xl">
+          <DialogClose className="text-white bg-black/50 p-2 rounded-full absolute right-4 top-4 z-50 backdrop-blur-md" />
+          {selectedItem && (
+            <div className="flex flex-col md:flex-row h-full">
+              {/* Image Section */}
+              <div className="w-full md:w-1/2 h-64 md:h-auto relative bg-gray-900">
+                <SafeImage
+                  src={selectedItem.image}
+                  alt={selectedItem.name}
+                  fill
+                  className="object-cover"
+                  priority
+                />
+                <div className="absolute bottom-0 left-0 w-full h-24 bg-gradient-to-t from-black to-transparent" />
+              </div>
+
+              {/* Content Section */}
+              <div className="p-6 md:p-8 flex flex-col md:w-1/2">
+                <div className="mb-auto">
+                  <div className="flex items-center gap-2 mb-2">
+                    {selectedItem.vegetarian ? (
+                      <Badge className="bg-green-500/10 text-green-500 border-green-500/20 hover:bg-green-500/20">Veg</Badge>
+                    ) : (
+                      <Badge className="bg-red-500/10 text-red-500 border-red-500/20 hover:bg-red-500/20">Non-Veg</Badge>
+                    )}
+                    {selectedItem.isBestSeller && (
+                      <Badge className="bg-yellow-500/10 text-yellow-500 border-yellow-500/20 hover:bg-yellow-500/20">Bestseller</Badge>
+                    )}
+                  </div>
+
+                  <h2 className="text-2xl font-black mb-2">{selectedItem.name}</h2>
+                  <p className="text-gray-400 text-sm leading-relaxed mb-6">{selectedItem.description}</p>
+
+                  <div className="space-y-3 mb-8">
+                    <div className="flex items-center justify-between text-sm py-2 border-b border-white/5">
+                      <span className="text-gray-500">Preparation</span>
+                      <span className="font-bold">{selectedItem.preparationTime || 20} min</span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm py-2 border-b border-white/5">
+                      <span className="text-gray-500">Calories</span>
+                      <span className="font-bold">{selectedItem.calories || 350} kcal</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Footer Actions */}
+                <div className="mt-auto pt-4 flex items-center justify-between gap-4">
+                  <div className="text-2xl font-black">₹{selectedItem.price}</div>
+
+                  {getQuantityInCart(selectedItem.id) > 0 ? (
+                    <div className="flex items-center bg-gray-800 rounded-xl h-12 px-2 border border-white/10">
+                      <button
+                        className="w-10 h-full flex items-center justify-center hover:text-orange-500 transition-colors"
+                        onClick={() => {
+                          const currentQty = getQuantityInCart(selectedItem.id);
+                          const cartItem = cartItems.find(ci => ci.menuItemId === selectedItem.id);
+                          if (currentQty === 1 && cartItem) removeItem(cartItem.menuItemId);
+                          else if (cartItem) updateQuantity(cartItem.menuItemId, currentQty - 1);
+                        }}
+                      >
+                        <Minus className="w-4 h-4" />
+                      </button>
+                      <span className="w-8 text-center font-bold text-lg">{getQuantityInCart(selectedItem.id)}</span>
+                      <button
+                        className="w-10 h-full flex items-center justify-center hover:text-orange-500 transition-colors"
+                        onClick={() => handleAddToCart(selectedItem)}
+                      >
+                        <Plus className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <Button
+                      onClick={() => handleAddToCart(selectedItem)}
+                      className="flex-1 h-12 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-bold"
+                      disabled={!isServiceable}
+                    >
+                      Add to Cart
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
     </div>
   );

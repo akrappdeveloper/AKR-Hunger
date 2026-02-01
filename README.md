@@ -24,6 +24,8 @@ AKR Hunger is a dual-portal application designed to revolutionize the food deliv
 *   **Smart Product Details**: Dynamic pages with image carousels, nutritional info, allergens, and "Recommended for You" sections.
 *   **Advanced Cart & Checkout**: Real-time cart updates, coupon application, and secure checkout flow.
 *   **Order Tracking**: Live status updates for active orders.
+*   **Verified Reviews**: Authentic reviews with "Verified Purchase" badges for trust.
+*   **Robust Image Handling**: Smart fallbacks for missing images ensures a seamless visual experience.
 *   **Responsive Design**: Fully optimized for mobile, tablet, and desktop devices.
 
 ### 🏪 Restaurant Partner Portal

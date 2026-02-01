@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Heart, ShoppingCart, ArrowRight, Star } from 'lucide-react';
 import Link from 'next/link';
+import SafeImage from '@/components/ui/safe-image';
 
 export default function FavoritesPage() {
     const { user, customer } = useAuth();
@@ -81,39 +82,59 @@ export default function FavoritesPage() {
                         </Link>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {favorites.map((item) => (
-                            <Link key={item.id} href={`/customer/product/${item.id}`} className="group block">
-                                <div className="flex p-4 rounded-3xl bg-gray-900/40 border border-white/5 hover:bg-gray-900/80 hover:border-orange-500/30 transition-all duration-300 relative overflow-hidden backdrop-blur-md">
+                    <div className="space-y-12">
+                        {/* Favorite Items Section */}
+                        <div>
+                            <h2 className="text-xl font-bold mb-6 text-gray-300">Favorite Items</h2>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {favorites.map((item) => (
+                                    <Link key={item.id} href={`/customer/product/${item.id}`} className="group block">
+                                        <div className="flex p-4 rounded-3xl bg-gray-900/40 border border-white/5 hover:bg-gray-900/80 hover:border-orange-500/30 transition-all duration-300 relative overflow-hidden backdrop-blur-md">
 
-                                    {/* Image */}
-                                    <div className="w-32 h-32 flex-shrink-0 rounded-2xl overflow-hidden relative">
-                                        <img src={item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                                        <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors" />
-                                        <div className="absolute top-2 left-2 bg-black/60 backdrop-blur-md px-2 py-1 rounded-lg text-xs font-bold text-white flex items-center gap-1">
-                                            <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" /> {item.averageRating || 'New'}
-                                        </div>
-                                    </div>
-
-                                    {/* Content */}
-                                    <div className="ml-5 flex-1 flex flex-col justify-between py-1">
-                                        <div>
-                                            <div className="flex justify-between items-start">
-                                                <h3 className="font-bold text-lg text-white group-hover:text-orange-400 transition-colors line-clamp-1">{item.name}</h3>
+                                            {/* Image */}
+                                            <div className="w-32 h-32 flex-shrink-0 rounded-2xl overflow-hidden relative bg-gray-800">
+                                                <SafeImage
+                                                    src={item.image}
+                                                    alt={item.name}
+                                                    className="object-cover group-hover:scale-105 transition-transform duration-500"
+                                                    fill
+                                                />
+                                                <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors" />
+                                                <div className="absolute top-2 left-2 bg-black/60 backdrop-blur-md px-2 py-1 rounded-lg text-xs font-bold text-white flex items-center gap-1">
+                                                    <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" /> {item.averageRating || 'New'}
+                                                </div>
                                             </div>
-                                            <p className="text-sm text-gray-400 line-clamp-2 mt-1 font-medium">{item.description}</p>
-                                        </div>
 
-                                        <div className="flex items-center justify-between mt-3">
-                                            <span className="font-bold text-xl text-orange-500">₹{item.price}</span>
-                                            <Button size="icon" className="w-8 h-8 rounded-full bg-white text-black hover:bg-gray-200">
-                                                <ArrowRight className="w-4 h-4" />
-                                            </Button>
+                                            {/* Content */}
+                                            <div className="ml-5 flex-1 flex flex-col justify-between py-1">
+                                                <div>
+                                                    <div className="flex justify-between items-start">
+                                                        <h3 className="font-bold text-lg text-white group-hover:text-orange-400 transition-colors line-clamp-1">{item.name}</h3>
+                                                    </div>
+                                                    <p className="text-sm text-gray-400 line-clamp-2 mt-1 font-medium">{item.description}</p>
+                                                </div>
+
+                                                <div className="flex items-center justify-between mt-3">
+                                                    <span className="font-bold text-xl text-orange-500">₹{item.price}</span>
+                                                    <Button size="icon" className="w-8 h-8 rounded-full bg-white text-black hover:bg-gray-200">
+                                                        <ArrowRight className="w-4 h-4" />
+                                                    </Button>
+                                                </div>
+                                            </div>
                                         </div>
-                                    </div>
-                                </div>
-                            </Link>
-                        ))}
+                                    </Link>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Favorite Restaurants Section - Placeholder (To be fully implemented with data) */}
+                        <div>
+                            <h2 className="text-xl font-bold mb-6 text-gray-300">Favorite Restaurants</h2>
+                            <div className="p-8 text-center bg-gray-900/30 rounded-3xl border border-white/5">
+                                <p className="text-gray-500">You haven't favorited any restaurants yet.</p>
+                                <Link href="/customer" className="text-orange-500 font-bold text-sm hover:underline mt-2 inline-block">Explore Restaurants</Link>
+                            </div>
+                        </div>
                     </div>
                 )}
             </div>

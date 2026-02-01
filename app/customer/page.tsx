@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { useCart } from '@/context/CartContext';
 import { Search, ShoppingCart, Star, Flame, Clock, Filter, MapPin, ChevronRight, TrendingUp } from 'lucide-react';
 import Link from 'next/link';
+import SafeImage from '@/components/ui/safe-image';
 
 // Mock Data for UI Categories
 const CATEGORIES = [
@@ -26,7 +27,7 @@ const CATEGORIES = [
 
 export default function CustomerHomePage() {
   const router = useRouter();
-  const { items } = useCart();
+  const { items, deliveryAddress } = useCart();
 
   const [menuItems, setMenuItems] = useState<(MenuItem & { restaurantName: string })[]>([]);
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
@@ -99,11 +100,33 @@ export default function CustomerHomePage() {
       item.category.toLowerCase().includes(categoryFilter.toLowerCase()) ||
       (categoryFilter === 'Pizza' && item.name.toLowerCase().includes('pizza')); // Simple fallback mapping
 
-    return matchesSearch && matchesCategory;
+    // Service Area Filter
+    let inServiceArea = true;
+    if (deliveryAddress?.pincode) {
+      const rest = restaurants.find(r => r.id === item.restaurantId);
+      if (rest) {
+        // If restaurant has defined service pincodes, check if it includes user's pincode
+        if (rest.servicePincodes && rest.servicePincodes.length > 0) {
+          inServiceArea = rest.servicePincodes.includes(deliveryAddress.pincode);
+        }
+        // If no service pincodes defined, we assume it serves everywhere (or maybe nowhere? defaulting to everywhere for now)
+      }
+    }
+
+    return matchesSearch && matchesCategory && inServiceArea;
   });
 
-  // Featured Restaurants (Mock logic: just take first 5)
-  const featuredRestaurants = restaurants.slice(0, 5);
+  // Filter Restaurants based on Service Area for Featured Section
+  const filteredRestaurants = restaurants.filter(r => {
+    if (!deliveryAddress?.pincode) return true;
+    if (r.servicePincodes && r.servicePincodes.length > 0) {
+      return r.servicePincodes.includes(deliveryAddress.pincode);
+    }
+    return true; // Default to true if no restrictions set
+  });
+
+  // Featured Restaurants (Mock logic: just take first 5 from filtered)
+  const featuredRestaurants = filteredRestaurants.slice(0, 5);
 
   if (loading) {
     return (
@@ -198,8 +221,10 @@ export default function CustomerHomePage() {
               {featuredRestaurants.map((restaurant) => (
                 <Link key={restaurant.id} href={`/customer/restaurant/${restaurant.id}`} className="snap-center min-w-[280px] group">
                   <div className="h-64 rounded-2xl overflow-hidden relative shadow-lg bg-gray-900">
-                    <img
-                      src={restaurant.image || `https://source.unsplash.com/random/400x300/?restaurant,${restaurant.cuisine || 'food'}`}
+                    <SafeImage
+                      src={restaurant.image}
+                      fallbackType="restaurant"
+                      useImgTag={true}
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                       alt={restaurant.name}
                     />
@@ -211,7 +236,7 @@ export default function CustomerHomePage() {
                           <Star className="w-3 h-3 fill-green-400" /> {restaurant.rating || '4.5'}
                         </span>
                         <span className="w-1 h-1 bg-gray-500 rounded-full" />
-                        <span>{restaurant.cuisine || 'Multi-cuisine'}</span>
+                        <span>{restaurant.cuisineType?.join(', ') || 'Multi-cuisine'}</span>
                       </div>
                     </div>
                     {/* Promo Badge */}
@@ -236,6 +261,11 @@ export default function CustomerHomePage() {
           <h2 className="text-xl font-bold flex items-center gap-2">
             {searchQuery ? 'Search Results' : (categoryFilter !== 'all' ? `${categoryFilter} Items` : 'Popular Near You')}
             {!searchQuery && categoryFilter === 'all' && <Badge variant="outline" className="text-xs border-green-500/50 text-green-500 bg-green-500/10">Free Delivery</Badge>}
+            {deliveryAddress && (
+              <Badge variant="outline" className="text-xs border-orange-500/50 text-orange-500 bg-orange-500/10 hidden md:flex">
+                Serving {deliveryAddress.pincode}
+              </Badge>
+            )}
           </h2>
 
           {filteredItems.length === 0 && (
