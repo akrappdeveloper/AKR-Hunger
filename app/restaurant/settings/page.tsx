@@ -34,7 +34,9 @@ import {
   Plus,
   Trash2,
   Navigation,
-  ShieldCheck
+  ShieldCheck,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { toast } from 'sonner';
@@ -106,6 +108,7 @@ export default function RestaurantSettingsPage() {
     ifscCode: '',
   });
   const [savingBank, setSavingBank] = useState(false);
+  const [showAccountNumber, setShowAccountNumber] = useState(false);
 
   useEffect(() => {
     if (authLoading) return;
@@ -709,12 +712,22 @@ export default function RestaurantSettingsPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <Label className="text-gray-300">Account Number *</Label>
-                      <StyledInput
-                        type="password"
-                        placeholder="XXXXXXXXXXXX"
-                        value={bankDetails.accountNumber}
-                        onChange={(e: any) => setBankDetails({ ...bankDetails, accountNumber: e.target.value })}
-                      />
+                      <div className="relative">
+                        <Input
+                          type={showAccountNumber ? "text" : "password"}
+                          placeholder="XXXXXXXXXXXX"
+                          value={bankDetails.accountNumber}
+                          onChange={(e) => setBankDetails({ ...bankDetails, accountNumber: e.target.value })}
+                          className="bg-white/5 border-white/10 text-white placeholder:text-gray-600 focus:border-orange-500/50 focus:ring-orange-500/20 h-12 transition-all rounded-xl pr-10"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowAccountNumber(!showAccountNumber)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+                        >
+                          {showAccountNumber ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                        </button>
+                      </div>
                     </div>
                     <div className="space-y-2">
                       <Label className="text-gray-300">IFSC Code *</Label>

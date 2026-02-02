@@ -3,72 +3,94 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet'; // Shadcn Sheet for generic drawer
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { Package, MapPin, TrendingUp, MoreVertical } from 'lucide-react';
+import { Package, MapPin, TrendingUp, MoreVertical, LayoutGrid, DollarSign } from 'lucide-react';
 import DeliverySidebar from './DeliverySidebar';
-
-// If Sheet is not found in codebase, I might need to implement a simple drawer or check if they have it.
-// Assuming they have generic UI components. If not, I'll build a simple fixed overlay.
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function DeliveryBottomNav() {
     const pathname = usePathname();
     const [open, setOpen] = useState(false);
 
-    // Hide on login/register pages
     if (pathname.includes('/login') || pathname.includes('/register')) return null;
 
     const mainLinks = [
         { href: '/delivery', label: 'Active', icon: Package },
-        { href: '/delivery/available', label: 'Available', icon: MapPin },
-        { href: '/delivery/earnings', label: 'Earnings', icon: TrendingUp },
+        { href: '/delivery/available', label: 'Market', icon: MapPin },
+        { href: '/delivery/earnings', label: 'Earn', icon: DollarSign },
     ];
 
     return (
-        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-black/95 backdrop-blur-xl border-t border-gray-800 flex justify-around items-center h-16 z-50 px-2 pb-safe shadow-[0_-5px_20px_rgba(0,0,0,0.5)]">
-            {mainLinks.map(({ href, label, icon: Icon }) => {
-                const isActive = pathname === href || pathname.startsWith(href) && href !== '/delivery';
-                // Enhanced check: Exact match for dashboard, startsWith for others
-                const isExactActive = href === '/delivery' ? pathname === href : pathname.startsWith(href);
+        <div className="md:hidden fixed bottom-6 left-4 right-4 z-50">
+            {/* Soft Glow Behind */}
+            <div className="absolute inset-0 bg-black/40 blur-xl rounded-full -z-10 transform translate-y-2 opacity-50" />
 
-                return (
-                    <Link key={href} href={href} className="flex-1">
-                        <Button
-                            variant="ghost"
-                            className={`w-full h-full flex flex-col items-center justify-center gap-1 rounded-xl hover:bg-transparent transition-all duration-300 ${isExactActive
-                                ? 'text-blue-400'
-                                : 'text-gray-500 hover:text-gray-300'
-                                }`}
-                        >
-                            <div className={`p-1.5 rounded-full transition-all duration-300 ${isExactActive
-                                ? 'bg-blue-600/20 shadow-[0_0_15px_rgba(37,99,235,0.3)] transform -translate-y-1'
-                                : ''
-                                }`}>
-                                <Icon className={`w-5 h-5 ${isExactActive ? 'fill-blue-500/20' : ''}`} />
+            <motion.nav
+                initial={{ y: 100, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ type: "spring", stiffness: 260, damping: 20 }}
+                className="bg-black/80 backdrop-blur-xl border border-white/10 rounded-full h-16 px-2 flex items-center justify-between shadow-2xl relative overflow-hidden"
+            >
+                {/* Floating Gradient Background */}
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-900/10 via-purple-900/10 to-blue-900/10 pointer-events-none" />
+
+                {mainLinks.map(({ href, label, icon: Icon }) => {
+                    const isActive = href === '/delivery' ? pathname === href : pathname.startsWith(href);
+
+                    return (
+                        <Link key={href} href={href} className="flex-1 h-full relative group">
+                            <div className="relative w-full h-full flex flex-col items-center justify-center gap-0.5">
+                                {isActive && (
+                                    <motion.div
+                                        layoutId="bottomNavIndicator"
+                                        className="absolute inset-2 bg-gradient-to-b from-blue-500/20 to-blue-600/10 rounded-2xl -z-10"
+                                        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                                    />
+                                )}
+
+                                <div className={`p-2 rounded-full transition-all duration-300 relative ${isActive ? '' : ''}`}>
+                                    {isActive && (
+                                        <motion.div
+                                            initial={{ scale: 0 }} animate={{ scale: 1 }}
+                                            className="absolute inset-0 bg-blue-500 blur-lg opacity-40"
+                                        />
+                                    )}
+                                    <Icon className={`w-5 h-5 relative z-10 transition-all duration-300 ${isActive ? 'text-blue-400 stroke-[2.5px] -translate-y-1' : 'text-gray-400 group-hover:text-gray-200'}`} />
+                                </div>
+                                <span className={`text-[10px] font-medium transition-all duration-300 ${isActive ? 'text-white scale-105' : 'text-gray-500'}`}>
+                                    {label}
+                                </span>
+
+                                {isActive && (
+                                    <motion.div
+                                        layoutId="activeDot"
+                                        className="absolute bottom-2 w-1 h-1 bg-blue-400 rounded-full shadow-[0_0_5px_currentColor]"
+                                    />
+                                )}
                             </div>
-                            <span className={`text-[10px] font-medium transition-all ${isExactActive ? 'font-bold transform -translate-y-0.5' : ''}`}>{label}</span>
-                        </Button>
-                    </Link>
-                )
-            })}
+                        </Link>
+                    )
+                })}
 
-            {/* More / Menu Button */}
-            <Sheet open={open} onOpenChange={setOpen}>
-                <SheetTrigger asChild>
-                    <Button
-                        variant="ghost"
-                        className="flex-1 h-full flex flex-col items-center justify-center gap-1 rounded-none hover:bg-transparent text-gray-500 hover:text-gray-300"
-                    >
-                        <MoreVertical className="w-5 h-5" />
-                        <span className="text-[10px] font-medium">Menu</span>
-                    </Button>
-                </SheetTrigger>
-                <SheetContent side="left" className="p-0 w-[85%] max-w-[300px] border-r-gray-800 bg-black text-white">
-                    <div className="h-full">
-                        <DeliverySidebar isMobile={true} onClose={() => setOpen(false)} />
-                    </div>
-                </SheetContent>
-            </Sheet>
+                {/* More / Menu Button */}
+                <Sheet open={open} onOpenChange={setOpen}>
+                    <SheetTrigger asChild>
+                        <div className="flex-1 h-full cursor-pointer relative group flex flex-col items-center justify-center gap-0.5">
+                            <div className={`p-2 rounded-full transition-all duration-300 ${open ? 'bg-white/10' : ''}`}>
+                                <LayoutGrid className={`w-5 h-5 transition-colors ${open ? 'text-white' : 'text-gray-400 group-hover:text-gray-200'}`} />
+                            </div>
+                            <span className={`text-[10px] font-medium transition-colors ${open ? 'text-white' : 'text-gray-500'}`}>Menu</span>
+                        </div>
+                    </SheetTrigger>
+                    <SheetContent side="left" className="p-0 w-[85%] max-w-[320px] bg-black border-r border-white/10 text-white z-[60]">
+                        <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
+                        <div className="h-full bg-gradient-to-br from-black via-gray-900 to-black">
+                            <DeliverySidebar isMobile={true} onClose={() => setOpen(false)} />
+                        </div>
+                    </SheetContent>
+                </Sheet>
+            </motion.nav>
         </div>
     );
 }
