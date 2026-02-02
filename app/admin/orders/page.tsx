@@ -104,8 +104,8 @@ export default function OrdersPage() {
     const q = query(collection(db, 'orders'), orderBy('createdAt', 'desc'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const data = snapshot.docs.map((doc) => ({
-        id: doc.id,
         ...doc.data(),
+        id: doc.id,
       })) as Order[];
       setOrders(data);
       setLoading(false);
@@ -219,64 +219,64 @@ export default function OrdersPage() {
 
       {/* Enhanced Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="bg-gradient-to-br from-blue-900/30 to-gray-900 border-blue-500/30 text-white shadow-lg hover:shadow-blue-500/20 transition-all duration-300">
+        <Card className="bg-gradient-to-br from-blue-900/20 to-black/40 border-blue-500/20 backdrop-blur-md shadow-[0_0_30px_rgba(59,130,246,0.1)] group hover:shadow-[0_0_40px_rgba(59,130,246,0.2)] transition-all duration-300">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-bold text-gray-100 uppercase tracking-widest">Active Orders</CardTitle>
-            <Activity className="h-5 w-5 text-blue-300" />
+            <CardTitle className="text-xs font-bold text-blue-400 uppercase tracking-widest">Active Orders</CardTitle>
+            <Activity className="h-5 w-5 text-blue-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-4xl font-bold text-white mb-1">{activeOrders}</div>
-            <p className="text-xs text-gray-200 font-medium flex items-center gap-1">
+            <div className="text-4xl font-bold text-white mb-1 tracking-tight">{activeOrders}</div>
+            <p className="text-xs text-gray-400 font-medium flex items-center gap-1">
               <TrendingUp className="h-3 w-3" />
               In progress right now
             </p>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-orange-900/30 to-gray-900 border-orange-500/30 text-white shadow-lg hover:shadow-orange-500/20 transition-all duration-300">
+        <Card className="bg-gradient-to-br from-orange-900/20 to-black/40 border-orange-500/20 backdrop-blur-md shadow-[0_0_30px_rgba(249,115,22,0.1)] group hover:shadow-[0_0_40px_rgba(249,115,22,0.2)] transition-all duration-300">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-bold text-gray-100 uppercase tracking-widest">Pending Action</CardTitle>
-            <Clock className="h-5 w-5 text-orange-300" />
+            <CardTitle className="text-xs font-bold text-orange-400 uppercase tracking-widest">Pending Action</CardTitle>
+            <Clock className="h-5 w-5 text-orange-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-4xl font-bold text-orange-300 mb-1">{pendingOrders}</div>
-            <p className="text-xs text-gray-200 font-medium">Orders waiting for confirmation</p>
+            <div className="text-4xl font-bold text-white mb-1 tracking-tight">{pendingOrders}</div>
+            <p className="text-xs text-gray-400 font-medium">Orders waiting for confirmation</p>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-green-900/30 to-gray-900 border-green-500/30 text-white shadow-lg hover:shadow-green-500/20 transition-all duration-300">
+        <Card className="bg-gradient-to-br from-green-900/20 to-black/40 border-green-500/20 backdrop-blur-md shadow-[0_0_30px_rgba(34,197,94,0.1)] group hover:shadow-[0_0_40px_rgba(34,197,94,0.2)] transition-all duration-300">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-bold text-gray-100 uppercase tracking-widest">Total Revenue</CardTitle>
-            <DollarSign className="h-5 w-5 text-green-300" />
+            <CardTitle className="text-xs font-bold text-green-400 uppercase tracking-widest">Total Revenue</CardTitle>
+            <DollarSign className="h-5 w-5 text-green-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-4xl font-bold text-green-300 mb-1">₹{totalRevenue.toLocaleString()}</div>
-            <p className="text-xs text-gray-200 font-medium">From delivered orders</p>
+            <div className="text-4xl font-bold text-white mb-1 tracking-tight">₹{totalRevenue.toLocaleString()}</div>
+            <p className="text-xs text-gray-400 font-medium">From delivered orders</p>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-purple-900/30 to-gray-900 border-purple-500/30 text-white shadow-lg hover:shadow-purple-500/20 transition-all duration-300">
+        <Card className="bg-gradient-to-br from-purple-900/20 to-black/40 border-purple-500/20 backdrop-blur-md shadow-[0_0_30px_rgba(168,85,247,0.1)] group hover:shadow-[0_0_40px_rgba(168,85,247,0.2)] transition-all duration-300">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-bold text-gray-100 uppercase tracking-widest">Today's Orders</CardTitle>
-            <Calendar className="h-5 w-5 text-purple-300" />
+            <CardTitle className="text-xs font-bold text-purple-400 uppercase tracking-widest">Today's Orders</CardTitle>
+            <Calendar className="h-5 w-5 text-purple-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-4xl font-bold text-purple-300 mb-1">{todaysOrders}</div>
-            <p className="text-xs text-gray-200 font-medium">Avg: ₹{avgOrderValue.toFixed(0)}</p>
+            <div className="text-4xl font-bold text-white mb-1 tracking-tight">{todaysOrders}</div>
+            <p className="text-xs text-gray-400 font-medium">Avg: ₹{avgOrderValue.toFixed(0)}</p>
           </CardContent>
         </Card>
       </div>
 
-      <Card className="bg-gray-900/70 border-gray-800 backdrop-blur-sm shadow-2xl">
-        <CardHeader className="pb-3 border-b border-gray-800">
+      <Card className="bg-black/40 border-white/10 backdrop-blur-xl shadow-2xl">
+        <CardHeader className="pb-3 border-b border-white/5">
           <div className="flex flex-col md:flex-row gap-4 justify-between items-center">
             <Tabs defaultValue="all" value={filterStatus} onValueChange={setFilterStatus} className="w-full md:w-auto">
-              <TabsList className="bg-gray-950 border border-gray-800 h-10 p-1">
-                <TabsTrigger value="all" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-gray-200 font-medium">All</TabsTrigger>
-                <TabsTrigger value="pending" className="data-[state=active]:bg-yellow-600 data-[state=active]:text-white text-gray-200 font-medium">Pending</TabsTrigger>
-                <TabsTrigger value="preparing" className="data-[state=active]:bg-orange-600 data-[state=active]:text-white text-gray-200 font-medium">Preparing</TabsTrigger>
-                <TabsTrigger value="out_for_delivery" className="data-[state=active]:bg-cyan-600 data-[state=active]:text-white text-gray-200 font-medium">En Route</TabsTrigger>
-                <TabsTrigger value="delivered" className="data-[state=active]:bg-green-600 data-[state=active]:text-white text-gray-200 font-medium">Completed</TabsTrigger>
+              <TabsList className="bg-gray-900/50 border border-white/5 h-10 p-1">
+                <TabsTrigger value="all" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-gray-400 font-medium">All</TabsTrigger>
+                <TabsTrigger value="pending" className="data-[state=active]:bg-yellow-600 data-[state=active]:text-white text-gray-400 font-medium">Pending</TabsTrigger>
+                <TabsTrigger value="preparing" className="data-[state=active]:bg-orange-600 data-[state=active]:text-white text-gray-400 font-medium">Preparing</TabsTrigger>
+                <TabsTrigger value="out_for_delivery" className="data-[state=active]:bg-cyan-600 data-[state=active]:text-white text-gray-400 font-medium">En Route</TabsTrigger>
+                <TabsTrigger value="delivered" className="data-[state=active]:bg-green-600 data-[state=active]:text-white text-gray-400 font-medium">Completed</TabsTrigger>
               </TabsList>
             </Tabs>
             <div className="relative w-full md:w-64">
@@ -285,27 +285,27 @@ export default function OrdersPage() {
                 placeholder="Search orders..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9 bg-gray-950 border-gray-700 text-white placeholder:text-gray-500 focus-visible:ring-blue-500 focus-visible:border-blue-500 h-10"
+                className="pl-9 bg-black/20 border-white/10 text-white placeholder:text-gray-500 focus:bg-black/40 focus:border-blue-500/50 h-10 transition-all rounded-lg"
               />
             </div>
           </div>
 
           {/* Bulk Actions */}
           {selectedOrders.length > 0 && (
-            <div className="mt-4 p-3 bg-blue-950/30 border border-blue-500/30 rounded-lg flex items-center justify-between">
+            <div className="mt-4 p-3 bg-blue-900/20 border border-blue-500/20 rounded-lg flex items-center justify-between">
               <span className="text-sm text-blue-200 font-medium">
                 {selectedOrders.length} order{selectedOrders.length > 1 ? 's' : ''} selected
               </span>
               <div className="flex gap-2">
-                <Button size="sm" onClick={() => bulkUpdateStatus('confirmed')} className="bg-blue-600 hover:bg-blue-500 text-white">
+                <Button size="sm" onClick={() => bulkUpdateStatus('confirmed')} className="bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-900/20">
                   <CheckCircle className="h-3.5 w-3.5 mr-1" />
                   Confirm
                 </Button>
-                <Button size="sm" onClick={() => bulkUpdateStatus('preparing')} className="bg-orange-600 hover:bg-orange-500 text-white">
+                <Button size="sm" onClick={() => bulkUpdateStatus('preparing')} className="bg-orange-600 hover:bg-orange-500 text-white shadow-lg shadow-orange-900/20">
                   <ChefHat className="h-3.5 w-3.5 mr-1" />
                   Prepare
                 </Button>
-                <Button size="sm" onClick={() => bulkUpdateStatus('cancelled')} variant="outline" className="border-red-500/50 text-red-300 hover:bg-red-950/30">
+                <Button size="sm" onClick={() => bulkUpdateStatus('cancelled')} variant="outline" className="border-red-500/30 bg-red-950/20 text-red-300 hover:bg-red-950/40">
                   <Ban className="h-3.5 w-3.5 mr-1" />
                   Cancel
                 </Button>
@@ -315,15 +315,15 @@ export default function OrdersPage() {
         </CardHeader>
         <CardContent className="p-0">
           <ScrollArea className="h-[600px]">
-            <div className="rounded-xl overflow-hidden">
+            <div className="rounded-none">
               <Table>
-                <TableHeader className="bg-gray-950 sticky top-0 z-10">
-                  <TableRow className="border-gray-800 hover:bg-gray-950">
+                <TableHeader className="bg-white/5 sticky top-0 z-10 backdrop-blur-sm">
+                  <TableRow className="border-white/5 hover:bg-transparent">
                     <TableHead className="w-12">
                       <Checkbox
                         checked={selectedOrders.length === filteredOrders.length && filteredOrders.length > 0}
                         onCheckedChange={toggleSelectAll}
-                        className="border-gray-600"
+                        className="border-gray-500 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
                       />
                     </TableHead>
                     <TableHead className="font-bold text-white">Order ID</TableHead>
@@ -350,11 +350,11 @@ export default function OrdersPage() {
                       <TableCell colSpan={8} className="h-32 text-center text-gray-200 font-medium">No orders found.</TableCell>
                     </TableRow>
                   ) : (
-                    filteredOrders.map((order) => {
+                    filteredOrders.map((order, index) => {
                       const status = statusConfig[order.status || 'pending'] || statusConfig.pending;
                       const StatusIcon = status.icon;
                       return (
-                        <TableRow key={order.id} className="border-gray-800 hover:bg-gray-800/30 transition-colors">
+                        <TableRow key={order.id || `order-${index}`} className="border-gray-800 hover:bg-gray-800/30 transition-colors">
                           <TableCell>
                             <Checkbox
                               checked={selectedOrders.includes(order.id!)}

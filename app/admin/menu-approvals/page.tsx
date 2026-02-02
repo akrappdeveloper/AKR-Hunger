@@ -299,51 +299,57 @@ export default function MenuApprovalsPage() {
 
             {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <Card className="bg-gray-900 border-gray-800 text-white">
+                <Card className="bg-gradient-to-br from-orange-900/20 to-black/40 border-orange-500/20 backdrop-blur-md shadow-[0_0_30px_rgba(249,115,22,0.1)] group hover:shadow-[0_0_40px_rgba(249,115,22,0.2)] transition-all duration-300">
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
-                        <CardTitle className="text-sm font-medium text-gray-400 uppercase tracking-wider">Pending Review</CardTitle>
-                        <Clock className="h-5 w-5 text-orange-400" />
+                        <CardTitle className="text-sm font-bold text-orange-400 uppercase tracking-widest flex items-center gap-2">
+                            <Clock className="h-4 w-4" /> Pending Review
+                        </CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-4xl font-bold text-white">{pendingItems.length}</div>
+                        <div className="text-4xl font-bold text-white tracking-tight">{pendingItems.length}</div>
+                        <p className="text-xs text-gray-400 font-medium mt-1">Awaiting decision</p>
                     </CardContent>
                 </Card>
-                <Card className="bg-gray-900 border-gray-800 text-white">
+                <Card className="bg-gradient-to-br from-green-900/20 to-black/40 border-green-500/20 backdrop-blur-md shadow-[0_0_30px_rgba(34,197,94,0.1)] group hover:shadow-[0_0_40px_rgba(34,197,94,0.2)] transition-all duration-300">
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
-                        <CardTitle className="text-sm font-medium text-gray-400 uppercase tracking-wider">Approved Items</CardTitle>
-                        <CheckCircle className="h-5 w-5 text-green-400" />
+                        <CardTitle className="text-sm font-bold text-green-400 uppercase tracking-widest flex items-center gap-2">
+                            <CheckCircle className="h-4 w-4" /> Approved Items
+                        </CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-4xl font-bold text-white">{approvedItems.length}</div>
+                        <div className="text-4xl font-bold text-white tracking-tight">{approvedItems.length}</div>
+                        <p className="text-xs text-gray-400 font-medium mt-1">Live on platform</p>
                     </CardContent>
                 </Card>
-                <Card className="bg-gray-900 border-gray-800 text-white">
+                <Card className="bg-gradient-to-br from-red-900/20 to-black/40 border-red-500/20 backdrop-blur-md shadow-[0_0_30px_rgba(239,68,68,0.1)] group hover:shadow-[0_0_40px_rgba(239,68,68,0.2)] transition-all duration-300">
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
-                        <CardTitle className="text-sm font-medium text-gray-400 uppercase tracking-wider">Rejected Items</CardTitle>
-                        <XCircle className="h-5 w-5 text-red-400" />
+                        <CardTitle className="text-sm font-bold text-red-400 uppercase tracking-widest flex items-center gap-2">
+                            <XCircle className="h-4 w-4" /> Rejected Items
+                        </CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-4xl font-bold text-white">{rejectedItems.length}</div>
+                        <div className="text-4xl font-bold text-white tracking-tight">{rejectedItems.length}</div>
+                        <p className="text-xs text-gray-400 font-medium mt-1">Requires changes</p>
                     </CardContent>
                 </Card>
             </div>
 
-            <div className="bg-gray-900/30 border border-gray-800 rounded-xl p-6 backdrop-blur-sm">
+            <div className="bg-black/40 border border-white/10 rounded-xl p-6 backdrop-blur-xl shadow-2xl">
                 <Tabs defaultValue="pending" className="w-full">
-                    <TabsList className="grid w-full grid-cols-3 bg-gray-900 p-1 mb-8 rounded-lg border border-gray-800 h-14">
-                        <TabsTrigger value="pending" className="data-[state=active]:bg-gray-800 data-[state=active]:text-white text-gray-400 h-12 text-base">Pending Approval</TabsTrigger>
-                        <TabsTrigger value="approved" className="data-[state=active]:bg-gray-800 data-[state=active]:text-white text-gray-400 h-12 text-base">Approved History</TabsTrigger>
-                        <TabsTrigger value="rejected" className="data-[state=active]:bg-gray-800 data-[state=active]:text-white text-gray-400 h-12 text-base">Rejected History</TabsTrigger>
+                    <TabsList className="grid w-full grid-cols-3 bg-gray-900/50 p-1 mb-8 rounded-lg border border-white/5 h-14">
+                        <TabsTrigger value="pending" className="data-[state=active]:bg-orange-500 data-[state=active]:text-white text-gray-400 h-12 text-base transition-all">Pending Approval</TabsTrigger>
+                        <TabsTrigger value="approved" className="data-[state=active]:bg-green-600 data-[state=active]:text-white text-gray-400 h-12 text-base transition-all">Approved History</TabsTrigger>
+                        <TabsTrigger value="rejected" className="data-[state=active]:bg-red-600 data-[state=active]:text-white text-gray-400 h-12 text-base transition-all">Rejected History</TabsTrigger>
                     </TabsList>
 
                     <TabsContent value="pending" className="space-y-6 m-0 focus-visible:ring-0 focus-visible:outline-none">
                         {loading ? (
                             <div className="text-center py-20 text-gray-500 flex flex-col items-center">
-                                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-white mb-4"></div>
-                                <p>Loading menu items...</p>
+                                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-orange-500 mb-4"></div>
+                                <p className="animate-pulse">Loading menu items...</p>
                             </div>
                         ) : pendingItems.length === 0 ? (
-                            <div className="flex flex-col items-center justify-center py-20 text-gray-500 border-2 border-dashed border-gray-800 rounded-xl">
+                            <div className="flex flex-col items-center justify-center py-20 text-gray-500 border-2 border-dashed border-white/10 rounded-xl bg-gray-900/20">
                                 <CheckCircle className="h-16 w-16 mb-4 text-gray-700" />
                                 <p className="text-xl font-medium text-gray-400">All caught up!</p>
                                 <p className="text-sm text-gray-600">No pending menu items to review.</p>

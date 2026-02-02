@@ -190,50 +190,61 @@ export default function RestaurantsPage() {
 
       {/* Enhanced Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="bg-gradient-to-br from-blue-900/30 to-gray-900 border-blue-500/30 text-white shadow-lg hover:shadow-blue-500/20 transition-all duration-300">
+        <Card className="bg-gradient-to-br from-blue-900/20 to-black/40 border-blue-500/20 backdrop-blur-md shadow-[0_0_30px_rgba(59,130,246,0.1)] group hover:shadow-[0_0_40px_rgba(59,130,246,0.2)] transition-all duration-300">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-bold text-gray-100 uppercase tracking-widest">Total Partners</CardTitle>
-            <Store className="h-5 w-5 text-blue-300" />
+            <CardTitle className="text-sm font-bold text-blue-400 uppercase tracking-widest">Total Partners</CardTitle>
+            <div className="p-2.5 rounded-xl bg-blue-500/10 group-hover:bg-blue-500/20 transition-colors">
+              <Store className="h-5 w-5 text-blue-400" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-4xl font-bold text-white mb-1">{totalRestaurants}</div>
-            <p className="text-xs text-gray-200 font-medium">Registered restaurants</p>
+            <div className="text-4xl font-bold text-white mb-1 tracking-tight">{totalRestaurants}</div>
+            <p className="text-xs text-gray-400 font-medium">Registered restaurants</p>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br from-green-900/30 to-gray-900 border-green-500/30 text-white shadow-lg hover:shadow-green-500/20 transition-all duration-300">
+        <Card className="bg-gradient-to-br from-emerald-900/20 to-black/40 border-emerald-500/20 backdrop-blur-md shadow-[0_0_30px_rgba(16,185,129,0.1)] group hover:shadow-[0_0_40px_rgba(16,185,129,0.2)] transition-all duration-300">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-bold text-gray-100 uppercase tracking-widest">Active Now</CardTitle>
-            <CheckCircle className="h-5 w-5 text-green-300" />
+            <CardTitle className="text-sm font-bold text-emerald-400 uppercase tracking-widest">Active Now</CardTitle>
+            <div className="p-2.5 rounded-xl bg-emerald-500/10 group-hover:bg-emerald-500/20 transition-colors">
+              <CheckCircle className="h-5 w-5 text-emerald-400" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-4xl font-bold text-green-300 mb-1">{activeRestaurants}</div>
-            <p className="text-xs text-gray-200 font-medium">Open for business</p>
+            <div className="text-4xl font-bold text-white mb-1 tracking-tight">{activeRestaurants}</div>
+            <p className="text-xs text-gray-400 font-medium">Open for business</p>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br from-yellow-900/30 to-gray-900 border-yellow-500/30 text-white shadow-lg hover:shadow-yellow-500/20 transition-all duration-300">
+        <Card className="bg-gradient-to-br from-amber-900/20 to-black/40 border-amber-500/20 backdrop-blur-md shadow-[0_0_30px_rgba(245,158,11,0.1)] group hover:shadow-[0_0_40px_rgba(245,158,11,0.2)] transition-all duration-300">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-bold text-gray-100 uppercase tracking-widest">Avg Rating</CardTitle>
-            <Star className="h-5 w-5 text-yellow-300" />
+            <CardTitle className="text-sm font-bold text-amber-400 uppercase tracking-widest">Avg Rating</CardTitle>
+            <div className="p-2.5 rounded-xl bg-amber-500/10 group-hover:bg-amber-500/20 transition-colors">
+              <Star className="h-5 w-5 text-amber-400" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-4xl font-bold text-yellow-300 mb-1">{avgRating}</div>
-            <p className="text-xs text-gray-200 font-medium">Platform-wide average</p>
+            <div className="text-4xl font-bold text-white mb-1 tracking-tight">{avgRating}</div>
+            <p className="text-xs text-gray-400 font-medium">Platform-wide average</p>
           </CardContent>
         </Card>
       </div>
 
-      <Card className="bg-gray-900/50 border-gray-800 backdrop-blur-sm">
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-xl text-white font-bold">All Restaurants</CardTitle>
+      <Card className="bg-black/40 border-white/10 backdrop-blur-md shadow-2xl overflow-hidden">
+        <CardHeader className="pb-3 border-b border-white/5 bg-white/5">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-orange-500/10 border border-orange-500/20">
+                <Store className="w-5 h-5 text-orange-400" />
+              </div>
+              <CardTitle className="text-xl text-white font-bold">All Restaurants</CardTitle>
+            </div>
 
             <div className="relative w-full md:w-64">
-              <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+              <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-500" />
               <Input
                 placeholder="Search restaurants..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9 bg-gray-900/50 border-gray-700 text-white placeholder:text-gray-400 focus-visible:ring-blue-600 focus-visible:border-blue-600 font-medium"
+                className="pl-9 bg-black/20 border-white/10 text-white placeholder:text-gray-500 focus-visible:ring-blue-600 focus-visible:border-blue-600 font-medium transition-all rounded-lg"
               />
             </div>
           </div>

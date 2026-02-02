@@ -159,57 +159,71 @@ export default function CustomersPage() {
 
       {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="bg-gray-900/50 border-gray-800 backdrop-blur-sm">
+        <Card className="bg-gradient-to-br from-blue-900/20 to-black/40 border-blue-500/20 backdrop-blur-md shadow-[0_0_30px_rgba(59,130,246,0.1)]">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-400">Total Customers</CardTitle>
-            <Users className="h-4 w-4 text-blue-400" />
+            <CardTitle className="text-sm font-bold text-blue-400 uppercase tracking-widest">Total Customers</CardTitle>
+            <div className="p-2 bg-blue-500/10 rounded-lg">
+              <Users className="h-4 w-4 text-blue-400" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-white">{totalCustomers}</div>
+            <div className="text-3xl font-bold text-white mb-1">{totalCustomers}</div>
+            <p className="text-xs text-gray-400">Registered users</p>
           </CardContent>
         </Card>
-        <Card className="bg-gray-900/50 border-gray-800 backdrop-blur-sm">
+        <Card className="bg-gradient-to-br from-emerald-900/20 to-black/40 border-emerald-500/20 backdrop-blur-md shadow-[0_0_30px_rgba(16,185,129,0.1)]">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-400">Active Users</CardTitle>
-            <UserCheck className="h-4 w-4 text-green-400" />
+            <CardTitle className="text-sm font-bold text-emerald-400 uppercase tracking-widest">Active Users</CardTitle>
+            <div className="p-2 bg-emerald-500/10 rounded-lg">
+              <UserCheck className="h-4 w-4 text-emerald-400" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-white">{activeCustomers}</div>
+            <div className="text-3xl font-bold text-white mb-1">{activeCustomers}</div>
+            <p className="text-xs text-gray-400">Currently active</p>
           </CardContent>
         </Card>
-        <Card className="bg-gray-900/50 border-gray-800 backdrop-blur-sm">
+        <Card className="bg-gradient-to-br from-red-900/20 to-black/40 border-red-500/20 backdrop-blur-md shadow-[0_0_30px_rgba(239,68,68,0.1)]">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-400">Blocked Users</CardTitle>
-            <UserX className="h-4 w-4 text-red-400" />
+            <CardTitle className="text-sm font-bold text-red-400 uppercase tracking-widest">Blocked Users</CardTitle>
+            <div className="p-2 bg-red-500/10 rounded-lg">
+              <UserX className="h-4 w-4 text-red-400" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-white">{blockedCustomers}</div>
+            <div className="text-3xl font-bold text-white mb-1">{blockedCustomers}</div>
+            <p className="text-xs text-gray-400">Restricted access</p>
           </CardContent>
         </Card>
       </div>
 
-      <Card className="bg-gray-900/50 border-gray-800 backdrop-blur-sm">
-        <CardHeader>
+      <Card className="bg-black/40 border-white/10 backdrop-blur-md shadow-2xl overflow-hidden">
+        <CardHeader className="border-b border-white/5 bg-white/5 pb-4">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <CardTitle className="text-white font-bold">Customer Database</CardTitle>
+            <div className="flex items-center gap-2">
+              <div className="p-2 bg-blue-500/10 rounded-lg border border-blue-500/20">
+                <Users className="w-5 h-5 text-blue-400" />
+              </div>
+              <CardTitle className="text-xl font-bold text-white">Customer Database</CardTitle>
+            </div>
             <div className="flex items-center gap-3 w-full md:w-auto">
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[140px] bg-gray-800 border-gray-700 text-white font-medium">
+                <SelectTrigger className="w-[140px] bg-black/20 border-white/10 text-white font-medium hover:bg-white/5 transition-colors">
                   <SelectValue placeholder="All Status" />
                 </SelectTrigger>
-                <SelectContent className="bg-gray-800 border-gray-700 text-white">
+                <SelectContent className="bg-[#1a1a1a] border-gray-800 text-white">
                   <SelectItem value="all">All Status</SelectItem>
                   <SelectItem value="active">Active</SelectItem>
                   <SelectItem value="blocked">Blocked</SelectItem>
                 </SelectContent>
               </Select>
               <div className="relative w-full md:w-64">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
+                <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-500" />
                 <Input
                   placeholder="Search customers..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-8 bg-gray-800/50 border-gray-700 text-white placeholder:text-gray-400 focus-visible:ring-blue-500"
+                  className="pl-9 bg-black/20 border-white/10 text-white placeholder:text-gray-500 focus-visible:ring-blue-500 focus-visible:border-blue-500 transition-all rounded-lg"
                 />
               </div>
             </div>
@@ -487,7 +501,7 @@ export default function CustomersPage() {
                       {customerOrders.map((order) => (
                         <TableRow key={order.id} className="border-gray-800 hover:bg-gray-800/30">
                           <TableCell className="font-mono text-xs text-gray-400 pl-6">
-                            {order.id.slice(0, 8)}...
+                            {(order.id || '').slice(0, 8)}...
                           </TableCell>
                           <TableCell className="text-gray-300 text-sm">
                             <div className="flex flex-col">
@@ -499,7 +513,7 @@ export default function CustomersPage() {
                             ₹{order.total}
                           </TableCell>
                           <TableCell>
-                            <Badge variant="outline" className={`capitalize ${order.status === 'completed' ? 'text-green-400 border-green-500/30 bg-green-500/10' :
+                            <Badge variant="outline" className={`capitalize ${order.status === 'delivered' ? 'text-green-400 border-green-500/30 bg-green-500/10' :
                               order.status === 'cancelled' ? 'text-red-400 border-red-500/30 bg-red-500/10' :
                                 'text-blue-400 border-blue-500/30 bg-blue-500/10'
                               }`}>

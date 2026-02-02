@@ -20,7 +20,7 @@ export default function AdminBottomNav() {
     ];
 
     return (
-        <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-black/95 backdrop-blur-xl border-t border-gray-800 flex justify-around items-center h-16 z-50 px-2 pb-safe shadow-[0_-5px_20px_rgba(0,0,0,0.5)]">
+        <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-black/80 backdrop-blur-2xl border-t border-white/10 flex justify-around items-center h-20 z-50 px-4 pb-safe shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
             {mainLinks.map(({ href, label, icon: Icon }) => {
                 const isExactActive = href === '/admin' ? pathname === href : pathname.startsWith(href);
 
@@ -34,8 +34,8 @@ export default function AdminBottomNav() {
                                 }`}
                         >
                             <div className={`p-1.5 rounded-full transition-all duration-300 ${isExactActive
-                                    ? 'bg-blue-600/20 shadow-[0_0_15px_rgba(37,99,235,0.3)] transform -translate-y-1'
-                                    : ''
+                                ? 'bg-blue-600/20 shadow-[0_0_15px_rgba(37,99,235,0.3)] transform -translate-y-1'
+                                : ''
                                 }`}>
                                 <Icon className={`w-5 h-5 ${isExactActive ? 'fill-blue-500/20' : ''}`} />
                             </div>

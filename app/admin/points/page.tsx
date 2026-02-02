@@ -71,7 +71,7 @@ export default function PointsPage() {
     const [searchTerm, setSearchTerm] = useState('');
 
     // Selection & Transactions
-    const [selectedAccount, setSelectedAccount] = useState<(PointsAccount & { restaurantName?: string }) | null>(null);
+    const [selectedAccount, setSelectedAccount] = useState<(PointsAccount & { restaurantName?: string, restaurantImage?: string }) | null>(null);
     const [transactions, setTransactions] = useState<PointsTransaction[]>([]);
     const [loadingTransactions, setLoadingTransactions] = useState(false);
 
@@ -236,30 +236,30 @@ export default function PointsPage() {
                 </div>
             </div>
 
-            {/* Stats Cards */}
+            {/* Enhanced Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 shrink-0">
-                <Card className="bg-gray-900 border-gray-800 text-white shadow-lg backdrop-blur-sm group hover:border-blue-500/50 transition-all">
+                <Card className="bg-gradient-to-br from-blue-900/20 to-black/40 border-blue-500/20 backdrop-blur-md shadow-[0_0_30px_rgba(59,130,246,0.1)] group hover:shadow-[0_0_40px_rgba(59,130,246,0.2)] transition-all duration-300">
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
-                        <CardTitle className="text-sm font-bold text-white uppercase tracking-widest">Total In Circulation</CardTitle>
-                        <Wallet className="h-5 w-5 text-blue-400 group-hover:scale-110 transition-transform" />
+                        <CardTitle className="text-xs font-bold text-blue-400 uppercase tracking-widest">Total In Circulation</CardTitle>
+                        <Wallet className="h-5 w-5 text-blue-500 group-hover:scale-110 transition-transform" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-3xl font-bold text-white tracking-tight">{totalCirculation.toLocaleString()} <span className="text-sm text-gray-200 font-normal">pts</span></div>
+                        <div className="text-3xl font-bold text-white tracking-tight">{totalCirculation.toLocaleString()} <span className="text-sm text-gray-400 font-normal">pts</span></div>
                     </CardContent>
                 </Card>
-                <Card className="bg-gray-900 border-gray-800 text-white shadow-lg backdrop-blur-sm group hover:border-purple-500/50 transition-all">
+                <Card className="bg-gradient-to-br from-purple-900/20 to-black/40 border-purple-500/20 backdrop-blur-md shadow-[0_0_30px_rgba(168,85,247,0.1)] group hover:shadow-[0_0_40px_rgba(168,85,247,0.2)] transition-all duration-300">
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
-                        <CardTitle className="text-sm font-bold text-gray-200 uppercase tracking-widest">Total Spent (Lifetime)</CardTitle>
-                        <TrendingUp className="h-5 w-5 text-purple-400 group-hover:scale-110 transition-transform" />
+                        <CardTitle className="text-xs font-bold text-purple-400 uppercase tracking-widest">Total Spent (Lifetime)</CardTitle>
+                        <TrendingUp className="h-5 w-5 text-purple-500 group-hover:scale-110 transition-transform" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-3xl font-bold text-white tracking-tight">{totalSpentGlobal.toLocaleString()} <span className="text-sm text-gray-200 font-normal">pts</span></div>
+                        <div className="text-3xl font-bold text-white tracking-tight">{totalSpentGlobal.toLocaleString()} <span className="text-sm text-gray-400 font-normal">pts</span></div>
                     </CardContent>
                 </Card>
-                <Card className="bg-gray-900 border-gray-800 text-white shadow-lg backdrop-blur-sm group hover:border-green-500/50 transition-all">
+                <Card className="bg-gradient-to-br from-green-900/20 to-black/40 border-green-500/20 backdrop-blur-md shadow-[0_0_30px_rgba(34,197,94,0.1)] group hover:shadow-[0_0_40px_rgba(34,197,94,0.2)] transition-all duration-300">
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
-                        <CardTitle className="text-sm font-bold text-white uppercase tracking-widest">Active Accounts</CardTitle>
-                        <Store className="h-5 w-5 text-green-400 group-hover:scale-110 transition-transform" />
+                        <CardTitle className="text-xs font-bold text-green-400 uppercase tracking-widest">Active Accounts</CardTitle>
+                        <Store className="h-5 w-5 text-green-500 group-hover:scale-110 transition-transform" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-3xl font-bold text-white tracking-tight">{accounts.length}</div>
@@ -269,15 +269,15 @@ export default function PointsPage() {
 
             <div className="flex-1 min-h-0 flex flex-col md:flex-row gap-6 overflow-hidden">
                 {/* Left: Accounts List */}
-                <Card className="flex-1 flex flex-col bg-gray-900/40 border-gray-800 backdrop-blur-md overflow-hidden">
-                    <div className="p-4 border-b border-gray-800 shrink-0">
+                <Card className="flex-1 flex flex-col bg-black/40 border-white/10 backdrop-blur-xl shadow-2xl overflow-hidden">
+                    <div className="p-4 border-b border-white/5 shrink-0">
                         <div className="relative">
                             <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
                             <Input
                                 placeholder="Search by Restaurant Name or ID..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className="pl-9 bg-gray-950/50 border-gray-700 text-white placeholder:text-gray-400"
+                                className="pl-9 bg-black/20 border-white/10 text-white placeholder:text-gray-500 focus:bg-black/40 focus:border-blue-500/50 transition-all"
                             />
                         </div>
                     </div>

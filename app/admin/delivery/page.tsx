@@ -165,48 +165,48 @@ export default function DeliveryPage() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card className="bg-gray-900 border-gray-800 text-white shadow-xl bg-opacity-80 backdrop-blur-md">
+        <Card className="bg-gradient-to-br from-orange-900/20 to-black/40 border-orange-500/20 backdrop-blur-md shadow-[0_0_30px_rgba(249,115,22,0.1)] group hover:shadow-[0_0_40px_rgba(249,115,22,0.2)] transition-all duration-300">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-xs font-semibold text-gray-400 uppercase tracking-widest">Pending Requests</CardTitle>
+            <CardTitle className="text-xs font-bold text-orange-400 uppercase tracking-widest">Pending Requests</CardTitle>
             <ShieldAlert className="h-5 w-5 text-orange-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-orange-500">{pendingCount}</div>
-            <p className="text-xs text-gray-500 mt-1">Awaiting verification</p>
+            <div className="text-3xl font-bold text-white tracking-tight">{pendingCount}</div>
+            <p className="text-xs text-gray-400 font-medium mt-1">Awaiting verification</p>
           </CardContent>
         </Card>
-        <Card className="bg-gray-900 border-gray-800 text-white shadow-xl bg-opacity-80 backdrop-blur-md">
+        <Card className="bg-gradient-to-br from-blue-900/20 to-black/40 border-blue-500/20 backdrop-blur-md shadow-[0_0_30px_rgba(59,130,246,0.1)] group hover:shadow-[0_0_40px_rgba(59,130,246,0.2)] transition-all duration-300">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-xs font-semibold text-gray-400 uppercase tracking-widest">Total Partners</CardTitle>
+            <CardTitle className="text-xs font-bold text-blue-400 uppercase tracking-widest">Total Partners</CardTitle>
             <User className="h-5 w-5 text-blue-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-white">{totalPartners}</div>
-            <p className="text-xs text-gray-500 mt-1">Registered fleet members</p>
+            <div className="text-3xl font-bold text-white tracking-tight">{totalPartners}</div>
+            <p className="text-xs text-gray-400 font-medium mt-1">Registered fleet members</p>
           </CardContent>
         </Card>
-        <Card className="bg-gray-900 border-gray-800 text-white shadow-xl bg-opacity-80 backdrop-blur-md">
+        <Card className="bg-gradient-to-br from-green-900/20 to-black/40 border-green-500/20 backdrop-blur-md shadow-[0_0_30px_rgba(34,197,94,0.1)] group hover:shadow-[0_0_40px_rgba(34,197,94,0.2)] transition-all duration-300">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-xs font-semibold text-gray-400 uppercase tracking-widest">Online Now</CardTitle>
+            <CardTitle className="text-xs font-bold text-green-400 uppercase tracking-widest">Online Now</CardTitle>
             <Activity className="h-5 w-5 text-green-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-green-500">{onlinePartners}</div>
-            <p className="text-xs text-gray-500 mt-1">Available for orders</p>
+            <div className="text-3xl font-bold text-white tracking-tight">{onlinePartners}</div>
+            <p className="text-xs text-gray-400 font-medium mt-1">Available for orders</p>
           </CardContent>
         </Card>
-        <Card className="bg-gray-900 border-gray-800 text-white shadow-xl bg-opacity-80 backdrop-blur-md">
+        <Card className="bg-gradient-to-br from-yellow-900/20 to-black/40 border-yellow-500/20 backdrop-blur-md shadow-[0_0_30px_rgba(234,179,8,0.1)] group hover:shadow-[0_0_40px_rgba(234,179,8,0.2)] transition-all duration-300">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-xs font-semibold text-gray-400 uppercase tracking-widest">Avg Fleet Rating</CardTitle>
+            <CardTitle className="text-xs font-bold text-yellow-400 uppercase tracking-widest">Avg Fleet Rating</CardTitle>
             <Award className="h-5 w-5 text-yellow-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-yellow-500">
+            <div className="text-3xl font-bold text-white tracking-tight">
               {totalPartners > 0
                 ? (partners.reduce((acc, curr) => acc + (curr.rating || 0), 0) / totalPartners).toFixed(1)
                 : 'N/A'}
             </div>
-            <p className="text-xs text-gray-500 mt-1">Based on customer feedback</p>
+            <p className="text-xs text-gray-400 font-medium mt-1">Based on customer feedback</p>
           </CardContent>
         </Card>
       </div>
@@ -297,20 +297,21 @@ export default function DeliveryPage() {
       )}
 
       {/* SEARCH & FILTER BAR */}
-      <Card className="bg-gray-900/50 border-gray-800 backdrop-blur-sm sticky top-0 z-10 shadow-xl">
+      <Card className="bg-black/80 border-white/5 backdrop-blur-xl sticky top-0 z-10 shadow-lg">
         <CardHeader className="py-4">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <CardTitle className="text-lg text-white font-bold flex items-center gap-2">
+              <Truck className="h-5 w-5 text-blue-400" />
               Active Fleet
-              <Badge variant="secondary" className="bg-gray-800 text-gray-400 text-xs font-normal">{filteredPartners.length} drivers</Badge>
+              <Badge variant="secondary" className="bg-white/10 text-white text-xs font-normal border border-white/5">{filteredPartners.length} drivers</Badge>
             </CardTitle>
             <div className="relative w-full md:w-80">
-              <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-500" />
+              <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
               <Input
                 placeholder="Search drivers by name, phone..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 bg-black/40 border-gray-700 text-white placeholder:text-gray-600 focus-visible:ring-blue-600 focus-visible:border-blue-600 h-10 rounded-full"
+                className="pl-10 bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:bg-white/10 focus:border-blue-500/50 h-10 rounded-xl transition-all"
               />
             </div>
           </div>
@@ -318,15 +319,15 @@ export default function DeliveryPage() {
       </Card>
 
       {/* All Partners Table */}
-      <div className="rounded-xl border border-gray-800 overflow-hidden shadow-2xl bg-gray-900/30">
+      <div className="rounded-xl border border-white/10 overflow-hidden shadow-2xl bg-black/40 backdrop-blur-xl">
         <Table>
-          <TableHeader className="bg-gray-900 text-white border-b border-gray-800">
-            <TableRow className="border-gray-800 hover:bg-gray-900">
-              <TableHead className="font-semibold text-gray-400 py-4 pl-6">Partner Identity</TableHead>
-              <TableHead className="font-semibold text-gray-400 py-4">Fleet Details</TableHead>
-              <TableHead className="font-semibold text-gray-400 py-4">Metrics</TableHead>
-              <TableHead className="font-semibold text-gray-400 py-4">Current Status</TableHead>
-              <TableHead className="text-right font-semibold text-gray-400 py-4 pr-6">Management</TableHead>
+          <TableHeader className="bg-white/5 border-b border-white/5">
+            <TableRow className="border-white/5 hover:bg-transparent">
+              <TableHead className="font-bold text-gray-300 py-4 pl-6 uppercase text-xs tracking-wider">Partner Identity</TableHead>
+              <TableHead className="font-bold text-gray-300 py-4 uppercase text-xs tracking-wider">Fleet Details</TableHead>
+              <TableHead className="font-bold text-gray-300 py-4 uppercase text-xs tracking-wider">Metrics</TableHead>
+              <TableHead className="font-bold text-gray-300 py-4 uppercase text-xs tracking-wider">Current Status</TableHead>
+              <TableHead className="text-right font-bold text-gray-300 py-4 pr-6 uppercase text-xs tracking-wider">Management</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>

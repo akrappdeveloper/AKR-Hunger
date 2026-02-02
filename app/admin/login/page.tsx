@@ -1,12 +1,11 @@
 'use client';
 
-import React from "react"
-
-import { useState } from 'react';
+import React, { useState } from "react"
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { Loader2, ArrowRight, ShieldCheck, Lock } from 'lucide-react';
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState('');
@@ -21,87 +20,107 @@ export default function AdminLoginPage() {
     setLoading(true);
 
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      // Determine if this user is actually an admin before redirecting
-      // Although context does this, doing it here creates a better UX with immediate feedback
-
-      // Note: We can't import 'db' here directly cleanly if not already imported or we can rely on context 
-      // but context updates might be slightly delayed. 
-      // Safest is to just push and let context handle it OR check claim if using custom claims 
-      // For now, valid login -> push -> Context will verify role and redirect back if invalid.
-      // But to avoid "flash", let's wait a tiny bit or trust the context.
-
+      await signInWithEmailAndPassword(auth, email, password);
       router.push('/admin');
     } catch (err: any) {
       console.error(err);
-      setError('Invalid email or password.');
-      // If it was a permission error (user exists but not in 'admins' collection), 
-      // it would be caught by context redirecting back here.
+      setError('Invalid credentials. Access denied.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="bg-gray-800 rounded-xl shadow-2xl p-8 border border-gray-700">
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-white mb-2">AKR Hunger</h1>
-            <p className="text-gray-400">Admin Panel Login</p>
+    <div className="min-h-screen w-full flex items-center justify-center bg-black relative overflow-hidden font-sans">
+      {/* Dynamic Background */}
+      <div className="absolute inset-0 w-full h-full">
+        <div className="absolute top-0 -left-4 w-72 h-72 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob"></div>
+        <div className="absolute top-0 -right-4 w-72 h-72 bg-blue-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-2000"></div>
+        <div className="absolute -bottom-8 left-20 w-72 h-72 bg-indigo-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-4000"></div>
+        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 brightness-100 contrast-150"></div>
+      </div>
+
+      {/* Glassmorphic Card */}
+      <div className="relative z-10 w-full max-w-md p-8 sm:p-10 mx-4">
+        <div className="absolute inset-0 bg-white/5 backdrop-blur-2xl rounded-3xl border border-white/10 shadow-[0_0_80px_rgba(0,0,0,0.5)]"></div>
+
+        <div className="relative z-20 flex flex-col items-center">
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/30 mb-8 transform hover:scale-105 transition-transform duration-300">
+            <ShieldCheck className="text-white w-8 h-8" />
           </div>
 
-          {error && (
-            <div className="bg-red-900/20 border border-red-700 text-red-400 px-4 py-3 rounded-lg mb-6 text-sm">
-              {error}
-            </div>
-          )}
+          <div className="text-center mb-10">
+            <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white via-gray-200 to-gray-400 mb-2 tracking-tight">
+              Welcome Back
+            </h1>
+            <p className="text-gray-400 text-sm tracking-wide uppercase">Admin Portal Access</p>
+          </div>
 
-          <form onSubmit={handleLogin} className="space-y-5">
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Email Address
-              </label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="admin@akrhunger.com"
-                className="w-full px-4 py-2.5 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-                required
-              />
+          <form onSubmit={handleLogin} className="w-full space-y-5">
+            {error && (
+              <div className="bg-red-500/10 border border-red-500/20 text-red-200 px-4 py-3 rounded-xl text-center text-sm font-medium animate-shake">
+                {error}
+              </div>
+            )}
+
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-gray-400 ml-1">Email Address</label>
+              <div className="relative group">
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="admin@akrhunger.com"
+                  className="w-full px-5 py-4 bg-black/20 border border-white/10 rounded-xl text-white placeholder-gray-600 focus:outline-none focus:border-blue-500/50 focus:bg-black/40 focus:ring-1 focus:ring-blue-500/20 transition-all duration-300"
+                  required
+                />
+              </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Password
-              </label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                className="w-full px-4 py-2.5 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-                required
-              />
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-gray-400 ml-1">Password</label>
+              <div className="relative group">
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full px-5 py-4 bg-black/20 border border-white/10 rounded-xl text-white placeholder-gray-600 focus:outline-none focus:border-blue-500/50 focus:bg-black/40 focus:ring-1 focus:ring-blue-500/20 transition-all duration-300"
+                  required
+                />
+              </div>
             </div>
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white font-semibold py-2.5 rounded-lg transition-colors"
+              className="w-full mt-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-900/20 hover:shadow-blue-600/30 transform hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
-              {loading ? 'Logging in...' : 'Login'}
+              {loading ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <span>Verifying...</span>
+                </>
+              ) : (
+                <>
+                  <span>Access Dashboard</span>
+                  <ArrowRight className="w-5 h-5" />
+                </>
+              )}
             </button>
           </form>
 
-          <p className="text-center text-gray-400 text-sm mt-6">
-            Back to{' '}
-            <Link href="/" className="text-blue-400 hover:text-blue-300">
-              Customer Panel
+          <div className="mt-8 pt-6 border-t border-white/5 w-full text-center">
+            <Link href="/" className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-white transition-colors duration-200">
+              <span>Return to Website</span>
             </Link>
-          </p>
+          </div>
         </div>
+      </div>
+
+      {/* Footer / Copyright */}
+      <div className="absolute bottom-6 text-center w-full">
+        <p className="text-white/20 text-xs">© 2026 AKR Hunger. Secure Admin Environment.</p>
       </div>
     </div>
   );

@@ -282,74 +282,74 @@ export default function AdminPaymentsPage() {
 
             {/* Enhanced Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <Card className="bg-gradient-to-br from-yellow-900/30 to-gray-900 border-yellow-500/30 text-white shadow-lg hover:shadow-yellow-500/20 transition-all duration-300">
+                <Card className="bg-gradient-to-br from-yellow-900/20 to-black/40 border-yellow-500/20 backdrop-blur-md shadow-[0_0_30px_rgba(234,179,8,0.1)] group hover:shadow-[0_0_40px_rgba(234,179,8,0.2)] transition-all duration-300">
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
-                        <CardTitle className="text-sm font-bold text-gray-100 uppercase tracking-widest">Pending</CardTitle>
-                        <Clock className="h-5 w-5 text-yellow-300" />
+                        <CardTitle className="text-xs font-bold text-yellow-400 uppercase tracking-widest">Pending</CardTitle>
+                        <Clock className="h-5 w-5 text-yellow-500" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-4xl font-bold text-yellow-300 mb-1">₹{totalPending.toFixed(2)}</div>
-                        <p className="text-xs text-gray-200 font-medium flex items-center gap-1">
+                        <div className="text-4xl font-bold text-white mb-1 tracking-tight">₹{totalPending.toFixed(2)}</div>
+                        <p className="text-xs text-gray-400 font-medium flex items-center gap-1">
                             <AlertCircle className="h-3 w-3" />
                             {requests.filter(r => r.status === 'pending').length} pending
                         </p>
                     </CardContent>
                 </Card>
 
-                <Card className="bg-gradient-to-br from-green-900/30 to-gray-900 border-green-500/30 text-white shadow-lg hover:shadow-green-500/20 transition-all duration-300">
+                <Card className="bg-gradient-to-br from-green-900/20 to-black/40 border-green-500/20 backdrop-blur-md shadow-[0_0_30px_rgba(34,197,94,0.1)] group hover:shadow-[0_0_40px_rgba(34,197,94,0.2)] transition-all duration-300">
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
-                        <CardTitle className="text-sm font-bold text-gray-100 uppercase tracking-widest">Accepted</CardTitle>
-                        <CheckCircle className="h-5 w-5 text-green-300" />
+                        <CardTitle className="text-xs font-bold text-green-400 uppercase tracking-widest">Accepted</CardTitle>
+                        <CheckCircle className="h-5 w-5 text-green-500" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-4xl font-bold text-green-300 mb-1">₹{totalPaid.toFixed(2)}</div>
-                        <p className="text-xs text-gray-200 font-medium flex items-center gap-1">
+                        <div className="text-4xl font-bold text-white mb-1 tracking-tight">₹{totalPaid.toFixed(2)}</div>
+                        <p className="text-xs text-gray-400 font-medium flex items-center gap-1">
                             <TrendingUp className="h-3 w-3" />
                             {requests.filter(r => r.status === 'completed').length} approved
                         </p>
                     </CardContent>
                 </Card>
 
-                <Card className="bg-gradient-to-br from-red-900/30 to-gray-900 border-red-500/30 text-white shadow-lg hover:shadow-red-500/20 transition-all duration-300">
+                <Card className="bg-gradient-to-br from-red-900/20 to-black/40 border-red-500/20 backdrop-blur-md shadow-[0_0_30px_rgba(239,68,68,0.1)] group hover:shadow-[0_0_40px_rgba(239,68,68,0.2)] transition-all duration-300">
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
-                        <CardTitle className="text-sm font-bold text-gray-100 uppercase tracking-widest">Rejected</CardTitle>
-                        <XCircle className="h-5 w-5 text-red-300" />
+                        <CardTitle className="text-xs font-bold text-red-400 uppercase tracking-widest">Rejected</CardTitle>
+                        <XCircle className="h-5 w-5 text-red-500" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-4xl font-bold text-red-300 mb-1">₹{totalRejected.toFixed(2)}</div>
-                        <p className="text-xs text-gray-200 font-medium">{requests.filter(r => r.status === 'rejected').length} declined</p>
+                        <div className="text-4xl font-bold text-white mb-1 tracking-tight">₹{totalRejected.toFixed(2)}</div>
+                        <p className="text-xs text-gray-400 font-medium">{requests.filter(r => r.status === 'rejected').length} declined</p>
                     </CardContent>
                 </Card>
 
-                <Card className="bg-gradient-to-br from-blue-900/30 to-gray-900 border-blue-500/30 text-white shadow-lg hover:shadow-blue-500/20 transition-all duration-300">
+                <Card className="bg-gradient-to-br from-blue-900/20 to-black/40 border-blue-500/20 backdrop-blur-md shadow-[0_0_30px_rgba(59,130,246,0.1)] group hover:shadow-[0_0_40px_rgba(59,130,246,0.2)] transition-all duration-300">
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
-                        <CardTitle className="text-sm font-bold text-gray-100 uppercase tracking-widest">Total Requests</CardTitle>
-                        <FileText className="h-5 w-5 text-blue-300" />
+                        <CardTitle className="text-xs font-bold text-blue-400 uppercase tracking-widest">Total Requests</CardTitle>
+                        <FileText className="h-5 w-5 text-blue-500" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-4xl font-bold text-blue-300 mb-1">{totalRequestsCount}</div>
-                        <p className="text-xs text-gray-200 font-medium">All time</p>
+                        <div className="text-4xl font-bold text-white mb-1 tracking-tight">{totalRequestsCount}</div>
+                        <p className="text-xs text-gray-400 font-medium">All time</p>
                     </CardContent>
                 </Card>
             </div>
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <Card className="bg-gray-900/70 border-gray-800 backdrop-blur-sm shadow-2xl">
-                    <CardHeader className="pb-3 border-b border-gray-800">
+                <Card className="bg-black/40 border-white/10 backdrop-blur-xl shadow-2xl">
+                    <CardHeader className="pb-3 border-b border-white/5">
                         <div className="flex flex-col md:flex-row gap-4 justify-between items-center">
                             <div className="w-full md:w-auto">
-                                <TabsList className="bg-gray-950 border border-gray-800 h-10 p-1">
-                                    <TabsTrigger value="pending" className="data-[state=active]:bg-yellow-600 data-[state=active]:text-white text-gray-200 font-medium">
+                                <TabsList className="bg-gray-900/50 border border-white/5 h-10 p-1">
+                                    <TabsTrigger value="pending" className="data-[state=active]:bg-yellow-600 data-[state=active]:text-white text-gray-400 font-medium">
                                         Pending
-                                        <Badge className="ml-2 bg-yellow-500/20 text-yellow-300 border-0">{pendingRequests.length}</Badge>
+                                        <Badge className="ml-2 bg-black/20 text-white border-0">{pendingRequests.length}</Badge>
                                     </TabsTrigger>
-                                    <TabsTrigger value="completed" className="data-[state=active]:bg-green-600 data-[state=active]:text-white text-gray-200 font-medium">
+                                    <TabsTrigger value="completed" className="data-[state=active]:bg-green-600 data-[state=active]:text-white text-gray-400 font-medium">
                                         Accepted
-                                        <Badge className="ml-2 bg-green-500/20 text-green-300 border-0">{completedRequests.length}</Badge>
+                                        <Badge className="ml-2 bg-black/20 text-white border-0">{completedRequests.length}</Badge>
                                     </TabsTrigger>
-                                    <TabsTrigger value="rejected" className="data-[state=active]:bg-red-600 data-[state=active]:text-white text-gray-200 font-medium">
+                                    <TabsTrigger value="rejected" className="data-[state=active]:bg-red-600 data-[state=active]:text-white text-gray-400 font-medium">
                                         Rejected
-                                        <Badge className="ml-2 bg-red-500/20 text-red-300 border-0">{rejectedRequests.length}</Badge>
+                                        <Badge className="ml-2 bg-black/20 text-white border-0">{rejectedRequests.length}</Badge>
                                     </TabsTrigger>
                                 </TabsList>
                             </div>
@@ -357,7 +357,7 @@ export default function AdminPaymentsPage() {
                                 <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
                                 <Input
                                     placeholder="Search restaurant..."
-                                    className="bg-gray-950 border-gray-700 text-white pl-10 placeholder:text-gray-500 focus-visible:ring-blue-500 focus-visible:border-blue-500 h-10"
+                                    className="bg-black/20 border-white/10 text-white pl-10 placeholder:text-gray-500 focus:bg-black/40 focus:border-blue-500/50 h-10 transition-all rounded-lg"
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                 />

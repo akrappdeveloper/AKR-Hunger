@@ -107,7 +107,7 @@ service cloud.firestore {
 
     // Notifications
     match /notifications/{notifId} {
-      allow read, update: if request.auth.uid != null && resource.data.userId == request.auth.uid;
+      allow read, update: if request.auth.uid != null && (resource.data.userId == request.auth.uid || isAdmin(request.auth.uid));
       allow create: if request.auth.uid != null || isAdmin(request.auth.uid);
     }
 

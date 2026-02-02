@@ -144,17 +144,17 @@ export default function AdminNotificationsPage() {
             {/* Main Content */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                 <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
-                    <TabsList className="bg-gray-900 border border-gray-800 h-11 p-1 w-full md:w-auto overflow-x-auto justify-start">
-                        <TabsTrigger value="all" className="data-[state=active]:bg-gray-700 data-[state=active]:text-white text-gray-400 px-6">
+                    <TabsList className="bg-black/40 border border-white/5 h-11 p-1 w-full md:w-auto overflow-x-auto justify-start backdrop-blur-md">
+                        <TabsTrigger value="all" className="data-[state=active]:bg-gray-800 data-[state=active]:text-white text-gray-400 px-6 font-medium">
                             All
                         </TabsTrigger>
-                        <TabsTrigger value="customer" className="data-[state=active]:bg-green-700 data-[state=active]:text-white text-gray-400 px-6">
+                        <TabsTrigger value="customer" className="data-[state=active]:bg-green-600 data-[state=active]:text-white text-gray-400 px-6 font-medium">
                             <User className="w-4 h-4 mr-2" /> Customers
                         </TabsTrigger>
-                        <TabsTrigger value="restaurant" className="data-[state=active]:bg-orange-700 data-[state=active]:text-white text-gray-400 px-6">
+                        <TabsTrigger value="restaurant" className="data-[state=active]:bg-orange-600 data-[state=active]:text-white text-gray-400 px-6 font-medium">
                             <Store className="w-4 h-4 mr-2" /> Restaurants
                         </TabsTrigger>
-                        <TabsTrigger value="delivery" className="data-[state=active]:bg-blue-700 data-[state=active]:text-white text-gray-400 px-6">
+                        <TabsTrigger value="delivery" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-gray-400 px-6 font-medium">
                             <Truck className="w-4 h-4 mr-2" /> Delivery
                         </TabsTrigger>
                     </TabsList>
@@ -165,12 +165,12 @@ export default function AdminNotificationsPage() {
                             placeholder="Search notifications..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="bg-gray-900 border-gray-800 pl-10 text-white focus-visible:ring-blue-500"
+                            className="bg-black/20 border-white/10 pl-10 text-white focus:bg-black/40 focus:border-blue-500/50 transition-all rounded-lg"
                         />
                     </div>
                 </div>
 
-                <Card className="bg-gray-900/40 border-gray-800 backdrop-blur-sm min-h-[600px]">
+                <Card className="bg-black/40 border-white/10 backdrop-blur-xl shadow-2xl min-h-[600px]">
                     <CardContent className="p-0">
                         <ScrollArea className="h-[700px] p-4">
                             {filteredNotifications.length === 0 ? (
@@ -187,14 +187,14 @@ export default function AdminNotificationsPage() {
                                             className={`
                         relative group flex flex-col md:flex-row gap-4 p-4 rounded-xl border transition-all duration-300
                         ${notif.isRead
-                                                    ? 'bg-gray-900/30 border-gray-800/50 hover:bg-gray-900/50'
-                                                    : 'bg-gray-800/40 border-blue-500/30 hover:bg-gray-800/60 shadow-lg shadow-blue-900/10'}
+                                                    ? 'bg-gray-900/40 border-gray-800/50 hover:bg-gray-900/60'
+                                                    : 'bg-gradient-to-r from-gray-900 to-gray-800/50 border-blue-500/30 hover:border-blue-500/50 shadow-lg shadow-blue-500/5'}
                       `}
                                         >
                                             {/* Icon Container */}
                                             <div className={`
-                        flex items-center justify-center w-12 h-12 rounded-full shrink-0
-                        ${notif.type === 'alert' ? 'bg-red-500/10' : 'bg-gray-800'}
+                        flex items-center justify-center w-12 h-12 rounded-full shrink-0 shadow-lg
+                        ${notif.type === 'alert' ? 'bg-red-500/20 shadow-red-500/10' : 'bg-black/40 shadow-black/20'}
                       `}>
                                                 {getIconForType(notif.userType)}
                                             </div>
@@ -209,7 +209,7 @@ export default function AdminNotificationsPage() {
                                                         {notif.userType || 'System'}
                                                     </Badge>
                                                     {!notif.isRead && (
-                                                        <span className="flex h-2 w-2 rounded-full bg-blue-500 ml-2 animate-pulse" />
+                                                        <span className="flex h-2 w-2 rounded-full bg-blue-500 ml-2 animate-pulse shadow-[0_0_10px_#3b82f6]" />
                                                     )}
                                                 </div>
 
@@ -218,12 +218,12 @@ export default function AdminNotificationsPage() {
                                                 </p>
 
                                                 <div className="flex items-center gap-4 text-xs text-gray-500 font-medium">
-                                                    <span className="flex items-center gap-1.5 bg-gray-950/50 px-2 py-1 rounded-md">
+                                                    <span className="flex items-center gap-1.5 bg-black/20 px-2 py-1 rounded-md border border-white/5">
                                                         <Clock className="w-3.5 h-3.5" />
                                                         {notif.createdAt ? formatDistanceToNow(notif.createdAt, { addSuffix: true }) : 'Just now'}
                                                     </span>
                                                     {notif.orderId && (
-                                                        <span className="flex items-center gap-1.5 hover:text-blue-400 cursor-pointer transition-colors">
+                                                        <span className="flex items-center gap-1.5 hover:text-blue-400 cursor-pointer transition-colors bg-blue-500/10 px-2 py-1 rounded-md border border-blue-500/20">
                                                             <AlertCircle className="w-3.5 h-3.5" />
                                                             Order #{notif.orderId.substring(0, 6)}
                                                         </span>

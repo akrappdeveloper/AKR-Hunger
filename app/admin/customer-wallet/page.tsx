@@ -106,8 +106,8 @@ export default function CustomerWalletAdminPage() {
                             variant={filterStatus === status ? 'secondary' : 'ghost'}
                             onClick={() => setFilterStatus(status as any)}
                             className={`capitalize ${filterStatus === status
-                                    ? 'bg-white text-black hover:bg-gray-200 shadow-lg'
-                                    : 'text-gray-400 hover:text-white hover:bg-white/5'
+                                ? 'bg-white text-black hover:bg-gray-200 shadow-lg'
+                                : 'text-gray-400 hover:text-white hover:bg-white/5'
                                 }`}
                         >
                             {status}
@@ -118,65 +118,65 @@ export default function CustomerWalletAdminPage() {
 
             {/* Stats Overview */}
             <div className="grid gap-6 md:grid-cols-3">
-                <Card className="bg-gray-900/40 border-white/10 backdrop-blur-md relative overflow-hidden group">
-                    <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/10 to-transparent opacity-50 group-hover:opacity-100 transition-opacity" />
-                    <CardHeader className="pb-2 relative z-10">
-                        <CardTitle className="text-sm font-medium text-gray-400 flex items-center gap-2">
-                            <Clock className="w-4 h-4 text-yellow-500" />
+                <Card className="bg-gradient-to-br from-yellow-900/20 to-black/40 border-yellow-500/20 backdrop-blur-md shadow-[0_0_30px_rgba(234,179,8,0.1)] group hover:shadow-[0_0_40px_rgba(234,179,8,0.2)] transition-all duration-300">
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-bold text-yellow-400 uppercase tracking-widest flex items-center gap-2">
+                            <Clock className="w-4 h-4" />
                             Pending Requests
                         </CardTitle>
                     </CardHeader>
-                    <CardContent className="relative z-10">
-                        <div className="text-4xl font-bold text-white mb-1">
+                    <CardContent>
+                        <div className="text-4xl font-bold text-white mb-1 tracking-tight">
                             {requests.filter(r => r.status === 'pending').length}
                         </div>
-                        <p className="text-xs text-yellow-500 font-medium">Awaiting Action</p>
+                        <p className="text-xs text-gray-400 font-medium">Awaiting Action</p>
                     </CardContent>
                 </Card>
 
-                <Card className="bg-gray-900/40 border-white/10 backdrop-blur-md relative overflow-hidden group">
-                    <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-transparent opacity-50 group-hover:opacity-100 transition-opacity" />
-                    <CardHeader className="pb-2 relative z-10">
-                        <CardTitle className="text-sm font-medium text-gray-400 flex items-center gap-2">
-                            <ArrowUpRight className="w-4 h-4 text-green-500" />
+                <Card className="bg-gradient-to-br from-emerald-900/20 to-black/40 border-emerald-500/20 backdrop-blur-md shadow-[0_0_30px_rgba(16,185,129,0.1)] group hover:shadow-[0_0_40px_rgba(16,185,129,0.2)] transition-all duration-300">
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-bold text-emerald-400 uppercase tracking-widest flex items-center gap-2">
+                            <ArrowUpRight className="w-4 h-4" />
                             Total Disbursed
                         </CardTitle>
                     </CardHeader>
-                    <CardContent className="relative z-10">
-                        <div className="text-4xl font-bold text-white mb-1">
+                    <CardContent>
+                        <div className="text-4xl font-bold text-white mb-1 tracking-tight">
                             ₹{requests.filter(r => r.status === 'approved').reduce((acc, curr) => acc + curr.amount, 0).toLocaleString()}
                         </div>
-                        <p className="text-xs text-green-500 font-medium">Successfully Transferred</p>
+                        <p className="text-xs text-gray-400 font-medium">Successfully Transferred</p>
                     </CardContent>
                 </Card>
 
-                <Card className="bg-gray-900/40 border-white/10 backdrop-blur-md relative overflow-hidden group">
-                    <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent opacity-50 group-hover:opacity-100 transition-opacity" />
-                    <CardHeader className="pb-2 relative z-10">
-                        <CardTitle className="text-sm font-medium text-gray-400 flex items-center gap-2">
-                            <Banknote className="w-4 h-4 text-blue-500" />
+                <Card className="bg-gradient-to-br from-blue-900/20 to-black/40 border-blue-500/20 backdrop-blur-md shadow-[0_0_30px_rgba(59,130,246,0.1)] group hover:shadow-[0_0_40px_rgba(59,130,246,0.2)] transition-all duration-300">
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-bold text-blue-400 uppercase tracking-widest flex items-center gap-2">
+                            <Banknote className="w-4 h-4" />
                             Largest Withdrawal
                         </CardTitle>
                     </CardHeader>
-                    <CardContent className="relative z-10">
-                        <div className="text-4xl font-bold text-white mb-1">
+                    <CardContent>
+                        <div className="text-4xl font-bold text-white mb-1 tracking-tight">
                             ₹{Math.max(...requests.map(r => r.amount), 0).toLocaleString()}
                         </div>
-                        <p className="text-xs text-blue-400 font-medium">Single Transaction</p>
+                        <p className="text-xs text-gray-400 font-medium">Single Transaction</p>
                     </CardContent>
                 </Card>
             </div>
 
             {/* Main Table Card */}
-            <Card className="bg-gray-900/40 border-white/10 backdrop-blur-xl shadow-2xl">
-                <CardHeader className="border-b border-white/5 pb-4">
+            <Card className="bg-black/40 border-white/10 backdrop-blur-xl shadow-2xl overflow-hidden">
+                <CardHeader className="border-b border-white/5 bg-white/5 pb-4">
                     <div className="flex items-center justify-between">
                         <div>
-                            <CardTitle className="text-xl text-white">Withdrawal Requests</CardTitle>
+                            <CardTitle className="text-xl text-white font-bold flex items-center gap-2">
+                                <Banknote className="h-5 w-5 text-green-400" />
+                                Withdrawal Requests
+                            </CardTitle>
                             <CardDescription className="text-gray-400 mt-1">Review and process customer fund withdrawals</CardDescription>
                         </div>
-                        <div className="flex items-center gap-2 text-sm text-gray-400 bg-black/20 px-3 py-1 rounded-full border border-white/5">
-                            <AlertCircle className="w-4 h-4" />
+                        <div className="flex items-center gap-2 text-xs font-bold text-white bg-blue-500/20 px-3 py-1.5 rounded-full border border-blue-500/20">
+                            <AlertCircle className="w-3.5 h-3.5" />
                             Showing {filteredRequests.length} requests
                         </div>
                     </div>

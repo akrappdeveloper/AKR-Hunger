@@ -175,59 +175,55 @@ export default function CardRequestsPage() {
 
             {/* Statistics Dashboard */}
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-                <Card className="bg-gray-900/40 border-white/10 backdrop-blur-md relative overflow-hidden group">
-                    <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent opacity-50 group-hover:opacity-100 transition-opacity" />
-                    <CardHeader className="pb-2 relative z-10">
-                        <CardTitle className="text-sm font-medium text-gray-400 flex items-center gap-2">
-                            <Wallet className="w-4 h-4 text-blue-500" />
+                <Card className="bg-gradient-to-br from-blue-900/20 to-black/40 border-blue-500/20 backdrop-blur-md shadow-[0_0_30px_rgba(59,130,246,0.1)] group hover:shadow-[0_0_40px_rgba(59,130,246,0.2)] transition-all duration-300">
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-bold text-blue-400 uppercase tracking-widest flex items-center gap-2">
+                            <Wallet className="w-4 h-4" />
                             Total Requests
                         </CardTitle>
                     </CardHeader>
-                    <CardContent className="relative z-10">
-                        <div className="text-3xl font-bold text-white mb-1">{requests.length}</div>
-                        <p className="text-xs text-blue-400 font-medium">Lifetime Applications</p>
+                    <CardContent>
+                        <div className="text-3xl font-bold text-white mb-1 tracking-tight">{requests.length}</div>
+                        <p className="text-xs text-gray-400 font-medium">Lifetime Applications</p>
                     </CardContent>
                 </Card>
 
-                <Card className="bg-gray-900/40 border-white/10 backdrop-blur-md relative overflow-hidden group">
-                    <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/10 to-transparent opacity-50 group-hover:opacity-100 transition-opacity" />
-                    <CardHeader className="pb-2 relative z-10">
-                        <CardTitle className="text-sm font-medium text-gray-400 flex items-center gap-2">
-                            <Clock className="w-4 h-4 text-yellow-500" />
+                <Card className="bg-gradient-to-br from-amber-900/20 to-black/40 border-amber-500/20 backdrop-blur-md shadow-[0_0_30px_rgba(245,158,11,0.1)] group hover:shadow-[0_0_40px_rgba(245,158,11,0.2)] transition-all duration-300">
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-bold text-amber-400 uppercase tracking-widest flex items-center gap-2">
+                            <Clock className="w-4 h-4" />
                             Pending
                         </CardTitle>
                     </CardHeader>
-                    <CardContent className="relative z-10">
-                        <div className="text-3xl font-bold text-white mb-1">{pendingCount}</div>
-                        <p className="text-xs text-yellow-500 font-medium">Requires Attention</p>
+                    <CardContent>
+                        <div className="text-3xl font-bold text-white mb-1 tracking-tight">{pendingCount}</div>
+                        <p className="text-xs text-gray-400 font-medium">Requires Attention</p>
                     </CardContent>
                 </Card>
 
-                <Card className="bg-gray-900/40 border-white/10 backdrop-blur-md relative overflow-hidden group">
-                    <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-transparent opacity-50 group-hover:opacity-100 transition-opacity" />
-                    <CardHeader className="pb-2 relative z-10">
-                        <CardTitle className="text-sm font-medium text-gray-400 flex items-center gap-2">
-                            <CheckCircle2 className="w-4 h-4 text-green-500" />
+                <Card className="bg-gradient-to-br from-emerald-900/20 to-black/40 border-emerald-500/20 backdrop-blur-md shadow-[0_0_30px_rgba(16,185,129,0.1)] group hover:shadow-[0_0_40px_rgba(16,185,129,0.2)] transition-all duration-300">
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-bold text-emerald-400 uppercase tracking-widest flex items-center gap-2">
+                            <CheckCircle2 className="w-4 h-4" />
                             Cards Issued
                         </CardTitle>
                     </CardHeader>
-                    <CardContent className="relative z-10">
-                        <div className="text-3xl font-bold text-white mb-1">{approvedCount}</div>
-                        <p className="text-xs text-green-500 font-medium">Total Active Members</p>
+                    <CardContent>
+                        <div className="text-3xl font-bold text-white mb-1 tracking-tight">{approvedCount}</div>
+                        <p className="text-xs text-gray-400 font-medium">Total Active Members</p>
                     </CardContent>
                 </Card>
 
-                <Card className="bg-gray-900/40 border-white/10 backdrop-blur-md relative overflow-hidden group">
-                    <div className="absolute inset-0 bg-gradient-to-br from-red-500/10 to-transparent opacity-50 group-hover:opacity-100 transition-opacity" />
-                    <CardHeader className="pb-2 relative z-10">
-                        <CardTitle className="text-sm font-medium text-gray-400 flex items-center gap-2">
-                            <XCircle className="w-4 h-4 text-red-500" />
+                <Card className="bg-gradient-to-br from-red-900/20 to-black/40 border-red-500/20 backdrop-blur-md shadow-[0_0_30px_rgba(239,68,68,0.1)] group hover:shadow-[0_0_40px_rgba(239,68,68,0.2)] transition-all duration-300">
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-bold text-red-400 uppercase tracking-widest flex items-center gap-2">
+                            <XCircle className="w-4 h-4" />
                             Rejected
                         </CardTitle>
                     </CardHeader>
-                    <CardContent className="relative z-10">
-                        <div className="text-3xl font-bold text-white mb-1">{rejectedCount}</div>
-                        <p className="text-xs text-red-400 font-medium">Applications Denied</p>
+                    <CardContent>
+                        <div className="text-3xl font-bold text-white mb-1 tracking-tight">{rejectedCount}</div>
+                        <p className="text-xs text-gray-400 font-medium">Applications Denied</p>
                     </CardContent>
                 </Card>
             </div>

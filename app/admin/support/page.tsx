@@ -174,21 +174,24 @@ export default function SupportPage() {
                 </div>
             </div>
 
-            {/* Stats Overview */}
+            {/* Enhanced Stats Overview */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 shrink-0">
-                <Card className="bg-gray-900 border-gray-800 text-white shadow-lg backdrop-blur-sm">
+                <Card className="bg-gradient-to-br from-blue-900/20 to-black/40 border-blue-500/20 backdrop-blur-md shadow-[0_0_30px_rgba(59,130,246,0.1)] group hover:shadow-[0_0_40px_rgba(59,130,246,0.2)] transition-all duration-300">
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
-                        <CardTitle className="text-sm font-bold text-blue-400 uppercase tracking-widest">Open Tickets</CardTitle>
+                        <CardTitle className="text-xs font-bold text-blue-400 uppercase tracking-widest">Open Tickets</CardTitle>
                         <Inbox className="h-5 w-5 text-blue-500" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-3xl font-bold text-white tracking-tight">{openCount}</div>
-                        <p className="text-xs text-gray-400 mt-1 font-medium">{activeTab} inquiries waiting</p>
+                        <p className="text-xs text-gray-400 mt-1 font-medium flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span>
+                            {activeTab} inquiries waiting
+                        </p>
                     </CardContent>
                 </Card>
-                <Card className="bg-gray-900 border-gray-800 text-white shadow-lg backdrop-blur-sm">
+                <Card className="bg-gradient-to-br from-red-900/20 to-black/40 border-red-500/20 backdrop-blur-md shadow-[0_0_30px_rgba(239,68,68,0.1)] group hover:shadow-[0_0_40px_rgba(239,68,68,0.2)] transition-all duration-300">
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
-                        <CardTitle className="text-sm font-bold text-red-400 uppercase tracking-widest">Urgent</CardTitle>
+                        <CardTitle className="text-xs font-bold text-red-400 uppercase tracking-widest">Urgent</CardTitle>
                         <AlertTriangle className="h-5 w-5 text-red-500" />
                     </CardHeader>
                     <CardContent>
@@ -196,9 +199,9 @@ export default function SupportPage() {
                         <p className="text-xs text-gray-400 mt-1 font-medium">High priority attention needed</p>
                     </CardContent>
                 </Card>
-                <Card className="bg-gray-900 border-gray-800 text-white shadow-lg backdrop-blur-sm">
+                <Card className="bg-gradient-to-br from-green-900/20 to-black/40 border-green-500/20 backdrop-blur-md shadow-[0_0_30px_rgba(34,197,94,0.1)] group hover:shadow-[0_0_40px_rgba(34,197,94,0.2)] transition-all duration-300">
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
-                        <CardTitle className="text-sm font-bold text-green-400 uppercase tracking-widest">Resolved</CardTitle>
+                        <CardTitle className="text-xs font-bold text-green-400 uppercase tracking-widest">Resolved</CardTitle>
                         <CheckCircle className="h-5 w-5 text-green-500" />
                     </CardHeader>
                     <CardContent>
@@ -208,12 +211,12 @@ export default function SupportPage() {
                 </Card>
             </div>
 
-            <div className="flex-1 min-h-0 bg-gray-900/40 border border-gray-800 rounded-xl overflow-hidden flex flex-col md:flex-row backdrop-blur-md shadow-2xl">
+            <div className="flex-1 min-h-0 bg-black/40 border border-white/10 rounded-xl overflow-hidden flex flex-col md:flex-row backdrop-blur-xl shadow-2xl">
                 {/* Left Sidebar - Ticket List */}
-                <div className="w-full md:w-1/3 min-w-[320px] flex flex-col border-r border-gray-800 bg-gray-900/60 h-full">
-                    <div className="p-4 border-b border-gray-800 space-y-4 shrink-0">
+                <div className="w-full md:w-1/3 min-w-[320px] flex flex-col border-r border-white/5 bg-black/20 h-full">
+                    <div className="p-4 border-b border-white/5 space-y-4 shrink-0">
                         <Tabs defaultValue="customer" value={activeTab} onValueChange={setActiveTab} className="w-full">
-                            <TabsList className="bg-gray-950 border border-gray-800 p-1 w-full grid grid-cols-3">
+                            <TabsList className="bg-gray-900/80 border border-white/10 p-1 w-full grid grid-cols-3">
                                 <TabsTrigger value="customer" className="text-xs font-medium text-gray-400 data-[state=active]:bg-gray-800 data-[state=active]:text-white transition-all">Customer</TabsTrigger>
                                 <TabsTrigger value="restaurant" className="text-xs font-medium text-gray-400 data-[state=active]:bg-gray-800 data-[state=active]:text-white transition-all">Restaurant</TabsTrigger>
                                 <TabsTrigger value="delivery" className="text-xs font-medium text-gray-400 data-[state=active]:bg-gray-800 data-[state=active]:text-white transition-all">Delivery</TabsTrigger>
@@ -389,8 +392,8 @@ export default function SupportPage() {
                                                     <span className="text-[10px] opacity-70">{formatDate(reply.createdAt)}</span>
                                                 </div>
                                                 <div className={`p-4 rounded-2xl border text-sm leading-relaxed ${reply.userType === 'admin'
-                                                        ? 'bg-blue-600/10 border-blue-500/30 text-blue-100 rounded-tr-none'
-                                                        : 'bg-gray-800/50 border-gray-700 text-gray-200 rounded-tl-none'
+                                                    ? 'bg-blue-600/10 border-blue-500/30 text-blue-100 rounded-tr-none'
+                                                    : 'bg-gray-800/50 border-gray-700 text-gray-200 rounded-tl-none'
                                                     }`}>
                                                     {reply.message}
                                                 </div>

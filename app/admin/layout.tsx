@@ -42,10 +42,21 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex min-h-screen bg-gray-900">
-      <AdminSidebar />
-      <div className="flex-1 lg:ml-64">
-        <main className="p-8 mt-14 lg:mt-0 mb-16 lg:mb-0">{children}</main>
+    <div className="flex min-h-screen bg-black text-white relative overflow-hidden">
+      {/* Background decorations */}
+      <div className="fixed top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-blue-600/10 blur-[120px]" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-purple-600/10 blur-[120px]" />
+      </div>
+
+      <div className="relative z-10 flex w-full">
+        <AdminSidebar />
+        <div className="flex-1 lg:ml-72 flex flex-col min-h-screen transition-all duration-300">
+          {/* Added padding top for mobile to account for header if any, or just general spacing */}
+          <main className="flex-1 p-4 lg:p-8 mt-14 lg:mt-0 mb-20 lg:mb-0 space-y-6">
+            {children}
+          </main>
+        </div>
       </div>
       <AdminBottomNav />
     </div>

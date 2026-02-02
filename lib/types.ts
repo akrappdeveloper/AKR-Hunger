@@ -7,14 +7,16 @@ export interface Customer {
   avatar?: string;
   addresses?: Address[];
   defaultAddressId?: string;
-  createdAt?: Date;
-  updatedAt?: Date;
+  createdAt?: Date | any;
+  updatedAt?: Date | any;
   orders?: string[];
   favorites?: string[]; // Array of MenuItem Ids
   favoriteRestaurants?: string[]; // Array of Restaurant Ids
   walletBalance?: number;
   membershipId?: string;
   membershipStatus?: 'none' | 'pending' | 'approved' | 'rejected';
+  isBlocked?: boolean;
+  image?: string; // Alias for avatar or separate field
   bankDetails?: {
     bankName: string;
     accountNumber: string;
@@ -283,7 +285,7 @@ export interface SupportTicket {
   category: 'technical' | 'billing' | 'order' | 'account' | 'feature' | 'other';
   priority: 'low' | 'medium' | 'high' | 'urgent';
   description: string;
-  status: 'open' | 'in_progress' | 'resolved' | 'closed';
+  status: 'open' | 'in_progress' | 'resolved' | 'closed' | 'rejected';
   attachments?: string[];
   adminResponse?: string;
   replies?: TicketReply[];
