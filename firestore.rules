@@ -6,46 +6,64 @@ service cloud.firestore {
       return uid != null && exists(/databases/$(database)/documents/admins/$(uid));
     }
 
-    // Public read access to restaurants for browsing and email validation
+    // 1. Restaurants: Public read for browsing, Owner / Admin manage
     match /restaurants/{restaurantId} {
       allow read: if true;
-      allow list: if true; // Allow queries for email validation
+      allow list: if true; // Allow queries for email validation and public listings
       allow create: if request.auth.uid != null && request.auth.uid == restaurantId;
-      allow update, delete: if request.auth.uid != null && (isAdmin(request.auth.uid) || request.auth.uid == restaurantId || request.auth.uid == resource.data.ownerId);
+      allow update, delete: if request.auth.uid != null && (
+        isAdmin(request.auth.uid) || 
+        request.auth.uid == restaurantId || 
+        request.auth.uid == resource.data.ownerId
+      );
     }
 
-    // Public read access to menu items
+    // 2. Menu Items (Subcollection under restaurant)
     match /restaurants/{restaurantId}/menuItems/{itemId} {
       allow read: if true;
-      allow write: if request.auth.uid != null && (isAdmin(request.auth.uid) || request.auth.uid == restaurantId || request.auth.uid == get(/databases/$(database)/documents/restaurants/$(restaurantId)).data.ownerId);
+      allow write: if request.auth.uid != null && (
+        isAdmin(request.auth.uid) || 
+        request.auth.uid == restaurantId || 
+        request.auth.uid == get(/databases/$(database)/documents/restaurants/$(restaurantId)).data.ownerId
+      );
     }
 
-    // Alternative menu items collection (if stored flat)
+    // 3. Menu Items (Root Flat Collection)
     match /menuItems/{itemId} {
       allow read: if true; // Public can read all items
       allow create: if request.auth.uid != null && request.resource.data.restaurantId == request.auth.uid;
-      allow update: if request.auth.uid != null; // Allow all auth users to update (for ratings)
+      allow update: if request.auth.uid != null; // Allow auth users to update (for ratings and restaurant owners)
       allow delete: if request.auth.uid != null && (
         isAdmin(request.auth.uid) || 
         request.auth.uid == resource.data.restaurantId
       );
     }
 
-    // Customer profiles - Public read for reviews (name/avatar), Write: Owner only
+    // 4. Customer Profiles & Subcollections
     match /customers/{customerId} {
       allow read: if request.auth.uid == customerId || isAdmin(request.auth.uid);
       allow list: if isAdmin(request.auth.uid);
       allow create: if request.auth.uid != null && request.auth.uid == customerId;
       allow update, delete: if request.auth.uid == customerId || isAdmin(request.auth.uid);
+
+      // Customer Wallet Transactions (Subcollection)
+      match /walletTransactions/{transactionId} {
+        allow read: if request.auth.uid == customerId || isAdmin(request.auth.uid);
+        allow create: if request.auth.uid == customerId || isAdmin(request.auth.uid);
+      }
     }
 
-    // Orders - users can read their own, restaurants can read assigned orders
+    // 5. Orders: Multi-Party Access (Customer, Restaurant, Delivery Partner, Admin)
     match /orders/{orderId} {
       allow read: if request.auth.uid == resource.data.customerId 
                    || request.auth.uid == resource.data.restaurantId
                    || request.auth.uid == resource.data.deliveryPersonId
                    || isAdmin(request.auth.uid)
-                   || (request.auth.uid != null && (resource.data.status == 'confirmed' || resource.data.status == 'preparing' || resource.data.status == 'ready'));
+                   || (request.auth.uid != null && (
+                        resource.data.status == 'confirmed' || 
+                        resource.data.status == 'preparing' || 
+                        resource.data.status == 'ready'
+                      ));
       allow create: if request.auth.uid != null && request.auth.uid == request.resource.data.customerId;
       allow update: if request.auth.uid == resource.data.restaurantId
                      || ("deliveryPersonId" in resource.data && resource.data.deliveryPersonId == request.auth.uid)
@@ -55,80 +73,97 @@ service cloud.firestore {
       allow delete: if request.auth.uid == resource.data.restaurantId || isAdmin(request.auth.uid);
     }
 
-    // Admin collection for role management
+    // 6. Admin Collection for Role Management
     match /admins/{adminId} {
       allow read: if request.auth.uid == adminId;
       allow write: if isAdmin(request.auth.uid);
     }
 
-    // Delivery Partners (Matches code: 'delivery_partners')
+    // 7. Delivery Partners (Matches code: 'delivery_partners')
     match /delivery_partners/{partnerId} {
       allow read: if request.auth.uid == partnerId || isAdmin(request.auth.uid);
       allow write: if request.auth.uid == partnerId || isAdmin(request.auth.uid);
     }
 
-    // Unified Delivery Persons access
+    // 8. Unified Delivery Persons Access & Wallet Subcollection
     match /deliveryPersons/{partnerId} {
       allow read: if request.auth.uid != null;
       allow write: if request.auth.uid == partnerId || isAdmin(request.auth.uid);
+      
+      // Allow delivery person to read and create their own wallet transactions
+      match /walletTransactions/{transactionId} {
+        allow read: if request.auth.uid == partnerId || isAdmin(request.auth.uid);
+        allow create: if request.auth.uid == partnerId || isAdmin(request.auth.uid);
+      }
     }
     
-    // Support Tickets (Unified)
+    // 9. Support Tickets (Unified support_tickets & supportTickets)
     match /support_tickets/{ticketId} {
       allow read: if request.auth.uid != null && (resource.data.userId == request.auth.uid || isAdmin(request.auth.uid));
-      allow list: if request.auth.uid != null && isAdmin(request.auth.uid); // Allow admins to list all tickets
-      allow create: if request.auth.uid != null && request.resource.data.userId == request.auth.uid;
+      allow list: if request.auth.uid != null; // Allows users to query their own tickets and admins to list all
+      allow create: if true; // Allows registered users and guests to submit support tickets
       allow update: if request.auth.uid != null && (isAdmin(request.auth.uid) || resource.data.userId == request.auth.uid);
       allow delete: if isAdmin(request.auth.uid);
     }
     
-    // Alternative collection name for support tickets
     match /supportTickets/{ticketId} {
       allow read: if request.auth.uid != null && (resource.data.userId == request.auth.uid || isAdmin(request.auth.uid));
-      allow list: if request.auth.uid != null && isAdmin(request.auth.uid); // Allow admins to list all tickets
-      allow create: if request.auth.uid != null && request.resource.data.userId == request.auth.uid;
+      allow list: if request.auth.uid != null; // Allows users to query their own tickets and admins to list all
+      allow create: if true; // Allows registered users and guests to submit support tickets
       allow update: if request.auth.uid != null && (isAdmin(request.auth.uid) || resource.data.userId == request.auth.uid);
       allow delete: if isAdmin(request.auth.uid);
     }
 
-    // Payout Requests (Legacy)
+    // 10. Platform Feedback
+    match /platformFeedback/{feedbackId} {
+      allow read: if isAdmin(request.auth.uid);
+      allow create: if request.auth.uid != null;
+      allow delete: if isAdmin(request.auth.uid);
+    }
+
+    // 11. Payout Requests (Legacy)
     match /payout_requests/{requestId} {
       allow read: if request.auth.uid != null && (resource.data.userId == request.auth.uid || isAdmin(request.auth.uid));
       allow create: if request.auth.uid != null && request.resource.data.userId == request.auth.uid;
       allow update: if isAdmin(request.auth.uid);
     }
 
-    // Withdrawal Requests (Restaurant)
+    // 12. Withdrawal Requests (Restaurant)
     match /withdrawalRequests/{requestId} {
       allow read: if request.auth.uid != null && (resource.data.restaurantId == request.auth.uid || isAdmin(request.auth.uid));
       allow create: if request.auth.uid != null && request.resource.data.restaurantId == request.auth.uid;
       allow update: if isAdmin(request.auth.uid);
     }
 
-    // Notifications
+    // 13. Notifications
     match /notifications/{notifId} {
       allow read, update: if request.auth.uid != null && (resource.data.userId == request.auth.uid || isAdmin(request.auth.uid));
       allow create: if request.auth.uid != null || isAdmin(request.auth.uid);
     }
 
-    // Reviews
+    // 14. Reviews (Public Read, Customer / Restaurant Reply / Admin Manage)
     match /reviews/{reviewId} {
       allow read: if true;
       allow create: if request.auth.uid != null;
-      allow update, delete: if request.auth.uid != null && (
+      allow update: if request.auth.uid != null && (
+        resource.data.customerId == request.auth.uid ||
+        resource.data.restaurantId == request.auth.uid ||
+        isAdmin(request.auth.uid)
+      );
+      allow delete: if request.auth.uid != null && (
         resource.data.customerId == request.auth.uid ||
         isAdmin(request.auth.uid)
       );
     }
 
-    // Ad Campaigns
+    // 15. Ad Campaigns
     match /adCampaigns/{campaignId} {
       allow read: if request.auth.uid != null;
       allow create, update: if request.auth.uid != null && request.resource.data.restaurantId == request.auth.uid;
       allow delete: if request.auth.uid != null && (resource.data.restaurantId == request.auth.uid || isAdmin(request.auth.uid));
     }
 
-    // Ad Clicks
+    // 16. Ad Clicks
     match /adClicks/{clickId} {
       allow read: if request.auth.uid != null && (
         resource.data.restaurantId == request.auth.uid ||
@@ -137,54 +172,56 @@ service cloud.firestore {
       allow create: if request.auth.uid != null;
     }
 
-    // Points Accounts
+    // 17. Points Accounts
     match /pointsAccounts/{accountId} {
       allow read, update: if request.auth.uid != null && (accountId == request.auth.uid || isAdmin(request.auth.uid));
       allow create: if request.auth.uid != null && request.resource.id == request.auth.uid;
     }
 
-    // Points Transactions
+    // 18. Points Transactions
     match /pointsTransactions/{transId} {
       allow read: if request.auth.uid != null && (resource.data.userId == request.auth.uid || isAdmin(request.auth.uid));
       allow create: if request.auth.uid != null;
     }
 
-    // Payments
+    // 19. Payments
     match /payments/{paymentId} {
       allow read: if request.auth.uid != null && (resource.data.userId == request.auth.uid || isAdmin(request.auth.uid));
       allow create: if request.auth.uid != null && request.resource.data.userId == request.auth.uid;
       allow update: if isAdmin(request.auth.uid);
     }
 
-    // Customer Withdrawal Requests
+    // 20. Customer Withdrawal Requests
     match /customerWithdrawals/{requestId} {
       allow read: if request.auth.uid != null && (resource.data.customerId == request.auth.uid || isAdmin(request.auth.uid));
       allow create: if request.auth.uid != null && request.resource.data.customerId == request.auth.uid;
       allow update: if isAdmin(request.auth.uid);
     }
 
-    // Membership Requests
+    // 21. Membership Requests
     match /membershipRequests/{requestId} {
       allow read: if request.auth.uid != null && (resource.data.customerId == request.auth.uid || isAdmin(request.auth.uid));
       allow create: if request.auth.uid != null && request.resource.data.customerId == request.auth.uid;
       allow update: if isAdmin(request.auth.uid);
     }
 
-    // Issued Cards (New)
+    // 22. Issued Cards
     match /issuedCards/{cardId} {
       allow read: if request.auth.uid != null && (resource.data.customerId == request.auth.uid || isAdmin(request.auth.uid));
       allow create, update, delete: if isAdmin(request.auth.uid);
     }
 
-    // Customer Wallet Transactions (Subcollection)
-    match /customers/{customerId}/walletTransactions/{transactionId} {
-      allow read: if request.auth.uid == customerId || isAdmin(request.auth.uid);
-      allow create: if isAdmin(request.auth.uid); // Only admin/system actions should create these directly usually, but for now strict
+    // 23. Promotions & Coupons (Public read for active coupons, Admin write)
+    match /promotions/{promotionId} {
+      allow read: if true; // Public customers can read promotions to see available offers
+      allow write: if isAdmin(request.auth.uid);
     }
 
-    // Temporary: Allow server actions (which might run as client SDK if not using admin SDK) to write.
-    // Ideally, wallet mutations happen via backend using Admin SDK.
-    // Since we are using client SDK in some places, we might need broader permissions or Cloud Functions.
-    // For this prototype, we'll assume "system" actions authenticated as admin or careful client side logic.
+    // 24. Promotion Usages Tracking
+    match /promotionUsages/{usageId} {
+      allow read: if request.auth.uid != null && (resource.data.customerId == request.auth.uid || isAdmin(request.auth.uid));
+      allow create: if request.auth.uid != null;
+      allow update, delete: if isAdmin(request.auth.uid);
+    }
   }
 }

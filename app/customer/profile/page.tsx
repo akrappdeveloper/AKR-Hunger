@@ -7,15 +7,18 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '@/lib/firebase';
 import { Customer, Address } from '@/lib/types';
 import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Camera, MapPin, Phone, Mail, User, Save, Edit2, Plus, Home, Briefcase, Trash2, LogOut, ChevronRight, CheckCircle2, Loader2 } from 'lucide-react'; // Added CheckCircle2, Loader2
+import Link from 'next/link';
+import { Camera, MapPin, Phone, Mail, User, Save, Edit2, Plus, Home, Briefcase, Trash2, LogOut, ChevronRight, CheckCircle2, Loader2, Sparkles, LifeBuoy } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { uploadToImgBB } from '@/lib/imgbb';
 import ImageUploadDialog from '@/components/ImageUploadDialog';
 import MembershipCard from '@/components/customer/MembershipCard';
+import ThemeToggle from '@/components/customer/ThemeToggle';
 import {
   Dialog,
   DialogContent,
@@ -327,142 +330,158 @@ export default function ProfilePage() {
   };
 
 
-  if (loading && !profile) { // Modified loading check
+  if (loading && !profile) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-black text-white pb-40 sm:pb-20 font-sans selection:bg-orange-500/30">
+    <div className="min-h-screen bg-background text-foreground pb-40 sm:pb-24 font-sans selection:bg-primary/20">
 
       {/* Header Banner */}
-      <div className="h-64 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-orange-600 to-red-600 opacity-90" />
-        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-30" />
-        <div className="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-black to-transparent" />
+      <div className="h-44 sm:h-60 relative overflow-hidden bg-gradient-to-r from-orange-600 via-amber-600 to-red-600">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-white/15 via-transparent to-transparent" />
+        <div className="absolute bottom-0 left-0 w-full h-24 bg-gradient-to-t from-background to-transparent" />
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 relative -mt-24 z-10">
+      <div className="max-w-7xl mx-auto px-4 relative -mt-20 sm:-mt-24 z-10">
 
         {/* Profile Card */}
-        <div className="flex flex-col md:flex-row gap-6 items-end md:items-center mb-8">
-          <div className="relative group">
-            <div className="w-40 h-40 rounded-3xl border-4 border-black bg-gray-800 shadow-2xl overflow-hidden relative">
-              {profile?.avatar ? (
-                <img src={profile.avatar} alt="Profile" className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center bg-gray-800 text-gray-600">
-                  <User className="w-16 h-16" />
+        <div className="flex flex-col md:flex-row gap-5 items-start md:items-end justify-between mb-8 bg-card/85 backdrop-blur-xl border border-border/80 p-5 sm:p-6 rounded-3xl shadow-lg">
+          <div className="flex flex-col sm:flex-row gap-5 items-center sm:items-end w-full md:w-auto">
+            <div className="relative group flex-shrink-0">
+              <div className="w-28 h-28 sm:w-36 sm:h-36 rounded-3xl border-4 border-background bg-muted shadow-xl overflow-hidden relative">
+                {profile?.avatar ? (
+                  <img src={profile.avatar} alt="Profile" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-muted text-muted-foreground">
+                    <User className="w-12 h-12 sm:w-16 sm:h-16" />
+                  </div>
+                )}
+                {/* Overlay for Image Edit */}
+                <div
+                  onClick={handleImageClick}
+                  className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center cursor-pointer backdrop-blur-xs text-white"
+                >
+                  <Camera className="w-6 h-6 mb-1" />
+                  <span className="text-[10px] font-bold uppercase tracking-wider">Change</span>
+                </div>
+              </div>
+              {uploadingImage && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-3xl z-20">
+                  <Spinner className="w-7 h-7 text-primary" />
                 </div>
               )}
-              {/* Overlay for Image Edit */}
-              <div
-                onClick={handleImageClick}
-                className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center cursor-pointer backdrop-blur-sm"
-              >
-                <Camera className="w-8 h-8 text-white mb-2" />
-                <span className="text-xs font-bold text-white uppercase tracking-wider">Change</span>
-              </div>
+              {/* Hidden Input */}
+              <input
+                type="file"
+                ref={imageInputRef}
+                className="hidden"
+                accept="image/*"
+                onChange={handleFileSelect}
+              />
             </div>
-            {uploadingImage && (
-              <div className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-3xl z-20">
-                <Spinner className="w-8 h-8 text-orange-500" />
-              </div>
-            )}
-            {/* Hidden Input */}
-            <input
-              type="file"
-              ref={imageInputRef}
-              className="hidden"
-              accept="image/*"
-              onChange={handleFileSelect}
-            />
+
+            <div className="text-center sm:text-left">
+              <h1 className="text-2xl sm:text-3xl font-black text-foreground mb-1">{formData.name || 'User'}</h1>
+              <p className="text-muted-foreground text-sm font-medium">{formData.email}</p>
+            </div>
           </div>
 
-          <ImageUploadDialog
-            isOpen={imageUploadOpen}
-            onClose={() => setImageUploadOpen(false)}
-            imageSrc={selectedImageSrc}
-            onCropComplete={handleCropSave}
-          />
-
-          <div className="flex-1 mb-2">
-            <h1 className="text-4xl font-black text-white mb-1">{formData.name || 'User'}</h1>
-            <p className="text-gray-400 font-medium">{formData.email}</p>
-          </div>
-
-          <Button variant="outline" className="border-red-500/30 text-red-400 hover:bg-red-500/10 hover:text-red-300" onClick={logout}>
+          <Button variant="outline" className="border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive w-full sm:w-auto rounded-xl" onClick={logout}>
             <LogOut className="w-4 h-4 mr-2" /> Logout
           </Button>
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-8">
+        <ImageUploadDialog
+          isOpen={imageUploadOpen}
+          onClose={() => setImageUploadOpen(false)}
+          imageSrc={selectedImageSrc}
+          onCropComplete={handleCropSave}
+        />
 
-          {/* Left Col: Personal Info */}
+        <div className="grid lg:grid-cols-3 gap-6 sm:gap-8">
+
+          {/* Left Col: Personal Info & Theme */}
           <div className="lg:col-span-2 space-y-6">
-            <div className="bg-gray-900/50 backdrop-blur-md border border-white/5 rounded-3xl p-6 md:p-8">
+
+            {/* Theme & Display Preferences */}
+            <div className="bg-card border border-border/80 rounded-3xl p-5 sm:p-7 shadow-sm">
+              <div className="mb-4">
+                <h2 className="text-lg sm:text-xl font-black flex items-center gap-2 text-foreground">
+                  <Sparkles className="w-5 h-5 text-primary" /> Theme & Appearance
+                </h2>
+                <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+                  Choose your theme style. Preview and switch with a single tap.
+                </p>
+              </div>
+              <ThemeToggle variant="tiles" />
+            </div>
+
+            {/* Personal Info */}
+            <div className="bg-card border border-border/80 rounded-3xl p-5 sm:p-7 shadow-sm">
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-bold flex items-center gap-2">
-                  <User className="w-5 h-5 text-orange-500" /> Personal Information
+                <h2 className="text-lg sm:text-xl font-black flex items-center gap-2 text-foreground">
+                  <User className="w-5 h-5 text-primary" /> Personal Information
                 </h2>
 
                 {/* Auto-save Status Indicator */}
                 <div className="flex items-center gap-2">
                   {saveStatus === 'saving' && (
-                    <div className="flex items-center gap-2 text-orange-400 text-sm animate-pulse">
-                      <Loader2 className="w-4 h-4 animate-spin" /> Saving...
+                    <div className="flex items-center gap-2 text-primary text-xs font-semibold animate-pulse">
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" /> Saving...
                     </div>
                   )}
                   {saveStatus === 'saved' && (
-                    <div className="flex items-center gap-2 text-green-400 text-sm">
-                      <CheckCircle2 className="w-4 h-4" /> Saved
+                    <div className="flex items-center gap-1.5 text-green-600 dark:text-green-400 text-xs font-semibold">
+                      <CheckCircle2 className="w-3.5 h-3.5" /> Saved
                     </div>
                   )}
                   {saveStatus === 'error' && (
-                    <div className="flex items-center gap-2 text-red-400 text-sm font-bold">
-                      <Loader2 className="w-4 h-4" /> Save Failed
+                    <div className="flex items-center gap-1.5 text-destructive text-xs font-bold">
+                      <Loader2 className="w-3.5 h-3.5" /> Save Failed
                     </div>
                   )}
                 </div>
               </div>
 
               <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label className="text-gray-400">Full Name</Label>
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold text-muted-foreground">Full Name</Label>
                   <div className="relative">
-                    <User className="absolute left-4 top-3.5 w-4 h-4 text-gray-500" />
+                    <User className="absolute left-4 top-3.5 w-4 h-4 text-muted-foreground" />
                     <Input
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="pl-11 bg-black/40 border-gray-800 text-white focus:border-orange-500 h-12 rounded-xl"
+                      className="pl-11 bg-muted/40 border-border text-foreground focus:border-primary/50 h-11 rounded-xl"
                       placeholder="Enter your name"
                     />
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label className="text-gray-400">Email Address</Label>
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold text-muted-foreground">Email Address</Label>
                   <div className="relative">
-                    <Mail className="absolute left-4 top-3.5 w-4 h-4 text-gray-500" />
+                    <Mail className="absolute left-4 top-3.5 w-4 h-4 text-muted-foreground" />
                     <Input
                       value={formData.email}
                       disabled={true}
-                      className="pl-11 bg-black/20 border-gray-800 text-gray-500 h-12 rounded-xl cursor-not-allowed"
+                      className="pl-11 bg-muted/20 border-border/50 text-muted-foreground h-11 rounded-xl cursor-not-allowed opacity-75"
                     />
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label className="text-gray-400">Phone Number</Label>
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold text-muted-foreground">Phone Number</Label>
                   <div className="relative">
-                    <Phone className="absolute left-4 top-3.5 w-4 h-4 text-gray-500" />
+                    <Phone className="absolute left-4 top-3.5 w-4 h-4 text-muted-foreground" />
                     <Input
                       value={formData.phone}
                       onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      className="pl-11 bg-black/40 border-gray-800 text-white focus:border-orange-500 h-12 rounded-xl"
+                      className="pl-11 bg-muted/40 border-border text-foreground focus:border-primary/50 h-11 rounded-xl"
                       placeholder="+91 00000 00000"
                     />
                   </div>
@@ -471,67 +490,67 @@ export default function ProfilePage() {
             </div>
 
             {/* Addresses */}
-            <div className="bg-gray-900/50 backdrop-blur-md border border-white/5 rounded-3xl p-6 md:p-8">
+            <div className="bg-card border border-border/80 rounded-3xl p-5 sm:p-7 shadow-sm">
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-bold flex items-center gap-2">
-                  <MapPin className="w-5 h-5 text-blue-500" /> Saved Addresses
+                <h2 className="text-lg sm:text-xl font-black flex items-center gap-2 text-foreground">
+                  <MapPin className="w-5 h-5 text-primary" /> Saved Addresses
                 </h2>
 
                 <Dialog open={isAddressDialogOpen} onOpenChange={setIsAddressDialogOpen}>
                   <DialogTrigger asChild>
-                    <Button size="sm" onClick={openAddAddress} className="bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg pointer-events-auto cursor-pointer">
-                      <Plus className="w-4 h-4 mr-2" /> Add New
+                    <Button size="sm" onClick={openAddAddress} className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-xl pointer-events-auto cursor-pointer shadow-md">
+                      <Plus className="w-4 h-4 mr-1.5" /> Add New
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="bg-gray-900 border-gray-800 text-white sm:max-w-md">
+                  <DialogContent className="bg-card border-border text-card-foreground sm:max-w-md shadow-2xl">
                     <DialogHeader>
                       <DialogTitle>{editingAddressId ? 'Edit Address' : 'Add New Address'}</DialogTitle>
-                      <DialogDescription className="text-gray-400">
+                      <DialogDescription className="text-muted-foreground">
                         {editingAddressId ? 'Update your' : 'Enter new'} delivery location details below.
                       </DialogDescription>
                     </DialogHeader>
-                    <div className="grid gap-4 py-4">
+                    <div className="grid gap-4 py-3">
 
                       {/* Search / Pincode Section */}
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="grid gap-2">
-                          <Label htmlFor="pincode" className="text-gray-300">Pincode *</Label>
-                          <Input id="pincode" maxLength={6} className="bg-black/50 border-gray-700 focus:border-orange-500" placeholder="110001" value={newAddress.pincode} onChange={(e) => setNewAddress({ ...newAddress, pincode: e.target.value.replace(/[^0-9]/g, '') })} />
+                      <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                        <div className="grid gap-1.5">
+                          <Label htmlFor="pincode" className="text-xs font-semibold text-muted-foreground">Pincode *</Label>
+                          <Input id="pincode" maxLength={6} className="bg-muted/40 border-border text-foreground focus:border-primary/50 h-10 rounded-xl" placeholder="110001" value={newAddress.pincode} onChange={(e) => setNewAddress({ ...newAddress, pincode: e.target.value.replace(/[^0-9]/g, '') })} />
                         </div>
-                        <div className="grid gap-2">
-                          <Label htmlFor="plusCode" className="text-gray-300">Plus Code (Optional)</Label>
-                          <Input id="plusCode" className="bg-black/50 border-gray-700 focus:border-orange-500" placeholder="V2H7+FP" value={newAddress.plusCode} onChange={(e) => setNewAddress({ ...newAddress, plusCode: e.target.value })} />
-                        </div>
-                      </div>
-
-                      <div className="grid gap-2">
-                        <Label htmlFor="street" className="text-gray-300">Street Address *</Label>
-                        <Input id="street" className="bg-black/50 border-gray-700 focus:border-orange-500" placeholder="Flat No, Building, Street" value={newAddress.street} onChange={(e) => setNewAddress({ ...newAddress, street: e.target.value })} />
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="grid gap-2">
-                          <Label htmlFor="city" className="text-gray-300">City</Label>
-                          <Input id="city" className="bg-black/50 border-gray-700 focus:border-orange-500" placeholder="Auto-filled" value={newAddress.city} readOnly />
-                        </div>
-                        <div className="grid gap-2">
-                          <Label htmlFor="state" className="text-gray-300">State</Label>
-                          <Input id="state" className="bg-black/50 border-gray-700 focus:border-orange-500" placeholder="Auto-filled" value={newAddress.state} readOnly />
+                        <div className="grid gap-1.5">
+                          <Label htmlFor="plusCode" className="text-xs font-semibold text-muted-foreground">Plus Code (Optional)</Label>
+                          <Input id="plusCode" className="bg-muted/40 border-border text-foreground focus:border-primary/50 h-10 rounded-xl" placeholder="V2H7+FP" value={newAddress.plusCode} onChange={(e) => setNewAddress({ ...newAddress, plusCode: e.target.value })} />
                         </div>
                       </div>
 
-                      <div className="grid gap-2">
-                        <Label className="text-gray-300">Address Type</Label>
-                        <div className="flex gap-4">
+                      <div className="grid gap-1.5">
+                        <Label htmlFor="street" className="text-xs font-semibold text-muted-foreground">Street Address *</Label>
+                        <Input id="street" className="bg-muted/40 border-border text-foreground focus:border-primary/50 h-10 rounded-xl" placeholder="Flat No, Building, Street" value={newAddress.street} onChange={(e) => setNewAddress({ ...newAddress, street: e.target.value })} />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                        <div className="grid gap-1.5">
+                          <Label htmlFor="city" className="text-xs font-semibold text-muted-foreground">City</Label>
+                          <Input id="city" className="bg-muted/20 border-border/60 text-muted-foreground h-10 rounded-xl" placeholder="Auto-filled" value={newAddress.city} readOnly />
+                        </div>
+                        <div className="grid gap-1.5">
+                          <Label htmlFor="state" className="text-xs font-semibold text-muted-foreground">State</Label>
+                          <Input id="state" className="bg-muted/20 border-border/60 text-muted-foreground h-10 rounded-xl" placeholder="Auto-filled" value={newAddress.state} readOnly />
+                        </div>
+                      </div>
+
+                      <div className="grid gap-1.5">
+                        <Label className="text-xs font-semibold text-muted-foreground">Address Type</Label>
+                        <div className="grid grid-cols-3 gap-2">
                           {['home', 'work', 'other'].map((type) => (
                             <div
                               key={type}
                               onClick={() => setNewAddress({ ...newAddress, type: type as any })}
-                              className={`cursor-pointer px-4 py-2 rounded-lg border flex items-center gap-2 transition-colors capitalize ${newAddress.type === type ? 'border-orange-500 bg-orange-500/10 text-orange-500' : 'border-gray-700 bg-black/20 hover:bg-gray-800 text-gray-400'}`}
+                              className={`cursor-pointer px-3 py-2 rounded-xl border flex items-center justify-center gap-1.5 transition-all capitalize text-xs font-bold ${newAddress.type === type ? 'border-primary bg-primary/10 text-primary shadow-sm' : 'border-border bg-muted/30 hover:bg-muted text-muted-foreground hover:text-foreground'}`}
                             >
-                              {type === 'home' && <Home className="w-4 h-4" />}
-                              {type === 'work' && <Briefcase className="w-4 h-4" />}
-                              {type === 'other' && <MapPin className="w-4 h-4" />}
+                              {type === 'home' && <Home className="w-3.5 h-3.5" />}
+                              {type === 'work' && <Briefcase className="w-3.5 h-3.5" />}
+                              {type === 'other' && <MapPin className="w-3.5 h-3.5" />}
                               {type}
                             </div>
                           ))}
@@ -539,7 +558,7 @@ export default function ProfilePage() {
                       </div>
                     </div>
                     <DialogFooter>
-                      <Button onClick={handleAddressSubmit} disabled={addressLoading} className="bg-orange-600 hover:bg-orange-700 w-full font-bold">
+                      <Button onClick={handleAddressSubmit} disabled={addressLoading} className="bg-primary hover:bg-primary/90 text-primary-foreground w-full font-bold rounded-xl shadow-md">
                         {addressLoading ? <Spinner className="w-4 h-4 mr-2" /> : (editingAddressId ? 'Update Address' : 'Save Address')}
                       </Button>
                     </DialogFooter>
@@ -547,56 +566,57 @@ export default function ProfilePage() {
                 </Dialog>
               </div>
 
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {profile?.addresses && profile.addresses.length > 0 ? (
                   profile.addresses.map(addr => (
-                    <div key={addr.id} className="flex justify-between items-start p-4 border border-white/5 rounded-xl hover:bg-white/5 transition-colors bg-black/20 group">
-                      <div className="flex gap-4">
-                        <div className={`mt-1 w-10 h-10 rounded-full flex items-center justify-center ${(addr.type as string) === 'home' || (addr.type as string) === 'Home' ? 'bg-orange-500/10 text-orange-500' : (addr.type as string) === 'work' || (addr.type as string) === 'Work' ? 'bg-purple-500/10 text-purple-500' : 'bg-gray-700/30 text-gray-400'}`}>
-                          {((addr.type as string) === 'home' || (addr.type as string) === 'Home') && <Home className="w-5 h-5" />}
-                          {((addr.type as string) === 'work' || (addr.type as string) === 'Work') && <Briefcase className="w-5 h-5" />}
-                          {((addr.type as string) === 'other' || (addr.type as string) === 'Other') && <MapPin className="w-5 h-5" />}
+                    <div key={addr.id} className="flex justify-between items-start p-3.5 sm:p-4 border border-border/70 rounded-2xl hover:border-primary/40 hover:bg-muted/30 transition-all bg-card/60 group">
+                      <div className="flex gap-3 sm:gap-4 min-w-0">
+                        <div className={`mt-0.5 w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${(addr.type as string) === 'home' || (addr.type as string) === 'Home' ? 'bg-blue-500/10 text-blue-500' : (addr.type as string) === 'work' || (addr.type as string) === 'Work' ? 'bg-purple-500/10 text-purple-500' : 'bg-muted text-muted-foreground'}`}>
+                          {((addr.type as string) === 'home' || (addr.type as string) === 'Home') && <Home className="w-4 h-4 sm:w-5 sm:h-5" />}
+                          {((addr.type as string) === 'work' || (addr.type as string) === 'Work') && <Briefcase className="w-4 h-4 sm:w-5 sm:h-5" />}
+                          {((addr.type as string) === 'other' || (addr.type as string) === 'Other') && <MapPin className="w-4 h-4 sm:w-5 sm:h-5" />}
                         </div>
-                        <div>
+                        <div className="min-w-0">
                           <div className="flex items-center gap-2">
-                            <p className="font-bold text-white capitalize">{addr.type}</p>
-                            {addr.isDefault && <span className="text-[10px] bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full font-bold uppercase">Default</span>}
+                            <p className="font-bold text-sm sm:text-base text-foreground capitalize">{addr.type}</p>
+                            {addr.isDefault && <span className="text-[10px] bg-green-500/10 text-green-600 dark:text-green-400 px-2 py-0.5 rounded-full font-bold uppercase">Default</span>}
                           </div>
-                          <p className="text-sm text-gray-400 mt-1 max-w-[200px] sm:max-w-xs">{addr.street}</p>
-                          <p className="text-sm text-gray-500">{addr.city}, {addr.pincode}</p>
+                          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 truncate max-w-[180px] sm:max-w-xs">{addr.street}</p>
+                          <p className="text-xs text-muted-foreground/80">{addr.city}, {addr.pincode}</p>
                         </div>
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex items-center gap-1">
                         {!addr.isDefault && (
-                          <Button variant="ghost" size="icon" onClick={() => handleSetDefault(addr.id)} className="text-gray-600 hover:text-yellow-500 hover:bg-yellow-500/10" title="Set as Default">
+                          <Button variant="ghost" size="icon" onClick={() => handleSetDefault(addr.id)} className="text-muted-foreground hover:text-amber-500 hover:bg-amber-500/10 w-8 h-8 rounded-lg" title="Set as Default">
                             <CheckCircle2 className="w-4 h-4" />
                           </Button>
                         )}
-                        <Button variant="ghost" size="icon" onClick={() => openEditAddress(addr)} className="text-gray-400 hover:text-blue-500 hover:bg-blue-500/10">
+                        <Button variant="ghost" size="icon" onClick={() => openEditAddress(addr)} className="text-muted-foreground hover:text-primary hover:bg-primary/10 w-8 h-8 rounded-lg">
                           <Edit2 className="w-4 h-4" />
                         </Button>
-                        <Button variant="ghost" size="icon" onClick={() => handleDeleteAddress(addr)} className="text-gray-600 hover:text-red-500 hover:bg-red-500/10">
+                        <Button variant="ghost" size="icon" onClick={() => handleDeleteAddress(addr)} className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 w-8 h-8 rounded-lg">
                           <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>
                     </div>
                   ))
                 ) : (
-                  <div className="text-center py-8">
-                    <p className="text-gray-500 mb-2">No addresses saved</p>
+                  <div className="text-center py-8 text-muted-foreground">
+                    <p className="text-sm">No saved addresses</p>
                   </div>
                 )}
               </div>
             </div>
           </div>
 
-          {/* Right Col: Quick Stats or Ads */}
+          {/* Right Col: Prime & Membership */}
           <div className="lg:col-span-1 space-y-6">
-            <div className="bg-gradient-to-br from-indigo-900 to-purple-900 rounded-3xl p-6 relative overflow-hidden">
+            <div className="bg-gradient-to-br from-primary via-orange-600 to-amber-600 rounded-3xl p-6 relative overflow-hidden text-white shadow-lg shadow-primary/20">
               <div className="relative z-10">
-                <h3 className="text-xl font-bold text-white mb-2">AKR Prime Member</h3>
-                <p className="text-indigo-200 text-sm mb-4">You're saving 20% on all delivery charges!</p>
-                <Button variant="secondary" className="w-full bg-white text-indigo-900 hover:bg-indigo-50 font-bold">
+                <Badge className="bg-white/20 text-white border-white/30 backdrop-blur-md mb-2 text-xs font-black">PRIME MEMBER</Badge>
+                <h3 className="text-xl font-black text-white mb-1">AKR Prime Pass</h3>
+                <p className="text-white/90 text-xs sm:text-sm mb-4 leading-relaxed">Enjoy zero delivery fees and priority customer support on every order!</p>
+                <Button variant="secondary" className="w-full bg-white text-primary hover:bg-white/90 font-black rounded-xl shadow-md">
                   View Benefits
                 </Button>
               </div>
@@ -604,23 +624,33 @@ export default function ProfilePage() {
             </div>
 
             {/* Membership Card Section */}
-            <div className='mt-8 mb-20 md:mb-0'>
-              <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-                <span className="text-orange-500">◆</span> Membership Card
+            <div className='mt-6 mb-4'>
+              <h3 className="text-base sm:text-lg font-black text-foreground mb-4 flex items-center gap-2">
+                <span className="text-primary">◆</span> Membership Card
               </h3>
               <MembershipCard
                 balance={profile?.walletBalance || 0}
                 userName={formData.name || 'Valued Customer'}
                 membershipId={profile?.membershipId}
-              // createdAt is usually a Timestamp in Firestore, need to convert if using Date
-              // If profile.createdAt is Timestamp, use .toDate(), but interface might say Date.
-              // Safest to handle undefined.
-              // Assuming profile typings might need adjustment or handling.
-              // For now, let's assuming profile comes from onSnapshot which I added .data() as Customer.
-              // Firestore client SDK returns Timestamps for dates usually.
-              // I'll ignore memberSince prop if it's tricky, or pass current if missing.
-              // Actually Customer type says createdAt?: Date;
               />
+            </div>
+
+            {/* Help & Support Navigation Card */}
+            <div className='mb-20 md:mb-0'>
+              <Link href="/customer/support" className="block w-full">
+                <div className="p-4 rounded-2xl bg-card border border-border/80 hover:border-primary/50 hover:bg-primary/5 transition-all flex items-center justify-between group shadow-xs cursor-pointer">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center group-hover:scale-105 transition-transform">
+                      <LifeBuoy className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-bold text-foreground">Help & Support Center</h4>
+                      <p className="text-xs text-muted-foreground">Order issues, AI chatbot, tickets & refunds</p>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+                </div>
+              </Link>
             </div>
           </div>
 

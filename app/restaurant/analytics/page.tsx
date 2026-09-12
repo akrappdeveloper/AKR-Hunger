@@ -44,13 +44,13 @@ const itemVariants = {
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-black/90 border border-white/10 p-3 rounded-lg shadow-xl backdrop-blur-md">
-        <p className="font-semibold text-white mb-2 text-sm">{label}</p>
+      <div className="bg-card/95 border border-border p-3 rounded-xl shadow-xl backdrop-blur-md text-card-foreground">
+        <p className="font-semibold text-foreground mb-2 text-sm">{label}</p>
         {payload.map((entry: any, index: number) => (
           <div key={index} className="flex items-center gap-2 text-xs mb-1">
             <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.fill || entry.color }} />
-            <span className="text-gray-400 capitalize">{entry.name}:</span>
-            <span className="font-bold text-white font-mono">
+            <span className="text-muted-foreground capitalize">{entry.name}:</span>
+            <span className="font-bold text-foreground font-mono">
               {entry.name === 'revenue' ? `₹${entry.value}` : entry.value}
             </span>
           </div>
@@ -252,40 +252,40 @@ export default function RestaurantAnalyticsPage() {
 
   if (authLoading || loading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-black/90">
+      <div className="flex h-screen items-center justify-center bg-background">
         <div className="text-center space-y-4">
-          <Spinner className="w-12 h-12 text-teal-500 mx-auto" />
-          <p className="text-gray-400 animate-pulse">Analyzing Data...</p>
+          <Spinner className="w-12 h-12 text-primary mx-auto" />
+          <p className="text-muted-foreground animate-pulse font-medium">Analyzing Data...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-black text-white p-4 md:p-8 space-y-8 max-w-[1600px] mx-auto font-sans">
+    <div className="min-h-screen bg-background text-foreground p-4 md:p-8 space-y-8 max-w-[1600px] mx-auto font-sans transition-colors duration-300">
 
       {/* Header */}
       <motion.div
         initial="hidden" animate="visible" variants={containerVariants}
-        className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-white/10"
+        className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-border"
       >
         <div>
-          <motion.h1 variants={itemVariants} className="text-4xl md:text-5xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 via-teal-500 to-cyan-500 mb-2">
+          <motion.h1 variants={itemVariants} className="text-3xl sm:text-4xl md:text-5xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 mb-2">
             Performance Hub
           </motion.h1>
-          <motion.p variants={itemVariants} className="text-gray-400 text-lg">
+          <motion.p variants={itemVariants} className="text-muted-foreground text-base sm:text-lg">
             Real-time business intelligence for your restaurant
           </motion.p>
         </div>
 
-        <motion.div variants={itemVariants} className="flex bg-white/5 p-1 rounded-full border border-white/10 backdrop-blur-md">
+        <motion.div variants={itemVariants} className="flex bg-muted/80 p-1 rounded-full border border-border backdrop-blur-md">
           {(['week', 'month', 'year'] as const).map((range) => (
             <button
               key={range}
               onClick={() => setDateRange(range)}
-              className={`px-6 py-2 rounded-full text-sm font-medium transition-all ${dateRange === range
-                  ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg'
-                  : 'text-gray-400 hover:text-white'
+              className={`px-5 py-2 rounded-full text-sm font-semibold transition-all ${dateRange === range
+                  ? 'bg-primary text-primary-foreground shadow-md'
+                  : 'text-muted-foreground hover:text-foreground'
                 }`}
             >
               {range.charAt(0).toUpperCase() + range.slice(1)}
@@ -297,22 +297,22 @@ export default function RestaurantAnalyticsPage() {
       {/* Smart Insights Panel */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
         <div className="flex items-center gap-2 mb-4">
-          <Sparkles className="w-5 h-5 text-purple-400" />
-          <h2 className="text-xl font-bold">Smart Insights</h2>
+          <Sparkles className="w-5 h-5 text-purple-500" />
+          <h2 className="text-xl font-bold text-foreground">Smart Insights</h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {insights.map((insight, idx) => (
-            <Card key={idx} className="bg-white/5 border-white/5 backdrop-blur-md hover:bg-white/10 transition-colors">
+            <Card key={idx} className="bg-card border-border text-card-foreground shadow-sm hover:shadow-md transition-all">
               <CardContent className="p-4 flex gap-4 items-start">
-                <div className={`p-2 rounded-lg ${insight.type === 'positive' ? 'bg-green-500/10 text-green-400' :
-                    insight.type === 'negative' ? 'bg-red-500/10 text-red-400' :
-                      'bg-blue-500/10 text-blue-400'
+                <div className={`p-2.5 rounded-xl shrink-0 ${insight.type === 'positive' ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20' :
+                    insight.type === 'negative' ? 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20' :
+                      'bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20'
                   }`}>
                   <insight.icon className="w-5 h-5" />
                 </div>
                 <div>
-                  <h4 className="font-semibold text-white text-sm">{insight.title}</h4>
-                  <p className="text-xs text-gray-400 mt-1 leading-relaxed">{insight.description}</p>
+                  <h4 className="font-semibold text-foreground text-sm">{insight.title}</h4>
+                  <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{insight.description}</p>
                 </div>
               </CardContent>
             </Card>
@@ -323,10 +323,10 @@ export default function RestaurantAnalyticsPage() {
       {/* Main KPI Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {[
-          { label: 'Total Revenue', value: `₹${metrics.totalRevenue.toLocaleString()}`, icon: DollarSign, color: 'text-emerald-400', sub: 'Gross income' },
-          { label: 'Total Orders', value: metrics.totalOrders, icon: ShoppingCart, color: 'text-blue-400', sub: `${metrics.fulfillmentRate.toFixed(0)}% Fulfilled` },
-          { label: 'Avg Order Value', value: `₹${metrics.avgOrderValue.toFixed(0)}`, icon: Target, color: 'text-purple-400', sub: 'Per customer' },
-          { label: 'Active Customers', value: metrics.uniqueCustomers, icon: Users, color: 'text-orange-400', sub: 'Unique users' },
+          { label: 'Total Revenue', value: `₹${metrics.totalRevenue.toLocaleString()}`, icon: DollarSign, color: 'text-emerald-500', sub: 'Gross income' },
+          { label: 'Total Orders', value: metrics.totalOrders, icon: ShoppingCart, color: 'text-blue-500', sub: `${metrics.fulfillmentRate.toFixed(0)}% Fulfilled` },
+          { label: 'Avg Order Value', value: `₹${metrics.avgOrderValue.toFixed(0)}`, icon: Target, color: 'text-purple-500', sub: 'Per customer' },
+          { label: 'Active Customers', value: metrics.uniqueCustomers, icon: Users, color: 'text-amber-500', sub: 'Unique users' },
         ].map((stat, idx) => (
           <motion.div
             key={idx}
@@ -334,24 +334,24 @@ export default function RestaurantAnalyticsPage() {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.3 + idx * 0.1 }}
           >
-            <Card className="bg-gradient-to-br from-gray-900 to-black border-white/10 relative overflow-hidden group">
-              <div className={`absolute top-0 right-0 p-20 bg-gradient-to-br ${idx === 0 ? 'from-emerald-500/10' : idx === 1 ? 'from-blue-500/10' : idx === 2 ? 'from-purple-500/10' : 'from-orange-500/10'
+            <Card className="bg-card border-border text-card-foreground shadow-sm hover:shadow-md transition-all relative overflow-hidden group">
+              <div className={`absolute top-0 right-0 p-20 bg-gradient-to-br ${idx === 0 ? 'from-emerald-500/10' : idx === 1 ? 'from-blue-500/10' : idx === 2 ? 'from-purple-500/10' : 'from-amber-500/10'
                 } to-transparent blur-3xl rounded-full opacity-50 group-hover:opacity-100 transition-opacity`} />
 
               <CardContent className="p-6 relative z-10">
                 <div className="flex justify-between items-start mb-4">
-                  <div className={`p-3 rounded-xl bg-white/5 border border-white/5 ${stat.color}`}>
+                  <div className={`p-3 rounded-xl bg-muted/60 border border-border ${stat.color}`}>
                     <stat.icon className="w-6 h-6" />
                   </div>
-                  {/* Mock Trend Indicator */}
-                  <Badge variant="outline" className="bg-green-500/10 text-green-400 border-green-500/20 gap-1">
+                  {/* Trend Indicator */}
+                  <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 font-semibold gap-1">
                     <ArrowUpRight className="w-3 h-3" /> 12%
                   </Badge>
                 </div>
                 <div>
-                  <h3 className="text-4xl font-bold text-white tracking-tight">{stat.value}</h3>
-                  <p className="text-sm text-gray-400 mt-1">{stat.label}</p>
-                  <p className="text-xs text-gray-600 mt-2">{stat.sub}</p>
+                  <h3 className="text-3xl sm:text-4xl font-black text-foreground tracking-tight">{stat.value}</h3>
+                  <p className="text-sm font-medium text-muted-foreground mt-1">{stat.label}</p>
+                  <p className="text-xs text-muted-foreground/80 mt-2">{stat.sub}</p>
                 </div>
               </CardContent>
             </Card>
@@ -362,9 +362,9 @@ export default function RestaurantAnalyticsPage() {
       {/* Analytics Tabs */}
       <Tabs defaultValue="overview" className="w-full">
         <div className="flex justify-center mb-8">
-          <TabsList className="bg-white/5 border border-white/10 rounded-full p-1">
+          <TabsList className="bg-muted/80 border border-border rounded-full p-1">
             {['overview', 'trends', 'menu', 'customers'].map(tab => (
-              <TabsTrigger key={tab} value={tab} className="rounded-full px-6 data-[state=active]:bg-teal-600">
+              <TabsTrigger key={tab} value={tab} className="rounded-full px-6 text-sm font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm">
                 {tab.charAt(0).toUpperCase() + tab.slice(1)}
               </TabsTrigger>
             ))}
@@ -374,10 +374,10 @@ export default function RestaurantAnalyticsPage() {
         <TabsContent value="overview" className="space-y-6 animate-in slide-in-from-bottom-4 duration-500">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Revenue Chart */}
-            <Card className="lg:col-span-2 bg-gray-900/50 border-white/10 backdrop-blur-sm">
+            <Card className="lg:col-span-2 bg-card border-border text-card-foreground shadow-sm">
               <CardHeader>
-                <CardTitle>Revenue Analytics</CardTitle>
-                <CardDescription>Income trend over selected period</CardDescription>
+                <CardTitle className="text-foreground font-bold">Revenue Analytics</CardTitle>
+                <CardDescription className="text-muted-foreground">Income trend over selected period</CardDescription>
               </CardHeader>
               <CardContent className="h-[350px]">
                 <ResponsiveContainer width="100%" height="100%">
@@ -388,9 +388,9 @@ export default function RestaurantAnalyticsPage() {
                         <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
-                    <XAxis dataKey="date" stroke="#666" fontSize={12} tickLine={false} axisLine={false} />
-                    <YAxis stroke="#666" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(val) => `₹${val}`} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="currentColor" className="opacity-15" vertical={false} />
+                    <XAxis dataKey="date" stroke="currentColor" className="opacity-60" fontSize={12} tickLine={false} axisLine={false} />
+                    <YAxis stroke="currentColor" className="opacity-60" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(val) => `₹${val}`} />
                     <Tooltip content={<CustomTooltip />} />
                     <Area type="monotone" dataKey="revenue" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorRev)" />
                   </AreaChart>
@@ -399,10 +399,10 @@ export default function RestaurantAnalyticsPage() {
             </Card>
 
             {/* Status Distribution */}
-            <Card className="bg-gray-900/50 border-white/10 backdrop-blur-sm">
+            <Card className="bg-card border-border text-card-foreground shadow-sm">
               <CardHeader>
-                <CardTitle>Order Logic</CardTitle>
-                <CardDescription>Fulfillment & Status</CardDescription>
+                <CardTitle className="text-foreground font-bold">Order Logic</CardTitle>
+                <CardDescription className="text-muted-foreground">Fulfillment & Status</CardDescription>
               </CardHeader>
               <CardContent className="h-[350px] relative">
                 <ResponsiveContainer width="100%" height="100%">
@@ -430,8 +430,8 @@ export default function RestaurantAnalyticsPage() {
                   </PieChart>
                 </ResponsiveContainer>
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                  <span className="text-3xl font-bold text-white">{metrics.totalOrders}</span>
-                  <span className="text-xs text-gray-500 uppercase tracking-widest">Orders</span>
+                  <span className="text-3xl font-extrabold text-foreground">{metrics.totalOrders}</span>
+                  <span className="text-xs text-muted-foreground uppercase tracking-widest font-medium">Orders</span>
                 </div>
               </CardContent>
             </Card>
@@ -439,17 +439,17 @@ export default function RestaurantAnalyticsPage() {
         </TabsContent>
 
         <TabsContent value="trends" className="space-y-6">
-          <Card className="bg-gray-900/50 border-white/10 backdrop-blur-sm">
+          <Card className="bg-card border-border text-card-foreground shadow-sm">
             <CardHeader>
-              <CardTitle>Peak Business Hours</CardTitle>
-              <CardDescription>When do your customers order the most?</CardDescription>
+              <CardTitle className="text-foreground font-bold">Peak Business Hours</CardTitle>
+              <CardDescription className="text-muted-foreground">When do your customers order the most?</CardDescription>
             </CardHeader>
             <CardContent className="h-[400px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={metrics.peakHoursData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
-                  <XAxis dataKey="name" stroke="#666" fontSize={12} tickLine={false} axisLine={false} />
-                  <YAxis stroke="#666" fontSize={12} tickLine={false} axisLine={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="currentColor" className="opacity-15" vertical={false} />
+                  <XAxis dataKey="name" stroke="currentColor" className="opacity-60" fontSize={12} tickLine={false} axisLine={false} />
+                  <YAxis stroke="currentColor" className="opacity-60" fontSize={12} tickLine={false} axisLine={false} />
                   <Tooltip content={<CustomTooltip />} />
                   <Bar dataKey="orders" fill="#3b82f6" radius={[4, 4, 0, 0]}>
                     {metrics.peakHoursData.map((entry, index) => (
@@ -465,37 +465,37 @@ export default function RestaurantAnalyticsPage() {
         <TabsContent value="menu" className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Top Items */}
-            <Card className="bg-gray-900/50 border-white/10">
+            <Card className="bg-card border-border text-card-foreground shadow-sm">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Award className="w-5 h-5 text-yellow-400" /> Top Performing Items
+                <CardTitle className="flex items-center gap-2 text-foreground font-bold">
+                  <Award className="w-5 h-5 text-amber-500" /> Top Performing Items
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 {metrics.topItems.map((item, i) => (
-                  <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors">
+                  <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-muted/40 border border-border hover:bg-muted/70 transition-colors">
                     <div className="flex items-center gap-4">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-black ${i === 0 ? 'bg-yellow-400' : i === 1 ? 'bg-gray-300' : 'bg-orange-600/50 text-white'
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-black ${i === 0 ? 'bg-amber-400' : i === 1 ? 'bg-gray-300' : 'bg-orange-500 text-white'
                         }`}>
                         {i + 1}
                       </div>
                       <div>
-                        <p className="font-semibold text-white">{item.name}</p>
-                        <p className="text-xs text-gray-400">{item.count} orders</p>
+                        <p className="font-semibold text-foreground">{item.name}</p>
+                        <p className="text-xs text-muted-foreground">{item.count} orders</p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="font-bold text-teal-400">₹{item.revenue}</p>
+                      <p className="font-bold text-emerald-600 dark:text-emerald-400">₹{item.revenue}</p>
                     </div>
                   </div>
                 ))}
               </CardContent>
             </Card>
 
-            {/* Category Performance (Mocked/Inferred for now) */}
-            <Card className="bg-gray-900/50 border-white/10">
+            {/* Category Performance */}
+            <Card className="bg-card border-border text-card-foreground shadow-sm">
               <CardHeader>
-                <CardTitle>Sales by Category</CardTitle>
+                <CardTitle className="text-foreground font-bold">Sales by Category</CardTitle>
               </CardHeader>
               <CardContent className="h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
@@ -524,25 +524,25 @@ export default function RestaurantAnalyticsPage() {
 
         <TabsContent value="customers" className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <Card className="bg-gradient-to-br from-blue-900/20 to-indigo-900/20 border-blue-500/20">
+            <Card className="bg-gradient-to-br from-blue-500/10 via-indigo-500/5 to-transparent border-border shadow-sm">
               <CardContent className="p-8 text-center">
-                <Users className="w-12 h-12 mx-auto text-blue-400 mb-4" />
-                <h3 className="text-4xl font-bold text-white mb-2">{metrics.uniqueCustomers}</h3>
-                <p className="text-blue-200">Total Unique Customers</p>
+                <Users className="w-12 h-12 mx-auto text-blue-500 mb-4" />
+                <h3 className="text-4xl font-extrabold text-foreground mb-2">{metrics.uniqueCustomers}</h3>
+                <p className="text-muted-foreground font-medium">Total Unique Customers</p>
               </CardContent>
             </Card>
-            <Card className="bg-gradient-to-br from-purple-900/20 to-pink-900/20 border-purple-500/20">
+            <Card className="bg-gradient-to-br from-purple-500/10 via-pink-500/5 to-transparent border-border shadow-sm">
               <CardContent className="p-8 text-center">
-                <Target className="w-12 h-12 mx-auto text-purple-400 mb-4" />
-                <h3 className="text-4xl font-bold text-white mb-2">₹{(metrics.totalRevenue / metrics.uniqueCustomers || 0).toFixed(0)}</h3>
-                <p className="text-purple-200">Revenue per Customer (LTV)</p>
+                <Target className="w-12 h-12 mx-auto text-purple-500 mb-4" />
+                <h3 className="text-4xl font-extrabold text-foreground mb-2">₹{(metrics.totalRevenue / metrics.uniqueCustomers || 0).toFixed(0)}</h3>
+                <p className="text-muted-foreground font-medium">Revenue per Customer (LTV)</p>
               </CardContent>
             </Card>
-            <Card className="bg-gradient-to-br from-teal-900/20 to-emerald-900/20 border-teal-500/20">
+            <Card className="bg-gradient-to-br from-teal-500/10 via-emerald-500/5 to-transparent border-border shadow-sm">
               <CardContent className="p-8 text-center">
-                <Package className="w-12 h-12 mx-auto text-teal-400 mb-4" />
-                <h3 className="text-4xl font-bold text-white mb-2">{(metrics.totalOrders / metrics.uniqueCustomers || 0).toFixed(1)}</h3>
-                <p className="text-teal-200">Orders per Customer</p>
+                <Package className="w-12 h-12 mx-auto text-teal-500 mb-4" />
+                <h3 className="text-4xl font-extrabold text-foreground mb-2">{(metrics.totalOrders / metrics.uniqueCustomers || 0).toFixed(1)}</h3>
+                <p className="text-muted-foreground font-medium">Orders per Customer</p>
               </CardContent>
             </Card>
           </div>

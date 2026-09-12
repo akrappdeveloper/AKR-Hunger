@@ -36,21 +36,23 @@ import {
   Navigation,
   ShieldCheck,
   Eye,
-  EyeOff
+  EyeOff,
+  Palette
 } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 // Reusable Components for Consistency
 const SectionHeader = ({ icon: Icon, title, description, colorClass }: { icon: any, title: string, description: string, colorClass: string }) => (
   <div className="flex items-start md:items-center gap-4 mb-8">
-    <div className={`w-12 h-12 ${colorClass} rounded-2xl flex items-center justify-center shadow-lg shrink-0 ring-4 ring-white/5`}>
+    <div className={`w-12 h-12 ${colorClass} rounded-2xl flex items-center justify-center shadow-lg shrink-0 ring-4 ring-border`}>
       <Icon className="w-6 h-6 text-white" />
     </div>
     <div>
-      <h2 className="text-2xl font-bold text-white tracking-tight">{title}</h2>
-      <p className="text-sm text-gray-400 font-medium mt-1">{description}</p>
+      <h2 className="text-2xl font-bold text-foreground tracking-tight">{title}</h2>
+      <p className="text-sm text-muted-foreground font-medium mt-1">{description}</p>
     </div>
   </div>
 );
@@ -58,13 +60,13 @@ const SectionHeader = ({ icon: Icon, title, description, colorClass }: { icon: a
 const StyledInput = ({ icon: Icon, ...props }: any) => (
   <div className="relative group">
     {Icon && (
-      <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-orange-500 transition-colors z-10">
+      <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors z-10">
         <Icon className="w-5 h-5" />
       </div>
     )}
     <Input
       {...props}
-      className={`bg-white/5 border-white/10 text-white placeholder:text-gray-600 focus:border-orange-500/50 focus:ring-orange-500/20 h-12 transition-all rounded-xl ${Icon ? 'pl-10' : ''}`}
+      className={`bg-card border-border text-foreground placeholder:text-muted-foreground focus:border-primary/50 focus:ring-primary/20 h-12 transition-all rounded-xl ${Icon ? 'pl-10' : ''}`}
     />
   </div>
 );
@@ -270,40 +272,40 @@ export default function RestaurantSettingsPage() {
 
   if (authLoading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-black">
-        <Spinner className="w-8 h-8 text-orange-500" />
+      <div className="flex items-center justify-center h-screen bg-background">
+        <Spinner className="w-8 h-8 text-primary" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-black pb-20 selection:bg-orange-500/30 font-sans">
+    <div className="min-h-screen bg-background text-foreground pb-20 selection:bg-primary/30 font-sans transition-colors duration-300">
 
       {/* Hero Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative bg-gradient-to-b from-gray-900 via-black to-black pt-8 pb-12 px-4 md:px-8 mb-8"
+        className="relative bg-gradient-to-b from-card via-background to-background pt-8 pb-12 px-4 md:px-8 mb-8 border-b border-border/40"
       >
         <div className="max-w-6xl mx-auto">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div className="flex items-center gap-5">
-              <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl flex items-center justify-center shadow-2xl shadow-orange-500/20 ring-2 ring-white/10">
-                <SettingsIcon className="w-8 h-8 text-white" />
+              <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center shadow-2xl shadow-primary/20 ring-2 ring-border">
+                <SettingsIcon className="w-8 h-8 text-primary-foreground" />
               </div>
               <div>
-                <h1 className="text-3xl md:text-5xl font-extrabold text-white tracking-tight">Settings</h1>
-                <p className="text-gray-400 mt-2 text-lg">Manage your restaurant profile and preferences</p>
+                <h1 className="text-3xl md:text-5xl font-extrabold text-foreground tracking-tight">Settings</h1>
+                <p className="text-muted-foreground mt-2 text-base md:text-lg">Manage your restaurant profile, themes, and preferences</p>
               </div>
             </div>
 
-            <div className="flex items-center gap-3 bg-white/5 p-2 rounded-2xl border border-white/10 self-start md:self-auto backdrop-blur-md">
-              <div className={`px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 transition-all ${settings.isOpen ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'bg-red-500/20 text-red-400 border border-red-500/30'}`}>
-                <div className={`w-2 h-2 rounded-full ${settings.isOpen ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`} />
+            <div className="flex items-center gap-3 bg-card p-2 rounded-2xl border border-border self-start md:self-auto backdrop-blur-md shadow-sm">
+              <div className={`px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 transition-all ${settings.isOpen ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30' : 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/30'}`}>
+                <div className={`w-2 h-2 rounded-full ${settings.isOpen ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`} />
                 {settings.isOpen ? 'OPEN' : 'CLOSED'}
               </div>
-              <div className="h-6 w-px bg-white/10" />
-              <div className={`px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 transition-all ${settings.acceptingOrders ? 'bg-orange-500/20 text-orange-400 border border-orange-500/30' : 'bg-gray-800 text-gray-400 border border-white/10'}`}>
+              <div className="h-6 w-px bg-border" />
+              <div className={`px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 transition-all ${settings.acceptingOrders ? 'bg-primary/10 text-primary border border-primary/30' : 'bg-muted text-muted-foreground border border-border'}`}>
                 <Truck className="w-4 h-4" />
                 {settings.acceptingOrders ? 'ONLINE' : 'PAUSED'}
               </div>
@@ -313,9 +315,10 @@ export default function RestaurantSettingsPage() {
       </motion.div>
 
       <div className="max-w-6xl mx-auto px-4 md:px-8">
-        <Tabs defaultValue="service" className="space-y-8">
-          <TabsList className="bg-white/5 border border-white/10 p-1.5 rounded-2xl h-auto flex flex-wrap lg:flex-nowrap justify-start w-full backdrop-blur-md gap-1">
+        <Tabs defaultValue="appearance" className="space-y-8">
+          <TabsList className="bg-card border border-border p-1.5 rounded-2xl h-auto flex flex-wrap lg:flex-nowrap justify-start w-full backdrop-blur-md gap-1 shadow-sm">
             {[
+              { id: 'appearance', icon: Palette, label: 'Appearance', gradient: 'from-amber-600 to-orange-600' },
               { id: 'general', icon: Store, label: 'General', gradient: 'from-orange-600 to-red-600' },
               { id: 'operations', icon: Truck, label: 'Operations', gradient: 'from-blue-600 to-indigo-600' },
               { id: 'service', icon: Map, label: 'Service Area', gradient: 'from-purple-600 to-pink-600' },
@@ -325,38 +328,62 @@ export default function RestaurantSettingsPage() {
               <TabsTrigger
                 key={tab.id}
                 value={tab.id}
-                className={`flex-1 py-3 px-4 rounded-xl data-[state=active]:bg-gradient-to-r ${tab.gradient} data-[state=active]:text-white text-gray-400 font-medium transition-all hover:text-white hover:bg-white/5`}
+                className="flex-1 py-3 px-4 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground font-semibold transition-all hover:text-foreground hover:bg-muted"
               >
                 <tab.icon className="w-4 h-4 mr-2" /> {tab.label}
               </TabsTrigger>
             ))}
           </TabsList>
 
+          {/* Appearance & Theme Tab */}
+          <TabsContent value="appearance" className="space-y-6">
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+              <Card className="p-6 md:p-8 bg-card border-border shadow-sm">
+                <SectionHeader
+                  icon={Palette}
+                  title="Theme & Visual Styling"
+                  description="Switch between Light, Dark, Sunset Warmth, and Midnight Blue palettes across your entire restaurant portal"
+                  colorClass="bg-primary"
+                />
+
+                <div className="space-y-6 pt-2">
+                  <p className="text-sm text-muted-foreground">
+                    Select your preferred interface appearance. All orders, menus, reviews, analytics, and modals will seamlessly adapt to your chosen theme.
+                  </p>
+
+                  <div className="pt-2">
+                    <ThemeToggle variant="tiles" />
+                  </div>
+                </div>
+              </Card>
+            </motion.div>
+          </TabsContent>
+
           {/* General Tab */}
           <TabsContent value="general" className="space-y-6">
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Left Column: Logo & Basic Info */}
               <div className="lg:col-span-1 space-y-6">
-                <Card className="p-6 bg-[#0A0A0A] border-white/10">
-                  <h3 className="text-white font-bold mb-4 flex items-center gap-2">
-                    <ImageIcon className="w-4 h-4 text-orange-500" /> Restaurant Logo
+                <Card className="p-6 bg-card border-border shadow-sm">
+                  <h3 className="text-foreground font-bold mb-4 flex items-center gap-2">
+                    <ImageIcon className="w-4 h-4 text-primary" /> Restaurant Logo
                   </h3>
                   <div className="flex flex-col items-center gap-4">
-                    <div className="w-40 h-40 rounded-full bg-black border-2 border-white/10 overflow-hidden relative group shadow-2xl ring-4 ring-black">
+                    <div className="w-40 h-40 rounded-full bg-muted border-2 border-border overflow-hidden relative group shadow-lg ring-4 ring-border/50">
                       {settings.image ? (
                         <img src={settings.image} alt="Logo" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
                       ) : (
-                        <div className="flex items-center justify-center w-full h-full text-gray-700">
+                        <div className="flex items-center justify-center w-full h-full text-muted-foreground">
                           <Store className="w-12 h-12" />
                         </div>
                       )}
                       {uploadingImage && (
-                        <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                          <Loader2 className="w-8 h-8 text-orange-500 animate-spin" />
+                        <div className="absolute inset-0 bg-background/70 flex items-center justify-center">
+                          <Loader2 className="w-8 h-8 text-primary animate-spin" />
                         </div>
                       )}
-                      <label className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center cursor-pointer text-white text-xs font-bold uppercase tracking-wider backdrop-blur-sm">
-                        <UploadCloud className="w-6 h-6 mb-1" />
+                      <label className="absolute inset-0 bg-background/80 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center cursor-pointer text-foreground text-xs font-bold uppercase tracking-wider backdrop-blur-sm">
+                        <UploadCloud className="w-6 h-6 mb-1 text-primary" />
                         Change Logo
                         <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
                           const file = e.target.files?.[0];
@@ -371,7 +398,7 @@ export default function RestaurantSettingsPage() {
                         }} />
                       </label>
                     </div>
-                    <p className="text-xs text-gray-500 text-center px-4">
+                    <p className="text-xs text-muted-foreground text-center px-4">
                       Square image recommended. Displays on customer app.
                     </p>
                   </div>
@@ -380,17 +407,17 @@ export default function RestaurantSettingsPage() {
 
               {/* Middle & Right Column: Details form */}
               <div className="lg:col-span-2 space-y-6">
-                <Card className="p-6 md:p-8 bg-[#0A0A0A] border-white/10">
+                <Card className="p-6 md:p-8 bg-card border-border shadow-sm">
                   <SectionHeader
                     icon={Store}
                     title="Basic Information"
                     description="Your public restaurant profile details"
-                    colorClass="bg-orange-600"
+                    colorClass="bg-primary"
                   />
                   <div className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
-                        <Label className="text-gray-300">Restaurant Name *</Label>
+                        <Label className="text-foreground">Restaurant Name *</Label>
                         <StyledInput
                           placeholder="e.g. Spice Garden"
                           value={settings.restaurantName}
@@ -398,7 +425,7 @@ export default function RestaurantSettingsPage() {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label className="text-gray-300">Contact Phone *</Label>
+                        <Label className="text-foreground">Contact Phone *</Label>
                         <StyledInput
                           icon={Phone}
                           placeholder="+91 99999 99999"
@@ -409,7 +436,7 @@ export default function RestaurantSettingsPage() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label className="text-gray-300">Email Address *</Label>
+                      <Label className="text-foreground">Email Address *</Label>
                       <StyledInput
                         icon={Mail}
                         placeholder="contact@restaurant.com"
@@ -419,9 +446,9 @@ export default function RestaurantSettingsPage() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label className="text-gray-300">Description</Label>
+                      <Label className="text-foreground">Description</Label>
                       <Textarea
-                        className="bg-white/5 border-white/10 text-white min-h-[100px] focus:border-orange-500/50 placeholder:text-gray-600 rounded-xl"
+                        className="bg-card border-border text-foreground min-h-[100px] focus:border-primary/50 placeholder:text-muted-foreground rounded-xl"
                         placeholder="Tell customers about your cuisine and specialties..."
                         value={settings.description}
                         onChange={(e) => setSettings({ ...settings, description: e.target.value })}
@@ -430,7 +457,7 @@ export default function RestaurantSettingsPage() {
                   </div>
                 </Card>
 
-                <Card className="p-6 md:p-8 bg-[#0A0A0A] border-white/10">
+                <Card className="p-6 md:p-8 bg-card border-border shadow-sm">
                   <SectionHeader
                     icon={MapPin}
                     title="Location & Address"
@@ -439,7 +466,7 @@ export default function RestaurantSettingsPage() {
                   />
                   <div className="space-y-6">
                     <div className="space-y-2">
-                      <Label className="text-gray-300">Street Address *</Label>
+                      <Label className="text-foreground">Street Address *</Label>
                       <StyledInput
                         placeholder="Shop No, Building, Street"
                         value={settings.street}
@@ -449,7 +476,7 @@ export default function RestaurantSettingsPage() {
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                       <div className="space-y-2 relative">
-                        <Label className="text-gray-300">Pincode *</Label>
+                        <Label className="text-foreground">Pincode *</Label>
                         <div className="relative">
                           <StyledInput
                             placeholder="400001"
@@ -458,29 +485,29 @@ export default function RestaurantSettingsPage() {
                             onChange={(e: any) => setSettings({ ...settings, pincode: e.target.value })}
                             onBlur={(e: any) => fetchCityStateFromPincode(e.target.value)}
                           />
-                          {pincodeLoading && <Loader2 className="absolute right-3 top-3.5 w-5 h-5 text-orange-500 animate-spin" />}
+                          {pincodeLoading && <Loader2 className="absolute right-3 top-3.5 w-5 h-5 text-primary animate-spin" />}
                         </div>
                       </div>
                       <div className="space-y-2">
-                        <Label className="text-gray-300">City</Label>
+                        <Label className="text-foreground">City</Label>
                         <StyledInput
                           readOnly
-                          className="bg-black/40 opacity-60 cursor-not-allowed text-gray-400 border-white/5"
+                          className="bg-muted/50 opacity-70 cursor-not-allowed text-muted-foreground border-border"
                           value={settings.city}
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label className="text-gray-300">State</Label>
+                        <Label className="text-foreground">State</Label>
                         <StyledInput
                           readOnly
-                          className="bg-black/40 opacity-60 cursor-not-allowed text-gray-400 border-white/5"
+                          className="bg-muted/50 opacity-70 cursor-not-allowed text-muted-foreground border-border"
                           value={settings.state}
                         />
                       </div>
                     </div>
 
                     {settings.latitude && (
-                      <div className="flex items-center gap-2 text-xs text-green-400 bg-green-900/10 p-4 rounded-xl border border-green-500/20">
+                      <div className="flex items-center gap-2 text-xs text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 p-4 rounded-xl border border-emerald-500/20">
                         <Globe className="w-4 h-4" />
                         <div>
                           <p className="font-bold">Geolocation Active</p>
@@ -495,7 +522,7 @@ export default function RestaurantSettingsPage() {
                   <Button
                     onClick={handleSaveSettings}
                     disabled={loading}
-                    className="bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white shadow-lg h-12 px-8 rounded-full font-bold transition-all hover:scale-105 active:scale-95"
+                    className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg h-12 px-8 rounded-full font-bold transition-all hover:scale-105 active:scale-95"
                   >
                     {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                     Save Changes
@@ -508,7 +535,7 @@ export default function RestaurantSettingsPage() {
           {/* Operations Tab */}
           <TabsContent value="operations" className="space-y-6">
             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
-              <Card className="p-6 md:p-8 bg-[#0A0A0A] border-white/10">
+              <Card className="p-6 md:p-8 bg-card border-border shadow-sm">
                 <SectionHeader
                   icon={Truck}
                   title="Operations & Delivery"
@@ -517,7 +544,7 @@ export default function RestaurantSettingsPage() {
                 />
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className="space-y-2">
-                    <Label className="text-gray-300">Minimum Order Value</Label>
+                    <Label className="text-foreground">Minimum Order Value</Label>
                     <StyledInput
                       icon={DollarSign}
                       type="number"
@@ -527,7 +554,7 @@ export default function RestaurantSettingsPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-gray-300">Delivery Charge</Label>
+                    <Label className="text-foreground">Delivery Charge</Label>
                     <StyledInput
                       icon={TrendingUp}
                       type="number"
@@ -537,7 +564,7 @@ export default function RestaurantSettingsPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-gray-300">Avg. Delivery Time (mins)</Label>
+                    <Label className="text-foreground">Avg. Delivery Time (mins)</Label>
                     <StyledInput
                       icon={Clock}
                       type="number"
@@ -548,37 +575,37 @@ export default function RestaurantSettingsPage() {
                   </div>
                 </div>
 
-                <div className="mt-8 pt-8 border-t border-white/10 grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="p-6 bg-white/5 border border-white/5 rounded-2xl hover:border-white/20 transition-all cursor-pointer group" onClick={() => setSettings({ ...settings, isOpen: !settings.isOpen })}>
+                <div className="mt-8 pt-8 border-t border-border grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="p-6 bg-muted/30 border border-border rounded-2xl hover:border-border/80 transition-all cursor-pointer group" onClick={() => setSettings({ ...settings, isOpen: !settings.isOpen })}>
                     <div className="flex justify-between items-start">
                       <div className="flex items-center gap-4">
-                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${settings.isOpen ? 'bg-green-500/20 text-green-500' : 'bg-gray-800 text-gray-500'}`}>
+                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${settings.isOpen ? 'bg-emerald-500/10 text-emerald-500' : 'bg-muted text-muted-foreground'}`}>
                           <Store className="w-6 h-6" />
                         </div>
                         <div>
-                          <h4 className="font-bold text-white group-hover:text-green-400 transition-colors text-lg">Restaurant Open</h4>
-                          <p className="text-sm text-gray-500">Visible on customer app</p>
+                          <h4 className="font-bold text-foreground group-hover:text-emerald-500 transition-colors text-lg">Restaurant Open</h4>
+                          <p className="text-sm text-muted-foreground">Visible on customer app</p>
                         </div>
                       </div>
-                      <div className={`relative w-14 h-8 rounded-full transition-colors duration-300 ${settings.isOpen ? 'bg-green-600' : 'bg-gray-700'}`}>
-                        <div className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-transform duration-300 shadow-md ${settings.isOpen ? 'left-7' : 'left-1'}`} />
+                      <div className={`relative w-14 h-8 rounded-full transition-colors duration-300 ${settings.isOpen ? 'bg-emerald-500' : 'bg-muted-foreground/30'}`}>
+                        <div className={`absolute top-1 w-6 h-6 bg-background rounded-full transition-transform duration-300 shadow-md ${settings.isOpen ? 'left-7' : 'left-1'}`} />
                       </div>
                     </div>
                   </div>
 
-                  <div className="p-6 bg-white/5 border border-white/5 rounded-2xl hover:border-white/20 transition-all cursor-pointer group" onClick={() => setSettings({ ...settings, acceptingOrders: !settings.acceptingOrders })}>
+                  <div className="p-6 bg-muted/30 border border-border rounded-2xl hover:border-border/80 transition-all cursor-pointer group" onClick={() => setSettings({ ...settings, acceptingOrders: !settings.acceptingOrders })}>
                     <div className="flex justify-between items-start">
                       <div className="flex items-center gap-4">
-                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${settings.acceptingOrders ? 'bg-orange-500/20 text-orange-500' : 'bg-gray-800 text-gray-500'}`}>
+                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${settings.acceptingOrders ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}`}>
                           <Truck className="w-6 h-6" />
                         </div>
                         <div>
-                          <h4 className="font-bold text-white group-hover:text-orange-400 transition-colors text-lg">Accepting Orders</h4>
-                          <p className="text-sm text-gray-500">Enable new incoming orders</p>
+                          <h4 className="font-bold text-foreground group-hover:text-primary transition-colors text-lg">Accepting Orders</h4>
+                          <p className="text-sm text-muted-foreground">Enable new incoming orders</p>
                         </div>
                       </div>
-                      <div className={`relative w-14 h-8 rounded-full transition-colors duration-300 ${settings.acceptingOrders ? 'bg-orange-600' : 'bg-gray-700'}`}>
-                        <div className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-transform duration-300 shadow-md ${settings.acceptingOrders ? 'left-7' : 'left-1'}`} />
+                      <div className={`relative w-14 h-8 rounded-full transition-colors duration-300 ${settings.acceptingOrders ? 'bg-primary' : 'bg-muted-foreground/30'}`}>
+                        <div className={`absolute top-1 w-6 h-6 bg-background rounded-full transition-transform duration-300 shadow-md ${settings.acceptingOrders ? 'left-7' : 'left-1'}`} />
                       </div>
                     </div>
                   </div>
@@ -588,7 +615,7 @@ export default function RestaurantSettingsPage() {
                   <Button
                     onClick={handleSaveSettings}
                     disabled={loading}
-                    className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-8 rounded-full h-12 shadow-lg hover:shadow-blue-900/20"
+                    className="bg-primary text-primary-foreground hover:bg-primary/90 font-bold px-8 rounded-full h-12 shadow-lg"
                   >
                     {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                     Update Operations
@@ -601,7 +628,7 @@ export default function RestaurantSettingsPage() {
           {/* Service Area Tab */}
           <TabsContent value="service" className="space-y-6">
             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
-              <Card className="p-6 md:p-8 bg-[#0A0A0A] border-white/10">
+              <Card className="p-6 md:p-8 bg-card border-border shadow-sm">
                 <SectionHeader
                   icon={Map}
                   title="Service Area Configuration"
@@ -612,7 +639,7 @@ export default function RestaurantSettingsPage() {
                 <div className="max-w-3xl">
                   <div className="flex flex-col md:flex-row gap-4 mb-8">
                     <div className="flex-1">
-                      <Label className="text-gray-300 mb-2 block">Add Service Pincode</Label>
+                      <Label className="text-foreground mb-2 block">Add Service Pincode</Label>
                       <div className="flex gap-3">
                         <StyledInput
                           placeholder="Enter 6-digit Pincode"
@@ -629,30 +656,30 @@ export default function RestaurantSettingsPage() {
                           Add
                         </Button>
                       </div>
-                      <p className="text-xs text-gray-500 mt-2">Only customers within these pincodes will be able to place orders.</p>
+                      <p className="text-xs text-muted-foreground mt-2">Only customers within these pincodes will be able to place orders.</p>
                     </div>
                   </div>
 
                   <div className="space-y-4">
-                    <Label className="text-gray-300 block font-medium">Active Service Areas <span className="text-gray-500">({settings.servicePincodes.length})</span></Label>
+                    <Label className="text-foreground block font-medium">Active Service Areas <span className="text-muted-foreground">({settings.servicePincodes.length})</span></Label>
 
                     {settings.servicePincodes.length === 0 ? (
-                      <div className="text-center p-12 bg-white/5 border border-white/10 border-dashed rounded-2xl">
-                        <Map className="w-12 h-12 text-gray-700 mx-auto mb-4" />
-                        <p className="text-gray-400 font-medium text-lg">No service areas defined</p>
-                        <p className="text-sm text-gray-600 mt-1">Add pincodes to start restricting delivery areas. (Currently visible to all)</p>
+                      <div className="text-center p-12 bg-muted/20 border border-border border-dashed rounded-2xl">
+                        <Map className="w-12 h-12 text-muted-foreground mx-auto mb-4 opacity-50" />
+                        <p className="text-muted-foreground font-medium text-lg">No service areas defined</p>
+                        <p className="text-sm text-muted-foreground/80 mt-1">Add pincodes to start restricting delivery areas. (Currently visible to all)</p>
                       </div>
                     ) : (
                       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
                         {settings.servicePincodes.map((code) => (
-                          <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} key={code} className="bg-white/5 border border-white/10 rounded-xl p-3 flex items-center justify-between group hover:border-pink-500/50 hover:bg-white/10 transition-colors">
+                          <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} key={code} className="bg-card border border-border rounded-xl p-3 flex items-center justify-between group hover:border-pink-500/50 hover:bg-muted/30 transition-colors">
                             <div className="flex items-center gap-2">
                               <Navigation className="w-3 h-3 text-pink-500" />
-                              <span className="text-white font-mono font-medium">{code}</span>
+                              <span className="text-foreground font-mono font-medium">{code}</span>
                             </div>
                             <button
                               onClick={() => handleRemovePincode(code)}
-                              className="text-gray-600 hover:text-red-400 transition-colors p-1"
+                              className="text-muted-foreground hover:text-destructive transition-colors p-1"
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
@@ -662,7 +689,7 @@ export default function RestaurantSettingsPage() {
                     )}
                   </div>
 
-                  <div className="flex justify-start pt-8 border-t border-white/10 mt-8">
+                  <div className="flex justify-start pt-8 border-t border-border mt-8">
                     <Button
                       onClick={handleSaveSettings}
                       disabled={loading}
@@ -681,7 +708,7 @@ export default function RestaurantSettingsPage() {
           {/* Bank Tab */}
           <TabsContent value="bank" className="space-y-6">
             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
-              <Card className="p-6 md:p-8 bg-[#0A0A0A] border-white/10">
+              <Card className="p-6 md:p-8 bg-card border-border shadow-sm">
                 <SectionHeader
                   icon={Landmark}
                   title="Banking Configuration"
@@ -692,7 +719,7 @@ export default function RestaurantSettingsPage() {
                 <div className="max-w-3xl space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <Label className="text-gray-300">Bank Name *</Label>
+                      <Label className="text-foreground">Bank Name *</Label>
                       <StyledInput
                         placeholder="e.g. HDFC Bank"
                         value={bankDetails.bankName}
@@ -700,7 +727,7 @@ export default function RestaurantSettingsPage() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-gray-300">Account Holder Name *</Label>
+                      <Label className="text-foreground">Account Holder Name *</Label>
                       <StyledInput
                         placeholder="As per passbook"
                         value={bankDetails.accountHolderName}
@@ -711,26 +738,26 @@ export default function RestaurantSettingsPage() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <Label className="text-gray-300">Account Number *</Label>
+                      <Label className="text-foreground">Account Number *</Label>
                       <div className="relative">
                         <Input
                           type={showAccountNumber ? "text" : "password"}
                           placeholder="XXXXXXXXXXXX"
                           value={bankDetails.accountNumber}
                           onChange={(e) => setBankDetails({ ...bankDetails, accountNumber: e.target.value })}
-                          className="bg-white/5 border-white/10 text-white placeholder:text-gray-600 focus:border-orange-500/50 focus:ring-orange-500/20 h-12 transition-all rounded-xl pr-10"
+                          className="bg-card border-border text-foreground placeholder:text-muted-foreground focus:border-primary/50 focus:ring-primary/20 h-12 transition-all rounded-xl pr-10"
                         />
                         <button
                           type="button"
                           onClick={() => setShowAccountNumber(!showAccountNumber)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                         >
                           {showAccountNumber ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                         </button>
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-gray-300">IFSC Code *</Label>
+                      <Label className="text-foreground">IFSC Code *</Label>
                       <StyledInput
                         placeholder="HDFC0001234"
                         value={bankDetails.ifscCode}
@@ -740,11 +767,11 @@ export default function RestaurantSettingsPage() {
                   </div>
 
                   {bankDetails.bankName && bankDetails.accountNumber && (
-                    <div className="bg-emerald-900/10 border border-emerald-500/20 rounded-xl p-5 flex items-start gap-4">
+                    <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-5 flex items-start gap-4">
                       <ShieldCheck className="w-6 h-6 text-emerald-500 mt-0.5" />
                       <div>
-                        <h4 className="text-emerald-400 font-bold">Account Linked & Secure</h4>
-                        <p className="text-sm text-emerald-500/70 mt-1">
+                        <h4 className="text-emerald-600 dark:text-emerald-400 font-bold">Account Linked & Secure</h4>
+                        <p className="text-sm text-emerald-600/80 dark:text-emerald-400/80 mt-1">
                           Settlements will be processed to {bankDetails.bankName} (Ending in {bankDetails.accountNumber.slice(-4)})
                         </p>
                       </div>
@@ -769,7 +796,7 @@ export default function RestaurantSettingsPage() {
 
           {/* Notifications Tab */}
           <TabsContent value="notifications" className="space-y-6">
-            <Card className="p-6 md:p-8 bg-[#0A0A0A] border-white/10">
+            <Card className="p-6 md:p-8 bg-card border-border shadow-sm">
               <SectionHeader
                 icon={Bell}
                 title="Notification Preferences"
@@ -777,21 +804,21 @@ export default function RestaurantSettingsPage() {
                 colorClass="bg-gray-600"
               />
 
-              <div className="bg-white/5 rounded-2xl border border-white/5 divide-y divide-white/10">
+              <div className="bg-muted/20 rounded-2xl border border-border divide-y divide-border">
                 {[
                   { title: 'New Order Alerts', desc: 'Get notified immediately when a customer places an order' },
                   { title: 'Menu Updates', desc: 'Notifications when your menu changes are approved/rejected' },
                   { title: 'Customer Reviews', desc: 'Alerts for new ratings and reviews from customers' },
                   { title: 'System Announcements', desc: 'Important platform updates and maintenance notices' },
                 ].map((item, i) => (
-                  <div key={i} className="p-6 flex items-center justify-between hover:bg-white/5 transition-colors">
+                  <div key={i} className="p-6 flex items-center justify-between hover:bg-muted/30 transition-colors">
                     <div>
-                      <h4 className="text-white font-bold text-lg">{item.title}</h4>
-                      <p className="text-sm text-gray-500">{item.desc}</p>
+                      <h4 className="text-foreground font-bold text-lg">{item.title}</h4>
+                      <p className="text-sm text-muted-foreground">{item.desc}</p>
                     </div>
                     <div className="relative inline-flex items-center cursor-pointer group">
                       <input type="checkbox" defaultChecked className="sr-only peer" />
-                      <div className="w-12 h-7 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-blue-600" />
+                      <div className="w-12 h-7 bg-muted-foreground/30 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-primary" />
                     </div>
                   </div>
                 ))}

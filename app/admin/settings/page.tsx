@@ -2,8 +2,12 @@
 
 import { useState } from 'react';
 import { useAdminAuth } from '@/context/AdminAuthContext';
-import { Settings, Bell, Lock, Database, FileText } from 'lucide-react';
+import { Settings, Bell, Lock, Database, FileText, FileJson, FileSpreadsheet } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { db } from '@/lib/firebase';
+import { collection, getDocs, orderBy, query } from 'firebase/firestore';
+import { exportToCSV, exportToPDF, exportToJSON, generateOrderReport, generateRestaurantReport, generateCustomerReport } from '@/lib/export';
+import { toast } from 'sonner';
 
 export default function SettingsPage() {
   const { admin } = useAdminAuth();
@@ -184,30 +188,91 @@ export default function SettingsPage() {
                 <div className="bg-black/20 p-6 rounded-xl border border-white/5">
                   <h3 className="text-white font-medium mb-4 uppercase text-xs tracking-wider opacity-70">Available Reports</h3>
                   <ul className="space-y-3">
-                    <li className="flex items-center justify-between p-3 rounded-lg hover:bg-white/5 transition-colors">
-                      <span className="text-gray-300 font-medium">Daily Orders Report</span>
-                      <button className="px-4 py-2 bg-blue-600/20 text-blue-400 border border-blue-500/30 hover:bg-blue-600 hover:text-white rounded-lg text-sm font-medium transition-all">
-                        Download CSV
-                      </button>
-                    </li>
-                    <li className="flex items-center justify-between p-3 rounded-lg hover:bg-white/5 transition-colors">
-                      <span className="text-gray-300 font-medium">Revenue Report</span>
-                      <button className="px-4 py-2 bg-green-600/20 text-green-400 border border-green-500/30 hover:bg-green-600 hover:text-white rounded-lg text-sm font-medium transition-all">
-                        Download PDF
-                      </button>
-                    </li>
-                    <li className="flex items-center justify-between p-3 rounded-lg hover:bg-white/5 transition-colors">
-                      <span className="text-gray-300 font-medium">Customer Analytics</span>
-                      <button className="px-4 py-2 bg-purple-600/20 text-purple-400 border border-purple-500/30 hover:bg-purple-600 hover:text-white rounded-lg text-sm font-medium transition-all">
-                        Download CSV
-                      </button>
-                    </li>
-                    <li className="flex items-center justify-between p-3 rounded-lg hover:bg-white/5 transition-colors">
-                      <span className="text-gray-300 font-medium">Restaurant Performance</span>
-                      <button className="px-4 py-2 bg-orange-600/20 text-orange-400 border border-orange-500/30 hover:bg-orange-600 hover:text-white rounded-lg text-sm font-medium transition-all">
-                        Download PDF
-                      </button>
-                    </li>
+                    {[
+                      {
+                        title: 'Daily Orders Report',
+                        fetch: async () => {
+                          const q = query(collection(db, 'orders'), orderBy('createdAt', 'desc'));
+                          const snapshot = await getDocs(q);
+                          const orders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                          return generateOrderReport(orders as any[]);
+                        },
+                        baseName: 'Daily_Orders_Report'
+                      },
+                      {
+                        title: 'Revenue Report (Orders)',
+                        fetch: async () => {
+                          const q = query(collection(db, 'orders'), orderBy('createdAt', 'desc'));
+                          const snapshot = await getDocs(q);
+                          const orders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                          return generateOrderReport(orders as any[]);
+                        },
+                        baseName: 'Revenue_Report'
+                      },
+                      {
+                        title: 'Customer Analytics',
+                        fetch: async () => {
+                          const snapshot = await getDocs(collection(db, 'customers'));
+                          const customers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                          return generateCustomerReport(customers);
+                        },
+                        baseName: 'Customer_Analytics_Report'
+                      },
+                      {
+                        title: 'Restaurant Performance',
+                        fetch: async () => {
+                          const snapshot = await getDocs(collection(db, 'restaurants'));
+                          const restaurants = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                          return generateRestaurantReport(restaurants as any[]);
+                        },
+                        baseName: 'Restaurant_Performance_Report'
+                      }
+                    ].map((report, idx) => (
+                      <li key={idx} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl bg-white/5 border border-white/5 hover:border-white/10 transition-all gap-4">
+                        <span className="text-gray-200 font-medium text-sm sm:text-base">{report.title}</span>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={async () => {
+                              try {
+                                toast.promise(async () => {
+                                  const data = await report.fetch();
+                                  exportToCSV(data, report.baseName);
+                                }, { loading: 'Generating CSV...', success: 'CSV downloaded!', error: 'Failed to download CSV' });
+                              } catch (e) { console.error(e); }
+                            }}
+                            className="flex items-center gap-2 px-3 py-1.5 bg-green-500/10 text-green-400 border border-green-500/20 hover:bg-green-500/20 rounded-lg text-xs font-bold transition-all"
+                          >
+                            <FileSpreadsheet className="w-3.5 h-3.5" /> CSV
+                          </button>
+                          <button
+                            onClick={async () => {
+                              try {
+                                toast.promise(async () => {
+                                  const data = await report.fetch();
+                                  exportToPDF(data, report.baseName);
+                                }, { loading: 'Generating PDF...', success: 'PDF downloaded!', error: 'Failed to download PDF' });
+                              } catch (e) { console.error(e); }
+                            }}
+                            className="flex items-center gap-2 px-3 py-1.5 bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 rounded-lg text-xs font-bold transition-all"
+                          >
+                            <FileText className="w-3.5 h-3.5" /> PDF
+                          </button>
+                          <button
+                            onClick={async () => {
+                              try {
+                                toast.promise(async () => {
+                                  const data = await report.fetch();
+                                  exportToJSON(data, report.baseName);
+                                }, { loading: 'Generating JSON...', success: 'JSON downloaded!', error: 'Failed to download JSON' });
+                              } catch (e) { console.error(e); }
+                            }}
+                            className="flex items-center gap-2 px-3 py-1.5 bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 hover:bg-yellow-500/20 rounded-lg text-xs font-bold transition-all"
+                          >
+                            <FileJson className="w-3.5 h-3.5" /> JSON
+                          </button>
+                        </div>
+                      </li>
+                    ))}
                   </ul>
                 </div>
               </div>

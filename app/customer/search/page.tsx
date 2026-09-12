@@ -7,8 +7,47 @@ import { db } from '@/lib/firebase';
 import { MenuItem } from '@/lib/types';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, TrendingUp, Clock, Star, X, Filter, Flame, ArrowRight } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import {
+    Search,
+    Clock,
+    Star,
+    X,
+    Flame,
+    TrendingUp,
+    Sparkles,
+    Trash2,
+    ArrowUpRight,
+    ShoppingBag
+} from 'lucide-react';
 import Link from 'next/link';
+import SafeImage from '@/components/ui/safe-image';
+
+const TRENDING_TAGS = [
+    'Dum Biryani',
+    'Woodfired Pizza',
+    'Truffle Burger',
+    'Butter Chicken',
+    'Cold Brew',
+    'Crispy Dimsum',
+    'Hakka Noodles',
+    'Sizzling Brownie'
+];
+
+const POPULAR_CUISINES = [
+    { name: 'Pizza', img: '🍕', bg: 'bg-orange-500/10 border-orange-500/25 text-orange-600 dark:text-orange-400' },
+    { name: 'Burger', img: '🍔', bg: 'bg-amber-500/10 border-amber-500/25 text-amber-600 dark:text-amber-400' },
+    { name: 'Biryani', img: '🍲', bg: 'bg-red-500/10 border-red-500/25 text-red-600 dark:text-red-400' },
+    { name: 'Chinese', img: '🍜', bg: 'bg-blue-500/10 border-blue-500/25 text-blue-600 dark:text-blue-400' },
+    { name: 'Dessert', img: '🍰', bg: 'bg-pink-500/10 border-pink-500/25 text-pink-600 dark:text-pink-400' },
+    { name: 'Healthy', img: '🥗', bg: 'bg-green-500/10 border-green-500/25 text-green-600 dark:text-green-400' },
+    { name: 'Drinks', img: '🥤', bg: 'bg-purple-500/10 border-purple-500/25 text-purple-600 dark:text-purple-400' },
+    { name: 'Rolls', img: '🌯', bg: 'bg-cyan-500/10 border-cyan-500/25 text-cyan-600 dark:text-cyan-400' },
+    { name: 'Kebabs', img: '🍢', bg: 'bg-amber-600/10 border-amber-600/25 text-amber-600 dark:text-amber-400' },
+    { name: 'South Indian', img: '🥞', bg: 'bg-indigo-500/10 border-indigo-500/25 text-indigo-600 dark:text-indigo-400' },
+    { name: 'Chai & Cafe', img: '☕', bg: 'bg-amber-700/10 border-amber-700/25 text-amber-700 dark:text-amber-300' },
+    { name: 'Bakery', img: '🥐', bg: 'bg-yellow-600/10 border-yellow-600/25 text-yellow-600 dark:text-yellow-400' },
+];
 
 export default function SearchPage() {
     const router = useRouter();
@@ -19,11 +58,17 @@ export default function SearchPage() {
     const [results, setResults] = useState<MenuItem[]>([]);
     const [loading, setLoading] = useState(false);
     const [recentSearches, setRecentSearches] = useState<string[]>([]);
-    const [activeTab, setActiveTab] = useState<'all' | 'veg' | 'non-veg'>('all');
+    const [activeTab, setActiveTab] = useState<'all' | 'veg' | 'non-veg' | 'top-rated'>('all');
 
     useEffect(() => {
         const saved = localStorage.getItem('recentSearches');
-        if (saved) setRecentSearches(JSON.parse(saved));
+        if (saved) {
+            try {
+                setRecentSearches(JSON.parse(saved));
+            } catch (e) {
+                console.error('Failed to parse recent searches', e);
+            }
+        }
         if (initialQuery) performSearch(initialQuery);
     }, [initialQuery]);
 
@@ -37,20 +82,21 @@ export default function SearchPage() {
             const snapshot = await getDocs(q);
             const allItems = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as MenuItem));
 
+            const lowerTerm = term.toLowerCase();
             const filtered = allItems.filter(item =>
-                item.name.toLowerCase().includes(term.toLowerCase()) ||
-                item.description?.toLowerCase().includes(term.toLowerCase()) ||
-                item.category.toLowerCase().includes(term.toLowerCase()) ||
-                item.tags?.some(tag => tag.toLowerCase().includes(term.toLowerCase()))
+                item.name?.toLowerCase().includes(lowerTerm) ||
+                item.description?.toLowerCase().includes(lowerTerm) ||
+                item.category?.toLowerCase().includes(lowerTerm) ||
+                item.tags?.some(tag => tag.toLowerCase().includes(lowerTerm))
             );
 
             setResults(filtered);
 
-            if (!recentSearches.includes(term)) {
-                const newRecent = [term, ...recentSearches].slice(0, 5);
-                setRecentSearches(newRecent);
-                localStorage.setItem('recentSearches', JSON.stringify(newRecent));
-            }
+            // Save to local storage history
+            const cleanTerm = term.trim();
+            const updatedRecent = [cleanTerm, ...recentSearches.filter(t => t.toLowerCase() !== cleanTerm.toLowerCase())].slice(0, 8);
+            setRecentSearches(updatedRecent);
+            localStorage.setItem('recentSearches', JSON.stringify(updatedRecent));
         } catch (error) {
             console.error('Search error:', error);
         } finally {
@@ -64,6 +110,19 @@ export default function SearchPage() {
         router.replace(`/customer/search?q=${encodeURIComponent(searchQuery)}`);
     };
 
+    const handleSelectTag = (term: string) => {
+        setSearchQuery(term);
+        performSearch(term);
+        router.replace(`/customer/search?q=${encodeURIComponent(term)}`);
+    };
+
+    const removeRecentItem = (termToRemove: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        const updated = recentSearches.filter(t => t !== termToRemove);
+        setRecentSearches(updated);
+        localStorage.setItem('recentSearches', JSON.stringify(updated));
+    };
+
     const clearRecent = () => {
         setRecentSearches([]);
         localStorage.removeItem('recentSearches');
@@ -72,26 +131,21 @@ export default function SearchPage() {
     const filteredResults = results.filter(item => {
         if (activeTab === 'veg') return item.vegetarian;
         if (activeTab === 'non-veg') return !item.vegetarian;
+        if (activeTab === 'top-rated') return (item.averageRating || 0) >= 4.0;
         return true;
     });
 
     return (
-        <div className="min-h-screen bg-black text-white pb-40 sm:pb-24 font-sans selection:bg-orange-500/30">
-            {/* Background Gradients */}
-            <div className="fixed inset-0 pointer-events-none">
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[500px] bg-gradient-to-b from-blue-900/10 to-transparent blur-[80px]" />
-            </div>
-
-            <div className="max-w-4xl mx-auto px-4 py-8 relative z-10">
+        <div className="min-h-screen bg-background text-foreground pb-40 sm:pb-24 font-sans selection:bg-primary/20">
+            <div className="max-w-5xl mx-auto px-3 sm:px-4 py-6 sm:py-8 relative z-10">
 
                 {/* Search Bar */}
-                <form onSubmit={handleSearchSubmit} className="relative mb-8 group">
-                    <div className="absolute inset-0 bg-gradient-to-r from-orange-500 to-red-500 rounded-2xl opacity-20 group-hover:opacity-30 blur-xl transition-opacity" />
+                <form onSubmit={handleSearchSubmit} className="relative mb-6 sm:mb-8 group">
                     <div className="relative">
-                        <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 group-focus-within:text-orange-500 transition-colors" />
+                        <Search className="absolute left-4 sm:left-5 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5 group-focus-within:text-primary transition-colors" />
                         <Input
-                            placeholder="Search dishes, restaurants, or cuisines..."
-                            className="pl-14 pr-4 h-16 text-lg rounded-2xl bg-black border border-gray-800 text-white placeholder:text-gray-600 focus:border-orange-500/50 focus:ring-4 focus:ring-orange-500/10 shadow-2xl transition-all"
+                            placeholder="Search dishes, restaurants, cuisines or snacks..."
+                            className="pl-12 sm:pl-14 pr-12 h-14 sm:h-16 text-base sm:text-lg rounded-2xl bg-card border border-border/80 text-foreground placeholder:text-muted-foreground focus:border-primary/50 focus:ring-4 focus:ring-primary/15 shadow-sm transition-all font-medium"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             autoFocus
@@ -101,10 +155,14 @@ export default function SearchPage() {
                                 type="button"
                                 variant="ghost"
                                 size="icon"
-                                onClick={() => setSearchQuery('')}
-                                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white"
+                                onClick={() => {
+                                    setSearchQuery('');
+                                    setResults([]);
+                                    router.replace('/customer/search');
+                                }}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground rounded-full w-9 h-9"
                             >
-                                <X className="w-5 h-5" />
+                                <X className="w-4 h-4" />
                             </Button>
                         )}
                     </div>
@@ -112,84 +170,87 @@ export default function SearchPage() {
 
                 {/* Results State */}
                 {loading ? (
-                    <div className="space-y-4">
-                        {[1, 2, 3].map(i => (
-                            <div key={i} className="h-32 bg-gray-900/50 rounded-3xl animate-pulse border border-white/5" />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {[1, 2, 3, 4].map(i => (
+                            <div key={i} className="h-32 bg-muted/50 rounded-2xl animate-pulse border border-border/60" />
                         ))}
                     </div>
-                ) : paramsHasQuery(searchQuery) && results.length > 0 ? (
+                ) : searchQuery.trim().length > 0 && results.length > 0 ? (
                     <div className="space-y-6">
-                        <div className="flex items-center justify-between">
-                            <h2 className="text-lg font-bold flex items-center gap-2">
-                                Finding results for "<span className="text-orange-500">{searchQuery}</span>"
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                            <h2 className="text-base sm:text-lg font-black text-foreground flex items-center gap-2">
+                                Results for "<span className="text-primary">{searchQuery}</span>"
+                                <Badge variant="secondary" className="text-xs font-bold px-2.5 py-0.5 rounded-full">
+                                    {filteredResults.length} items
+                                </Badge>
                             </h2>
 
                             {/* Filter Tabs */}
-                            <div className="flex bg-gray-900/80 p-1 rounded-xl border border-white/5">
-                                {['all', 'veg', 'non-veg'].map((tab) => (
+                            <div className="flex bg-muted/60 p-1 rounded-xl border border-border/60">
+                                {([
+                                    { id: 'all', label: 'All' },
+                                    { id: 'veg', label: 'Pure Veg' },
+                                    { id: 'non-veg', label: 'Non-Veg' },
+                                    { id: 'top-rated', label: '★ 4.0+' },
+                                ] as const).map((tab) => (
                                     <button
-                                        key={tab}
-                                        onClick={() => setActiveTab(tab as any)}
-                                        className={`px-4 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${activeTab === tab
-                                            ? 'bg-gray-800 text-white shadow-lg'
-                                            : 'text-gray-500 hover:text-gray-300'
-                                            }`}
+                                        key={tab.id}
+                                        type="button"
+                                        onClick={() => setActiveTab(tab.id)}
+                                        className={`px-3 sm:px-4 py-1.5 rounded-lg text-xs font-bold tracking-wide transition-all ${
+                                            activeTab === tab.id
+                                                ? 'bg-card text-foreground shadow-sm'
+                                                : 'text-muted-foreground hover:text-foreground'
+                                        }`}
                                     >
-                                        {tab}
+                                        {tab.label}
                                     </button>
                                 ))}
                             </div>
                         </div>
 
-                        <div className="grid gap-4">
+                        {/* Result Grid */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {filteredResults.map(item => (
                                 <Link key={item.id} href={`/customer/product/${item.id}`} className="group block">
-                                    <div className="flex p-4 rounded-3xl bg-gray-900/40 border border-white/5 hover:bg-gray-900/80 hover:border-orange-500/30 transition-all duration-300 relative overflow-hidden backdrop-blur-md">
-
-                                        import SafeImage from '@/components/ui/safe-image'; // Add to imports
-
-                                        // ...
+                                    <div className="flex p-3 sm:p-4 rounded-2xl bg-card border border-border/80 hover:border-primary/50 hover:shadow-lg transition-all duration-300 relative overflow-hidden">
                                         {/* Image */}
-                                        <div className="w-28 h-28 flex-shrink-0 rounded-2xl overflow-hidden relative">
+                                        <div className="w-24 h-24 sm:w-28 sm:h-28 flex-shrink-0 rounded-xl overflow-hidden relative bg-muted">
                                             <SafeImage
                                                 src={item.image}
                                                 alt={item.name}
-                                                className="bg-gray-800 object-cover group-hover:scale-105 transition-transform duration-500"
+                                                className="object-cover group-hover:scale-105 transition-transform duration-500"
                                                 fill
                                             />
-                                            <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors" />
                                         </div>
 
                                         {/* Content */}
-                                        <div className="ml-5 flex-1 flex flex-col justify-between py-1">
+                                        <div className="ml-3 sm:ml-4 flex-1 flex flex-col justify-between py-0.5 min-w-0">
                                             <div>
-                                                <div className="flex justify-between items-start">
-                                                    <h3 className="font-bold text-lg text-white group-hover:text-orange-400 transition-colors line-clamp-1">{item.name}</h3>
-                                                    <span className="font-bold text-orange-500 bg-orange-500/10 px-2 py-1 rounded-lg text-sm">₹{item.price}</span>
+                                                <div className="flex justify-between items-start gap-2">
+                                                    <h3 className="font-bold text-base sm:text-lg text-foreground group-hover:text-primary transition-colors truncate">
+                                                        {item.name}
+                                                    </h3>
+                                                    <span className="font-black text-primary bg-primary/10 px-2 py-0.5 rounded-md text-sm shrink-0">
+                                                        ₹{item.price}
+                                                    </span>
                                                 </div>
-                                                <p className="text-sm text-gray-400 line-clamp-1 mt-1 font-medium">{item.category}</p>
-                                                <p className="text-xs text-gray-500 line-clamp-1 mt-1">{item.description}</p>
+                                                <p className="text-xs font-semibold text-primary/80 truncate mt-0.5">{item.category}</p>
+                                                <p className="text-xs text-muted-foreground line-clamp-1 mt-1">{item.description}</p>
                                             </div>
 
-                                            <div className="flex items-center gap-4 mt-2">
+                                            <div className="flex items-center gap-3 mt-2">
                                                 {item.averageRating && (
-                                                    <div className="flex items-center gap-1 bg-yellow-500/10 px-2 py-1 rounded-lg border border-yellow-500/20">
-                                                        <Star className="w-3 h-3 fill-yellow-500 text-yellow-500" />
-                                                        <span className="text-xs font-bold text-yellow-500">{item.averageRating.toFixed(1)}</span>
+                                                    <div className="flex items-center gap-1 bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20">
+                                                        <Star className="w-3 h-3 fill-amber-500 text-amber-500" />
+                                                        <span className="text-xs font-bold text-amber-600 dark:text-amber-400">{item.averageRating.toFixed(1)}</span>
                                                     </div>
                                                 )}
-                                                <div className="flex items-center gap-1 text-xs text-gray-400 font-medium">
-                                                    <Clock className="w-3 h-3" />
+                                                <div className="flex items-center gap-1 text-xs text-muted-foreground font-medium">
+                                                    <Clock className="w-3 h-3 text-primary" />
                                                     <span>{item.preparationTime || 25} mins</span>
                                                 </div>
-                                                <div className={`w-2 h-2 rounded-full ${item.vegetarian ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]'}`} />
-                                            </div>
-                                        </div>
-
-                                        {/* Arrow Hint */}
-                                        <div className="absolute right-4 bottom-4 opacity-0 group-hover:opacity-100 transition-all transform translate-x-4 group-hover:translate-x-0">
-                                            <div className="w-8 h-8 rounded-full bg-white text-black flex items-center justify-center">
-                                                <ArrowRight className="w-4 h-4" />
+                                                <div className={`w-2.5 h-2.5 rounded-full ml-auto ${item.vegetarian ? 'bg-green-500 ring-2 ring-green-500/20 shadow-sm' : 'bg-red-500 ring-2 ring-red-500/20 shadow-sm'}`} />
                                             </div>
                                         </div>
                                     </div>
@@ -197,68 +258,114 @@ export default function SearchPage() {
                             ))}
                         </div>
                     </div>
-                ) : paramsHasQuery(searchQuery) && results.length === 0 && !loading ? (
-                    <div className="text-center py-20">
-                        <div className="w-24 h-24 bg-gray-900 rounded-full flex items-center justify-center mx-auto mb-6 border border-dashed border-gray-800">
-                            <Search className="w-10 h-10 text-gray-600" />
+                ) : searchQuery.trim().length > 0 && results.length === 0 && !loading ? (
+                    <div className="text-center py-16 sm:py-20 bg-card rounded-3xl border border-dashed border-border p-6 space-y-4">
+                        <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mx-auto border border-border/80 text-muted-foreground">
+                            <Search className="w-8 h-8" />
                         </div>
-                        <h3 className="text-xl font-bold text-white mb-2">No results found</h3>
-                        <p className="text-gray-500">We couldn't find anything matching "{searchQuery}".<br />Try searching for something else.</p>
+                        <div>
+                            <h3 className="text-lg sm:text-xl font-bold text-foreground mb-1">No culinary match found</h3>
+                            <p className="text-muted-foreground text-sm max-w-sm mx-auto">
+                                We couldn't find anything matching "{searchQuery}". Try exploring our trending searches or top categories below.
+                            </p>
+                        </div>
+                        <div className="flex flex-wrap justify-center gap-2 pt-2">
+                            {TRENDING_TAGS.slice(0, 4).map(tag => (
+                                <button
+                                    key={tag}
+                                    type="button"
+                                    onClick={() => handleSelectTag(tag)}
+                                    className="px-3 py-1.5 rounded-xl text-xs font-bold bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                                >
+                                    Try "{tag}"
+                                </button>
+                            ))}
+                        </div>
                     </div>
                 ) : (
-                    /* Suggestions State */
-                    <div className="space-y-10">
-
-                        {/* Recent Searches */}
+                    /* Suggestions & Exploration State */
+                    <div className="space-y-8">
+                        {/* Recent Searches (Local Storage) */}
                         {recentSearches.length > 0 && (
-                            <div className="space-y-4">
+                            <div className="space-y-3">
                                 <div className="flex justify-between items-center px-1">
-                                    <h3 className="font-bold text-lg text-gray-200">Recent Searches</h3>
-                                    <button onClick={clearRecent} className="text-xs text-red-400 hover:text-red-300 font-bold uppercase tracking-wider">
+                                    <h3 className="font-bold text-base sm:text-lg text-foreground flex items-center gap-2">
+                                        <Clock className="w-4 h-4 text-primary" />
+                                        Recent Searches
+                                    </h3>
+                                    <button
+                                        type="button"
+                                        onClick={clearRecent}
+                                        className="text-xs text-destructive hover:underline font-bold uppercase tracking-wider flex items-center gap-1"
+                                    >
+                                        <Trash2 className="w-3 h-3" />
                                         Clear All
                                     </button>
                                 </div>
                                 <div className="flex flex-wrap gap-2">
                                     {recentSearches.map((term, i) => (
-                                        <button
+                                        <div
                                             key={i}
-                                            onClick={() => { setSearchQuery(term); performSearch(term); }}
-                                            className="flex items-center gap-2 px-4 py-2 bg-gray-900 border border-gray-800 rounded-xl text-sm font-medium text-gray-300 hover:bg-gray-800 hover:border-gray-700 hover:text-white transition-all group"
+                                            onClick={() => handleSelectTag(term)}
+                                            className="inline-flex items-center gap-2 pl-3.5 pr-2 py-1.5 bg-card border border-border/80 rounded-xl text-xs sm:text-sm font-semibold text-foreground hover:bg-muted hover:border-primary/40 transition-all group shadow-sm cursor-pointer"
                                         >
-                                            <Clock className="w-3.5 h-3.5 text-gray-500 group-hover:text-orange-500 transition-colors" />
-                                            {term}
-                                        </button>
+                                            <Clock className="w-3.5 h-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
+                                            <span>{term}</span>
+                                            <button
+                                                type="button"
+                                                onClick={(e) => removeRecentItem(term, e)}
+                                                className="p-1 rounded-full text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                                                title="Remove search"
+                                            >
+                                                <X className="w-3 h-3" />
+                                            </button>
+                                        </div>
                                     ))}
                                 </div>
                             </div>
                         )}
 
-                        {/* Popular Cuisines Grid */}
-                        <div className="space-y-4">
-                            <h3 className="font-bold text-lg text-gray-200 flex items-center gap-2 px-1">
-                                <Flame className="w-5 h-5 text-orange-500" /> Popular Cuisines
+                        {/* Trending Searches */}
+                        <div className="space-y-3">
+                            <h3 className="font-bold text-base sm:text-lg text-foreground flex items-center gap-2 px-1">
+                                <TrendingUp className="w-5 h-5 text-primary" />
+                                Trending Searches
                             </h3>
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                {[
-                                    { name: 'Pizza', img: '🍕', color: 'from-orange-500/20 to-red-500/20' },
-                                    { name: 'Burger', img: '🍔', color: 'from-yellow-500/20 to-orange-500/20' },
-                                    { name: 'Biryani', img: '🥘', color: 'from-red-500/20 to-pink-500/20' },
-                                    { name: 'Chinese', img: '🥢', color: 'from-blue-500/20 to-indigo-500/20' },
-                                    { name: 'Dessert', img: '🍩', color: 'from-pink-500/20 to-purple-500/20' },
-                                    { name: 'Healthy', img: '🥗', color: 'from-green-500/20 to-emerald-500/20' },
-                                    { name: 'Drinks', img: '🥤', color: 'from-purple-500/20 to-blue-500/20' },
-                                    { name: 'Rolls', img: '🌯', color: 'from-indigo-500/20 to-cyan-500/20' },
-                                ].map((cat) => (
+                            <div className="flex flex-wrap gap-2">
+                                {TRENDING_TAGS.map((tag) => (
+                                    <button
+                                        key={tag}
+                                        type="button"
+                                        onClick={() => handleSelectTag(tag)}
+                                        className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-card border border-border/80 hover:border-primary/50 text-xs sm:text-sm font-bold text-foreground hover:text-primary hover:bg-primary/5 transition-all shadow-sm group cursor-pointer"
+                                    >
+                                        <Sparkles className="w-3.5 h-3.5 text-amber-500 group-hover:rotate-12 transition-transform" />
+                                        {tag}
+                                        <ArrowUpRight className="w-3 h-3 text-muted-foreground opacity-60 group-hover:opacity-100 group-hover:text-primary transition-all" />
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Popular Cuisines Grid */}
+                        <div className="space-y-3">
+                            <h3 className="font-bold text-base sm:text-lg text-foreground flex items-center gap-2 px-1">
+                                <Flame className="w-5 h-5 text-primary" />
+                                Popular Cuisines
+                            </h3>
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
+                                {POPULAR_CUISINES.map((cat) => (
                                     <div
                                         key={cat.name}
-                                        onClick={() => { setSearchQuery(cat.name); performSearch(cat.name); }}
-                                        className={`group relative p-4 rounded-2xl border border-white/5 cursor-pointer overflow-hidden backdrop-blur-sm bg-gradient-to-br ${cat.color} hover:border-white/20 transition-all`}
+                                        onClick={() => handleSelectTag(cat.name)}
+                                        className={`group relative p-4 rounded-2xl border cursor-pointer overflow-hidden backdrop-blur-sm transition-all duration-300 hover:scale-[1.03] shadow-sm flex flex-col items-center gap-2 text-center ${cat.bg}`}
                                     >
-                                        <div className="relative z-10 flex flex-col items-center gap-2">
-                                            <span className="text-3xl group-hover:scale-110 transition-transform duration-300">{cat.img}</span>
-                                            <span className="font-bold text-white group-hover:text-orange-400 transition-colors">{cat.name}</span>
-                                        </div>
-                                        <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors" />
+                                        <span className="text-3xl sm:text-4xl group-hover:scale-110 transition-transform duration-300">
+                                            {cat.img}
+                                        </span>
+                                        <span className="font-bold text-xs sm:text-sm text-foreground group-hover:text-primary transition-colors">
+                                            {cat.name}
+                                        </span>
                                     </div>
                                 ))}
                             </div>
@@ -268,8 +375,4 @@ export default function SearchPage() {
             </div>
         </div>
     );
-}
-
-function paramsHasQuery(q: string) {
-    return q && q.length > 0;
 }

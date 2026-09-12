@@ -6,6 +6,8 @@ import { AuthProvider } from '@/context/AuthContext'
 import { CartProvider } from '@/context/CartContext'
 import { RestaurantAuthProvider } from '@/context/RestaurantAuthContext'
 import CustomerNavbar from '@/components/customer/CustomerNavbar'
+import FCMInitializer from '@/components/fcm-initializer'
+import { ThemeProvider } from '@/components/theme-provider'
 import './globals.css'
 import '../styles/animations.css'
 
@@ -136,16 +138,24 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
-      <body className={`font-sans antialiased bg-gray-50 dark:bg-gray-950 pb-20 md:pb-0`}>
-        <AuthProvider>
-          <RestaurantAuthProvider>
-            <CartProvider>
-              {children}
-              <Analytics />
-            </CartProvider>
-          </RestaurantAuthProvider>
-        </AuthProvider>
+    <html lang="en" suppressHydrationWarning>
+      <body className={`font-sans antialiased bg-background text-foreground min-h-screen transition-colors duration-300 pb-20 md:pb-0`}>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          themes={['light', 'dark', 'sunset', 'midnight']}
+        >
+          <AuthProvider>
+            <RestaurantAuthProvider>
+              <FCMInitializer />
+              <CartProvider>
+                {children}
+                <Analytics />
+              </CartProvider>
+            </RestaurantAuthProvider>
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   )

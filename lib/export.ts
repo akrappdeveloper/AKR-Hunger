@@ -39,21 +39,50 @@ export const exportToCSV = (data: any[], filename: string) => {
   document.body.removeChild(link);
 };
 
-export const exportToPDF = (htmlContent: string, filename: string) => {
-  const element = document.createElement('div');
-  element.innerHTML = htmlContent;
-  
-  const opt = {
-    margin: 10,
-    filename: `${filename}-${new Date().toISOString().split('T')[0]}.pdf`,
-    image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: { scale: 2 },
-    jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' },
-  };
+import { jsPDF } from "jspdf";
 
-  // Note: This requires html2pdf library - for now we'll provide JSON export fallback
-  console.log('[v0] PDF export requires html2pdf library');
-  exportToJSON(htmlContent, filename);
+export const exportToPDF = (data: any[], filename: string) => {
+  if (data.length === 0) {
+    console.warn('[v0] No data to export');
+    return;
+  }
+
+  const doc = new jsPDF();
+  const headers = Object.keys(data[0]);
+  const rows = data.map(row => headers.map(header => {
+    const val = row[header];
+    return val === null || val === undefined ? '' : String(val);
+  }));
+
+  // Simple table generation
+  // Note: For advanced tables, jspdf-autotable is recommended but basic text works for critical data
+  let y = 10;
+  doc.setFontSize(16);
+  doc.text(filename.replace(/_/g, ' '), 10, y);
+  y += 10;
+
+  doc.setFontSize(10);
+  // Basic rendering as text list if autotable not available, but user has jspdf. 
+  // Since we want to be fast and autotable might need separate install/import check, 
+  // I'll try to use a simple loop or just dump the data cleanly.
+  // Actually, let's use a simple layout: Key: Value for each item if table is too wide, 
+  // OR just formatted text.
+
+  // Checking package.json shows jspdf but not jspdf-autotable explicitly in dependencies list? 
+  // Wait, I saw "jspdf": "^4.0.0". 
+  // I will use a reliable simple loop to print data.
+
+  data.forEach((item, i) => {
+    if (y > 280) {
+      doc.addPage();
+      y = 10;
+    }
+    const line = Object.values(item).join(' | ');
+    doc.text(line.substring(0, 90) + (line.length > 90 ? '...' : ''), 10, y);
+    y += 7;
+  });
+
+  doc.save(`${filename}-${new Date().toISOString().split('T')[0]}.pdf`);
 };
 
 export const exportToJSON = (data: any, filename: string) => {
@@ -111,5 +140,18 @@ export const generateDeliveryReport = (deliveries: DeliveryPerson[]): any[] => {
     'Rating': delivery.rating || 0,
     'Status': delivery.status || 'offline',
     'Created At': delivery.createdAt instanceof Date ? delivery.createdAt.toLocaleDateString() : 'N/A',
+  }));
+};
+
+export const generateCustomerReport = (customers: any[]): any[] => {
+  return customers.map((customer) => ({
+    'Customer ID': customer.id,
+    'Name': customer.name,
+    'Email': customer.email,
+    'Phone': customer.phone || 'N/A',
+    'Total Orders': customer.totalOrders || 0,
+    'Total Spent': customer.totalSpent || 0,
+    'Account Status': customer.isActive ? 'Active' : 'Inactive',
+    'Joined Date': customer.createdAt?.toDate ? customer.createdAt.toDate().toLocaleDateString() : 'N/A',
   }));
 };

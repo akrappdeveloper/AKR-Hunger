@@ -110,8 +110,31 @@ export interface MenuItem {
   approvalStatus?: 'pending' | 'approved' | 'rejected';
   isLive?: boolean;
   submittedAt?: Date;
-  approvedAt?: Date;
-  rejectionReason?: string;
+  // Customization & Add-on options provided by restaurant
+  customizations?: CustomizationGroup[];
+  addOns?: CustomizationOption[];
+  addons?: CustomizationOption[];
+  sizes?: CustomizationOption[];
+  variants?: CustomizationOption[];
+}
+
+export interface CustomizationOption {
+  id?: string;
+  name: string;
+  price: number;
+  description?: string;
+  category?: string;
+  isDefault?: boolean;
+}
+
+export interface CustomizationGroup {
+  id?: string;
+  name: string;
+  type?: 'single' | 'multiple';
+  min?: number;
+  max?: number;
+  required?: boolean;
+  options: CustomizationOption[];
 }
 
 export interface CartItem {
@@ -135,10 +158,11 @@ export interface Order {
   items?: OrderItem[];
   deliveryAddress?: Address | string;
   status?: 'pending' | 'confirmed' | 'preparing' | 'ready' | 'out_for_delivery' | 'delivered' | 'cancelled';
-  paymentMethod?: 'cod' | 'online';
+  paymentMethod?: 'cod' | 'online' | 'wallet';
   paymentStatus?: 'pending' | 'completed' | 'failed';
   razorpayOrderId?: string;
   razorpayPaymentId?: string;
+  walletTransactionId?: string;
   subtotal?: number;
   deliveryCharge?: number;
   taxes?: number;
@@ -203,6 +227,7 @@ export interface DeliveryPerson {
     accountNumber: string;
     ifscCode: string;
   };
+  walletBalance?: number; // Positive = Debt (Cash in Hand), Negative = Earnings
 }
 
 // Alias for admin panel

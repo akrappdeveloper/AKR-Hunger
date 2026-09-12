@@ -17,18 +17,12 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import { Address } from '@/lib/types';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { toast } from 'sonner';
+import ThemeToggle from '@/components/customer/ThemeToggle';
+import DeliveryLocationDialog from './DeliveryLocationDialog';
 
 export default function CustomerNavbar() {
   const router = useRouter();
@@ -87,93 +81,51 @@ export default function CustomerNavbar() {
   return (
     <>
       <header
-        className={`sticky top-0 z-50 w-full transition-all duration-300 border-b border-gray-800 ${isScrolled
-          ? 'bg-black/80 backdrop-blur-xl shadow-lg shadow-black/20'
-          : 'bg-black'
+        className={`sticky top-0 z-50 w-full transition-all duration-300 border-b border-border/60 ${isScrolled
+          ? 'bg-background/85 backdrop-blur-xl shadow-md shadow-black/5'
+          : 'bg-background/95 backdrop-blur-md'
           }`}
       >
-        <div className="max-w-7xl mx-auto px-4 md:px-6 h-16 md:h-20 flex items-center justify-between gap-4">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 h-16 md:h-20 flex items-center justify-between gap-2 sm:gap-4">
 
           {/* Logo & Location */}
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-3 sm:gap-6 flex-shrink-0">
             <Link href="/customer" className="flex items-center gap-2 flex-shrink-0">
-              <img src="/akrhunger.png" alt="AKR Hunger" className="w-10 h-10 object-contain" />
-              <span className="text-xl font-bold text-white hidden md:block tracking-tight">
-                AKR<span className="text-orange-500">Hunger</span>
+              <img src="/akrhunger.png" alt="AKR Hunger" className="w-9 h-9 sm:w-10 sm:h-10 object-contain" />
+              <span className="text-lg sm:text-xl font-black text-foreground hidden sm:block tracking-tight">
+                AKR<span className="text-primary">Hunger</span>
               </span>
             </Link>
 
-            {/* Location Selector Dialog */}
-            <Dialog open={isAddressDialogOpen} onOpenChange={setIsAddressDialogOpen}>
-              <DialogTrigger asChild>
-                <button className="flex flex-col items-start text-left cursor-pointer hover:bg-white/5 p-1 md:p-2 rounded-lg transition-colors group max-w-[140px] md:max-w-[200px]">
-                  <span className="hidden md:flex text-[10px] text-orange-500 font-bold uppercase tracking-wider items-center gap-1 group-hover:text-orange-400">
-                    <MapPin className="w-3 h-3" /> Delivery Location
-                  </span>
-                  <span className="text-xs md:text-sm font-bold text-gray-200 flex items-center gap-1 group-hover:text-white truncate w-full">
-                    <MapPin className="w-3 h-3 md:hidden text-orange-500 flex-shrink-0" />
-                    <span className="truncate">{deliveryAddress ? `${deliveryAddress.street}, ${deliveryAddress.city}` : 'Select Location'}</span>
-                    <ChevronDown className="w-3 h-3 text-gray-500 flex-shrink-0" />
-                  </span>
-                </button>
-              </DialogTrigger>
-              <DialogContent className="bg-gray-900 border-gray-800 text-white sm:max-w-md">
-                <DialogHeader>
-                  <DialogTitle>Select Delivery Location</DialogTitle>
-                  <DialogDescription className="text-gray-400">
-                    Choose from your saved addresses or add a new one.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-3 py-4">
-                  {customer?.addresses && customer.addresses.length > 0 ? (
-                    customer.addresses.map((addr) => (
-                      <div
-                        key={addr.id}
-                        onClick={() => handleSelectAddress(addr)}
-                        className={`p-4 rounded-xl border cursor-pointer transition-all flex items-center gap-3 ${deliveryAddress?.id === addr.id ? 'bg-orange-900/20 border-orange-500/50' : 'bg-gray-800/50 border-gray-700 hover:bg-gray-800'}`}
-                      >
-                        <div className={`p-2 rounded-full ${addr.type === 'home' ? 'bg-blue-500/20 text-blue-400' : addr.type === 'work' ? 'bg-purple-500/20 text-purple-400' : 'bg-gray-700 text-gray-400'}`}>
-                          {addr.type === 'home' && <Home className="w-4 h-4" />}
-                          {addr.type === 'work' && <Briefcase className="w-4 h-4" />}
-                          {addr.type === 'other' && <MapPin className="w-4 h-4" />}
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <span className="font-bold text-sm">{addr.type}</span>
-                            {addr.isDefault && <span className="text-[10px] bg-green-900/30 text-green-400 px-1.5 rounded uppercase font-bold">Default</span>}
-                          </div>
-                          <p className="text-xs text-gray-400 line-clamp-1">{addr.street}, {addr.city}</p>
-                        </div>
-                        {deliveryAddress?.id === addr.id && <div className="w-3 h-3 bg-orange-500 rounded-full" />}
-                      </div>
-                    ))
-                  ) : (
-                    <div className="text-center py-6 text-gray-500">
-                      <p>No saved addresses found.</p>
-                      <Button variant="link" onClick={() => router.push('/customer/profile')} className="text-orange-500">
-                        Add New Address
-                      </Button>
-                    </div>
-                  )}
-                  <Button
-                    className="w-full mt-2 bg-gray-800 hover:bg-gray-700 text-white border border-gray-700"
-                    onClick={() => { setIsAddressDialogOpen(false); router.push('/customer/profile'); }}
-                  >
-                    Manage Addresses
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
+            {/* Location Selector Trigger */}
+            <button
+              onClick={() => setIsAddressDialogOpen(true)}
+              className="flex flex-col items-start text-left cursor-pointer hover:bg-muted/60 p-1 sm:p-2 rounded-xl transition-colors group max-w-[120px] sm:max-w-[170px] md:max-w-[220px]"
+            >
+              <span className="hidden md:flex text-[10px] text-primary font-bold uppercase tracking-wider items-center gap-1 group-hover:opacity-80">
+                <MapPin className="w-3 h-3" /> Delivery Location
+              </span>
+              <span className="text-xs sm:text-sm font-bold text-foreground flex items-center gap-1 group-hover:text-primary transition-colors truncate w-full">
+                <MapPin className="w-3 h-3 md:hidden text-primary flex-shrink-0" />
+                <span className="truncate">{deliveryAddress ? `${deliveryAddress.street}, ${deliveryAddress.city}` : 'Select Location'}</span>
+                <ChevronDown className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+              </span>
+            </button>
 
+            {/* Reusable Luxury Delivery Location Dialog */}
+            <DeliveryLocationDialog
+              open={isAddressDialogOpen}
+              onOpenChange={setIsAddressDialogOpen}
+            />
           </div>
 
-          {/* Search Bar - Desktop */}
-          <div className="hidden lg:flex flex-1 max-w-xl mx-8">
+          {/* Search Bar - Desktop & Tablet */}
+          <div className="hidden md:flex flex-1 max-w-md lg:max-w-xl mx-2 lg:mx-8">
             <form onSubmit={handleSearch} className="relative w-full group">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 w-4 h-4 group-focus-within:text-orange-500 transition-colors" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4 group-focus-within:text-primary transition-colors" />
               <Input
-                placeholder="Search for 'Biryani', 'Pizza'..."
-                className="pl-11 h-12 rounded-2xl bg-gray-900/50 border-gray-800 text-gray-200 placeholder:text-gray-600 focus:bg-gray-900 focus:border-orange-500/30 focus:ring-1 focus:ring-orange-500/30 transition-all font-medium"
+                placeholder="Search for 'Biryani', 'Pizza', 'Burger'..."
+                className="pl-11 h-11 md:h-12 rounded-2xl bg-muted/50 border-border/80 text-foreground placeholder:text-muted-foreground focus:bg-background focus:border-primary/40 focus:ring-2 focus:ring-primary/20 transition-all font-medium text-sm"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -181,65 +133,71 @@ export default function CustomerNavbar() {
           </div>
 
           {/* Right Actions */}
-          <div className="flex items-center gap-3">
-            {/* Search - Mobile */}
-            <Button variant="ghost" size="icon" className="md:hidden text-gray-400 hover:text-white" onClick={() => router.push('/customer/search')}>
+          <div className="flex items-center gap-1.5 sm:gap-2.5">
+            {/* Search - Mobile Button */}
+            <Button variant="ghost" size="icon" className="md:hidden text-foreground/80 hover:text-foreground hover:bg-muted/60 rounded-full" onClick={() => router.push('/customer/search')}>
               <Search className="w-5 h-5" />
             </Button>
 
-            {/* Cart */}
-            <Link href="/customer/cart">
-              <Button variant="ghost" size="icon" className="relative text-gray-400 hover:text-white hover:bg-white/10 rounded-full w-10 h-10">
-                <ShoppingCart className="w-5 h-5" />
-                {itemCount > 0 && (
-                  <Badge className="absolute top-0 right-0 h-5 w-5 flex items-center justify-center p-0 bg-blue-600 text-[10px] border-2 border-black rounded-full animate-bounce-subtle">
-                    {itemCount}
-                  </Badge>
-                )}
-              </Button>
-            </Link>
+            {/* Theme Toggle Button */}
+            <ThemeToggle />
+
+            {/* Cart - Only visible when user is logged in */}
+            {user && (
+              <Link href="/customer/cart">
+                <Button variant="ghost" size="icon" className="relative text-foreground/80 hover:text-foreground hover:bg-muted/60 rounded-full w-10 h-10 border border-border/40">
+                  <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5" />
+                  {itemCount > 0 && (
+                    <Badge className="absolute -top-1 -right-1 h-5 min-w-[20px] px-1 flex items-center justify-center p-0 bg-primary text-primary-foreground text-[10px] font-black border-2 border-background rounded-full shadow-md animate-bounce-subtle">
+                      {itemCount}
+                    </Badge>
+                  )}
+                </Button>
+              </Link>
+            )}
 
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="gap-2 pl-2 pr-4 rounded-full border border-gray-800 hidden md:flex hover:bg-white/5 data-[state=open]:bg-white/10">
-                    <div className="w-8 h-8 bg-gradient-to-tr from-gray-700 to-gray-800 rounded-full flex items-center justify-center text-white font-bold text-xs ring-2 ring-black">
+                  <Button variant="ghost" className="gap-2 pl-1.5 pr-3 rounded-full border border-border/60 hidden md:flex hover:bg-muted/60 text-foreground">
+                    <div className="w-8 h-8 bg-gradient-to-tr from-primary/80 to-primary text-primary-foreground rounded-full flex items-center justify-center font-bold text-xs ring-2 ring-background">
                       {user.email?.[0].toUpperCase()}
                     </div>
                     <div className="text-left hidden lg:block">
-                      <p className="text-xs font-bold text-white leading-none">{user.displayName || 'My Account'}</p>
+                      <p className="text-xs font-bold text-foreground leading-none">{user.displayName || 'My Account'}</p>
                     </div>
-                    <ChevronDown className="w-3 h-3 text-gray-500" />
+                    <ChevronDown className="w-3 h-3 text-muted-foreground" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56 bg-gray-900 border-gray-800 text-white p-2 shadow-2xl shadow-black/50">
-                  <DropdownMenuLabel className="font-normal border-b border-gray-800 pb-2 mb-1">
+                <DropdownMenuContent align="end" className="w-56 bg-card border-border text-card-foreground p-1.5 shadow-2xl rounded-2xl">
+                  <DropdownMenuLabel className="font-normal border-b border-border/60 pb-2 mb-1">
                     <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-bold leading-none text-white">{user.displayName || 'User'}</p>
-                      <p className="text-xs leading-none text-gray-500">{user.email}</p>
+                      <p className="text-sm font-bold leading-none text-foreground">{user.displayName || 'User'}</p>
+                      <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
                     </div>
                   </DropdownMenuLabel>
-                  <DropdownMenuItem onClick={() => router.push('/customer/profile')} className="cursor-pointer focus:bg-white/10 focus:text-white rounded-lg my-0.5">
-                    <User className="w-4 h-4 mr-2 text-gray-400" />
+                  <DropdownMenuItem onClick={() => router.push('/customer/profile')} className="cursor-pointer rounded-xl my-0.5">
+                    <User className="w-4 h-4 mr-2 text-muted-foreground" />
                     Profile
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => router.push('/customer/wallet')} className="cursor-pointer focus:bg-white/10 focus:text-white rounded-lg my-0.5">
-                    <Wallet className="w-4 h-4 mr-2 text-gray-400" />
+                  <DropdownMenuItem onClick={() => router.push('/customer/wallet')} className="cursor-pointer rounded-xl my-0.5">
+                    <Wallet className="w-4 h-4 mr-2 text-muted-foreground" />
                     Wallet
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => router.push('/customer/notifications')} className="cursor-pointer focus:bg-white/10 focus:text-white rounded-lg my-0.5">
-                    <Bell className="w-4 h-4 mr-2 text-gray-400" />
+                  <DropdownMenuItem onClick={() => router.push('/customer/notifications')} className="cursor-pointer rounded-xl my-0.5">
+                    <Bell className="w-4 h-4 mr-2 text-muted-foreground" />
                     Notifications
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => router.push('/customer/favorites')} className="cursor-pointer focus:bg-white/10 focus:text-white rounded-lg my-0.5">
-                    <Heart className="w-4 h-4 mr-2 text-gray-400" />
+                  <DropdownMenuItem onClick={() => router.push('/customer/favorites')} className="cursor-pointer rounded-xl my-0.5">
+                    <Heart className="w-4 h-4 mr-2 text-muted-foreground" />
                     Favorites
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => router.push('/customer/orders')} className="cursor-pointer focus:bg-white/10 focus:text-white rounded-lg my-0.5">
-                    <Package className="w-4 h-4 mr-2 text-gray-400" />
+                  <DropdownMenuItem onClick={() => router.push('/customer/orders')} className="cursor-pointer rounded-xl my-0.5">
+                    <Package className="w-4 h-4 mr-2 text-muted-foreground" />
                     Orders
                   </DropdownMenuItem>
-                  <DropdownMenuItem className="text-red-400 focus:text-red-300 focus:bg-red-500/10 cursor-pointer rounded-lg my-0.5 mt-2" onClick={handleLogout}>
+                  <DropdownMenuSeparator className="bg-border/60" />
+                  <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer rounded-xl my-0.5" onClick={handleLogout}>
                     <LogOut className="w-4 h-4 mr-2" />
                     Logout
                   </DropdownMenuItem>
@@ -248,10 +206,10 @@ export default function CustomerNavbar() {
             ) : (
               <div className="flex items-center gap-2">
                 <Link href="/customer/login" className="hidden md:block">
-                  <Button variant="ghost" className="text-gray-300 hover:text-white hover:bg-white/10 rounded-full">Login</Button>
+                  <Button variant="ghost" className="text-foreground/80 hover:text-foreground hover:bg-muted/60 rounded-full">Login</Button>
                 </Link>
                 <Link href="/customer/login">
-                  <Button className="bg-white text-black hover:bg-gray-200 rounded-full font-bold px-6">
+                  <Button className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full font-bold px-4 sm:px-6 shadow-md shadow-primary/20">
                     Sign Up
                   </Button>
                 </Link>
@@ -261,67 +219,79 @@ export default function CustomerNavbar() {
             {/* Mobile Menu */}
             <Sheet>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="md:hidden text-white">
-                  <Menu className="w-6 h-6" />
+                <Button variant="ghost" size="icon" className="md:hidden text-foreground hover:bg-muted/60 rounded-full">
+                  <Menu className="w-5 h-5" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="right" className="w-[300px] border-l-gray-800 bg-black text-white p-0">
-                {/* Checking Auth State in Sidebar */}
-                <div className="flex flex-col h-full bg-black">
-                  {/* Accessibility Fix: SheetTitle is required */}
+              <SheetContent side="right" className="w-[300px] border-l border-border bg-card text-card-foreground p-0 shadow-2xl">
+                <div className="flex flex-col h-full bg-card">
                   <div className="sr-only">
                     <SheetTitle>Mobile Menu</SheetTitle>
                   </div>
 
-                  <div className="p-6 border-b border-gray-800 bg-gray-900/50">
+                  <div className="p-6 border-b border-border bg-muted/30">
                     {user ? (
                       <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-full flex items-center justify-center text-white text-lg font-bold shadow-lg shadow-blue-900/20 overflow-hidden bg-gray-800 border-2 border-white/10">
+                        <div className="w-12 h-12 rounded-full flex items-center justify-center text-primary-foreground text-lg font-bold shadow-md overflow-hidden bg-primary border-2 border-background">
                           {customer?.avatar ? (
                             <img src={customer.avatar} alt="Profile" className="w-full h-full object-cover" />
                           ) : (
-                            <div className="w-full h-full flex items-center justify-center bg-gradient-to-tr from-blue-600 to-indigo-600">
+                            <div className="w-full h-full flex items-center justify-center bg-primary">
                               {user.displayName?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase()}
                             </div>
                           )}
                         </div>
                         <div className="overflow-hidden">
-                          <h3 className="font-bold text-lg text-white truncate">{customer?.name || user.displayName || 'User'}</h3>
-                          <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                          <h3 className="font-bold text-base text-foreground truncate">{customer?.name || user.displayName || 'User'}</h3>
+                          <p className="text-xs text-muted-foreground truncate">{user.email}</p>
                         </div>
                       </div>
                     ) : (
-                      <h2 className="text-xl font-bold">Welcome Guest!</h2>
+                      <h2 className="text-lg font-bold text-foreground">Welcome to AKR Hunger!</h2>
                     )}
                   </div>
 
+                  {/* Theme Switcher in Mobile Sheet */}
+                  <div className="p-4 border-b border-border">
+                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Theme Mode</p>
+                    <ThemeToggle variant="compact" className="w-full justify-around" />
+                  </div>
+
                   <div className="flex-1 p-4 space-y-1">
-                    <Link href="/customer" className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 text-gray-300 hover:text-white transition-colors">
-                      <div className="w-8 h-8 rounded-lg bg-orange-500/10 flex items-center justify-center"><Package className="w-4 h-4 text-orange-500" /></div>
-                      <span className="font-medium">Home</span>
+                    <Link href="/customer" className="flex items-center gap-3 p-3 rounded-2xl hover:bg-muted/60 text-foreground transition-colors">
+                      <div className="w-8 h-8 rounded-xl bg-orange-500/10 text-orange-500 flex items-center justify-center"><Home className="w-4 h-4" /></div>
+                      <span className="font-semibold text-sm">Home</span>
                     </Link>
-                    <Link href="/customer/orders" className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 text-gray-300 hover:text-white transition-colors">
-                      <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center"><Package className="w-4 h-4 text-blue-500" /></div>
-                      <span className="font-medium">My Orders</span>
+                    <Link href="/customer/orders" className="flex items-center gap-3 p-3 rounded-2xl hover:bg-muted/60 text-foreground transition-colors">
+                      <div className="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center"><Package className="w-4 h-4" /></div>
+                      <span className="font-semibold text-sm">My Orders</span>
                     </Link>
-                    <Link href="/customer/profile" className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 text-gray-300 hover:text-white transition-colors">
-                      <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center"><User className="w-4 h-4 text-purple-500" /></div>
-                      <span className="font-medium">Profile</span>
+                    <Link href="/customer/wallet" className="flex items-center gap-3 p-3 rounded-2xl hover:bg-muted/60 text-foreground transition-colors">
+                      <div className="w-8 h-8 rounded-xl bg-green-500/10 text-green-500 flex items-center justify-center"><Wallet className="w-4 h-4" /></div>
+                      <span className="font-semibold text-sm">Wallet</span>
                     </Link>
-                    <Link href="/customer/notifications" className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 text-gray-300 hover:text-white transition-colors">
-                      <div className="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center"><Bell className="w-4 h-4 text-red-500" /></div>
-                      <span className="font-medium">Notifications</span>
+                    <Link href="/customer/favorites" className="flex items-center gap-3 p-3 rounded-2xl hover:bg-muted/60 text-foreground transition-colors">
+                      <div className="w-8 h-8 rounded-xl bg-pink-500/10 text-pink-500 flex items-center justify-center"><Heart className="w-4 h-4" /></div>
+                      <span className="font-semibold text-sm">Favorites</span>
+                    </Link>
+                    <Link href="/customer/profile" className="flex items-center gap-3 p-3 rounded-2xl hover:bg-muted/60 text-foreground transition-colors">
+                      <div className="w-8 h-8 rounded-xl bg-purple-500/10 text-purple-500 flex items-center justify-center"><User className="w-4 h-4" /></div>
+                      <span className="font-semibold text-sm">Profile</span>
+                    </Link>
+                    <Link href="/customer/notifications" className="flex items-center gap-3 p-3 rounded-2xl hover:bg-muted/60 text-foreground transition-colors">
+                      <div className="w-8 h-8 rounded-xl bg-red-500/10 text-red-500 flex items-center justify-center"><Bell className="w-4 h-4" /></div>
+                      <span className="font-semibold text-sm">Notifications</span>
                     </Link>
                   </div>
 
-                  <div className="p-6 border-t border-gray-800">
+                  <div className="p-4 border-t border-border">
                     {user ? (
                       <Button onClick={handleLogout} variant="destructive" className="w-full rounded-xl gap-2 font-bold">
                         <LogOut className="w-4 h-4" /> Logout
                       </Button>
                     ) : (
                       <Link href="/customer/login">
-                        <Button className="w-full rounded-xl font-bold bg-white text-black hover:bg-gray-200">Login / Signup</Button>
+                        <Button className="w-full rounded-xl font-bold bg-primary text-primary-foreground hover:bg-primary/90">Login / Signup</Button>
                       </Link>
                     )}
                   </div>

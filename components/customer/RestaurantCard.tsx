@@ -45,7 +45,7 @@ export default function RestaurantCard({ restaurant }: RestaurantCardProps) {
 
           {/* Cuisines */}
           <div className="flex flex-wrap gap-1">
-            {restaurant.cuisines.slice(0, 3).map((cuisine, idx) => (
+            {((restaurant as any).cuisines || restaurant.cuisineType || []).slice(0, 3).map((cuisine: string, idx: number) => (
               <Badge key={idx} variant="secondary" className="text-xs">
                 {cuisine}
               </Badge>
@@ -57,9 +57,9 @@ export default function RestaurantCard({ restaurant }: RestaurantCardProps) {
             <div className="flex items-center gap-1">
               <Star className="w-4 h-4 fill-primary text-primary" />
               <span className="font-medium text-foreground">
-                {restaurant.rating.toFixed(1)}
+                {restaurant.rating?.toFixed(1) || '4.5'}
               </span>
-              <span className="text-muted-foreground">({restaurant.reviews})</span>
+              <span className="text-muted-foreground">({(restaurant as any).reviews || 0})</span>
             </div>
           </div>
 
@@ -73,7 +73,11 @@ export default function RestaurantCard({ restaurant }: RestaurantCardProps) {
               <Truck className="w-3 h-3" />
               <span>₹{restaurant.deliveryCharge}</span>
             </div>
-            <span>Min ₹{restaurant.minimumOrder}</span>
+            <span>
+              {restaurant.minimumOrder && restaurant.minimumOrder > 0
+                ? `Min ₹${restaurant.minimumOrder}`
+                : 'No Min Order'}
+            </span>
           </div>
         </div>
       </Card>

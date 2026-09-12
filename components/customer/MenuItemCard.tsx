@@ -25,6 +25,7 @@ export default function MenuItemCard({ item }: MenuItemCardProps) {
       id: `${item.id}-${Date.now()}`,
       menuItemId: item.id,
       restaurantId: item.restaurantId,
+      restaurantName: (item as any).restaurantName || 'Restaurant',
       name: item.name,
       price: item.price,
       quantity,
@@ -64,13 +65,13 @@ export default function MenuItemCard({ item }: MenuItemCardProps) {
           {/* Badges */}
           <div className="flex gap-1 mb-2">
             {item.vegetarian && (
-              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+              <Badge variant="outline" className="bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20 text-[10px] font-bold">
                 <Leaf className="w-3 h-3 mr-1" />
                 Veg
               </Badge>
             )}
             {item.spicy && (
-              <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">
+              <Badge variant="outline" className="bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20 text-[10px] font-bold">
                 <Flame className="w-3 h-3 mr-1" />
                 Spicy
               </Badge>

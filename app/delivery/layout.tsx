@@ -1,10 +1,15 @@
 import React from 'react';
 import { DeliveryLayoutWrapper } from './DeliveryLayoutWrapper';
 import { Metadata } from 'next';
-import { generateDeliveryJobSchema, generateOrganizationSchema } from '@/lib/seo/schemas';
+import { generateDeliveryJobSchema, generateOrganizationSchema, generateFAQSchema } from '@/lib/seo/schemas';
 
 export const metadata: Metadata = {
   title: 'AKR Hunger Delivery Partner - Earn Money Delivering Food | Flexible Jobs',
+  applicationName: 'AKR Hunger Delivery',
+  icons: {
+    icon: '/akrhunger.png',
+    apple: '/akrhunger.png',
+  },
   description: 'Become a delivery partner with AKR Hunger. Flexible hours, competitive earnings, weekly payouts. Join thousands of delivery partners earning great income!',
   keywords: [
     'AKR Hunger delivery',
@@ -49,6 +54,7 @@ export const metadata: Metadata = {
 export default function DeliveryLayout({ children }: { children: React.ReactNode }) {
   const organizationSchema = generateOrganizationSchema();
   const deliveryJobSchema = generateDeliveryJobSchema();
+  const faqSchema = generateFAQSchema();
 
   return (
     <>
@@ -64,6 +70,10 @@ export default function DeliveryLayout({ children }: { children: React.ReactNode
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(deliveryJobSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
       />
     </>
   );

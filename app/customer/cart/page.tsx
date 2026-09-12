@@ -2,28 +2,54 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { doc, getDoc, addDoc, collection, updateDoc, Timestamp, onSnapshot } from 'firebase/firestore';
+import { doc, getDoc, addDoc, collection, updateDoc, Timestamp, onSnapshot, runTransaction, increment, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { loadRazorpayScript } from '@/lib/razorpay';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
-import { Restaurant, Order, OrderItem } from '@/lib/types';
+import { Restaurant, Order, OrderItem, Promotion } from '@/lib/types';
+import { validatePromotionCode, calculateDiscount, recordPromotionUsage } from '@/lib/promotions';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Spinner } from '@/components/ui/spinner';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Trash2, Plus, Minus, CreditCard, Wallet, MapPin, ChefHat, ShoppingBag, ShoppingCart, Home, Briefcase, ChevronDown } from 'lucide-react';
+import {
+  ArrowLeft,
+  Trash2,
+  Plus,
+  Minus,
+  CreditCard,
+  Wallet,
+  MapPin,
+  ChefHat,
+  ShoppingBag,
+  ShoppingCart,
+  Home,
+  Briefcase,
+  ChevronDown,
+  AlertTriangle,
+  ArrowRight,
+  ExternalLink,
+  Banknote,
+  Sparkles,
+  Tag,
+  X,
+  Check,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import SafeImage from '@/components/ui/safe-image';
+import DeliveryLocationDialog from '@/components/customer/DeliveryLocationDialog';
+import Link from 'next/link';
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+  DialogFooter,
+} from '@/components/ui/dialog';
 
 declare global {
   interface Window {
@@ -40,9 +66,68 @@ export default function CartPage() {
   const [specialInstructions, setSpecialInstructions] = useState('');
 
   // Checkout State
-  const [paymentMethod, setPaymentMethod] = useState<'cod' | 'online'>('cod');
+  const [paymentMethod, setPaymentMethod] = useState<'cod' | 'online' | 'wallet'>('cod');
   const [razorpayKeyId, setRazorpayKeyId] = useState<string>('');
   const [isAddressDialogOpen, setIsAddressDialogOpen] = useState(false);
+  const [isLowBalanceModalOpen, setIsLowBalanceModalOpen] = useState(false);
+
+  // Coupon & Promotions State
+  const [appliedPromotion, setAppliedPromotion] = useState<Promotion | null>(null);
+  const [discountAmount, setDiscountAmount] = useState<number>(0);
+  const [promoInput, setPromoInput] = useState<string>('');
+  const [isValidatingPromo, setIsValidatingPromo] = useState<boolean>(false);
+  const [promoError, setPromoError] = useState<string>('');
+  const [availablePromotions, setAvailablePromotions] = useState<Promotion[]>([]);
+
+  // Fetch available promotions for this restaurant from Firestore
+  useEffect(() => {
+    const fetchPromos = async () => {
+      try {
+        const promotionsRef = collection(db, 'promotions');
+        const q = query(promotionsRef, where('isActive', '==', true));
+        const snapshot = await getDocs(q);
+        const now = new Date();
+
+        const validPromotions = snapshot.docs
+          .map((doc) => {
+            const data = doc.data();
+            return {
+              id: doc.id,
+              ...data,
+              validFrom: data.validFrom?.toDate ? data.validFrom.toDate() : new Date(data.validFrom || Date.now()),
+              validUntil: data.validUntil?.toDate ? data.validUntil.toDate() : new Date(data.validUntil || Date.now()),
+            } as Promotion;
+          })
+          .filter((promo) => {
+            if (now < promo.validFrom || now > promo.validUntil) return false;
+            if (promo.usageLimit && promo.usageCount >= promo.usageLimit) return false;
+            if (promo.applicableRestaurants && promo.applicableRestaurants.length > 0) {
+              return restaurantId ? promo.applicableRestaurants.includes(restaurantId) : false;
+            }
+            return true;
+          });
+
+        setAvailablePromotions(validPromotions);
+
+        // Pre-fill if customer copied code from this specific restaurant page
+        const savedCode = localStorage.getItem('suggestedPromo');
+        const savedRestaurantId = localStorage.getItem('suggestedPromoRestaurantId');
+        if (savedCode) {
+          if (!savedRestaurantId || savedRestaurantId === restaurantId) {
+            setPromoInput(savedCode);
+          } else {
+            // Belongs to a different restaurant - do not prefill or allow cross-restaurant leakage
+            localStorage.removeItem('suggestedPromo');
+            localStorage.removeItem('suggestedPromoRestaurantId');
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch available promotions for cart:', err);
+      }
+    };
+
+    fetchPromos();
+  }, [restaurantId]);
 
   // Fetch restaurant details
   useEffect(() => {
@@ -87,7 +172,51 @@ export default function CartPage() {
   const subtotal = getSubtotal();
   const deliveryCharge = restaurant?.deliveryCharge || 40;
   const taxes = Math.round(subtotal * 0.05);
-  const total = subtotal + deliveryCharge + taxes;
+  const total = Math.max(0, subtotal - discountAmount + deliveryCharge + taxes);
+
+  // Apply Promo Handler
+  const handleApplyPromo = async (codeToApply?: string) => {
+    const code = (codeToApply || promoInput).trim().toUpperCase();
+    if (!code) {
+      setPromoError('Please enter a coupon code');
+      return;
+    }
+
+    setIsValidatingPromo(true);
+    setPromoError('');
+
+    try {
+      const result = await validatePromotionCode(code, user?.uid || 'guest', subtotal, restaurantId || undefined);
+      if (result.valid && result.promotion) {
+        const discount = calculateDiscount(result.promotion, subtotal, deliveryCharge);
+        setAppliedPromotion(result.promotion);
+        setDiscountAmount(discount);
+        setPromoInput('');
+        localStorage.removeItem('suggestedPromo');
+        toast.success(`Coupon "${result.promotion.code}" applied! You saved ₹${discount}`);
+      } else {
+        setPromoError(result.error || 'Invalid or expired coupon');
+        toast.error(result.error || 'Invalid coupon');
+      }
+    } catch (err: any) {
+      setPromoError('Failed to apply coupon');
+      toast.error('Failed to validate coupon');
+    } finally {
+      setIsValidatingPromo(false);
+    }
+  };
+
+  const handleRemovePromo = () => {
+    setAppliedPromotion(null);
+    setDiscountAmount(0);
+    setPromoError('');
+    toast.info('Coupon removed');
+  };
+
+  // Real-time Wallet Calculations
+  const walletBalance = Number(realtimeCustomer?.walletBalance ?? customer?.walletBalance ?? 0);
+  const isWalletSufficient = walletBalance >= total;
+  const deficitAmount = Math.max(0, total - walletBalance);
 
   const handlePlaceOrder = async () => {
     if (!user || !restaurantId) return;
@@ -106,6 +235,17 @@ export default function CartPage() {
       }
     }
 
+    // Wallet Balance Pre-Check: Do not place order if wallet has insufficient amount
+    if (paymentMethod === 'wallet') {
+      if (!isWalletSufficient) {
+        toast.error(
+          `Insufficient Wallet Balance! Your balance is ₹${walletBalance.toFixed(2)}, but order total is ₹${total.toFixed(2)}. Please add funds or change payment method.`
+        );
+        setIsLowBalanceModalOpen(true);
+        return;
+      }
+    }
+
     setLoading(true);
 
     try {
@@ -118,6 +258,92 @@ export default function CartPage() {
         specialInstructions: item.specialInstructions || specialInstructions,
       }));
 
+      // ================= WALLET PAYMENT FLOW =================
+      if (paymentMethod === 'wallet') {
+        const walletTxId = `WLT-${Date.now().toString(36).toUpperCase()}`;
+        const customerRef = doc(db, 'customers', user.uid);
+        const txColRef = collection(db, 'customers', user.uid, 'walletTransactions');
+
+        // Atomically verify balance and deduct funds inside Firestore transaction
+        await runTransaction(db, async (transaction) => {
+          const custDoc = await transaction.get(customerRef);
+          if (!custDoc.exists()) {
+            throw new Error('Customer account not found');
+          }
+          const currentBal = Number(custDoc.data().walletBalance || 0);
+          if (currentBal < total) {
+            throw new Error(
+              `Insufficient wallet balance. Available: ₹${currentBal.toFixed(2)}, Required: ₹${total.toFixed(2)}`
+            );
+          }
+
+          transaction.update(customerRef, {
+            walletBalance: increment(-total),
+            updatedAt: serverTimestamp(),
+          });
+        });
+
+        // Create immediately confirmed order
+        const orderData: Order = {
+          id: '',
+          customerId: user.uid,
+          restaurantId,
+          items: orderItems,
+          deliveryAddress,
+          status: 'confirmed',
+          paymentMethod: 'wallet',
+          paymentStatus: 'completed',
+          walletTransactionId: walletTxId,
+          subtotal,
+          deliveryCharge,
+          taxes,
+          discountAmount: discountAmount || 0,
+          promotionId: appliedPromotion?.id || '',
+          specialInstructions: specialInstructions || '',
+          total,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          customerName: realtimeCustomer?.name || 'Guest',
+          customerPhone: realtimeCustomer?.phone || '',
+          restaurantName: restaurant?.name || 'Unknown Restaurant',
+          deliveryOtp: Math.floor(1000 + Math.random() * 9000).toString(),
+        };
+
+        const docRef = await addDoc(collection(db, 'orders'), {
+          ...orderData,
+          createdAt: Timestamp.now(),
+          updatedAt: Timestamp.now(),
+        });
+
+        // Record promotion usage if a promotion was applied
+        if (appliedPromotion && user) {
+          recordPromotionUsage(appliedPromotion.id, user.uid, docRef.id, discountAmount).catch(e => console.error('Promo record error:', e));
+        }
+
+        // Record customer wallet debit transaction
+        await addDoc(txColRef, {
+          customerId: user.uid,
+          amount: total,
+          type: 'payment',
+          status: 'completed',
+          referenceId: docRef.id,
+          description: `Paid for Order #${docRef.id.slice(-8).toUpperCase()} at ${restaurant?.name || 'AKR Hunger'}`,
+          createdAt: serverTimestamp(),
+        });
+
+        // Trigger Notification (Fire and forget)
+        fetch('/api/notifications/new-order', {
+          method: 'POST',
+          body: JSON.stringify({ orderId: docRef.id }),
+        }).catch((err) => console.error('Failed to trigger notification', err));
+
+        toast.success(`₹${total} paid securely from your AKR Wallet! Order confirmed.`);
+        clearCart();
+        router.push(`/customer/orders/${docRef.id}`);
+        return;
+      }
+
+      // ================= COD / ONLINE PAYMENT FLOW =================
       const orderData: Order = {
         id: '',
         customerId: user.uid,
@@ -130,13 +356,16 @@ export default function CartPage() {
         subtotal,
         deliveryCharge,
         taxes,
+        discountAmount: discountAmount || 0,
+        promotionId: appliedPromotion?.id || '',
+        specialInstructions: specialInstructions || '',
         total,
         createdAt: new Date(),
         updatedAt: new Date(),
         customerName: realtimeCustomer?.name || 'Guest',
         customerPhone: realtimeCustomer?.phone || '',
         restaurantName: restaurant?.name || 'Unknown Restaurant',
-        deliveryOtp: Math.floor(1000 + Math.random() * 9000).toString() // Generate 4-digit OTP
+        deliveryOtp: Math.floor(1000 + Math.random() * 9000).toString(), // Generate 4-digit OTP
       };
 
       const docRef = await addDoc(collection(db, 'orders'), {
@@ -145,14 +374,24 @@ export default function CartPage() {
         updatedAt: Timestamp.now(),
       });
 
+      // Record promotion usage if a promotion was applied
+      if (appliedPromotion && user) {
+        recordPromotionUsage(appliedPromotion.id, user.uid, docRef.id, discountAmount).catch(e => console.error('Promo record error:', e));
+      }
+
       if (paymentMethod === 'cod') {
+        // Trigger Notification (Fire and forget)
+        fetch('/api/notifications/new-order', {
+          method: 'POST',
+          body: JSON.stringify({ orderId: docRef.id }),
+        }).catch((err) => console.error('Failed to trigger notification', err));
+
         toast.success('Order placed successfully!');
         clearCart();
         router.push(`/customer/orders/${docRef.id}`);
       } else {
         await handleOnlinePayment(docRef.id, total);
       }
-
     } catch (error: any) {
       console.error('Order placement failed:', error);
       toast.error('Failed to place order: ' + error.message);
@@ -205,6 +444,12 @@ export default function CartPage() {
               razorpayPaymentId: response.razorpay_payment_id,
               updatedAt: Timestamp.now()
             });
+            // Trigger Notification
+            fetch('/api/notifications/new-order', {
+              method: 'POST',
+              body: JSON.stringify({ orderId: orderId })
+            }).catch(err => console.error("Failed to trigger notification", err));
+
             clearCart();
             toast.success('Payment successful!');
             router.push(`/customer/orders/${orderId}`);
@@ -242,14 +487,14 @@ export default function CartPage() {
 
   if (items.length === 0) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center p-4">
+      <div className="min-h-[70vh] flex items-center justify-center p-4">
         <div className="text-center max-w-md space-y-6">
-          <div className="w-24 h-24 bg-gray-900 rounded-full flex items-center justify-center mx-auto shadow-2xl shadow-orange-500/10">
-            <ShoppingBag className="w-10 h-10 text-orange-500" />
+          <div className="w-24 h-24 bg-primary/10 border border-primary/20 rounded-full flex items-center justify-center mx-auto shadow-2xl shadow-primary/10">
+            <ShoppingBag className="w-10 h-10 text-primary animate-pulse" />
           </div>
-          <h2 className="text-3xl font-bold text-white">Your Cart is Empty</h2>
-          <p className="text-gray-400">Looks like you haven't added anything yet.</p>
-          <Button onClick={() => router.push('/customer')} size="lg" className="w-full bg-gradient-to-r from-orange-600 to-red-600 hover:scale-105 transition-transform font-bold rounded-xl">
+          <h2 className="text-3xl font-bold text-foreground">Your Cart is Empty</h2>
+          <p className="text-muted-foreground">Looks like you haven't added any delicious food yet.</p>
+          <Button onClick={() => router.push('/customer')} size="lg" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-xl shadow-lg shadow-primary/20 hover:scale-105 transition-all">
             Browse Food
           </Button>
         </div>
@@ -258,180 +503,160 @@ export default function CartPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white pb-40 sm:pb-24 font-sans max-w-7xl mx-auto px-2 sm:px-4 py-4 sm:py-8 relative selection:bg-orange-500/30">
+    <div className="min-h-screen text-foreground pb-24 md:pb-16 font-sans max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 relative selection:bg-primary/30">
 
-      {/* Ambient Background */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-orange-600/10 rounded-full blur-[120px]" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-red-600/10 rounded-full blur-[120px]" />
+      {/* Ambient Background Accent */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10">
+        <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-primary/10 rounded-full blur-[140px]" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-primary/5 rounded-full blur-[140px]" />
       </div>
 
       {/* Header */}
       <div className="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-8">
-        <Button variant="ghost" size="icon" onClick={() => router.back()} className="rounded-full bg-gray-900 hover:bg-gray-800 text-white">
+        <Button variant="outline" size="icon" onClick={() => router.back()} className="rounded-full bg-card hover:bg-accent border-border text-foreground">
           <ArrowLeft className="w-5 h-5" />
         </Button>
-        <h1 className="text-2xl sm:text-3xl font-bold">Checkout</h1>
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-black tracking-tight">Checkout</h1>
+          <p className="text-xs sm:text-sm text-muted-foreground">Review your delicious selection & choose payment</p>
+        </div>
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
+      <div className="grid lg:grid-cols-12 gap-5 sm:gap-6 lg:gap-8">
 
-        {/* Left Column */}
-        <div className="lg:col-span-2 space-y-4 sm:space-y-6">
+        {/* Left Column (Items & Options) */}
+        <div className="lg:col-span-7 xl:col-span-8 space-y-4 sm:space-y-6">
 
           {/* 1. Address Section */}
-          <div className="bg-gray-900/50 backdrop-blur-md rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-white/5">
+          <div className="bg-card/90 backdrop-blur-md rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-border/60 shadow-sm">
             <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
-              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-orange-500/20 flex items-center justify-center">
-                <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-orange-500" />
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-primary/15 flex items-center justify-center text-primary">
+                <MapPin className="w-5 h-5" />
               </div>
-              <h3 className="font-bold text-base sm:text-lg">Delivery Address</h3>
+              <div>
+                <h3 className="font-bold text-base sm:text-lg text-foreground">Delivery Address</h3>
+                <p className="text-xs text-muted-foreground">Where should we deliver your order?</p>
+              </div>
             </div>
 
             {deliveryAddress ? (
-              <div className="bg-black/40 rounded-2xl p-4 border border-white/5 flex items-start gap-4">
+              <div className="bg-muted/40 rounded-2xl p-4 border border-border/60 flex items-start gap-4">
                 <div className="mt-1">
                   <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${restaurant?.servicePincodes && restaurant.servicePincodes.includes(deliveryAddress.pincode)
-                    ? 'border-green-500'
-                    : 'border-red-500'
+                    ? 'border-emerald-500'
+                    : 'border-destructive'
                     }`}>
                     <div className={`w-2.5 h-2.5 rounded-full ${restaurant?.servicePincodes && restaurant.servicePincodes.includes(deliveryAddress.pincode)
-                      ? 'bg-green-500'
-                      : 'bg-red-500'
+                      ? 'bg-emerald-500'
+                      : 'bg-destructive'
                       }`} />
                   </div>
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="font-bold text-lg text-white">
+                    <span className="font-bold text-base sm:text-lg text-foreground">
                       {deliveryAddress.type}
                     </span>
                     {deliveryAddress.isDefault &&
-                      <Badge className="bg-orange-500/20 text-orange-500 hover:bg-orange-500/30 border-none">Default</Badge>
+                      <Badge className="bg-primary/15 text-primary hover:bg-primary/20 border-none text-xs font-semibold">Default</Badge>
                     }
                   </div>
-                  <p className="text-gray-400 text-sm leading-relaxed">
-                    {deliveryAddress.street}, {deliveryAddress.city} - <span className="text-white font-bold">{deliveryAddress.pincode}</span>
+                  <p className="text-muted-foreground text-xs sm:text-sm leading-relaxed">
+                    {deliveryAddress.street}, {deliveryAddress.city} - <span className="text-foreground font-bold">{deliveryAddress.pincode}</span>
                   </p>
 
                   {/* Service Area Status */}
                   {restaurant?.servicePincodes && !restaurant.servicePincodes.includes(deliveryAddress.pincode) && (
-                    <div className="mt-2 text-red-400 text-xs font-bold bg-red-500/10 p-2 rounded-lg border border-red-500/20">
-                      ⚠️ Not delivering to this pincode.
+                    <div className="mt-2 text-destructive text-xs font-bold bg-destructive/10 p-2.5 rounded-lg border border-destructive/20 flex items-center gap-2">
+                      <span>⚠️</span> Restaurant does not deliver to this pincode ({deliveryAddress.pincode}).
                     </div>
                   )}
                 </div>
 
-                {/* Address Selection Dialog */}
-                <Dialog open={isAddressDialogOpen} onOpenChange={setIsAddressDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button variant="link" className="text-orange-400">
-                      Change
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="bg-gray-900 border-gray-800 text-white sm:max-w-md">
-                    <DialogHeader>
-                      <DialogTitle>Select Delivery Location</DialogTitle>
-                      <DialogDescription className="text-gray-400">
-                        Choose from your saved addresses.
-                      </DialogDescription>
-                    </DialogHeader>
-                    <div className="space-y-3 py-4">
-                      {realtimeCustomer?.addresses && realtimeCustomer.addresses.length > 0 ? (
-                        realtimeCustomer.addresses.map((addr: any) => (
-                          <div
-                            key={addr.id}
-                            onClick={() => {
-                              setDeliveryAddress(addr);
-                              setIsAddressDialogOpen(false);
-                            }}
-                            className={`p-4 rounded-xl border cursor-pointer transition-all flex items-center gap-3 ${deliveryAddress?.id === addr.id ? 'bg-orange-900/20 border-orange-500/50' : 'bg-gray-800/50 border-gray-700 hover:bg-gray-800'}`}
-                          >
-                            <div className={`p-2 rounded-full ${addr.type === 'Home' ? 'bg-blue-500/20 text-blue-400' : addr.type === 'Work' ? 'bg-purple-500/20 text-purple-400' : 'bg-gray-700 text-gray-400'}`}>
-                              {addr.type === 'Home' && <Home className="w-4 h-4" />}
-                              {addr.type === 'Work' && <Briefcase className="w-4 h-4" />}
-                              {addr.type === 'Other' && <MapPin className="w-4 h-4" />}
-                            </div>
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2">
-                                <span className="font-bold text-sm">{addr.type}</span>
-                                {addr.isDefault && <span className="text-[10px] bg-green-900/30 text-green-400 px-1.5 rounded uppercase font-bold">Default</span>}
-                              </div>
-                              <p className="text-xs text-gray-400 line-clamp-1">{addr.street}, {addr.city} {addr.pincode}</p>
-                            </div>
-                            {deliveryAddress?.id === addr.id && <div className="w-3 h-3 bg-orange-500 rounded-full" />}
-                          </div>
-                        ))
-                      ) : (
-                        <div className="text-center py-6 text-gray-500">
-                          <p>No saved addresses found.</p>
-                          <Button variant="link" onClick={() => router.push('/customer/profile')} className="text-orange-500">
-                            Add New Address
-                          </Button>
-                        </div>
-                      )}
-
-                      <Button
-                        className="w-full mt-2 bg-gray-800 hover:bg-gray-700 text-white border border-gray-700"
-                        onClick={() => { setIsAddressDialogOpen(false); router.push('/customer/profile'); }}
-                      >
-                        Manage Addresses
-                      </Button>
-                    </div>
-                  </DialogContent>
-                </Dialog>
+                {/* Change Address Button */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsAddressDialogOpen(true)}
+                  className="text-primary border-primary/30 hover:bg-primary/10 rounded-xl font-bold"
+                >
+                  Change
+                </Button>
               </div>
             ) : (
-              <div className="text-center py-6 border-2 border-dashed border-gray-800 rounded-2xl">
-                <p className="text-gray-500 mb-4">No address found</p>
-                <Button onClick={() => router.push('/customer/profile')} variant="outline" className="border-orange-500/50 text-orange-400 hover:bg-orange-950">
-                  + Add Address
+              <div className="text-center py-6 border-2 border-dashed border-border rounded-2xl bg-muted/20">
+                <p className="text-muted-foreground mb-4 text-sm font-medium">No delivery address selected</p>
+                <Button
+                  onClick={() => setIsAddressDialogOpen(true)}
+                  variant="outline"
+                  className="border-primary/50 text-primary hover:bg-primary/10 rounded-xl font-bold"
+                >
+                  + Select / Add Address
                 </Button>
               </div>
             )}
+
+            {/* Reusable Luxury Delivery Location Dialog */}
+            <DeliveryLocationDialog
+              open={isAddressDialogOpen}
+              onOpenChange={setIsAddressDialogOpen}
+              servicePincodes={restaurant?.servicePincodes}
+            />
           </div>
 
           {/* 2. Items Section */}
-          <div className="bg-gray-900/40 backdrop-blur-xl rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-white/5 hover:border-white/10 transition-colors relative z-10 group">
-            <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-gradient-to-br from-blue-500/20 to-indigo-500/20 flex items-center justify-center border border-blue-500/10 group-hover:scale-105 transition-transform">
-                <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500" />
+          <div className="bg-card/90 backdrop-blur-md rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-border/60 shadow-sm relative z-10">
+            <div className="flex items-center justify-between mb-4 sm:mb-6">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                  <ShoppingBag className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-lg sm:text-xl text-foreground">Order Items</h3>
+                  <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">{items.length} Items in Cart</p>
+                </div>
               </div>
-              <div>
-                <h3 className="font-bold text-lg sm:text-xl text-white">Order Summary</h3>
-                <p className="text-xs text-gray-500 uppercase tracking-widest font-bold">{items.length} Items in Cart</p>
-              </div>
+              <Button variant="ghost" size="sm" onClick={clearCart} className="text-xs text-muted-foreground hover:text-destructive hover:bg-destructive/10">
+                Clear all
+              </Button>
             </div>
 
             <div className="space-y-3 sm:space-y-4">
               {items.map((item, idx) => (
-                <div key={idx} className="flex gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-black/40 border border-white/5 hover:bg-black/60 transition-colors group/item">
-                  <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl overflow-hidden flex-shrink-0 bg-gray-800 relative">
+                <div key={idx} className="flex gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-muted/40 border border-border/60 hover:bg-muted/60 transition-colors group/item">
+                  <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl overflow-hidden flex-shrink-0 bg-muted relative">
                     <SafeImage
                       src={item.image}
                       alt={item.name}
-                      className="object-cover"
+                      className="object-cover group-hover/item:scale-105 transition-transform duration-300"
                       fill
                     />
                   </div>
-                  <div className="flex-1 flex flex-col justify-between py-1">
-                    <div className="flex justify-between items-start">
+                  <div className="flex-1 flex flex-col justify-between py-0.5">
+                    <div className="flex justify-between items-start gap-2">
                       <div>
-                        <h4 className="font-bold text-white text-base sm:text-lg line-clamp-1">{item.name}</h4>
-                        <p className="text-xs text-gray-400">{item.restaurantName}</p>
+                        <h4 className="font-bold text-foreground text-sm sm:text-base line-clamp-1">{item.name}</h4>
+                        <p className="text-xs text-muted-foreground line-clamp-1">{item.restaurantName}</p>
+                        {item.specialInstructions && (
+                          <div className="mt-1">
+                            <span className="text-[11px] text-primary font-semibold bg-primary/10 border border-primary/20 px-2 py-0.5 rounded-md inline-block">
+                              {item.specialInstructions}
+                            </span>
+                          </div>
+                        )}
                       </div>
-                      <span className="font-bold text-orange-400 text-base sm:text-lg">₹{item.price * item.quantity}</span>
+                      <span className="font-bold text-primary text-sm sm:text-base whitespace-nowrap">₹{item.price * item.quantity}</span>
                     </div>
 
                     <div className="flex items-center justify-between mt-2">
                       {/* Quantity */}
-                      <div className="flex items-center gap-1 bg-gray-800/80 rounded-lg p-1 border border-white/5">
-                        <button onClick={() => updateQuantity(item.menuItemId, item.quantity - 1)} className="w-8 h-8 flex items-center justify-center hover:bg-gray-700 rounded-md transition text-white"><Minus className="w-3.5 h-3.5" /></button>
-                        <span className="text-sm font-bold w-6 text-center text-white">{item.quantity}</span>
-                        <button onClick={() => updateQuantity(item.menuItemId, item.quantity + 1)} className="w-8 h-8 flex items-center justify-center hover:bg-gray-700 rounded-md transition text-white"><Plus className="w-3.5 h-3.5" /></button>
+                      <div className="flex items-center gap-1 bg-card rounded-lg p-1 border border-border shadow-xs">
+                        <button onClick={() => updateQuantity(item.menuItemId, item.quantity - 1)} className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center hover:bg-accent rounded-md transition text-foreground" aria-label="Decrease quantity"><Minus className="w-3.5 h-3.5" /></button>
+                        <span className="text-xs sm:text-sm font-bold w-6 text-center text-foreground">{item.quantity}</span>
+                        <button onClick={() => updateQuantity(item.menuItemId, item.quantity + 1)} className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center hover:bg-accent rounded-md transition text-foreground" aria-label="Increase quantity"><Plus className="w-3.5 h-3.5" /></button>
                       </div>
 
-                      <button onClick={() => removeItem(item.menuItemId)} className="text-red-400 hover:bg-red-500/20 hover:text-red-300 p-2 rounded-lg transition opacity-0 group-hover/item:opacity-100">
+                      <button onClick={() => removeItem(item.menuItemId)} className="text-muted-foreground hover:bg-destructive/15 hover:text-destructive p-2 rounded-lg transition" aria-label="Remove item">
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
@@ -442,91 +667,462 @@ export default function CartPage() {
           </div>
 
           {/* 3. Payment Method */}
-          <div className="bg-gray-900/40 backdrop-blur-xl rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-white/5 hover:border-white/10 transition-colors relative z-10 group">
+          <div className="bg-card/90 backdrop-blur-md rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-border/60 shadow-sm relative z-10">
             <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-gradient-to-br from-green-500/20 to-emerald-500/20 flex items-center justify-center border border-green-500/10 group-hover:scale-105 transition-transform">
-                <Wallet className="w-4 h-4 sm:w-5 sm:h-5 text-green-500" />
+              <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-emerald-500/15 flex items-center justify-center text-emerald-500">
+                <Wallet className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="font-bold text-lg sm:text-xl text-white">Payment Method</h3>
-                <p className="text-xs text-gray-500 uppercase tracking-widest font-bold">Secure Transactions</p>
+                <h3 className="font-bold text-lg sm:text-xl text-foreground">Payment Method</h3>
+                <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">100% Secure Checkout</p>
               </div>
             </div>
 
-            <RadioGroup value={paymentMethod} onValueChange={(v: any) => setPaymentMethod(v)} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div onClick={() => setPaymentMethod('cod')} className={`cursor-pointer p-4 rounded-2xl border-2 transition-all flex items-center gap-3 hover:scale-[1.02] ${paymentMethod === 'cod' ? 'border-green-500 bg-green-500/10' : 'border-gray-800 hover:border-gray-600 bg-black/40'}`}>
-                <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${paymentMethod === 'cod' ? 'border-green-500' : 'border-gray-500'}`}>
-                  {paymentMethod === 'cod' && <div className="w-3 h-3 bg-green-500 rounded-full shadow-[0_0_10px_rgba(34,197,94,0.5)]" />}
+            <RadioGroup value={paymentMethod} onValueChange={(v: any) => setPaymentMethod(v)} className="grid grid-cols-1 gap-3 sm:gap-3.5">
+              {/* Option 1: AKR Hunger Wallet */}
+              <div
+                onClick={() => setPaymentMethod('wallet')}
+                className={`cursor-pointer p-4 sm:p-5 rounded-2xl border-2 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+                  paymentMethod === 'wallet'
+                    ? isWalletSufficient
+                      ? 'border-primary bg-primary/10 shadow-sm ring-1 ring-primary/20'
+                      : 'border-amber-500 bg-amber-500/10 shadow-sm ring-1 ring-amber-500/20'
+                    : 'border-border hover:border-border/80 bg-muted/30'
+                }`}
+              >
+                <div className="flex items-center gap-3.5">
+                  <div
+                    className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                      paymentMethod === 'wallet'
+                        ? isWalletSufficient
+                          ? 'border-primary'
+                          : 'border-amber-500'
+                        : 'border-muted-foreground'
+                    }`}
+                  >
+                    {paymentMethod === 'wallet' && (
+                      <div
+                        className={`w-2.5 h-2.5 rounded-full ${
+                          isWalletSufficient ? 'bg-primary' : 'bg-amber-500'
+                        }`}
+                      />
+                    )}
+                  </div>
+
+                  <div className="w-10 h-10 rounded-xl bg-primary/15 text-primary flex items-center justify-center shrink-0">
+                    <Wallet className="w-5 h-5" />
+                  </div>
+
+                  <div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="font-bold text-foreground text-sm sm:text-base">AKR Hunger Wallet</p>
+                      {isWalletSufficient ? (
+                        <Badge
+                          variant="outline"
+                          className="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 text-[10px] font-bold py-0"
+                        >
+                          Sufficient Balance
+                        </Badge>
+                      ) : (
+                        <Badge
+                          variant="outline"
+                          className="bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30 text-[10px] font-bold py-0"
+                        >
+                          Low Balance
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Available Balance: <strong className="text-foreground font-bold">₹{walletBalance.toFixed(2)}</strong>
+                      {isWalletSufficient ? (
+                        <span className="text-emerald-600 dark:text-emerald-400 ml-1.5 font-medium">• 1-Click Fast Checkout</span>
+                      ) : (
+                        <span className="text-amber-600 dark:text-amber-400 ml-1.5 font-medium">• Short by ₹{deficitAmount.toFixed(2)}</span>
+                      )}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="font-bold text-white text-base">Cash on Delivery</p>
-                  <p className="text-xs text-gray-400">Pay cash upon arrival</p>
-                </div>
+
+                {!isWalletSufficient && (
+                  <div className="sm:text-right flex items-center justify-end pl-8 sm:pl-0">
+                    <Link
+                      href="/customer/wallet"
+                      onClick={(e) => e.stopPropagation()}
+                      className="inline-flex items-center gap-1 text-xs font-bold text-primary hover:underline bg-primary/10 hover:bg-primary/15 px-3 py-1.5 rounded-xl transition"
+                    >
+                      <Plus className="w-3.5 h-3.5" /> Add Funds
+                    </Link>
+                  </div>
+                )}
               </div>
 
-              <div onClick={() => setPaymentMethod('online')} className={`cursor-pointer p-4 rounded-2xl border-2 transition-all flex items-center gap-3 hover:scale-[1.02] ${paymentMethod === 'online' ? 'border-blue-500 bg-blue-500/10' : 'border-gray-800 hover:border-gray-600 bg-black/40'}`}>
-                <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${paymentMethod === 'online' ? 'border-blue-500' : 'border-gray-500'}`}>
-                  {paymentMethod === 'online' && <div className="w-3 h-3 bg-blue-500 rounded-full shadow-[0_0_10px_rgba(59,130,246,0.5)]" />}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-3.5">
+                {/* Option 2: Pay Online */}
+                <div
+                  onClick={() => setPaymentMethod('online')}
+                  className={`cursor-pointer p-4 rounded-2xl border-2 transition-all flex items-center gap-3.5 ${
+                    paymentMethod === 'online'
+                      ? 'border-primary bg-primary/10 shadow-sm'
+                      : 'border-border hover:border-border/80 bg-muted/30'
+                  }`}
+                >
+                  <div
+                    className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                      paymentMethod === 'online' ? 'border-primary' : 'border-muted-foreground'
+                    }`}
+                  >
+                    {paymentMethod === 'online' && <div className="w-2.5 h-2.5 bg-primary rounded-full" />}
+                  </div>
+                  <div className="w-9 h-9 rounded-xl bg-blue-500/15 text-blue-500 flex items-center justify-center shrink-0">
+                    <CreditCard className="w-4.5 h-4.5" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-foreground text-sm sm:text-base">Pay Online</p>
+                    <p className="text-xs text-muted-foreground">UPI, Cards, NetBanking, Wallets</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="font-bold text-white text-base">Pay Online</p>
-                  <p className="text-xs text-gray-400">UPI, Cards, NetBanking</p>
+
+                {/* Option 3: Cash on Delivery */}
+                <div
+                  onClick={() => setPaymentMethod('cod')}
+                  className={`cursor-pointer p-4 rounded-2xl border-2 transition-all flex items-center gap-3.5 ${
+                    paymentMethod === 'cod'
+                      ? 'border-emerald-500 bg-emerald-500/10 shadow-sm'
+                      : 'border-border hover:border-border/80 bg-muted/30'
+                  }`}
+                >
+                  <div
+                    className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                      paymentMethod === 'cod' ? 'border-emerald-500' : 'border-muted-foreground'
+                    }`}
+                  >
+                    {paymentMethod === 'cod' && <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full" />}
+                  </div>
+                  <div className="w-9 h-9 rounded-xl bg-emerald-500/15 text-emerald-500 flex items-center justify-center shrink-0">
+                    <Banknote className="w-4.5 h-4.5" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-foreground text-sm sm:text-base">Cash on Delivery</p>
+                    <p className="text-xs text-muted-foreground">Pay with cash when order arrives</p>
+                  </div>
                 </div>
               </div>
             </RadioGroup>
+
+            {/* Insufficient Wallet Warning Banner */}
+            {paymentMethod === 'wallet' && !isWalletSufficient && (
+              <div className="mt-4 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-in fade-in duration-200">
+                <div className="flex items-start gap-2.5">
+                  <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-xs font-bold text-foreground">
+                      Insufficient Wallet Balance: ₹{walletBalance.toFixed(2)}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Order total is ₹{total}. You need ₹{deficitAmount.toFixed(2)} more. Please add funds to your wallet or choose another payment method to place your order.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 self-end sm:self-auto shrink-0 flex-wrap">
+                  <Link href="/customer/wallet">
+                    <Button size="sm" variant="default" className="h-8 text-xs font-bold rounded-xl bg-amber-600 hover:bg-amber-700 text-white gap-1 shadow-xs">
+                      <Plus className="w-3.5 h-3.5" /> Add Funds
+                    </Button>
+                  </Link>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setPaymentMethod('online')}
+                    className="h-8 text-xs font-bold rounded-xl"
+                  >
+                    Pay Online
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setPaymentMethod('cod')}
+                    className="h-8 text-xs font-bold rounded-xl"
+                  >
+                    Cash on Delivery
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Right Column - Summary */}
-        <div className="lg:col-span-1">
-          <div className="sticky top-20 sm:top-24 space-y-3 sm:space-y-4">
-            <div className="bg-gray-900 border border-gray-800 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-xl">
-              <div className="flex items-center gap-2 mb-4 sm:mb-6 pb-3 sm:pb-4 border-b border-gray-800">
-                <ChefHat className="w-4 h-4 sm:w-5 sm:h-5 text-orange-500" />
-                <h3 className="font-bold text-base sm:text-lg">Bill Details</h3>
+        {/* Right Column - Bill Summary, Offers & Instructions */}
+        <div className="lg:col-span-5 xl:col-span-4">
+          <div className="sticky top-20 sm:top-24 space-y-4">
+            
+            {/* Offers & Coupons Card */}
+            <div className="bg-card border border-border/70 rounded-2xl sm:rounded-3xl p-4 sm:p-5 shadow-sm space-y-3">
+              <div className="flex items-center gap-2 pb-2 border-b border-border/60">
+                <Tag className="w-4 h-4 text-primary" />
+                <h3 className="font-bold text-sm sm:text-base text-foreground">Offers & Coupons</h3>
+              </div>
+
+              {appliedPromotion ? (
+                <div className="flex items-center justify-between p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-xs">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="w-7 h-7 rounded-lg bg-emerald-500/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0">
+                      <Sparkles className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="font-bold text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5">
+                        <span className="font-mono">{appliedPromotion.code}</span>
+                        <Badge className="bg-emerald-600 text-white text-[9px] py-0 px-1.5 h-4">APPLIED</Badge>
+                      </div>
+                      <p className="text-[11px] text-muted-foreground mt-0.5 truncate">
+                        You saved ₹{discountAmount.toFixed(2)} on this order!
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={handleRemovePromo}
+                    className="h-7 w-7 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 shrink-0"
+                    title="Remove coupon"
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                      <Input
+                        placeholder="Enter coupon code"
+                        value={promoInput}
+                        onChange={(e) => {
+                          setPromoInput(e.target.value.toUpperCase());
+                          setPromoError('');
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') handleApplyPromo();
+                        }}
+                        className="pl-8 h-10 text-xs font-mono font-bold uppercase rounded-xl bg-muted/40 border-border/80"
+                      />
+                    </div>
+                    <Button
+                      onClick={() => handleApplyPromo()}
+                      disabled={isValidatingPromo || !promoInput.trim()}
+                      className="h-10 px-4 rounded-xl font-bold text-xs bg-primary text-primary-foreground hover:bg-primary/90 shrink-0 shadow-xs"
+                    >
+                      {isValidatingPromo ? <Spinner className="w-3.5 h-3.5" /> : 'Apply'}
+                    </Button>
+                  </div>
+
+                  {promoError && (
+                    <p className="text-xs text-destructive flex items-center gap-1 font-medium">
+                      <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                      <span>{promoError}</span>
+                    </p>
+                  )}
+
+                  {/* Available Coupons list for this restaurant (only if admin or restaurant gave them) */}
+                  {availablePromotions.length > 0 && (
+                    <div className="space-y-2 pt-1">
+                      <p className="text-[11px] text-muted-foreground font-semibold uppercase tracking-wider">
+                        Available Coupons:
+                      </p>
+                      <div className="space-y-2">
+                        {availablePromotions.map((p) => {
+                          const isEligible = !p.minOrderAmount || subtotal >= p.minOrderAmount;
+                          return (
+                            <div
+                              key={p.id}
+                              className={`p-2.5 rounded-xl border transition-all flex items-center justify-between gap-2 text-xs ${
+                                isEligible
+                                  ? 'bg-card border-border/80 hover:border-primary/40'
+                                  : 'bg-muted/30 border-dashed border-border/60 opacity-60'
+                              }`}
+                            >
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-1.5">
+                                  <span className="font-mono font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded text-[11px]">
+                                    {p.code}
+                                  </span>
+                                  <span className="font-bold text-foreground text-xs truncate">
+                                    {p.type === 'percentage'
+                                      ? `${p.value}% OFF`
+                                      : p.type === 'fixed'
+                                      ? `₹${p.value} OFF`
+                                      : 'FREE DELIVERY'}
+                                  </span>
+                                </div>
+                                <p className="text-[10px] text-muted-foreground truncate mt-0.5">
+                                  {p.minOrderAmount
+                                    ? `Min order ₹${p.minOrderAmount}`
+                                    : 'Valid on all orders'}
+                                  {p.maxDiscount ? ` &bull; Max disc ₹${p.maxDiscount}` : ''}
+                                </p>
+                              </div>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleApplyPromo(p.code)}
+                                disabled={!isEligible || isValidatingPromo}
+                                className="h-7 px-2.5 text-[11px] font-bold rounded-lg text-primary border-primary/30 hover:bg-primary hover:text-primary-foreground shrink-0"
+                              >
+                                Apply
+                              </Button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Bill Summary Card */}
+            <div className="bg-card border border-border/70 rounded-2xl sm:rounded-3xl p-5 sm:p-6 shadow-md">
+              <div className="flex items-center gap-2 mb-4 pb-3 border-b border-border/70">
+                <ChefHat className="w-5 h-5 text-primary" />
+                <h3 className="font-bold text-base sm:text-lg text-foreground">Bill Summary</h3>
               </div>
 
               <div className="space-y-3 text-sm">
-                <div className="flex justify-between text-gray-400">
+                <div className="flex justify-between text-muted-foreground">
                   <span>Item Total</span>
-                  <span className="text-white font-medium">₹{subtotal}</span>
+                  <span className="text-foreground font-semibold">₹{subtotal}</span>
                 </div>
-                <div className="flex justify-between text-gray-400">
-                  <span>Delivery Fee</span>
-                  <span className="text-white font-medium">₹{deliveryCharge}</span>
+
+                {discountAmount > 0 && (
+                  <div className="flex justify-between text-emerald-600 dark:text-emerald-400 font-bold">
+                    <span className="flex items-center gap-1">
+                      <Tag className="w-3.5 h-3.5" />
+                      Coupon Discount ({appliedPromotion?.code})
+                    </span>
+                    <span>-₹{discountAmount.toFixed(2)}</span>
+                  </div>
+                )}
+
+                <div className="flex justify-between text-muted-foreground">
+                  <span>Delivery Partner Fee</span>
+                  <span className="text-foreground font-semibold">₹{deliveryCharge}</span>
                 </div>
-                <div className="flex justify-between text-gray-400">
-                  <span>Taxes & Charges</span>
-                  <span className="text-white font-medium">₹{taxes}</span>
+                <div className="flex justify-between text-muted-foreground">
+                  <span>Govt. Taxes & Packaging (5%)</span>
+                  <span className="text-foreground font-semibold">₹{taxes}</span>
                 </div>
-                <div className="border-t border-gray-800 pt-3 flex justify-between items-center text-base sm:text-lg">
-                  <span className="font-bold text-white">To Pay</span>
-                  <span className="font-bold text-orange-500">₹{total}</span>
+                <div className="border-t border-border/70 pt-3 flex justify-between items-center text-base sm:text-lg">
+                  <span className="font-black text-foreground">Grand Total</span>
+                  <span className="font-black text-primary text-xl sm:text-2xl">₹{total}</span>
                 </div>
               </div>
 
               <Button
                 onClick={handlePlaceOrder}
                 disabled={loading || items.length === 0}
-                className="w-full mt-4 sm:mt-6 h-14 sm:h-16 rounded-xl sm:rounded-2xl text-base sm:text-lg font-bold bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 shadow-xl shadow-orange-900/30 transition-all active:scale-[0.98] border border-orange-500/20"
+                className={`w-full mt-5 sm:mt-6 h-13 sm:h-14 rounded-xl sm:rounded-2xl text-base font-bold shadow-lg transition-all active:scale-[0.98] ${
+                  paymentMethod === 'wallet' && !isWalletSufficient
+                    ? 'bg-amber-600 hover:bg-amber-700 text-white shadow-amber-600/20'
+                    : 'bg-primary hover:bg-primary/90 text-primary-foreground shadow-primary/20'
+                }`}
               >
-                {loading ? <Spinner className="w-6 h-6 text-white" /> : (paymentMethod === 'cod' ? 'Tap to Place Order' : 'Proceed to Payment')}
+                {loading ? (
+                  <Spinner className="w-5 h-5 text-primary-foreground" />
+                ) : paymentMethod === 'wallet' ? (
+                  isWalletSufficient ? (
+                    <span className="flex items-center gap-2">
+                      <Wallet className="w-5 h-5" /> Pay ₹{total} from Wallet
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-2 text-sm sm:text-base">
+                      <AlertTriangle className="w-5 h-5" /> Insufficient Balance (Add Funds)
+                    </span>
+                  )
+                ) : paymentMethod === 'cod' ? (
+                  'Place Cash on Delivery Order'
+                ) : (
+                  'Proceed to Online Payment'
+                )}
               </Button>
+
+              {paymentMethod === 'wallet' && !isWalletSufficient && (
+                <p className="text-[11px] text-amber-600 dark:text-amber-400 text-center font-medium mt-2">
+                  ⚠️ Wallet balance (₹{walletBalance.toFixed(2)}) is insufficient. Please add funds or change method.
+                </p>
+              )}
             </div>
 
-            <div className="bg-gray-900/50 rounded-2xl sm:rounded-3xl p-3 sm:p-4 border border-white/5">
-              <label className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 block">Cooking Instructions</label>
+            <div className="bg-card/70 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-4 border border-border/60">
+              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2 block">Cooking / Delivery Instructions</label>
               <textarea
                 value={specialInstructions}
                 onChange={(e) => setSpecialInstructions(e.target.value)}
-                placeholder="e.g. Less spicy, no onions..."
-                className="w-full bg-black/50 border border-gray-800 rounded-xl p-3 text-sm text-white placeholder:text-gray-600 focus:outline-none focus:border-orange-500 transition-colors h-20 sm:h-24 resize-none"
+                placeholder="e.g. Please avoid plastic cutlery, leave at the door..."
+                className="w-full bg-muted/40 border border-border/70 rounded-xl p-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors h-20 sm:h-24 resize-none"
               />
             </div>
           </div>
         </div>
       </div>
 
+      {/* Low Wallet Balance Dialog */}
+      <Dialog open={isLowBalanceModalOpen} onOpenChange={setIsLowBalanceModalOpen}>
+        <DialogContent className="max-w-md rounded-3xl p-6 bg-card border-border">
+          <DialogHeader className="text-left space-y-2">
+            <div className="w-12 h-12 rounded-2xl bg-amber-500/15 text-amber-500 flex items-center justify-center mb-1">
+              <AlertTriangle className="w-6 h-6" />
+            </div>
+            <DialogTitle className="text-xl font-black text-foreground">
+              Insufficient Wallet Balance
+            </DialogTitle>
+            <DialogDescription className="text-sm text-muted-foreground">
+              Your AKR Wallet has <strong className="text-foreground">₹{walletBalance.toFixed(2)}</strong>, but this order requires <strong className="text-foreground">₹{total.toFixed(2)}</strong>. You cannot place the order using wallet until funds are added.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="my-4 p-4 rounded-2xl bg-muted/50 border border-border space-y-2 text-xs">
+            <div className="flex justify-between text-muted-foreground">
+              <span>Order Amount:</span>
+              <span className="font-bold text-foreground">₹{total.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between text-muted-foreground">
+              <span>Your Wallet Balance:</span>
+              <span className="font-bold text-foreground">₹{walletBalance.toFixed(2)}</span>
+            </div>
+            <div className="border-t border-border pt-1.5 flex justify-between font-bold text-amber-600 dark:text-amber-400">
+              <span>Deficit Needed:</span>
+              <span>₹{deficitAmount.toFixed(2)}</span>
+            </div>
+          </div>
+
+          <DialogFooter className="flex flex-col sm:flex-row gap-2">
+            <Link href="/customer/wallet" className="w-full sm:w-auto flex-1">
+              <Button className="w-full rounded-xl font-bold bg-primary hover:bg-primary/90 text-primary-foreground gap-1.5">
+                <Plus className="w-4 h-4" /> Add Funds to Wallet
+              </Button>
+            </Link>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setPaymentMethod('online');
+                setIsLowBalanceModalOpen(false);
+              }}
+              className="w-full sm:w-auto rounded-xl font-bold"
+            >
+              Pay Online
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setPaymentMethod('cod');
+                setIsLowBalanceModalOpen(false);
+              }}
+              className="w-full sm:w-auto rounded-xl font-bold"
+            >
+              Cash on Delivery
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

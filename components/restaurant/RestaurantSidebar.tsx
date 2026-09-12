@@ -19,6 +19,7 @@ import {
   HelpCircle
 } from 'lucide-react';
 import NotificationBell from '@/components/notifications/NotificationBell';
+import ThemeToggle from '@/components/ThemeToggle';
 import { useEffect, useState } from 'react';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -150,29 +151,32 @@ export default function RestaurantSidebar({ isMobile = false, onClose }: Restaur
     <aside className={`${isMobile
       ? 'w-full h-full'
       : 'hidden md:flex w-72 border-r'
-      } bg-gradient-to-b from-gray-900/95 via-gray-900/90 to-gray-950/95 backdrop-blur-xl border-gray-800 flex flex-col transition-all duration-300 shadow-2xl`}>
+      } bg-card/95 backdrop-blur-xl border-border flex flex-col transition-colors duration-300 shadow-xl z-20`}>
       {/* Header */}
-      <div className="p-6 border-b border-gray-800 bg-gradient-to-r from-orange-900/20 to-red-900/20">
-        <div className="flex items-center justify-between gap-2 mb-4">
+      <div className="p-5 border-b border-border bg-gradient-to-r from-primary/10 via-primary/5 to-transparent">
+        <div className="flex items-center justify-between gap-2 mb-3">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-500 rounded-xl flex items-center justify-center shadow-lg shadow-orange-500/30 ring-2 ring-orange-500/20">
-              <Utensils className="w-7 h-7 text-white" />
+            <div className="w-11 h-11 bg-gradient-to-br from-primary to-orange-600 rounded-xl flex items-center justify-center shadow-md shadow-primary/30 ring-2 ring-primary/20">
+              <Utensils className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-base font-bold text-white">AKR Hunger</h1>
-              <p className="text-xs text-gray-400 font-medium">Food Platform</p>
+              <h1 className="text-base font-bold text-foreground">AKR Hunger</h1>
+              <p className="text-xs text-muted-foreground font-medium">Partner Portal</p>
             </div>
           </div>
-          {!isMobile && <NotificationBell />}
+          <div className="flex items-center gap-1.5">
+            {!isMobile && <NotificationBell />}
+            <ThemeToggle />
+          </div>
         </div>
-        <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-3 border border-gray-700 shadow-lg">
-          <p className="text-sm font-bold text-white truncate">{restaurant?.name || 'Restaurant'}</p>
-          <p className="text-xs text-gray-400 truncate font-medium">{user.email}</p>
+        <div className="bg-muted/60 backdrop-blur-sm rounded-xl p-3 border border-border/80 shadow-xs">
+          <p className="text-sm font-bold text-foreground truncate">{restaurant?.name || 'Restaurant'}</p>
+          <p className="text-xs text-muted-foreground truncate font-medium">{user.email}</p>
         </div>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-4 space-y-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent">
+      <nav className="flex-1 p-3 space-y-1 overflow-y-auto scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent">
         {navItems.map((item) => {
           const Icon = item.icon;
           const active = isActive(item.href, item.exact);
@@ -185,16 +189,16 @@ export default function RestaurantSidebar({ isMobile = false, onClose }: Restaur
                   if (isMobile && onClose) onClose();
                 }}
                 className={`w-full justify-start gap-3 group relative mb-1 h-11 text-sm font-semibold transition-all ${active
-                  ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg shadow-orange-500/30 scale-[1.02]'
-                  : 'text-gray-300 hover:bg-gray-800/50 hover:text-white hover:scale-[1.01]'
+                  ? 'bg-primary text-primary-foreground shadow-md shadow-primary/25 scale-[1.01]'
+                  : 'text-muted-foreground hover:bg-muted/80 hover:text-foreground hover:scale-[1.01]'
                   }`}
               >
-                <Icon className={`w-5 h-5 ${active ? '' : 'group-hover:scale-110 transition-transform'}`} />
+                <Icon className={`w-5 h-5 ${active ? '' : 'group-hover:scale-110 transition-transform text-muted-foreground group-hover:text-foreground'}`} />
                 <span className="flex-1 text-left">{item.label}</span>
                 {item.badge !== undefined && item.badge > 0 && (
                   <Badge
                     variant={active ? 'secondary' : (item.badgeVariant || 'destructive')}
-                    className={`ml-auto font-bold ${active ? 'bg-white/20 text-white' : ''}`}
+                    className={`ml-auto font-bold ${active ? 'bg-primary-foreground/20 text-primary-foreground' : ''}`}
                   >
                     {item.badge}
                   </Badge>
@@ -206,11 +210,11 @@ export default function RestaurantSidebar({ isMobile = false, onClose }: Restaur
       </nav>
 
       {/* Footer */}
-      <div className="p-4 border-t border-gray-800 bg-gray-950/50">
+      <div className="p-4 border-t border-border bg-muted/20">
         <Button
           onClick={handleLogout}
           variant="outline"
-          className="w-full justify-start gap-3 h-11 border-red-900/50 bg-red-950/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-semibold transition-all"
+          className="w-full justify-start gap-3 h-11 border-destructive/30 bg-destructive/10 text-destructive hover:bg-destructive hover:text-destructive-foreground font-semibold transition-all"
         >
           <LogOut className="w-5 h-5" />
           Logout

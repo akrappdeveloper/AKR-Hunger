@@ -134,10 +134,10 @@ export default function QualityAnalyticsPage() {
     };
 
     const getQualityColor = (score: number) => {
-        if (score >= 80) return 'text-emerald-400';
-        if (score >= 60) return 'text-yellow-400';
-        if (score >= 40) return 'text-orange-400';
-        return 'text-red-400';
+        if (score >= 80) return 'text-emerald-600 dark:text-emerald-400';
+        if (score >= 60) return 'text-yellow-600 dark:text-yellow-400';
+        if (score >= 40) return 'text-orange-600 dark:text-orange-400';
+        return 'text-red-600 dark:text-red-400';
     };
 
     const getQualityGradient = (score: number) => {
@@ -148,10 +148,10 @@ export default function QualityAnalyticsPage() {
     };
 
     const getQualityBadge = (score: number) => {
-        if (score >= 80) return { label: 'Excellent', color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' };
-        if (score >= 60) return { label: 'Good', color: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' };
-        if (score >= 40) return { label: 'Fair', color: 'bg-orange-500/10 text-orange-400 border-orange-500/20' };
-        return { label: 'Needs Improvement', color: 'bg-red-500/10 text-red-400 border-red-500/20' };
+        if (score >= 80) return { label: 'Excellent', color: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20' };
+        if (score >= 60) return { label: 'Good', color: 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border-yellow-500/20' };
+        if (score >= 40) return { label: 'Fair', color: 'bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20' };
+        return { label: 'Needs Improvement', color: 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20' };
     };
 
     const avgQualityScore = qualityMetrics.length > 0
@@ -163,14 +163,14 @@ export default function QualityAnalyticsPage() {
             <div className="p-8 flex items-center justify-center h-[calc(100vh-100px)]">
                 <div className="flex flex-col items-center gap-4">
                     <div className="w-16 h-16 border-4 border-t-green-500 border-r-emerald-500 border-b-teal-500 border-l-cyan-500 rounded-full animate-spin"></div>
-                    <p className="text-gray-400 animate-pulse">Analyzing quality metrics...</p>
+                    <p className="text-muted-foreground animate-pulse">Analyzing quality metrics...</p>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="p-4 md:p-8 space-y-8 min-h-screen bg-[#0B0F17]/50">
+        <div className="p-4 md:p-8 space-y-8 min-h-screen bg-background text-foreground transition-colors duration-300">
             {/* Header */}
             <div>
                 <motion.div
@@ -178,11 +178,11 @@ export default function QualityAnalyticsPage() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5 }}
                 >
-                    <h1 className="text-4xl md:text-5xl font-extrabold bg-gradient-to-r from-emerald-400 via-green-400 to-teal-400 bg-clip-text text-transparent flex items-center gap-3 drop-shadow-xl">
+                    <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold bg-gradient-to-r from-emerald-500 via-green-500 to-teal-500 bg-clip-text text-transparent flex items-center gap-3 drop-shadow-sm">
                         Quality Analytics
                     </h1>
-                    <p className="text-gray-400 mt-2 text-lg font-light tracking-wide flex items-center gap-2">
-                        <Zap className="w-4 h-4 text-emerald-400" />
+                    <p className="text-muted-foreground mt-2 text-base sm:text-lg font-light tracking-wide flex items-center gap-2">
+                        <Zap className="w-4 h-4 text-emerald-500" />
                         AI-driven performance scoring & insights
                     </p>
                 </motion.div>
@@ -194,35 +194,35 @@ export default function QualityAnalyticsPage() {
                 animate={{ opacity: 1, scale: 1 }}
                 className="relative overflow-hidden group"
             >
-                <div className="absolute inset-0 bg-gradient-to-r from-emerald-900/40 via-blue-900/20 to-purple-900/40 blur-xl transition-all duration-500 group-hover:blur-2xl" />
-                <Card className="relative p-8 bg-gray-900/40 border-gray-800 backdrop-blur-md shadow-2xl flex flex-col md:flex-row items-center justify-between gap-8">
+                <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 via-blue-500/5 to-purple-500/10 blur-xl transition-all duration-500 group-hover:blur-2xl" />
+                <Card className="relative p-6 sm:p-8 bg-card border-border text-card-foreground backdrop-blur-md shadow-xl flex flex-col md:flex-row items-center justify-between gap-8">
                     <div>
-                        <h2 className="text-2xl font-bold text-white mb-2 flex items-center gap-2">
-                            <Award className="w-6 h-6 text-yellow-400" />
+                        <h2 className="text-2xl font-bold text-foreground mb-2 flex items-center gap-2">
+                            <Award className="w-6 h-6 text-amber-500" />
                             Overall Restaurant Score
                         </h2>
-                        <p className="text-gray-400 max-w-md">
+                        <p className="text-muted-foreground max-w-md">
                             Aggregated score based on order success rate, customer satisfaction, and consistency across all menu items.
                         </p>
-                        <div className="flex gap-4 mt-6">
-                            <div className="flex items-center gap-2 bg-gray-800/50 px-3 py-1.5 rounded-lg border border-gray-700">
+                        <div className="flex flex-wrap gap-3 mt-6">
+                            <div className="flex items-center gap-2 bg-muted/60 px-3 py-1.5 rounded-lg border border-border">
                                 <div className="w-2 h-2 bg-blue-500 rounded-full" />
-                                <span className="text-xs text-gray-300">Success Rate</span>
+                                <span className="text-xs text-muted-foreground font-medium">Success Rate</span>
                             </div>
-                            <div className="flex items-center gap-2 bg-gray-800/50 px-3 py-1.5 rounded-lg border border-gray-700">
+                            <div className="flex items-center gap-2 bg-muted/60 px-3 py-1.5 rounded-lg border border-border">
                                 <div className="w-2 h-2 bg-emerald-500 rounded-full" />
-                                <span className="text-xs text-gray-300">Satisfaction</span>
+                                <span className="text-xs text-muted-foreground font-medium">Satisfaction</span>
                             </div>
-                            <div className="flex items-center gap-2 bg-gray-800/50 px-3 py-1.5 rounded-lg border border-gray-700">
+                            <div className="flex items-center gap-2 bg-muted/60 px-3 py-1.5 rounded-lg border border-border">
                                 <div className="w-2 h-2 bg-purple-500 rounded-full" />
-                                <span className="text-xs text-gray-300">Consistency</span>
+                                <span className="text-xs text-muted-foreground font-medium">Consistency</span>
                             </div>
                         </div>
                     </div>
 
                     <div className="relative text-center shrink-0">
-                        <svg className="w-48 h-48 transform -rotate-90">
-                            <circle cx="96" cy="96" r="88" className="stroke-gray-800" strokeWidth="12" fill="none" />
+                        <svg className="w-44 h-44 sm:w-48 sm:h-48 transform -rotate-90">
+                            <circle cx="96" cy="96" r="88" className="stroke-muted" strokeWidth="12" fill="none" />
                             <motion.circle
                                 cx="96" cy="96" r="88"
                                 className={`stroke-current ${getQualityColor(avgQualityScore)}`}
@@ -236,10 +236,10 @@ export default function QualityAnalyticsPage() {
                             />
                         </svg>
                         <div className="absolute inset-0 flex flex-col items-center justify-center">
-                            <span className={`text-5xl font-bold ${getQualityColor(avgQualityScore)} drop-shadow-lg`}>
+                            <span className={`text-4xl sm:text-5xl font-black ${getQualityColor(avgQualityScore)} drop-shadow-sm`}>
                                 {avgQualityScore}
                             </span>
-                            <Badge variant="outline" className={`${getQualityBadge(avgQualityScore).color} mt-2`}>
+                            <Badge variant="outline" className={`${getQualityBadge(avgQualityScore).color} mt-2 font-semibold`}>
                                 {getQualityBadge(avgQualityScore).label}
                             </Badge>
                         </div>
@@ -249,15 +249,15 @@ export default function QualityAnalyticsPage() {
 
             {/* Menu Items Quality Grid */}
             <div>
-                <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2 border-l-4 border-emerald-500 pl-3">
+                <h2 className="text-xl font-bold text-foreground mb-6 flex items-center gap-2 border-l-4 border-emerald-500 pl-3">
                     Menu Performance Metrics
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                     {qualityMetrics.length === 0 ? (
-                        <div className="col-span-full p-16 text-center border border-gray-800 rounded-3xl bg-gray-900/30">
-                            <Target className="w-20 h-20 mx-auto text-gray-700 mb-6" />
-                            <h3 className="text-2xl font-bold text-white mb-2">No Data Available</h3>
-                            <p className="text-gray-500">Performance metrics will appear once you have orders.</p>
+                        <div className="col-span-full p-16 text-center border border-border rounded-3xl bg-card text-card-foreground shadow-sm">
+                            <Target className="w-16 h-16 mx-auto text-muted-foreground/40 mb-4" />
+                            <h3 className="text-xl font-bold text-foreground mb-2">No Data Available</h3>
+                            <p className="text-muted-foreground text-sm">Performance metrics will appear once you have orders.</p>
                         </div>
                     ) : (
                         qualityMetrics.map((metric, index) => {
@@ -271,21 +271,21 @@ export default function QualityAnalyticsPage() {
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: index * 0.1 }}
                                 >
-                                    <Card className="h-full bg-gray-900/40 border-gray-800 backdrop-blur-sm overflow-hidden hover:bg-gray-900/60 transition-colors group relative">
+                                    <Card className="h-full bg-card border-border text-card-foreground shadow-sm hover:shadow-md transition-all group relative overflow-hidden">
                                         <div className={`absolute top-0 w-full h-1 bg-gradient-to-r ${gradient}`} />
 
                                         <div className="p-6">
                                             <div className="flex justify-between items-start mb-4">
                                                 <div>
-                                                    <h3 className="font-bold text-white text-lg line-clamp-1" title={metric.menuItemName}>{metric.menuItemName}</h3>
+                                                    <h3 className="font-bold text-foreground text-lg line-clamp-1" title={metric.menuItemName}>{metric.menuItemName}</h3>
                                                     <div className="flex items-center gap-2 mt-1.5">
                                                         <Badge variant="outline" className={qualityBadge.color}>{qualityBadge.label}</Badge>
-                                                        <span className="text-xs text-gray-500 font-mono">
+                                                        <span className="text-xs text-muted-foreground font-mono">
                                                             {metric.totalOrders} orders
                                                         </span>
                                                     </div>
                                                 </div>
-                                                <div className={`text-4xl font-bold ${getQualityColor(metric.qualityScore)}`}>
+                                                <div className={`text-4xl font-extrabold ${getQualityColor(metric.qualityScore)}`}>
                                                     {metric.qualityScore}
                                                 </div>
                                             </div>
@@ -293,11 +293,11 @@ export default function QualityAnalyticsPage() {
                                             <div className="space-y-4">
                                                 {/* Success Rate */}
                                                 <div>
-                                                    <div className="flex justify-between text-xs mb-1 text-gray-400">
+                                                    <div className="flex justify-between text-xs mb-1.5 text-muted-foreground font-medium">
                                                         <span>Success Rate</span>
-                                                        <span className="text-white">{metric.orderSuccessRate}%</span>
+                                                        <span className="text-foreground font-bold">{metric.orderSuccessRate}%</span>
                                                     </div>
-                                                    <div className="h-1.5 bg-gray-800 rounded-full overflow-hidden">
+                                                    <div className="h-2 bg-muted rounded-full overflow-hidden">
                                                         <motion.div
                                                             initial={{ width: 0 }}
                                                             animate={{ width: `${metric.orderSuccessRate}%` }}
@@ -308,14 +308,14 @@ export default function QualityAnalyticsPage() {
 
                                                 {/* Satisfaction */}
                                                 <div>
-                                                    <div className="flex justify-between text-xs mb-1 text-gray-400">
+                                                    <div className="flex justify-between text-xs mb-1.5 text-muted-foreground font-medium">
                                                         <span>Satisfaction</span>
-                                                        <span className="text-white flex items-center gap-1">
-                                                            <Star className="w-3 h-3 fill-yellow-500 text-yellow-500" />
+                                                        <span className="text-foreground font-bold flex items-center gap-1">
+                                                            <Star className="w-3 h-3 fill-amber-500 text-amber-500" />
                                                             {metric.averageRating.toFixed(1)}
                                                         </span>
                                                     </div>
-                                                    <div className="h-1.5 bg-gray-800 rounded-full overflow-hidden">
+                                                    <div className="h-2 bg-muted rounded-full overflow-hidden">
                                                         <motion.div
                                                             initial={{ width: 0 }}
                                                             animate={{ width: `${metric.customerSatisfaction}%` }}
@@ -326,11 +326,11 @@ export default function QualityAnalyticsPage() {
 
                                                 {/* Consistency */}
                                                 <div>
-                                                    <div className="flex justify-between text-xs mb-1 text-gray-400">
+                                                    <div className="flex justify-between text-xs mb-1.5 text-muted-foreground font-medium">
                                                         <span>Consistency</span>
-                                                        <span className="text-white">{metric.consistencyScore}%</span>
+                                                        <span className="text-foreground font-bold">{metric.consistencyScore}%</span>
                                                     </div>
-                                                    <div className="h-1.5 bg-gray-800 rounded-full overflow-hidden">
+                                                    <div className="h-2 bg-muted rounded-full overflow-hidden">
                                                         <motion.div
                                                             initial={{ width: 0 }}
                                                             animate={{ width: `${metric.consistencyScore}%` }}
@@ -342,24 +342,24 @@ export default function QualityAnalyticsPage() {
 
                                             {/* Smart Recommendations */}
                                             {metric.qualityScore < 70 && (
-                                                <div className="mt-6 pt-4 border-t border-gray-800">
-                                                    <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-2">
-                                                        <Zap className="w-3 h-3 text-yellow-500" /> Improvement Tips
+                                                <div className="mt-6 pt-4 border-t border-border">
+                                                    <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2.5 flex items-center gap-2">
+                                                        <Zap className="w-3.5 h-3.5 text-amber-500" /> Improvement Tips
                                                     </h4>
-                                                    <ul className="space-y-1.5">
+                                                    <ul className="space-y-2">
                                                         {metric.orderSuccessRate < 60 && (
-                                                            <li className="text-xs text-red-300 flex items-start gap-1.5">
-                                                                <ArrowDownRight className="w-3 h-3 shrink-0 mt-0.5" /> High cancellations. Check inventory.
+                                                            <li className="text-xs text-red-600 dark:text-red-400 font-medium flex items-start gap-1.5 bg-red-500/10 p-2 rounded-lg border border-red-500/20">
+                                                                <ArrowDownRight className="w-3.5 h-3.5 shrink-0 mt-0.5" /> High cancellations. Check inventory & prep time.
                                                             </li>
                                                         )}
                                                         {metric.customerSatisfaction < 60 && (
-                                                            <li className="text-xs text-orange-300 flex items-start gap-1.5">
-                                                                <ArrowUpRight className="w-3 h-3 shrink-0 mt-0.5" /> Ratings dropping. Review recipe/portion.
+                                                            <li className="text-xs text-amber-600 dark:text-amber-400 font-medium flex items-start gap-1.5 bg-amber-500/10 p-2 rounded-lg border border-amber-500/20">
+                                                                <ArrowUpRight className="w-3.5 h-3.5 shrink-0 mt-0.5" /> Ratings dropping. Review recipe, taste & portion.
                                                             </li>
                                                         )}
                                                         {metric.consistencyScore < 60 && (
-                                                            <li className="text-xs text-purple-300 flex items-start gap-1.5">
-                                                                <Target className="w-3 h-3 shrink-0 mt-0.5" /> Inconsistent ratings. Standardize prep.
+                                                            <li className="text-xs text-purple-600 dark:text-purple-400 font-medium flex items-start gap-1.5 bg-purple-500/10 p-2 rounded-lg border border-purple-500/20">
+                                                                <Target className="w-3.5 h-3.5 shrink-0 mt-0.5" /> Inconsistent feedback. Standardize cooking procedures.
                                                             </li>
                                                         )}
                                                     </ul>

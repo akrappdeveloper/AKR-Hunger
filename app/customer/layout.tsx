@@ -1,11 +1,17 @@
 import React from "react"
 import CustomerNavbar from '@/components/customer/CustomerNavbar';
 import CustomerMobileNav from '@/components/customer/MobileNav';
+import FloatingAIChatWidget from '@/components/ai/FloatingAIChatWidget';
 import { Metadata } from 'next';
-import { generateFoodDeliverySchema, generateWebSiteSchema, generateOrganizationSchema } from '@/lib/seo/schemas';
+import { generateFoodDeliverySchema, generateWebSiteSchema, generateOrganizationSchema, generateFAQSchema } from '@/lib/seo/schemas';
 
 export const metadata: Metadata = {
   title: 'AKR Hunger - Order Food Online | Fast Delivery from Best Restaurants',
+  applicationName: 'AKR Hunger',
+  icons: {
+    icon: '/akrhunger.png',
+    apple: '/akrhunger.png',
+  },
   description: 'Order delicious food online from your favorite restaurants with AKR Hunger. Fast delivery, great prices, wide selection of cuisines. Download now!',
   keywords: [
     'food delivery',
@@ -55,12 +61,14 @@ export default function CustomerLayout({
   const organizationSchema = generateOrganizationSchema();
   const websiteSchema = generateWebSiteSchema();
   const foodDeliverySchema = generateFoodDeliverySchema();
+  const faqSchema = generateFAQSchema();
 
   return (
-    <div className="min-h-screen bg-black text-white selection:bg-blue-500/30">
+    <div className="min-h-screen bg-background text-foreground transition-colors duration-300 selection:bg-primary/20">
       <CustomerNavbar />
-      <main className="pt-0 mb-16 md:mb-0">{children}</main>
+      <main className="pt-0 pb-16 md:pb-0">{children}</main>
       <CustomerMobileNav />
+      <FloatingAIChatWidget role="customer" buttonText="Help AI" />
 
       {/* JSON-LD Schema for SEO */}
       <script
@@ -74,6 +82,10 @@ export default function CustomerLayout({
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(foodDeliverySchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
       />
     </div>
   );

@@ -346,9 +346,6 @@ export default function AdCampaignsPage() {
                 image: '/logo.png',
                 handler: async function (response: any) {
                     try {
-                        const batch = db.batch(); // Use batch for atomicity (simulation)
-                        // Actually regular updates here as SDK doesn't support complex batch types easily in one go for different collections without doc refs
-
                         // Update Account
                         await updateDoc(doc(db, 'pointsAccounts', user!.uid), {
                             totalPoints: (pointsAccount?.totalPoints || 0) + points,
@@ -419,25 +416,25 @@ export default function AdCampaignsPage() {
 
     if (authLoading || loading) {
         return (
-            <div className="flex h-screen items-center justify-center bg-black/90">
+            <div className="flex h-screen items-center justify-center bg-background">
                 <div className="text-center space-y-4">
-                    <Spinner className="w-12 h-12 text-orange-500 mx-auto" />
-                    <p className="text-gray-400 animate-pulse">Loading Marketing Hub...</p>
+                    <Spinner className="w-12 h-12 text-primary mx-auto" />
+                    <p className="text-muted-foreground animate-pulse">Loading Marketing Hub...</p>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-black text-white p-4 md:p-8 space-y-8 max-w-[1600px] mx-auto font-sans">
+        <div className="min-h-screen bg-background text-foreground p-4 md:p-8 space-y-8 max-w-[1600px] mx-auto font-sans transition-colors duration-300">
 
             {/* Header Section */}
-            <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-white/10">
+            <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-border">
                 <div>
                     <motion.h1
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
-                        className="text-4xl md:text-5xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-orange-400 via-pink-500 to-purple-600 mb-2"
+                        className="text-3xl md:text-5xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-orange-500 via-pink-500 to-purple-600 mb-2"
                     >
                         Growth & Campaigns
                     </motion.h1>
@@ -445,7 +442,7 @@ export default function AdCampaignsPage() {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         transition={{ delay: 0.1 }}
-                        className="text-gray-400 text-lg"
+                        className="text-muted-foreground text-base md:text-lg"
                     >
                         Supercharge your restaurant's visibility with AI-driven ads
                     </motion.p>
@@ -454,14 +451,14 @@ export default function AdCampaignsPage() {
                     <Button
                         variant="ghost"
                         onClick={() => setPointsDialog(true)}
-                        className="border border-white/10 hover:bg-white/10 text-white gap-2 transition-all hover:scale-105"
+                        className="border border-border hover:bg-muted text-foreground gap-2 transition-all hover:scale-105"
                     >
-                        <Coins className="w-4 h-4 text-yellow-400" />
+                        <Coins className="w-4 h-4 text-amber-500" />
                         Buy Points
                     </Button>
                     <Button
                         onClick={() => setCampaignDialog(true)}
-                        className="bg-gradient-to-r from-orange-500 to-pink-600 hover:from-orange-600 hover:to-pink-700 text-white shadow-lg shadow-orange-900/40 gap-2 transition-all hover:scale-105"
+                        className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-md gap-2 transition-all hover:scale-105"
                     >
                         <Plus className="w-5 h-5" />
                         Create Campaign
@@ -472,10 +469,10 @@ export default function AdCampaignsPage() {
             {/* Quick Stats Dashboard */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {[
-                    { label: 'Available Points', value: pointsAccount?.availablePoints || 0, icon: Coins, color: 'text-yellow-400', gradient: 'from-yellow-500/10 to-orange-500/10', border: 'border-yellow-500/20', sub: 'Budget for ads' },
-                    { label: 'Total Impressions', value: totalImpressions.toLocaleString(), icon: Eye, color: 'text-blue-400', gradient: 'from-blue-500/10 to-cyan-500/10', border: 'border-blue-500/20', sub: 'Customer views' },
-                    { label: 'Total Clicks', value: totalClicks.toLocaleString(), icon: MousePointer, color: 'text-green-400', gradient: 'from-green-500/10 to-emerald-500/10', border: 'border-green-500/20', sub: 'Menu visits' },
-                    { label: 'Avg. CTR', value: `${averageCtr}%`, icon: BarChart3, color: 'text-purple-400', gradient: 'from-purple-500/10 to-pink-500/10', border: 'border-purple-500/20', sub: 'Click-through rate' },
+                    { label: 'Available Points', value: pointsAccount?.availablePoints || 0, icon: Coins, color: 'text-amber-500', gradient: 'from-amber-500/10 to-orange-500/10', border: 'border-amber-500/20', sub: 'Budget for ads' },
+                    { label: 'Total Impressions', value: totalImpressions.toLocaleString(), icon: Eye, color: 'text-blue-500', gradient: 'from-blue-500/10 to-cyan-500/10', border: 'border-blue-500/20', sub: 'Customer views' },
+                    { label: 'Total Clicks', value: totalClicks.toLocaleString(), icon: MousePointer, color: 'text-emerald-500', gradient: 'from-emerald-500/10 to-teal-500/10', border: 'border-emerald-500/20', sub: 'Menu visits' },
+                    { label: 'Avg. CTR', value: `${averageCtr}%`, icon: BarChart3, color: 'text-purple-500', gradient: 'from-purple-500/10 to-pink-500/10', border: 'border-purple-500/20', sub: 'Click-through rate' },
                 ].map((stat, idx) => (
                     <motion.div
                         key={idx}
@@ -483,21 +480,20 @@ export default function AdCampaignsPage() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: idx * 0.1 }}
                     >
-                        <Card className={`relative overflow-hidden bg-gradient-to-br ${stat.gradient} ${stat.border} backdrop-blur-md transition-all hover:scale-[1.02]`}>
+                        <Card className={`relative overflow-hidden bg-card border-border shadow-sm backdrop-blur-md transition-all hover:border-primary/30`}>
                             <CardContent className="p-6">
                                 <div className="flex justify-between items-start mb-4">
-                                    <div className={`p-3 rounded-xl bg-black/20 ${stat.color} border border-white/5`}>
+                                    <div className={`p-3 rounded-xl bg-muted ${stat.color} border border-border`}>
                                         <stat.icon className="w-6 h-6" />
                                     </div>
-                                    <Badge variant="outline" className={`bg-black/20 ${stat.color} border-current opacity-70`}>Live</Badge>
+                                    <Badge variant="outline" className={`bg-muted/40 ${stat.color} border-border`}>Live</Badge>
                                 </div>
                                 <div className="space-y-1 relative z-10">
-                                    <h3 className="text-3xl font-bold text-white tracking-tight">{stat.value}</h3>
-                                    <p className="text-sm text-gray-300 font-medium">{stat.label}</p>
-                                    <p className="text-xs text-gray-500 mt-1">{stat.sub}</p>
+                                    <h3 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">{stat.value}</h3>
+                                    <p className="text-xs sm:text-sm text-muted-foreground font-medium">{stat.label}</p>
+                                    <p className="text-xs text-muted-foreground/70 mt-1">{stat.sub}</p>
                                 </div>
-                                {/* Decorative blob */}
-                                <div className={`absolute -right-6 -bottom-6 w-24 h-24 rounded-full bg-current opacity-10 blur-2xl ${stat.color}`} />
+                                <div className={`absolute -right-6 -bottom-6 w-24 h-24 rounded-full bg-current opacity-5 blur-2xl ${stat.color}`} />
                             </CardContent>
                         </Card>
                     </motion.div>
@@ -508,11 +504,11 @@ export default function AdCampaignsPage() {
             <section>
                 <div className="flex items-center gap-3 mb-6">
                     <div className="p-2 bg-purple-500/10 rounded-lg">
-                        <Sparkles className="w-6 h-6 text-purple-400 animate-pulse" />
+                        <Sparkles className="w-6 h-6 text-purple-500 animate-pulse" />
                     </div>
                     <div>
-                        <h2 className="text-2xl font-bold text-white">AI Marketing Assistant</h2>
-                        <p className="text-sm text-gray-400">Personalized strategies to boost your sales</p>
+                        <h2 className="text-xl sm:text-2xl font-bold text-foreground">AI Marketing Assistant</h2>
+                        <p className="text-xs sm:text-sm text-muted-foreground">Personalized strategies to boost your sales</p>
                     </div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -524,27 +520,26 @@ export default function AdCampaignsPage() {
                             transition={{ delay: 0.2 + idx * 0.1 }}
                             className="group relative"
                         >
-                            <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                            <Card className="relative bg-[#0F0F0F] border-white/10 hover:border-purple-500/50 transition-all duration-300 h-full flex flex-col overflow-hidden">
+                            <Card className="relative bg-card border-border hover:border-primary/40 shadow-sm transition-all duration-300 h-full flex flex-col overflow-hidden">
                                 <div className={`absolute top-0 w-full h-1 bg-gradient-to-r ${idx === 0 ? 'from-amber-400 to-orange-500' : idx === 1 ? 'from-purple-400 to-pink-500' : 'from-blue-400 to-cyan-500'}`} />
                                 <CardHeader>
                                     <div className="flex justify-between items-start">
-                                        <div className={`p-2.5 rounded-xl bg-gray-900 ${suggestion.color} border border-white/5`}>
+                                        <div className={`p-2.5 rounded-xl bg-muted ${suggestion.color} border border-border`}>
                                             <suggestion.icon className="w-5 h-5" />
                                         </div>
-                                        <Badge className="bg-purple-500/10 text-purple-300 border-purple-500/20">Recommended</Badge>
+                                        <Badge className="bg-primary/10 text-primary border-primary/20">Recommended</Badge>
                                     </div>
-                                    <CardTitle className="text-lg text-white mt-4">{suggestion.title}</CardTitle>
-                                    <CardDescription className="text-gray-400 leading-relaxed">{suggestion.description}</CardDescription>
+                                    <CardTitle className="text-lg text-foreground mt-4">{suggestion.title}</CardTitle>
+                                    <CardDescription className="text-muted-foreground leading-relaxed">{suggestion.description}</CardDescription>
                                 </CardHeader>
                                 <CardContent className="flex-1 flex flex-col justify-end gap-4">
-                                    <div className="flex items-center justify-between text-sm p-3 bg-white/5 rounded-lg border border-white/5">
-                                        <span className="text-gray-400">Est. Reach</span>
-                                        <span className="font-semibold text-white tracking-wide">{suggestion.estimatedReach}</span>
+                                    <div className="flex items-center justify-between text-sm p-3 bg-muted/40 rounded-lg border border-border">
+                                        <span className="text-muted-foreground">Est. Reach</span>
+                                        <span className="font-semibold text-foreground tracking-wide">{suggestion.estimatedReach}</span>
                                     </div>
                                     <Button
                                         onClick={() => applyAiSuggestion(suggestion)}
-                                        className="w-full bg-white/5 hover:bg-white/10 text-white border border-white/10 hover:border-purple-500/30 transition-all group-hover:bg-purple-600/10 group-hover:text-purple-300"
+                                        className="w-full bg-card hover:bg-muted text-foreground border border-border hover:border-primary/30 transition-all"
                                     >
                                         Use Strategy <ArrowUpRight className="w-4 h-4 ml-2" />
                                     </Button>
@@ -556,31 +551,31 @@ export default function AdCampaignsPage() {
             </section>
 
             {/* Campaigns Management */}
-            <Card className="bg-[#0a0a0a] border-white/10 overflow-hidden min-h-[500px] shadow-2xl">
+            <Card className="bg-card border-border overflow-hidden min-h-[500px] shadow-sm">
                 <Tabs defaultValue="active" className="w-full">
-                    <div className="p-6 border-b border-white/5 flex flex-col md:flex-row justify-between items-center gap-6">
-                        <h2 className="text-xl font-bold flex items-center gap-3 text-white">
+                    <div className="p-6 border-b border-border flex flex-col md:flex-row justify-between items-center gap-6">
+                        <h2 className="text-xl font-bold flex items-center gap-3 text-foreground">
                             <div className="p-2 bg-orange-500/10 rounded-lg">
                                 <Target className="w-5 h-5 text-orange-500" />
                             </div>
                             Campaign Performance
                         </h2>
-                        <TabsList className="bg-black/40 border border-white/10 p-1 rounded-lg h-auto flex-wrap justify-center">
+                        <TabsList className="bg-muted/50 border border-border p-1 rounded-xl h-auto flex-wrap justify-center">
                             <TabsTrigger
                                 value="active"
-                                className="px-6 py-2 rounded-md data-[state=active]:bg-orange-600 data-[state=active]:text-white text-gray-400 hover:text-gray-200 transition-all"
+                                className="px-6 py-2 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground hover:text-foreground transition-all"
                             >
                                 Active
                             </TabsTrigger>
                             <TabsTrigger
                                 value="paused"
-                                className="px-6 py-2 rounded-md data-[state=active]:bg-gray-700 data-[state=active]:text-white text-gray-400 hover:text-gray-200 transition-all"
+                                className="px-6 py-2 rounded-lg data-[state=active]:bg-muted data-[state=active]:text-foreground text-muted-foreground hover:text-foreground transition-all"
                             >
                                 Paused
                             </TabsTrigger>
                             <TabsTrigger
                                 value="history"
-                                className="px-6 py-2 rounded-md data-[state=active]:bg-blue-600 data-[state=active]:text-white text-gray-400 hover:text-gray-200 transition-all"
+                                className="px-6 py-2 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground hover:text-foreground transition-all"
                             >
                                 History
                             </TabsTrigger>
@@ -631,8 +626,8 @@ export default function AdCampaignsPage() {
                         </TabsContent>
 
                         <TabsContent value="history" className="m-0">
-                            <div className="bg-black/20 rounded-xl border border-white/5 overflow-hidden">
-                                <div className="p-4 bg-white/5 font-semibold text-gray-300 text-sm grid grid-cols-4 gap-4">
+                            <div className="bg-muted/20 rounded-xl border border-border overflow-hidden">
+                                <div className="p-4 bg-muted/40 font-semibold text-muted-foreground text-sm grid grid-cols-4 gap-4">
                                     <div>Date</div>
                                     <div>Description</div>
                                     <div className="text-right">Amount</div>
@@ -640,13 +635,13 @@ export default function AdCampaignsPage() {
                                 </div>
                                 <div className="max-h-[400px] overflow-y-auto">
                                     {transactions.map(t => (
-                                        <div key={t.id} className="p-4 border-t border-white/5 grid grid-cols-4 gap-4 text-sm hover:bg-white/5 transition-colors">
-                                            <div className="text-gray-400">{t.createdAt.toLocaleDateString()}</div>
-                                            <div className="text-gray-200 truncate">{t.description}</div>
-                                            <div className={`text-right font-mono font-medium ${t.type === 'purchase' ? 'text-green-400' : 'text-red-400'}`}>
+                                        <div key={t.id} className="p-4 border-t border-border grid grid-cols-4 gap-4 text-sm hover:bg-muted/30 transition-colors">
+                                            <div className="text-muted-foreground">{t.createdAt.toLocaleDateString()}</div>
+                                            <div className="text-foreground truncate">{t.description}</div>
+                                            <div className={`text-right font-mono font-medium ${t.type === 'purchase' ? 'text-emerald-600 dark:text-emerald-400' : 'text-destructive'}`}>
                                                 {t.type === 'purchase' ? '+' : '-'}{t.amount}
                                             </div>
-                                            <div className="text-right font-mono text-gray-500">{t.balanceAfter}</div>
+                                            <div className="text-right font-mono text-muted-foreground">{t.balanceAfter}</div>
                                         </div>
                                     ))}
                                 </div>
@@ -658,25 +653,25 @@ export default function AdCampaignsPage() {
 
             {/* Campaign Creation Dialog */}
             <Dialog open={campaignDialog} onOpenChange={setCampaignDialog}>
-                <DialogContent className="bg-[#0a0a0a] border-gray-800 text-white max-w-2xl">
+                <DialogContent className="bg-card border-border text-card-foreground max-w-2xl shadow-2xl">
                     <DialogHeader>
-                        <DialogTitle className="text-xl flex items-center gap-2">
-                            <Zap className="w-5 h-5 text-orange-500" />
+                        <DialogTitle className="text-xl flex items-center gap-2 text-foreground">
+                            <Zap className="w-5 h-5 text-primary" />
                             Create High-Impact Campaign
                         </DialogTitle>
-                        <DialogDescription className="text-gray-400">
+                        <DialogDescription className="text-muted-foreground">
                             Design your ad to target specific time slots and customers.
                         </DialogDescription>
                     </DialogHeader>
 
                     <div className="space-y-6 pt-4">
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label className="text-gray-400 text-xs uppercase tracking-widest">Target Menu Item</Label>
+                                <Label className="text-muted-foreground text-xs uppercase tracking-widest">Target Menu Item</Label>
                                 <select
                                     value={newCampaign.menuItemId}
                                     onChange={(e) => setNewCampaign({ ...newCampaign, menuItemId: e.target.value })}
-                                    className="w-full bg-gray-900 border-gray-700 text-white rounded-md h-10 px-3 focus:ring-orange-500 focus:border-orange-500"
+                                    className="w-full bg-card border border-input text-foreground rounded-md h-10 px-3 focus:ring-primary focus:border-primary"
                                 >
                                     <option value="">Select Item</option>
                                     {menuItems.map(item => (
@@ -685,66 +680,66 @@ export default function AdCampaignsPage() {
                                 </select>
                             </div>
                             <div className="space-y-2">
-                                <Label className="text-gray-400 text-xs uppercase tracking-widest">Campaign Goal</Label>
+                                <Label className="text-muted-foreground text-xs uppercase tracking-widest">Campaign Goal</Label>
                                 <Input
                                     placeholder="e.g. Boost Weekend Sales"
                                     value={newCampaign.title}
                                     onChange={(e) => setNewCampaign({ ...newCampaign, title: e.target.value })}
-                                    className="bg-gray-900 border-gray-700 text-white"
+                                    className="bg-card border-input text-foreground"
                                 />
                             </div>
                         </div>
 
                         <div className="space-y-2">
-                            <Label className="text-gray-400 text-xs uppercase tracking-widest">Ad Copy / Description</Label>
+                            <Label className="text-muted-foreground text-xs uppercase tracking-widest">Ad Copy / Description</Label>
                             <Textarea
                                 placeholder="Why should customers buy this? e.g. 'Freshly baked and 20% off!'"
                                 value={newCampaign.description}
                                 onChange={(e) => setNewCampaign({ ...newCampaign, description: e.target.value })}
-                                className="bg-gray-900 border-gray-700 text-white min-h-[80px]"
+                                className="bg-card border-input text-foreground min-h-[80px]"
                             />
                         </div>
 
-                        <div className="p-4 bg-gradient-to-r from-orange-500/10 to-red-500/10 rounded-xl border border-orange-500/20 space-y-4">
-                            <div className="flex items-center gap-2 text-orange-400 font-semibold">
+                        <div className="p-4 bg-primary/5 rounded-xl border border-primary/20 space-y-4">
+                            <div className="flex items-center gap-2 text-primary font-semibold">
                                 <Coins className="w-4 h-4" /> Budget Settings
                             </div>
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
-                                    <Label className="text-gray-500 text-xs mb-1.5 block">Budget Type</Label>
+                                    <Label className="text-muted-foreground text-xs mb-1.5 block">Budget Type</Label>
                                     <select
                                         value={newCampaign.budget}
                                         onChange={(e) => setNewCampaign({ ...newCampaign, budget: e.target.value as any })}
-                                        className="w-full bg-black/40 border-gray-700 text-white rounded-md h-9 px-2 text-sm"
+                                        className="w-full bg-card border border-input text-foreground rounded-md h-9 px-2 text-sm"
                                     >
                                         <option value="daily">Daily Cap</option>
                                         <option value="monthly">Total Budget</option>
                                     </select>
                                 </div>
                                 <div>
-                                    <Label className="text-gray-500 text-xs mb-1.5 block">Points Allocation</Label>
+                                    <Label className="text-muted-foreground text-xs mb-1.5 block">Points Allocation</Label>
                                     <Input
                                         type="number"
                                         placeholder="Points (e.g. 50)"
                                         value={newCampaign.cost}
                                         onChange={(e) => setNewCampaign({ ...newCampaign, cost: e.target.value })}
-                                        className="bg-black/40 border-gray-700 text-white h-9"
+                                        className="bg-card border-input text-foreground h-9"
                                     />
                                 </div>
                             </div>
-                            <p className="text-xs text-gray-400 flex items-center gap-1.5">
-                                <Lightbulb className="w-3 h-3 text-yellow-500" />
+                            <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                                <Lightbulb className="w-3 h-3 text-amber-500" />
                                 <span>Estimated reach: <strong>{newCampaign.cost ? parseInt(newCampaign.cost) * 40 : 0} views</strong> (approx)</span>
                             </p>
                         </div>
                     </div>
 
                     <DialogFooter>
-                        <Button variant="ghost" onClick={() => setCampaignDialog(false)} className="hover:bg-white/5 hover:text-white">Cancel</Button>
+                        <Button variant="ghost" onClick={() => setCampaignDialog(false)} className="hover:bg-muted text-foreground">Cancel</Button>
                         <Button
                             onClick={handleCreateCampaign}
                             disabled={processing}
-                            className="bg-white text-black hover:bg-gray-200"
+                            className="bg-primary text-primary-foreground hover:bg-primary/90 font-bold"
                         >
                             {processing ? <Spinner className="mr-2" /> : <TrendingUp className="mr-2 w-4 h-4" />}
                             Launch Campaign
@@ -755,10 +750,10 @@ export default function AdCampaignsPage() {
 
             {/* Payment Dialog */}
             <Dialog open={pointsDialog} onOpenChange={setPointsDialog}>
-                <DialogContent className="bg-[#0a0a0a] border-gray-800 text-white">
+                <DialogContent className="bg-card border-border text-card-foreground shadow-2xl">
                     <DialogHeader>
-                        <DialogTitle>Add Funds to Wallet</DialogTitle>
-                        <DialogDescription className="text-gray-400">Secure payment via Razorpay. 1 Point = ₹5</DialogDescription>
+                        <DialogTitle className="text-foreground">Add Funds to Wallet</DialogTitle>
+                        <DialogDescription className="text-muted-foreground">Secure payment via Razorpay. 1 Point = ₹5</DialogDescription>
                     </DialogHeader>
                     <div className="grid grid-cols-3 gap-3 py-4">
                         {[100, 500, 1000].map(amt => (
@@ -766,7 +761,7 @@ export default function AdCampaignsPage() {
                                 key={amt}
                                 onClick={() => setPaymentAmount(amt.toString())}
                                 className={`p-4 rounded-xl border transition-all flex flex-col items-center justify-center gap-1
-                                    ${paymentAmount === amt.toString() ? 'bg-orange-500 text-white border-orange-500' : 'bg-gray-900 border-gray-700 text-gray-400 hover:border-gray-500'}
+                                    ${paymentAmount === amt.toString() ? 'bg-primary text-primary-foreground border-primary' : 'bg-muted/40 border-border text-foreground hover:border-primary/40'}
                                 `}
                             >
                                 <span className="text-lg font-bold">₹{amt}</span>
@@ -780,14 +775,14 @@ export default function AdCampaignsPage() {
                             placeholder="Custom Amount"
                             value={paymentAmount}
                             onChange={(e) => setPaymentAmount(e.target.value)}
-                            className="bg-gray-900 border-gray-700 text-white pl-8"
+                            className="bg-card border-input text-foreground pl-8"
                         />
-                        <span className="absolute left-3 top-2.5 text-gray-500">₹</span>
+                        <span className="absolute left-3 top-2.5 text-muted-foreground">₹</span>
                     </div>
                     <DialogFooter>
                         <Button
                             onClick={handleBuyPoints}
-                            className="w-full bg-green-600 hover:bg-green-500 text-white"
+                            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
                             disabled={processing || !paymentAmount}
                         >
                             {processing ? <Spinner className="mr-2" /> : <CreditCard className="mr-2 w-4 h-4" />}
@@ -804,14 +799,14 @@ export default function AdCampaignsPage() {
 // Sub-components
 function EmptyState({ icon: Icon, title, desc, action }: { icon: any, title: string, desc: string, action?: () => void }) {
     return (
-        <div className="flex flex-col items-center justify-center py-16 text-center text-gray-500">
-            <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4">
+        <div className="flex flex-col items-center justify-center py-16 text-center text-muted-foreground">
+            <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
                 <Icon className="w-8 h-8 opacity-50" />
             </div>
-            <h3 className="text-white text-lg font-semibold mb-2">{title}</h3>
+            <h3 className="text-foreground text-lg font-semibold mb-2">{title}</h3>
             <p className="max-w-xs mx-auto mb-6">{desc}</p>
             {action && (
-                <Button onClick={action} variant="outline" className="border-orange-500/50 text-orange-500 hover:bg-orange-500/10">
+                <Button onClick={action} variant="outline" className="border-primary/50 text-primary hover:bg-primary/10">
                     Get Started
                 </Button>
             )}
@@ -821,7 +816,7 @@ function EmptyState({ icon: Icon, title, desc, action }: { icon: any, title: str
 
 function CampaignCard({ campaign, onToggle, isPaused }: { campaign: AdCampaign, onToggle: () => void, isPaused?: boolean }) {
     return (
-        <Card className={`bg-black/40 border-white/10 overflow-hidden ${isPaused ? 'opacity-70 grayscale' : ''}`}>
+        <Card className={`bg-card border-border overflow-hidden shadow-sm ${isPaused ? 'opacity-70 grayscale' : ''}`}>
             <div className="flex h-full">
                 {/* Image Section */}
                 <div className="w-1/3 relative">
@@ -830,17 +825,17 @@ function CampaignCard({ campaign, onToggle, isPaused }: { campaign: AdCampaign, 
                         alt={campaign.menuItemName}
                         className="absolute inset-0 w-full h-full object-cover"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-r from-black/0 to-black/80" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-background/0 to-background/80" />
                 </div>
 
                 {/* Content Section */}
                 <div className="flex-1 p-5">
                     <div className="flex justify-between items-start mb-2">
                         <div>
-                            <h3 className="text-lg font-bold text-white leading-tight">{campaign.title}</h3>
-                            <p className="text-sm text-gray-400">{campaign.menuItemName}</p>
+                            <h3 className="text-lg font-bold text-foreground leading-tight">{campaign.title}</h3>
+                            <p className="text-sm text-muted-foreground">{campaign.menuItemName}</p>
                         </div>
-                        <Badge className={`${isPaused ? 'bg-gray-700' : 'bg-green-600'} text-xs`}>
+                        <Badge className={`${isPaused ? 'bg-muted text-muted-foreground' : 'bg-emerald-600 text-white'} text-xs`}>
                             {isPaused ? 'PAUSED' : 'LIVE'}
                         </Badge>
                     </div>
@@ -851,9 +846,9 @@ function CampaignCard({ campaign, onToggle, isPaused }: { campaign: AdCampaign, 
                         <StatBox label="Budget" value={campaign.pointsRemaining} suffix="left" highlighted />
                     </div>
 
-                    <div className="flex items-center justify-between mt-auto pt-2 border-t border-white/5">
-                        <span className="text-xs text-gray-500">Started {campaign.startDate instanceof Date ? campaign.startDate.toLocaleDateString() : 'N/A'}</span>
-                        <Button size="sm" variant="ghost" onClick={onToggle} className="h-8 hover:bg-white/10 hover:text-white">
+                    <div className="flex items-center justify-between mt-auto pt-2 border-t border-border">
+                        <span className="text-xs text-muted-foreground">Started {campaign.startDate instanceof Date ? campaign.startDate.toLocaleDateString() : 'N/A'}</span>
+                        <Button size="sm" variant="ghost" onClick={onToggle} className="h-8 hover:bg-muted text-foreground">
                             {isPaused ? <><Play className="w-3 h-3 mr-2" /> Resume</> : <><Pause className="w-3 h-3 mr-2" /> Pause</>}
                         </Button>
                     </div>
@@ -866,9 +861,9 @@ function CampaignCard({ campaign, onToggle, isPaused }: { campaign: AdCampaign, 
 function StatBox({ label, value, suffix, highlighted }: any) {
     return (
         <div>
-            <p className="text-[10px] text-gray-500 uppercase tracking-wider">{label}</p>
-            <p className={`text-lg font-mono font-bold ${highlighted ? 'text-orange-400' : 'text-gray-200'}`}>
-                {value} <span className="text-[10px] font-normal text-gray-500">{suffix}</span>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{label}</p>
+            <p className={`text-lg font-mono font-bold ${highlighted ? 'text-primary' : 'text-foreground'}`}>
+                {value} <span className="text-[10px] font-normal text-muted-foreground">{suffix}</span>
             </p>
         </div>
     );

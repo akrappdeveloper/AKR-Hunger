@@ -64,7 +64,7 @@ export default function NotificationItem({ notification }: NotificationItemProps
   return (
     <div
       onClick={handleClick}
-      className={`relative flex items-start gap-4 p-4 cursor-pointer transition-all duration-200 group hover:bg-white/5 ${!notification.read ? 'bg-blue-600/5' : ''
+      className={`relative flex items-start gap-4 p-4 cursor-pointer transition-all duration-200 group hover:bg-muted/60 ${!notification.read ? 'bg-primary/5' : ''
         }`}
     >
       <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center border ${color}`}>
@@ -73,27 +73,27 @@ export default function NotificationItem({ notification }: NotificationItemProps
 
       <div className="flex-1 min-w-0 pt-0.5">
         <div className="flex items-start justify-between gap-2">
-          <h3 className={`text-sm font-semibold truncate ${!notification.read ? 'text-white' : 'text-gray-300'}`}>
+          <h3 className={`text-sm font-semibold truncate ${!notification.read ? 'text-foreground font-bold' : 'text-foreground/80'}`}>
             {notification.title}
           </h3>
-          <span className="text-[10px] text-gray-500 whitespace-nowrap pt-0.5">
+          <span className="text-[10px] text-muted-foreground whitespace-nowrap pt-0.5">
             {timeAgo(notification.createdAt)}
           </span>
         </div>
 
-        <p className="text-xs text-gray-400 mt-1 leading-relaxed line-clamp-2 group-hover:text-gray-300 transition-colors">
+        <p className="text-xs text-muted-foreground mt-1 leading-relaxed line-clamp-2 group-hover:text-foreground transition-colors">
           {notification.message}
         </p>
       </div>
 
       {!notification.read && (
-        <div className="absolute right-4 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.8)]" />
+        <div className="absolute right-4 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_8px_rgba(59,130,246,0.8)]" />
       )}
 
       {/* Delete button (visible on hover) */}
       <button
         onClick={handleDelete}
-        className="absolute right-2 top-2 p-1.5 text-gray-600 hover:text-red-400 rounded-full hover:bg-white/10 opacity-0 group-hover:opacity-100 transition-all duration-200"
+        className="absolute right-2 top-2 p-1.5 text-muted-foreground hover:text-red-500 rounded-full hover:bg-red-500/10 opacity-0 group-hover:opacity-100 transition-all duration-200"
       >
         <X size={14} />
       </button>

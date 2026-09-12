@@ -77,6 +77,17 @@ export async function validatePromotionCode(
             };
         }
 
+        if (
+            (promotion as any).restaurantId &&
+            restaurantId &&
+            (promotion as any).restaurantId !== restaurantId
+        ) {
+            return {
+                valid: false,
+                error: 'This promotion is not applicable to this restaurant',
+            };
+        }
+
         // Check total usage limit
         if (promotion.usageLimit && promotion.usageCount >= promotion.usageLimit) {
             return { valid: false, error: 'This promotion has reached its usage limit' };

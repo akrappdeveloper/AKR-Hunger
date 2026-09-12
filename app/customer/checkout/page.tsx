@@ -20,8 +20,8 @@ export default function CheckoutPage() {
   }, [router]);
 
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center">
-      <Spinner className="text-orange-500 w-8 h-8" />
+    <div className="min-h-screen bg-background flex items-center justify-center">
+      <Spinner className="text-primary w-8 h-8" />
     </div>
   );
 }

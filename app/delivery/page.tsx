@@ -254,18 +254,78 @@ export default function DeliveryDashboard() {
 
   const completeDelivery = async (orderId: string) => {
     try {
-      await updateDoc(doc(db, 'orders', orderId), {
-        status: 'delivered',
-        deliveryStatus: 'delivered',
-        paymentStatus: 'paid',
-        deliveredAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
+      if (!user) return;
+
+      await runTransaction(db, async (transaction) => {
+        const orderRef = doc(db, 'orders', orderId);
+        const orderDoc = await transaction.get(orderRef);
+
+        if (!orderDoc.exists()) {
+          throw new Error("Order does not exist!");
+        }
+
+        const orderData = orderDoc.data() as Order;
+        const deliveryCharge = orderData.deliveryCharge || 0;
+        const earnings = deliveryCharge * 0.70;
+        const totalAmount = orderData.total || 0;
+        const isCOD = orderData.paymentMethod === 'cod';
+
+        // Calculate Wallet Impact
+        // Positive Wallet Balance = Delivery Person OWES Platform (Cash in hand)
+        // Negative Wallet Balance = Platform OWES Delivery Person (Earnings)
+
+        let walletChange = 0;
+
+        if (isCOD) {
+          // Driver collected Cash (Total).
+          // Driver keeps 'Earnings'.
+          // Driver owes 'Total - Earnings' to Platform.
+          // Example: Total 100, Earn 20. Coll 100. Keeps 20. Owes 80.
+          // Balance Change = + (100 - 20) = +80.
+          walletChange = totalAmount - earnings;
+        } else {
+          // Online Payment (Platform has money).
+          // Platform owes 'Earnings' to Driver.
+          // Balance Change = - Earnings.
+          // Example: Earn 20. Balance Change = -20.
+          walletChange = -earnings;
+        }
+
+        // Update Order
+        transaction.update(orderRef, {
+          status: 'delivered',
+          deliveryStatus: 'delivered',
+          paymentStatus: 'paid',
+          deliveredAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        });
+
+        // Update Delivery Person Wallet
+        const driverRef = doc(db, 'deliveryPersons', user.uid);
+        transaction.update(driverRef, {
+          walletBalance: increment(walletChange)
+        });
+
+        // Log Transaction
+        const walletTxRef = doc(collection(driverRef, 'walletTransactions'));
+        transaction.set(walletTxRef, {
+          amount: Math.abs(walletChange),
+          type: walletChange > 0 ? 'cod_collection' : 'earnings', // Simplified type
+          description: isCOD
+            ? `Order #${orderId.slice(0, 6)} (COD: ₹${totalAmount} - Earn: ₹${earnings})`
+            : `Order #${orderId.slice(0, 6)} Earnings`,
+          orderId: orderId,
+          isDebit: walletChange > 0, // True if debt increases (Driver owes more)
+          createdAt: serverTimestamp()
+        });
       });
-      toast.success('Order delivered & Payment marked as Paid!');
+
+      toast.success('Order delivered & Wallet Updated!');
       setShowOtpDialog(false);
       setVerifyingOrderId(null);
     } catch (error) {
-      toast.error("Failed to mark delivered");
+      console.error("Delivery Error:", error);
+      toast.error("Failed to update status");
     }
   };
 
@@ -444,7 +504,7 @@ export default function DeliveryDashboard() {
                 >
                   {/* Status Bar */}
                   <div className={`h-1.5 w-full bg-gradient-to-r ${order.deliveryStatus === 'going_to_restaurant' ? 'from-orange-500 via-yellow-500 to-orange-500' :
-                      'from-blue-500 via-indigo-500 to-blue-500'
+                    'from-blue-500 via-indigo-500 to-blue-500'
                     } animate-progress-flow`} />
 
                   <div className="p-6 md:p-8 relative">

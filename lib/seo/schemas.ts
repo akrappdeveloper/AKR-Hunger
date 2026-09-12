@@ -140,3 +140,141 @@ export function generateWebSiteSchema() {
         },
     }
 }
+
+/**
+ * Generate FAQ schema for common platform questions
+ */
+export function generateFAQSchema() {
+    return {
+        '@context': 'https://schema.org',
+        '@type': 'FAQPage',
+        mainEntity: [
+            {
+                '@type': 'Question',
+                name: 'What is AKR Hunger?',
+                acceptedAnswer: {
+                    '@type': 'Answer',
+                    text: 'AKR Hunger is a leading food delivery platform that connects customers with their favorite local restaurants for fast and reliable food delivery.',
+                },
+            },
+            {
+                '@type': 'Question',
+                name: 'How to order food on AKR Hunger?',
+                acceptedAnswer: {
+                    '@type': 'Answer',
+                    text: 'You can order food on AKR Hunger by visiting our website or downloading our mobile app. Simply browse restaurants, select your items, and checkout securely.',
+                },
+            },
+            {
+                '@type': 'Question',
+                name: 'Is AKR Hunger available near me?',
+                acceptedAnswer: {
+                    '@type': 'Answer',
+                    text: 'AKR Hunger is rapidly expanding across major cities. You can check availability by entering your delivery address on our homepage or app.',
+                },
+            },
+            {
+                '@type': 'Question',
+                name: 'Is AKR Hunger mobile friendly?',
+                acceptedAnswer: {
+                    '@type': 'Answer',
+                    text: 'Yes, AKR Hunger is fully optimized for mobile devices. We offer a seamless experience on both our responsive website and dedicated mobile applications.',
+                },
+            },
+            {
+                '@type': 'Question',
+                name: 'Does AKR Hunger provide fast delivery?',
+                acceptedAnswer: {
+                    '@type': 'Answer',
+                    text: 'Yes, we prioritize speed. Our advanced logistics network ensures your food reaches you hot and fresh in the shortest time possible.',
+                },
+            },
+        ],
+    }
+}
+
+/**
+ * Generate Restaurant schema for detailed restaurant pages
+ */
+export function generateRestaurantSchema(restaurant: any, menuItems: any[]) {
+    return {
+        '@context': 'https://schema.org',
+        '@type': 'Restaurant',
+        name: restaurant.name,
+        image: restaurant.image,
+        url: `${baseUrl}/customer/restaurant/${restaurant.id}`,
+        telephone: restaurant.phone,
+        address: {
+            '@type': 'PostalAddress',
+            streetAddress: restaurant.address,
+            addressCountry: 'IN',
+        },
+        geo: {
+            '@type': 'GeoCoordinates',
+            latitude: restaurant.location?.lat,
+            longitude: restaurant.location?.lng,
+        },
+        servesCuisine: restaurant.cuisineType,
+        priceRange: '₹₹',
+        aggregateRating: {
+            '@type': 'AggregateRating',
+            ratingValue: restaurant.averageRating || restaurant.rating || 4.2,
+            reviewCount: restaurant.totalReviews || restaurant.reviews || 0,
+            bestRating: 5,
+            worstRating: 1,
+        },
+        hasMenu: {
+            '@type': 'Menu',
+            name: 'Main Menu',
+            hasMenuSection: Object.entries(
+                menuItems.reduce((acc: any, item: any) => {
+                    if (!acc[item.category]) acc[item.category] = [];
+                    acc[item.category].push(item);
+                    return acc;
+                }, {})
+            ).map(([category, items]: [string, any]) => ({
+                '@type': 'MenuSection',
+                name: category,
+                hasMenuItem: items.map((item: any) => ({
+                    '@type': 'MenuItem',
+                    name: item.name,
+                    description: item.description,
+                    offers: {
+                        '@type': 'Offer',
+                        price: item.price,
+                        priceCurrency: 'INR',
+                    },
+                })),
+            })),
+        },
+    }
+}
+
+/**
+ * Generate Product schema for individual menu items
+ */
+export function generateMenuItemSchema(item: any, restaurantName: string) {
+    return {
+        '@context': 'https://schema.org',
+        '@type': 'Product',
+        name: item.name,
+        image: item.image,
+        description: item.description,
+        brand: {
+            '@type': 'Restaurant',
+            name: restaurantName,
+        },
+        offers: {
+            '@type': 'Offer',
+            url: `${baseUrl}/customer/product/${item.id}`,
+            priceCurrency: 'INR',
+            price: item.price,
+            availability: 'https://schema.org/InStock',
+        },
+        aggregateRating: {
+            '@type': 'AggregateRating',
+            ratingValue: item.averageRating || 4.5,
+            reviewCount: item.totalReviews || 1,
+        },
+    }
+}

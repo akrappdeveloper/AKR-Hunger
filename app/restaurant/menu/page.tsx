@@ -302,8 +302,8 @@ export default function MenuManagementPage() {
 
   if (authLoading || loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-black">
-        <Spinner className="w-8 h-8 text-orange-500" />
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <Spinner className="w-8 h-8 text-primary" />
       </div>
     );
   }
@@ -323,23 +323,23 @@ export default function MenuManagementPage() {
       initial="hidden"
       animate="visible"
       variants={containerVariants}
-      className="min-h-screen bg-[#050505] p-4 md:p-8 space-y-8 text-white selection:bg-orange-500/30 font-sans pb-24"
+      className="min-h-screen bg-background p-4 md:p-8 space-y-8 text-foreground selection:bg-primary/30 font-sans pb-24 transition-colors duration-300"
     >
 
       {/* Hero Header */}
-      <motion.div variants={itemVariants} className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-orange-600/10 via-red-900/10 to-black border border-white/5 p-8 md:p-10 mb-8">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-orange-500/10 rounded-full blur-[80px] -z-10" />
+      <motion.div variants={itemVariants} className="relative overflow-hidden rounded-3xl bg-card border border-border p-8 md:p-10 mb-8 shadow-sm">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[80px] -z-10" />
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <Badge className="bg-orange-500/20 text-orange-400 border border-orange-500/30 hover:bg-orange-500/30 px-3 py-1">
+              <Badge className="bg-primary/10 text-primary border border-primary/20 px-3 py-1">
                 Restaurant Partners
               </Badge>
             </div>
-            <h1 className="text-4xl md:text-6xl font-black text-white tracking-tight mb-3">
-              Menu <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600">Editor</span>
+            <h1 className="text-3xl md:text-5xl font-black text-foreground tracking-tight mb-3">
+              Menu <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-orange-500">Editor</span>
             </h1>
-            <p className="text-gray-400 text-lg max-w-xl leading-relaxed">
+            <p className="text-muted-foreground text-base md:text-lg max-w-xl leading-relaxed">
               Craft your digital menu with precision. Add detailed descriptions, enticing images, and manage availability in real-time.
             </p>
           </div>
@@ -369,53 +369,54 @@ export default function MenuManagementPage() {
             setDialogOpen(open);
           }}>
             <DialogTrigger asChild>
-              <Button className="h-14 px-8 rounded-full gap-2 bg-white text-black hover:bg-gray-200 font-bold text-lg shadow-[0_0_30px_-5px_rgba(255,255,255,0.3)] transition-all hover:scale-105 active:scale-95 group">
-                <Plus className="w-6 h-6 group-hover:rotate-90 transition-transform duration-300" />
+              <Button className="h-12 md:h-14 px-6 md:px-8 rounded-full gap-2 bg-primary text-primary-foreground hover:bg-primary/90 font-bold text-base md:text-lg shadow-lg hover:shadow-primary/20 transition-all hover:scale-105 active:scale-95 group">
+                <Plus className="w-5 h-5 md:w-6 md:h-6 group-hover:rotate-90 transition-transform duration-300" />
                 Add New Dish
               </Button>
             </DialogTrigger>
 
             {/* ADD ITEM DIALOG */}
-            <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto bg-black border-white/10 text-white backdrop-blur-2xl shadow-2xl p-0 gap-0 [&::-webkit-scrollbar]:hidden">
-              <div className="sticky top-0 z-20 bg-black/90 backdrop-blur-md border-b border-white/10 p-6 flex justify-between items-center">
+            <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto bg-card border-border text-card-foreground backdrop-blur-2xl shadow-2xl p-0 gap-0 [&::-webkit-scrollbar]:hidden">
+              <div className="sticky top-0 z-20 bg-card/95 backdrop-blur-md border-b border-border p-6 flex justify-between items-center">
                 <div>
-                  <DialogTitle className="text-2xl font-bold text-white">Add New Menu Item</DialogTitle>
-                  <DialogDescription className="text-gray-400">Create a masterpiece for your menu.</DialogDescription>
+                  <DialogTitle className="text-2xl font-bold text-foreground">
+                    {editingId ? 'Edit Menu Item' : 'Add New Menu Item'}
+                  </DialogTitle>
+                  <DialogDescription className="text-muted-foreground">Create a masterpiece for your menu.</DialogDescription>
                 </div>
-                {/* Close button is handled by DialogPrimitive, but we can add custom if needed or rely on default */}
               </div>
 
               <div className="p-6 md:p-8">
                 <Tabs defaultValue="basic" className="w-full">
-                  <TabsList className="bg-white/5 border border-white/10 p-1 rounded-2xl w-full grid grid-cols-3 gap-1 mb-8">
-                    <TabsTrigger value="basic" className="rounded-xl py-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-600 data-[state=active]:to-red-600 data-[state=active]:text-white data-[state=active]:shadow-lg text-gray-400 font-bold transition-all">Basic Info</TabsTrigger>
-                    <TabsTrigger value="details" className="rounded-xl py-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-600 data-[state=active]:to-red-600 data-[state=active]:text-white data-[state=active]:shadow-lg text-gray-400 font-bold transition-all">Details</TabsTrigger>
-                    <TabsTrigger value="attributes" className="rounded-xl py-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-600 data-[state=active]:to-red-600 data-[state=active]:text-white data-[state=active]:shadow-lg text-gray-400 font-bold transition-all">Attributes</TabsTrigger>
+                  <TabsList className="bg-muted/50 border border-border p-1 rounded-2xl w-full grid grid-cols-3 gap-1 mb-8">
+                    <TabsTrigger value="basic" className="rounded-xl py-3 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg text-muted-foreground font-bold transition-all">Basic Info</TabsTrigger>
+                    <TabsTrigger value="details" className="rounded-xl py-3 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg text-muted-foreground font-bold transition-all">Details</TabsTrigger>
+                    <TabsTrigger value="attributes" className="rounded-xl py-3 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg text-muted-foreground font-bold transition-all">Attributes</TabsTrigger>
                   </TabsList>
 
                   {/* Basic Info Tab */}
                   <TabsContent value="basic" className="space-y-6 focus-visible:outline-none">
                     {/* Images Upload */}
                     <div className="space-y-3">
-                      <Label className="text-white font-bold flex items-center gap-2">
-                        <ImageIcon className="w-4 h-4 text-orange-500" /> Item Images * (Up to 5)
+                      <Label className="text-foreground font-bold flex items-center gap-2">
+                        <ImageIcon className="w-4 h-4 text-primary" /> Item Images * (Up to 5)
                       </Label>
-                      <div className="border-2 border-dashed border-white/10 bg-white/5 rounded-2xl p-6 transition-all hover:border-orange-500/30 hover:bg-white/[0.07] group/upload">
+                      <div className="border-2 border-dashed border-border bg-muted/20 rounded-2xl p-6 transition-all hover:border-primary/50 hover:bg-muted/40 group/upload">
                         {imagePreviews.length > 0 ? (
                           <div className="space-y-4">
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                               {imagePreviews.map((preview, index) => (
-                                <div key={index} className="relative group aspect-square rounded-xl overflow-hidden border border-white/10 shadow-lg">
+                                <div key={index} className="relative group aspect-square rounded-xl overflow-hidden border border-border shadow-lg">
                                   <img
                                     src={preview}
                                     alt={`Preview ${index + 1}`}
                                     className="w-full h-full object-cover transition-transform group-hover:scale-110 duration-500"
                                   />
-                                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                  <div className="absolute inset-0 bg-background/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                     <button
                                       type="button"
                                       onClick={() => removeImage(index)}
-                                      className="p-2 bg-red-600 text-white rounded-full hover:bg-red-700 transition-transform hover:scale-110"
+                                      className="p-2 bg-destructive text-destructive-foreground rounded-full hover:bg-destructive/90 transition-transform hover:scale-110"
                                     >
                                       <Trash2 className="w-4 h-4" />
                                     </button>
@@ -426,7 +427,7 @@ export default function MenuManagementPage() {
                                 <button
                                   type="button"
                                   onClick={() => document.getElementById('image-upload')?.click()}
-                                  className="aspect-square rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 flex flex-col items-center justify-center gap-2 text-gray-400 hover:text-white transition-all"
+                                  className="aspect-square rounded-xl border border-border bg-muted/30 hover:bg-muted/60 flex flex-col items-center justify-center gap-2 text-muted-foreground hover:text-foreground transition-all"
                                 >
                                   <Plus className="w-8 h-8 opacity-50" />
                                   <span className="text-xs font-bold uppercase tracking-wider">Add More</span>
@@ -436,12 +437,12 @@ export default function MenuManagementPage() {
                           </div>
                         ) : (
                           <label htmlFor="image-upload" className="cursor-pointer flex flex-col items-center gap-4 py-8">
-                            <div className="w-20 h-20 bg-gradient-to-br from-gray-800 to-black rounded-full flex items-center justify-center border border-white/10 group-hover/upload:border-orange-500/50 shadow-inner transition-all">
-                              <Upload className="w-8 h-8 text-gray-400 group-hover/upload:text-orange-500 transition-colors" />
+                            <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center border border-border group-hover/upload:border-primary transition-all">
+                              <Upload className="w-8 h-8 text-muted-foreground group-hover/upload:text-primary transition-colors" />
                             </div>
                             <div className="text-center">
-                              <p className="text-lg font-bold text-white group-hover/upload:text-orange-400 transition-colors">Click to upload images</p>
-                              <p className="text-sm text-gray-500 mt-1">PNG, JPG up to 5MB (Max 5)</p>
+                              <p className="text-lg font-bold text-foreground group-hover/upload:text-primary transition-colors">Click to upload images</p>
+                              <p className="text-sm text-muted-foreground mt-1">PNG, JPG up to 5MB (Max 5)</p>
                             </div>
                           </label>
                         )}
@@ -458,43 +459,43 @@ export default function MenuManagementPage() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
-                        <Label htmlFor="name" className="text-gray-300">Item Name *</Label>
+                        <Label htmlFor="name" className="text-foreground">Item Name *</Label>
                         <Input
                           id="name"
                           placeholder="e.g., Truffle Mushroom Burger"
                           value={newItem.name}
                           onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
-                          className="bg-white/5 border-white/10 text-white focus:border-orange-500 h-14 rounded-xl px-4 text-lg font-medium"
+                          className="bg-card border-border text-foreground placeholder:text-muted-foreground focus:border-primary h-14 rounded-xl px-4 text-lg font-medium"
                         />
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="category" className="text-gray-300">Category *</Label>
+                        <Label htmlFor="category" className="text-foreground">Category *</Label>
                         <Input
                           id="category"
                           placeholder="e.g., Burgers & Wraps"
                           value={newItem.category}
                           onChange={(e) => setNewItem({ ...newItem, category: e.target.value })}
-                          className="bg-white/5 border-white/10 text-white focus:border-orange-500 h-14 rounded-xl px-4 text-lg"
+                          className="bg-card border-border text-foreground placeholder:text-muted-foreground focus:border-primary h-14 rounded-xl px-4 text-lg"
                         />
                       </div>
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="description" className="text-gray-300">Description</Label>
+                      <Label htmlFor="description" className="text-foreground">Description</Label>
                       <Textarea
                         id="description"
                         placeholder="Describe the textures, flavors, and key ingredients that make this dish special..."
                         value={newItem.description}
                         onChange={(e) => setNewItem({ ...newItem, description: e.target.value })}
-                        className="bg-white/5 border-white/10 text-white focus:border-orange-500 min-h-[120px] rounded-xl p-4 text-base resize-none"
+                        className="bg-card border-border text-foreground placeholder:text-muted-foreground focus:border-primary min-h-[120px] rounded-xl p-4 text-base resize-none"
                       />
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="price" className="text-gray-300">Price (₹) *</Label>
+                      <Label htmlFor="price" className="text-foreground">Price (₹) *</Label>
                       <div className="relative group/price">
-                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-bold text-lg group-focus-within/price:text-orange-500 transition-colors">₹</span>
+                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground font-bold text-lg group-focus-within/price:text-primary transition-colors">₹</span>
                         <Input
                           id="price"
                           type="number"
@@ -503,7 +504,7 @@ export default function MenuManagementPage() {
                           onChange={(e) => setNewItem({ ...newItem, price: e.target.value })}
                           min="0"
                           step="0.01"
-                          className="bg-white/5 border-white/10 text-white focus:border-orange-500 pl-10 h-14 rounded-xl text-xl font-bold font-mono tracking-wide"
+                          className="bg-card border-border text-foreground placeholder:text-muted-foreground focus:border-primary pl-10 h-14 rounded-xl text-xl font-bold font-mono tracking-wide"
                         />
                       </div>
                     </div>
@@ -511,75 +512,75 @@ export default function MenuManagementPage() {
 
                   {/* Details Tab */}
                   <TabsContent value="details" className="space-y-6 focus-visible:outline-none">
-                    <div className="grid grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="prepTime" className="text-gray-300">Prep Time (min)</Label>
+                        <Label htmlFor="prepTime" className="text-foreground">Prep Time (min)</Label>
                         <div className="relative">
-                          <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                          <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                           <Input
                             id="prepTime"
                             type="number"
                             placeholder="30"
                             value={newItem.preparationTime}
                             onChange={(e) => setNewItem({ ...newItem, preparationTime: e.target.value })}
-                            className="bg-white/5 border-white/10 text-white h-12 rounded-xl pl-10"
+                            className="bg-card border-border text-foreground placeholder:text-muted-foreground h-12 rounded-xl pl-10"
                           />
                         </div>
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="servings" className="text-gray-300">Servings</Label>
+                        <Label htmlFor="servings" className="text-foreground">Servings</Label>
                         <div className="relative">
-                          <Users className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                          <Users className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                           <Input
                             id="servings"
                             type="number"
                             placeholder="1"
                             value={newItem.servings}
                             onChange={(e) => setNewItem({ ...newItem, servings: e.target.value })}
-                            className="bg-white/5 border-white/10 text-white h-12 rounded-xl pl-10"
+                            className="bg-card border-border text-foreground placeholder:text-muted-foreground h-12 rounded-xl pl-10"
                           />
                         </div>
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="calories" className="text-gray-300">Calories</Label>
+                        <Label htmlFor="calories" className="text-foreground">Calories</Label>
                         <div className="relative">
-                          <Flame className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                          <Flame className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                           <Input
                             id="calories"
                             type="number"
                             placeholder="450"
                             value={newItem.calories}
                             onChange={(e) => setNewItem({ ...newItem, calories: e.target.value })}
-                            className="bg-white/5 border-white/10 text-white h-12 rounded-xl pl-10"
+                            className="bg-card border-border text-foreground placeholder:text-muted-foreground h-12 rounded-xl pl-10"
                           />
                         </div>
                       </div>
                     </div>
 
                     <div className="space-y-3">
-                      <Label htmlFor="allergens" className="text-gray-300">Allergens</Label>
+                      <Label htmlFor="allergens" className="text-foreground">Allergens</Label>
                       <div className="relative">
-                        <AlertCircle className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                        <AlertCircle className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                         <Input
                           id="allergens"
                           placeholder="e.g., Gluten, Dairy, Cashews (Comma separated)"
                           value={newItem.allergens}
                           onChange={(e) => setNewItem({ ...newItem, allergens: e.target.value })}
-                          className="bg-white/5 border-white/10 text-white h-14 rounded-xl pl-12"
+                          className="bg-card border-border text-foreground placeholder:text-muted-foreground h-14 rounded-xl pl-12"
                         />
                       </div>
                     </div>
 
                     <div className="space-y-3">
-                      <Label htmlFor="tags" className="text-gray-300">Tags</Label>
+                      <Label htmlFor="tags" className="text-foreground">Tags</Label>
                       <div className="relative">
-                        <Tag className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                        <Tag className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                         <Input
                           id="tags"
                           placeholder="e.g., Chef's Special, Spicy, Weekend Only"
                           value={newItem.tags}
                           onChange={(e) => setNewItem({ ...newItem, tags: e.target.value })}
-                          className="bg-white/5 border-white/10 text-white h-14 rounded-xl pl-12"
+                          className="bg-card border-border text-foreground placeholder:text-muted-foreground h-14 rounded-xl pl-12"
                         />
                       </div>
                     </div>
@@ -589,26 +590,26 @@ export default function MenuManagementPage() {
                   <TabsContent value="attributes" className="space-y-6 focus-visible:outline-none">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {[
-                        { label: 'Vegetarian', desc: 'Contains no meat ingredients', checked: newItem.isVegetarian, key: 'isVegetarian', icon: '🥬', color: 'text-green-400', bg: 'bg-green-500/10', border: 'border-green-500/20' },
-                        { label: 'Spicy', desc: 'Contains hot spices or peppers', checked: newItem.isSpicy, key: 'isSpicy', icon: '🌶️', color: 'text-red-400', bg: 'bg-red-500/10', border: 'border-red-500/20' },
-                        { label: 'Available', desc: 'Currently in stock and ready to serve', checked: newItem.isAvailable, key: 'isAvailable', icon: '✅', color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20' },
-                        { label: 'Best Seller', desc: 'Popular item among customers', checked: newItem.isBestSeller, key: 'isBestSeller', icon: '⭐', color: 'text-amber-400', bg: 'bg-amber-500/10', border: 'border-amber-500/20' },
-                        { label: 'New Item', desc: 'Recently added to the menu', checked: newItem.isNew, key: 'isNew', icon: '🆕', color: 'text-blue-400', bg: 'bg-blue-500/10', border: 'border-blue-500/20' },
+                        { label: 'Vegetarian', desc: 'Contains no meat ingredients', checked: newItem.isVegetarian, key: 'isVegetarian', icon: '🥬', color: 'text-emerald-500', bg: 'bg-emerald-500/10', border: 'border-emerald-500/30' },
+                        { label: 'Spicy', desc: 'Contains hot spices or peppers', checked: newItem.isSpicy, key: 'isSpicy', icon: '🌶️', color: 'text-red-500', bg: 'bg-red-500/10', border: 'border-red-500/30' },
+                        { label: 'Available', desc: 'Currently in stock and ready to serve', checked: newItem.isAvailable, key: 'isAvailable', icon: '✅', color: 'text-emerald-500', bg: 'bg-emerald-500/10', border: 'border-emerald-500/30' },
+                        { label: 'Best Seller', desc: 'Popular item among customers', checked: newItem.isBestSeller, key: 'isBestSeller', icon: '⭐', color: 'text-amber-500', bg: 'bg-amber-500/10', border: 'border-amber-500/30' },
+                        { label: 'New Item', desc: 'Recently added to the menu', checked: newItem.isNew, key: 'isNew', icon: '🆕', color: 'text-blue-500', bg: 'bg-blue-500/10', border: 'border-blue-500/30' },
                       ].map((attr) => (
                         <label
                           key={attr.key}
-                          className={`flex items-start gap-4 p-5 rounded-2xl border cursor-pointer transition-all duration-300 ${attr.checked ? `${attr.bg} ${attr.border}` : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20'}`}
+                          className={`flex items-start gap-4 p-5 rounded-2xl border cursor-pointer transition-all duration-300 ${attr.checked ? `${attr.bg} ${attr.border}` : 'bg-muted/20 border-border hover:bg-muted/40 hover:border-border'}`}
                         >
                           <Checkbox
                             checked={attr.checked}
                             onCheckedChange={(c) => setNewItem({ ...newItem, [attr.key]: !!c })}
-                            className={`mt-1 h-5 w-5 data-[state=checked]:${attr.color.replace('text-', 'bg-').replace('-400', '-500')} border-white/30`}
+                            className="mt-1 h-5 w-5 data-[state=checked]:bg-primary border-border"
                           />
                           <div>
-                            <p className={`font-bold text-lg flex items-center gap-2 ${attr.checked ? attr.color : 'text-white'}`}>
+                            <p className={`font-bold text-lg flex items-center gap-2 ${attr.checked ? attr.color : 'text-foreground'}`}>
                               {attr.icon} {attr.label}
                             </p>
-                            <p className="text-sm text-gray-400 mt-1">{attr.desc}</p>
+                            <p className="text-sm text-muted-foreground mt-1">{attr.desc}</p>
                           </div>
                         </label>
                       ))}
@@ -617,16 +618,16 @@ export default function MenuManagementPage() {
                 </Tabs>
               </div>
 
-              <div className="sticky bottom-0 z-20 bg-black/90 backdrop-blur-xl border-t border-white/10 p-6 flex justify-end gap-4">
+              <div className="sticky bottom-0 z-20 bg-card/95 backdrop-blur-xl border-t border-border p-6 flex justify-end gap-4">
                 <DialogTrigger asChild>
-                  <Button variant="outline" type="button" disabled={submitting} className="border-white/10 bg-transparent text-white hover:bg-white/10 h-12 px-6 rounded-xl font-bold">
+                  <Button variant="outline" type="button" disabled={submitting} className="border-border bg-card text-foreground hover:bg-muted h-12 px-6 rounded-xl font-bold">
                     Cancel
                   </Button>
                 </DialogTrigger>
                 <Button
                   onClick={handleAddItem}
                   disabled={submitting}
-                  className="bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white font-bold h-12 px-8 rounded-xl shadow-lg hover:shadow-orange-500/20 transition-all"
+                  className="bg-primary text-primary-foreground hover:bg-primary/90 font-bold h-12 px-8 rounded-xl shadow-lg transition-all"
                 >
                   {submitting && <Spinner className="mr-2 h-5 w-5" />}
                   {submitting ? (editingId ? 'Updating...' : 'Publishing...') : (editingId ? 'Update Item' : 'Publish Item')}
@@ -638,40 +639,40 @@ export default function MenuManagementPage() {
       </motion.div>
 
       {/* Info Banner */}
-      <motion.div variants={itemVariants} className="p-5 rounded-2xl bg-blue-900/10 border border-blue-500/20 backdrop-blur-md flex items-center gap-4 shadow-lg">
-        <div className="p-3 bg-blue-500/20 rounded-full shrink-0">
-          <Clock className="w-5 h-5 text-blue-400" />
+      <motion.div variants={itemVariants} className="p-5 rounded-2xl bg-primary/5 border border-primary/20 backdrop-blur-md flex items-center gap-4 shadow-sm">
+        <div className="p-3 bg-primary/10 rounded-full shrink-0">
+          <Clock className="w-5 h-5 text-primary" />
         </div>
         <div>
-          <h4 className="text-blue-200 font-bold text-sm">Review Process</h4>
-          <p className="text-sm text-blue-300/80 mt-0.5">
+          <h4 className="text-foreground font-bold text-sm">Review Process</h4>
+          <p className="text-sm text-muted-foreground mt-0.5">
             All newly added items require admin approval before they appear on the customer app.
           </p>
         </div>
       </motion.div>
 
       {/* Search & Filter */}
-      <motion.div variants={itemVariants} className="sticky top-0 z-10 bg-[#050505]/80 backdrop-blur-xl py-4 flex gap-4">
+      <motion.div variants={itemVariants} className="sticky top-0 z-10 bg-background/80 backdrop-blur-xl py-4 flex gap-4">
         <div className="relative flex-1">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
           <Input
             placeholder="Search your menu..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="bg-white/5 border-white/10 h-12 pl-12 rounded-full text-white focus:border-orange-500 focus:bg-white/10 transition-all font-medium"
+            className="bg-card border-border h-12 pl-12 rounded-full text-foreground placeholder:text-muted-foreground focus:border-primary focus:bg-card transition-all font-medium"
           />
         </div>
       </motion.div>
 
       {/* Menu Items */}
       {categories.length === 0 ? (
-        <Card className="py-32 text-center bg-[#0A0A0A] border-white/10 border-dashed rounded-3xl group hover:border-white/20 transition-colors">
-          <div className="w-24 h-24 mx-auto bg-gradient-to-br from-gray-800 to-black rounded-full flex items-center justify-center mb-6 shadow-inner ring-1 ring-white/10 group-hover:scale-110 transition-transform duration-500">
-            <Utensils className="w-10 h-10 text-gray-500 group-hover:text-white transition-colors" />
+        <Card className="py-32 text-center bg-card border-border border-dashed rounded-3xl group hover:border-border transition-colors">
+          <div className="w-24 h-24 mx-auto bg-muted rounded-full flex items-center justify-center mb-6 shadow-inner ring-1 ring-border group-hover:scale-110 transition-transform duration-500">
+            <Utensils className="w-10 h-10 text-muted-foreground group-hover:text-primary transition-colors" />
           </div>
-          <h3 className="text-3xl font-black text-white mb-3">Your Menu is Empty</h3>
-          <p className="text-gray-400 mb-8 max-w-sm mx-auto text-lg">Start building your restaurant's legacy by adding your first dish.</p>
-          <Button onClick={() => setDialogOpen(true)} size="lg" className="bg-white text-black font-bold rounded-full px-10 h-14 text-lg shadow-xl hover:bg-gray-200 transition-all hover:scale-105 active:scale-95">
+          <h3 className="text-3xl font-black text-foreground mb-3">Your Menu is Empty</h3>
+          <p className="text-muted-foreground mb-8 max-w-sm mx-auto text-lg">Start building your restaurant's legacy by adding your first dish.</p>
+          <Button onClick={() => setDialogOpen(true)} size="lg" className="bg-primary text-primary-foreground font-bold rounded-full px-10 h-14 text-lg shadow-xl hover:bg-primary/90 transition-all hover:scale-105 active:scale-95">
             <Plus className="w-6 h-6 mr-2" />
             Create First Item
           </Button>
@@ -690,19 +691,19 @@ export default function MenuManagementPage() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: idx * 0.1 }}
                 >
-                  <div className={`overflow-hidden rounded-3xl transition-all duration-300 border ${isExpanded ? 'bg-[#0A0A0A] border-orange-500/20 shadow-2xl shadow-orange-900/10' : 'bg-white/5 border-white/5 hover:border-white/10'}`}>
+                  <div className={`overflow-hidden rounded-3xl transition-all duration-300 border ${isExpanded ? 'bg-card border-primary/30 shadow-xl' : 'bg-card/60 border-border hover:border-primary/30'}`}>
                     <button
                       onClick={() => setExpandedCategory(isExpanded ? null : category)}
-                      className="w-full p-6 md:p-8 flex items-center justify-between bg-gradient-to-r from-transparent via-transparent to-white/[0.02] hover:bg-white/[0.02] transition-colors"
+                      className="w-full p-6 md:p-8 flex items-center justify-between bg-card hover:bg-muted/20 transition-colors"
                     >
                       <div className="flex items-center gap-5">
-                        <div className={`w-1.5 h-10 rounded-full transition-colors ${isExpanded ? 'bg-orange-500' : 'bg-gray-700'}`} />
+                        <div className={`w-1.5 h-10 rounded-full transition-colors ${isExpanded ? 'bg-primary' : 'bg-muted-foreground/40'}`} />
                         <div className="text-left">
-                          <h3 className="font-black text-white text-2xl md:text-3xl tracking-tight">{category}</h3>
-                          <p className="text-gray-500 text-sm font-medium mt-1 uppercase tracking-wider">{categoryItems.length} ITEMS</p>
+                          <h3 className="font-black text-foreground text-2xl md:text-3xl tracking-tight">{category}</h3>
+                          <p className="text-muted-foreground text-sm font-medium mt-1 uppercase tracking-wider">{categoryItems.length} ITEMS</p>
                         </div>
                       </div>
-                      <div className={`w-12 h-12 rounded-full border border-white/10 flex items-center justify-center bg-black/40 transition-transform duration-300 ${isExpanded ? 'rotate-180 bg-orange-500/10 text-orange-400 border-orange-500/30' : 'text-gray-400'}`}>
+                      <div className={`w-12 h-12 rounded-full border border-border flex items-center justify-center bg-muted/50 transition-transform duration-300 ${isExpanded ? 'rotate-180 bg-primary/10 text-primary border-primary/30' : 'text-muted-foreground'}`}>
                         <ChevronDown className="w-6 h-6" />
                       </div>
                     </button>
@@ -713,7 +714,7 @@ export default function MenuManagementPage() {
                           initial={{ opacity: 0, height: 0 }}
                           animate={{ opacity: 1, height: 'auto' }}
                           exit={{ opacity: 0, height: 0 }}
-                          className="border-t border-white/5"
+                          className="border-t border-border"
                         >
                           <div className="p-4 md:p-6 grid gap-4">
                             {categoryItems.map((item, index) => (
@@ -722,9 +723,9 @@ export default function MenuManagementPage() {
                                 initial={{ opacity: 0, y: 10 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: index * 0.05 }}
-                                className="group relative flex flex-col md:flex-row p-4 md:p-5 bg-black/40 rounded-2xl border border-white/5 hover:border-orange-500/30 transition-all duration-300 hover:shadow-2xl hover:shadow-black/60 hover:bg-white/[0.03]"
+                                className="group relative flex flex-col md:flex-row p-4 md:p-5 bg-card rounded-2xl border border-border hover:border-primary/30 transition-all duration-300 hover:shadow-xl hover:bg-muted/20"
                               >
-                                <div className="relative w-full md:w-56 h-48 md:h-40 rounded-xl overflow-hidden shrink-0 shadow-lg ring-1 ring-white/10">
+                                <div className="relative w-full md:w-56 h-48 md:h-40 rounded-xl overflow-hidden shrink-0 shadow-sm ring-1 ring-border">
                                   {item.image ? (
                                     <img
                                       src={item.image}
@@ -732,8 +733,8 @@ export default function MenuManagementPage() {
                                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                                     />
                                   ) : (
-                                    <div className="w-full h-full bg-gray-900 flex items-center justify-center">
-                                      <ImageIcon className="w-10 h-10 text-gray-700" />
+                                    <div className="w-full h-full bg-muted flex items-center justify-center">
+                                      <ImageIcon className="w-10 h-10 text-muted-foreground" />
                                     </div>
                                   )}
                                   {/* Status Badge Overlay */}
@@ -747,32 +748,32 @@ export default function MenuManagementPage() {
                                     <div className="flex items-start justify-between gap-4 mb-2">
                                       <div className="flex-1">
                                         <div className="flex flex-wrap items-center gap-2 mb-2">
-                                          <h4 className="font-bold text-white text-xl md:text-2xl truncate group-hover:text-orange-400 transition-colors">{item.name}</h4>
-                                          {item.isBestSeller && <Badge className="bg-amber-500 text-black font-extrabold text-[10px] px-2 py-0.5 border-0 shadow-lg">BESTSELLER</Badge>}
-                                          {item.isNew && <Badge className="bg-blue-600 text-white font-extrabold text-[10px] px-2 py-0.5 border-0 shadow-lg">NEW</Badge>}
+                                          <h4 className="font-bold text-foreground text-xl md:text-2xl truncate group-hover:text-primary transition-colors">{item.name}</h4>
+                                          {item.isBestSeller && <Badge className="bg-amber-500 text-amber-950 font-extrabold text-[10px] px-2 py-0.5 border-0 shadow-sm">BESTSELLER</Badge>}
+                                          {item.isNew && <Badge className="bg-blue-600 text-white font-extrabold text-[10px] px-2 py-0.5 border-0 shadow-sm">NEW</Badge>}
                                         </div>
-                                        <p className="text-gray-400 text-sm md:text-base line-clamp-2 leading-relaxed max-w-2xl">{item.description || 'No description provided.'}</p>
+                                        <p className="text-muted-foreground text-sm md:text-base line-clamp-2 leading-relaxed max-w-2xl">{item.description || 'No description provided.'}</p>
                                       </div>
                                       <div className="text-right">
-                                        <p className="text-2xl font-black text-white tracking-tight">₹{item.price}</p>
-                                        <p className="text-xs text-gray-500 font-medium">per item</p>
+                                        <p className="text-2xl font-black text-foreground tracking-tight">₹{item.price}</p>
+                                        <p className="text-xs text-muted-foreground font-medium">per item</p>
                                       </div>
                                     </div>
 
                                     <div className="flex flex-wrap gap-2 text-xs font-semibold mt-4">
-                                      {item.vegetarian && <Badge variant="outline" className="border-green-500/30 text-green-400 bg-green-500/5 px-2 py-1">VEG</Badge>}
-                                      {item.spicy && <Badge variant="outline" className="border-red-500/30 text-red-400 bg-red-500/5 px-2 py-1">SPICY</Badge>}
-                                      <span className="flex items-center gap-1.5 bg-white/5 px-3 py-1 rounded-lg text-gray-300 border border-white/5"><Clock className="w-3.5 h-3.5" /> {item.preparationTime}m</span>
-                                      <span className="flex items-center gap-1.5 bg-white/5 px-3 py-1 rounded-lg text-gray-300 border border-white/5"><Users className="w-3.5 h-3.5" /> Serves {item.servings}</span>
+                                      {item.vegetarian && <Badge variant="outline" className="border-emerald-500/30 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-1">VEG</Badge>}
+                                      {item.spicy && <Badge variant="outline" className="border-red-500/30 text-red-600 dark:text-red-400 bg-red-500/10 px-2 py-1">SPICY</Badge>}
+                                      <span className="flex items-center gap-1.5 bg-muted/60 px-3 py-1 rounded-lg text-muted-foreground border border-border"><Clock className="w-3.5 h-3.5" /> {item.preparationTime}m</span>
+                                      <span className="flex items-center gap-1.5 bg-muted/60 px-3 py-1 rounded-lg text-muted-foreground border border-border"><Users className="w-3.5 h-3.5" /> Serves {item.servings}</span>
                                     </div>
                                   </div>
 
-                                  <div className="flex justify-end gap-3 mt-4 md:mt-0 pt-4 border-t border-white/5 md:border-0 md:pt-0">
+                                  <div className="flex justify-end gap-3 mt-4 md:mt-0 pt-4 border-t border-border md:border-0 md:pt-0">
                                     <Button
                                       variant="ghost"
                                       size="sm"
                                       onClick={() => handleDeleteItem(item.id || '')}
-                                      className="text-red-400 hover:text-white hover:bg-red-600 rounded-lg px-4 transition-colors"
+                                      className="text-destructive hover:text-destructive hover:bg-destructive/10 rounded-lg px-4 transition-colors"
                                     >
                                       <Trash2 className="w-4 h-4 mr-2" /> Delete
                                     </Button>
@@ -780,14 +781,14 @@ export default function MenuManagementPage() {
                                       variant="outline"
                                       size="sm"
                                       onClick={() => handleEditItem(item)}
-                                      className="border-white/10 bg-white/5 text-white hover:bg-white hover:text-black rounded-lg px-4 transition-all"
+                                      className="border-border bg-card text-foreground hover:bg-primary hover:text-primary-foreground rounded-lg px-4 transition-all"
                                     >
                                       Edit Details
                                     </Button>
                                   </div>
                                 </div>
                                 {item.approvalStatus === 'rejected' && item.rejectionReason && (
-                                  <div className="absolute inset-x-0 -bottom-3 mx-6 bg-red-900/90 text-white text-xs font-bold p-2.5 rounded-b-xl backdrop-blur-md border border-red-500/30 flex items-center justify-center gap-2 shadow-lg z-10">
+                                  <div className="absolute inset-x-0 -bottom-3 mx-6 bg-destructive text-destructive-foreground text-xs font-bold p-2.5 rounded-b-xl backdrop-blur-md border border-destructive/30 flex items-center justify-center gap-2 shadow-lg z-10">
                                     <AlertCircle className="w-4 h-4" /> REJECTED: {item.rejectionReason}
                                   </div>
                                 )}
@@ -807,15 +808,15 @@ export default function MenuManagementPage() {
 
       {/* Success Dialog */}
       <Dialog open={successDialog} onOpenChange={setSuccessDialog}>
-        <DialogContent className="max-w-md bg-black border-white/10 text-white text-center p-10 shadow-2xl rounded-3xl">
-          <div className="w-24 h-24 bg-gradient-to-br from-green-500/20 to-emerald-600/20 rounded-full flex items-center justify-center mx-auto mb-8 ring-4 ring-green-500/10 shadow-[0_0_40px_-10px_rgba(16,185,129,0.5)]">
-            <CheckCircle className="w-12 h-12 text-green-400" />
+        <DialogContent className="max-w-md bg-card border-border text-card-foreground text-center p-10 shadow-2xl rounded-3xl">
+          <div className="w-24 h-24 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-8 ring-4 ring-emerald-500/10 shadow-lg">
+            <CheckCircle className="w-12 h-12 text-emerald-500" />
           </div>
-          <h3 className="text-3xl font-black text-white mb-3">Item Submitted!</h3>
-          <p className="text-gray-400 text-base mb-8 leading-relaxed">
+          <h3 className="text-3xl font-black text-foreground mb-3">Item Submitted!</h3>
+          <p className="text-muted-foreground text-base mb-8 leading-relaxed">
             Your culinary creation has been successfully sent for approval. It will appear on your menu once verified by our team.
           </p>
-          <Button onClick={() => setSuccessDialog(false)} className="w-full bg-white text-black hover:bg-gray-200 font-bold rounded-xl h-14 text-lg shadow-lg">
+          <Button onClick={() => setSuccessDialog(false)} className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-bold rounded-xl h-14 text-lg shadow-lg">
             Awesome, Continue
           </Button>
         </DialogContent>

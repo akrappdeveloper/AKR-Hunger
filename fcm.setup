@@ -1,0 +1,51 @@
+# Firebase Cloud Messaging (FCM) V1 Setup Guide
+
+This guide details exactly how to configure your project to enable Push Notifications.
+
+## 1. Get Firebase Service Account Key
+To send notifications from the server, you need a private key.
+
+1.  Go to the [Firebase Console](https://console.firebase.google.com/).
+2.  Select your project **"akr-ride"**.
+3.  Click the ⚙️ icon (Project Settings) > **Service accounts**.
+4.  Click **"Generate new private key"**.
+5.  A JSON file will be downloaded containing your credentials.
+
+## 2. Update Environment Variables (.env)
+Open your `.env` file and add the following keys using the values from the JSON file you just downloaded.
+
+> [!IMPORTANT]
+> The private key contains special characters like `\n`. When pasting into `.env`, ensure it is a single line string.
+
+```env
+# ... existing config ...
+
+# FIREBASE ADMIN SDK (Required for sending notifications)
+# From the downloaded JSON file: "client_email"
+FIREBASE_CLIENT_EMAIL=firebase-adminsdk-xxxxx@akr-ride.iam.gserviceaccount.com
+
+# From the downloaded JSON file: "private_key"
+# fast way: Copy the content inside "private_key" quotes.
+# ERROR WARNING: Ensure all \n are strictly literal string characters or handle them correctly. 
+# Best practice for .env: pasting "Line 1\nLine 2\n..." is usually fine in Next.js
+FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nYour...\nPrivate...\nKey...\n-----END PRIVATE KEY-----\n"
+
+# OPTIONAL: Vapid Key for Web Push (Settings > Cloud Messaging > Web configuration)
+# This is needed if you want to support web push properly across all browsers
+NEXT_PUBLIC_FIREBASE_VAPID_KEY=Your_Vapid_Key_Here
+```
+
+## 3. Verify Setup
+1.  **Restart Server**: Stop and restart your development server (`npm run dev`) so the new `.env` variables are loaded.
+2.  **Test**: 
+    -   Go to `http://localhost:3000`.
+    -   Wait for the notification permission prompt (or check console for "FCM Token").
+    -   Use the verification guide to send a test message.
+
+## 4. Integration Details (How it works)
+-   **Client**: `hooks/use-fcm-token.ts` gets the device token and saves it to Firestore (`users` or `restaurants`).
+-   **Server**: Uses `lib/firebase-admin.ts` to initialize the Admin SDK using the variables above.
+-   **Triggers**:
+    -   **New Order**: Calls `/api/notifications/new-order` (Notifies Restaurant).
+    -   **Order Update**: Calls `/api/notifications/order-status` (Notifies Customer).
+    -   **Delivery Request**: Calls `/api/notifications/delivery-request` (Notifies Delivery Partners).

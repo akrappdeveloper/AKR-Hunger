@@ -23,7 +23,7 @@ export default function MobileNav() {
     ];
 
     return (
-        <div className="fixed bottom-0 left-0 right-0 z-50 bg-black/95 backdrop-blur-xl border-t border-gray-800 pb-safe md:hidden shadow-[0_-5px_20px_rgba(0,0,0,0.5)]">
+        <div className="fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-xl border-t border-border/80 pb-safe md:hidden shadow-[0_-5px_20px_rgba(0,0,0,0.08)]">
             <div className="flex justify-around items-center h-16 px-2">
                 {links.map(({ href, icon: Icon, label, badge }) => {
                     const isActive = pathname === href || (href !== '/customer' && pathname.startsWith(href));
@@ -36,22 +36,22 @@ export default function MobileNav() {
                         >
                             <div
                                 className={`flex flex-col items-center justify-center w-full h-full gap-1 rounded-xl transition-all duration-300 ${isActive
-                                    ? 'text-orange-500'
-                                    : 'text-gray-500 hover:text-gray-300'
+                                    ? 'text-primary'
+                                    : 'text-muted-foreground hover:text-foreground'
                                     }`}
                             >
                                 <div className={`p-1.5 rounded-full transition-all duration-300 relative ${isActive
-                                        ? 'bg-orange-600/20 shadow-[0_0_15px_rgba(234,88,12,0.3)] transform -translate-y-1'
+                                        ? 'bg-primary/15 shadow-[0_0_15px_rgba(234,88,12,0.25)] transform -translate-y-1'
                                         : ''
                                     }`}>
-                                    <Icon className={`w-5 h-5 ${isActive ? 'fill-orange-500/20 stroke-2' : ''}`} />
+                                    <Icon className={`w-5 h-5 ${isActive ? 'fill-primary/20 stroke-2' : ''}`} />
                                     {badge ? (
-                                        <Badge className="absolute -top-1 -right-1 h-4 min-w-[16px] px-1 flex items-center justify-center p-0 bg-red-600 text-[9px] border border-black text-white z-10">
+                                        <Badge className="absolute -top-1 -right-1 h-4 min-w-[16px] px-1 flex items-center justify-center p-0 bg-primary text-[9px] border border-background text-primary-foreground font-bold z-10">
                                             {badge}
                                         </Badge>
                                     ) : null}
                                 </div>
-                                <span className={`text-[10px] font-medium transition-all ${isActive ? 'font-bold transform -translate-y-0.5' : ''}`}>{label}</span>
+                                <span className={`text-[10px] font-medium transition-all ${isActive ? 'font-bold transform -translate-y-0.5 text-primary' : ''}`}>{label}</span>
                             </div>
                         </Link>
                     );

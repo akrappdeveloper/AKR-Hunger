@@ -36,4 +36,8 @@ export const realtimeDb = getDatabase(app);
 // Initialize Analytics only in browser and if supported
 export const analytics = typeof window !== 'undefined' ? isSupported().then(yes => yes ? getAnalytics(app) : null) : null;
 
+// Initialize Messaging
+import { getMessaging, isSupported as isMessagingSupported } from 'firebase/messaging';
+export const messaging = typeof window !== 'undefined' ? isMessagingSupported().then(yes => yes ? getMessaging(app) : null) : null;
+
 export default app;

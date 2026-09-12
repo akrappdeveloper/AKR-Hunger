@@ -83,12 +83,12 @@ export default function OrdersPage() {
 
   const getStatusColor = (status: string) => {
     switch (status?.toLowerCase()) {
-      case 'delivered': return 'bg-green-500/20 text-green-400 border-none';
-      case 'out_for_delivery': return 'bg-blue-500/20 text-blue-400 border-none';
-      case 'preparing': return 'bg-yellow-500/20 text-yellow-400 border-none';
-      case 'confirmed': return 'bg-purple-500/20 text-purple-400 border-none';
-      case 'cancelled': return 'bg-red-500/20 text-red-400 border-none';
-      default: return 'bg-gray-800 text-gray-400 border-none';
+      case 'delivered': return 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20';
+      case 'out_for_delivery': return 'bg-sky-500/15 text-sky-600 dark:text-sky-400 border border-sky-500/20';
+      case 'preparing': return 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/20';
+      case 'confirmed': return 'bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/20';
+      case 'cancelled': return 'bg-destructive/15 text-destructive border border-destructive/20';
+      default: return 'bg-muted text-muted-foreground border border-border';
     }
   };
 
@@ -112,7 +112,6 @@ export default function OrdersPage() {
 
     setSubmittingRating(true);
     try {
-      // 1. Create Review Document
       await addDoc(collection(db, 'reviews'), {
         customerId: user.uid,
         customerName: user.displayName || 'Customer',
@@ -126,8 +125,6 @@ export default function OrdersPage() {
         createdAt: serverTimestamp(),
       });
 
-      // 2. Update MenuItem Stats (Average Rating)
-      // Note: In a real app, this should be a Cloud Function or Transaction for safety
       const itemRef = doc(db, 'menuItems', ratingItem.id);
       const itemDoc = await getDoc(itemRef);
 
@@ -145,14 +142,15 @@ export default function OrdersPage() {
         });
       }
 
-      // 3. Mark Order Item as rated by updating the order document
-      await updateDoc(doc(db, 'orders', ratingOrder.id), {
-        [`ratings.${ratingItem.id}`]: {
-          rating: ratingValue,
-          comment: ratingComment,
-          ratedAt: new Date() // Use client date or serverTimestamp() if needed, but date is fine for display
-        }
-      });
+      if (ratingOrder.id) {
+        await updateDoc(doc(db, 'orders', ratingOrder.id), {
+          [`ratings.${ratingItem.id}`]: {
+            rating: ratingValue,
+            comment: ratingComment,
+            ratedAt: new Date()
+          }
+        });
+      }
 
       toast.success("Thanks for your feedback!");
       setRatingOrder(null);
@@ -168,84 +166,96 @@ export default function OrdersPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-black text-white pb-40 sm:pb-24 font-sans selection:bg-orange-500/30">
-      <div className="max-w-4xl mx-auto px-4 py-8">
+    <div className="min-h-screen text-foreground pb-24 md:pb-16 font-sans selection:bg-primary/30">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
 
         {/* Header */}
-        <div className="flex items-center gap-3 mb-8">
-          <div className="w-10 h-10 rounded-full bg-orange-500/20 flex items-center justify-center">
-            <ShoppingBag className="w-5 h-5 text-orange-500" />
+        <div className="flex items-center gap-3 mb-6 sm:mb-8">
+          <div className="w-11 h-11 rounded-2xl bg-primary/15 flex items-center justify-center text-primary shadow-xs">
+            <ShoppingBag className="w-5 h-5" />
           </div>
-          <h1 className="text-3xl font-bold">Your Orders</h1>
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-foreground">Your Orders</h1>
+            <p className="text-xs sm:text-sm text-muted-foreground">Track ongoing deliveries and view past orders</p>
+          </div>
         </div>
 
         {orders.length === 0 ? (
-          <div className="text-center py-20 bg-gray-900/50 backdrop-blur-md rounded-3xl border border-white/5">
-            <div className="w-20 h-20 bg-gray-800/50 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Package className="w-10 h-10 text-gray-500" />
+          <div className="text-center py-20 bg-card/70 backdrop-blur-md rounded-3xl border border-border/60 shadow-sm">
+            <div className="w-20 h-20 bg-muted/60 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Package className="w-10 h-10 text-muted-foreground" />
             </div>
-            <h3 className="text-xl font-bold mb-2">No orders yet</h3>
-            <p className="text-gray-400 mb-8 max-w-sm mx-auto">Looks like you haven't placed any orders yet. Order now to get delicious food delivered!</p>
+            <h3 className="text-xl font-bold mb-2 text-foreground">No orders yet</h3>
+            <p className="text-muted-foreground mb-8 max-w-sm mx-auto text-sm">Looks like you haven't placed any orders yet. Explore top dishes and get quick delivery!</p>
             <Link href="/customer">
-              <Button className="bg-gradient-to-r from-orange-600 to-red-600 rounded-xl px-8 py-6 font-bold text-lg hover:scale-105 transition-transform shadow-lg shadow-orange-900/40">
+              <Button className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl px-8 py-6 font-bold text-base shadow-lg shadow-primary/20 hover:scale-105 transition-all">
                 Browse Food
               </Button>
             </Link>
           </div>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-5 sm:space-y-6">
             {orders.map((order) => (
-              <div key={order.id} className="bg-gray-900/60 backdrop-blur-md border border-white/5 rounded-3xl overflow-hidden hover:border-gray-700 transition-colors group">
+              <div
+                key={order.id}
+                onClick={() => router.push(`/customer/orders/${order.id}`)}
+                className="bg-card border border-border/70 rounded-2xl sm:rounded-3xl overflow-hidden hover:border-primary/50 hover:shadow-lg transition-all duration-300 shadow-xs group cursor-pointer"
+              >
 
                 {/* Order Header */}
-                <div className="p-6 flex flex-col sm:flex-row justify-between items-start gap-4 border-b border-white/5 bg-white/5">
-                  <div className="flex gap-4">
-                    <div className="w-12 h-12 bg-gray-800 rounded-xl flex items-center justify-center flex-shrink-0 border border-white/5">
-                      <ChefHat className="w-6 h-6 text-gray-400" />
+                <div className="p-4 sm:p-6 flex flex-col sm:flex-row justify-between items-start gap-4 border-b border-border/60 bg-muted/30 group-hover:bg-muted/40 transition-colors">
+                  <div className="flex gap-3 sm:gap-4">
+                    <div className="w-11 h-11 sm:w-12 sm:h-12 bg-card rounded-xl flex items-center justify-center flex-shrink-0 border border-border text-primary shadow-xs group-hover:scale-105 transition-transform">
+                      <ChefHat className="w-5 h-5 sm:w-6 sm:h-6" />
                     </div>
                     <div>
-                      <h3 className="font-bold text-lg text-white mb-1">{order.restaurantName || 'Restaurant'}</h3>
-                      <div className="flex items-center gap-2 text-xs text-gray-400 font-medium">
-                        <span className="bg-gray-800 px-2 py-0.5 rounded text-gray-300">#{order.id.slice(-6).toUpperCase()}</span>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-bold text-base sm:text-lg text-foreground group-hover:text-primary transition-colors mb-0.5">
+                          {order.restaurantName || 'Restaurant'}
+                        </h3>
+                        <ChevronRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground font-medium">
+                        <span className="bg-muted px-2 py-0.5 rounded text-foreground font-semibold">#{order.id ? order.id.slice(-6).toUpperCase() : 'ORDER'}</span>
                         <span>•</span>
                         <span>{formatDate(order.createdAt)}</span>
                       </div>
                     </div>
                   </div>
-                  <Badge className={`${getStatusColor(order.status || 'pending')} px-3 py-1 text-xs font-bold uppercase tracking-wider`}>
+                  <Badge className={`${getStatusColor(order.status || 'pending')} px-3 py-1 text-xs font-bold uppercase tracking-wider rounded-lg`}>
                     {order.status?.replace('_', ' ') || 'PENDING'}
                   </Badge>
                 </div>
 
                 {/* Order Items */}
-                <div className="p-6 space-y-4">
+                <div className="p-4 sm:p-6 space-y-4">
                   <div className="space-y-3">
                     {order.items?.map((item, idx) => (
                       <div key={idx} className="flex justify-between items-center text-sm">
                         <div className="flex items-center gap-3">
-                          <span className="w-6 h-6 bg-gray-800 rounded flex items-center justify-center text-xs font-bold text-gray-400 border border-gray-700">
+                          <span className="w-6 h-6 bg-muted rounded flex items-center justify-center text-xs font-bold text-foreground border border-border">
                             {item.quantity}x
                           </span>
                           <div className="flex flex-col">
-                            <span className="text-gray-300">{item.name}</span>
+                            <span className="text-foreground font-medium text-xs sm:text-sm">{item.name}</span>
                             {order.status === 'delivered' && (
-                              <div className="mt-1">
+                              <div className="mt-1" onClick={(e) => e.stopPropagation()}>
                                 {(order as any).ratings?.[item.menuItemId] ? (
-                                  <div className="flex items-center gap-1 text-yellow-500 text-xs font-bold bg-yellow-500/10 px-2 py-1 rounded-md w-fit">
-                                    <Star className="w-3 h-3 fill-yellow-500" />
+                                  <div className="flex items-center gap-1 text-amber-500 text-xs font-bold bg-amber-500/10 px-2 py-0.5 rounded-md w-fit">
+                                    <Star className="w-3 h-3 fill-amber-500" />
                                     <span>{(order as any).ratings[item.menuItemId].rating}/5</span>
                                   </div>
                                 ) : (
                                   <button
                                     onClick={() => openRatingDialog(order, { id: item.menuItemId, name: item.name, image: item.image })}
-                                    className="text-[10px] text-blue-400 hover:text-blue-300 text-left flex items-center gap-1"
+                                    className="text-[11px] text-primary hover:underline text-left flex items-center gap-1 font-semibold"
                                   >
                                     <Star className="w-3 h-3" /> Rate Item
                                   </button>
@@ -254,55 +264,67 @@ export default function OrdersPage() {
                             )}
                           </div>
                         </div>
-                        <span className="text-gray-400 font-medium">₹{item.price * item.quantity}</span>
+                        <span className="text-foreground font-bold text-xs sm:text-sm">₹{item.price * item.quantity}</span>
                       </div>
                     ))}
                   </div>
 
-                  <div className="h-px w-full bg-white/5 my-4" />
+                  <div className="h-px w-full bg-border/60 my-4" />
 
                   <div className="flex justify-between items-center">
-                    <div className="flex items-center gap-2 text-gray-400 text-sm">
-                      <MapPin className="w-4 h-4" />
+                    <div className="flex items-center gap-2 text-muted-foreground text-xs sm:text-sm">
+                      <MapPin className="w-4 h-4 text-primary" />
                       <span className="capitalize">{typeof order.deliveryAddress === 'string' ? 'Saved Address' : order.deliveryAddress?.type || 'Home'}</span>
                     </div>
-                    <div className="text-xl font-bold text-white">
-                      Total: <span className="text-orange-500">₹{order.total}</span>
+                    <div className="text-base sm:text-lg font-black text-foreground">
+                      Total: <span className="text-primary font-black">₹{order.total}</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Actions */}
-                <div className="p-4 bg-black/40 flex flex-wrap gap-2 justify-end">
+                <div
+                  className="p-3.5 sm:p-4 bg-muted/20 border-t border-border/50 flex flex-wrap gap-2 justify-end items-center"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <InvoiceButton order={order} customer={customer} />
 
                   <Button
-                    variant="ghost"
+                    variant="outline"
                     size="sm"
-                    className="text-gray-400 hover:text-white hover:bg-white/10"
+                    className="border-border hover:bg-accent text-foreground rounded-xl text-xs sm:text-sm font-semibold"
                     onClick={() => handleReorder(order)}
                   >
-                    <RefreshCw className="w-4 h-4 mr-2" /> Reorder
+                    <RefreshCw className="w-3.5 h-3.5 mr-1.5" /> Reorder
                   </Button>
 
                   {order.status === 'pending' && (
                     <Button
                       size="sm"
-                      variant="ghost"
-                      className="text-red-400 hover:text-red-500 hover:bg-red-500/10"
+                      variant="outline"
+                      className="text-destructive border-destructive/30 hover:bg-destructive/10 rounded-xl text-xs sm:text-sm font-semibold"
                       onClick={() => setCancelOrderData(order)}
                     >
-                      <X className="w-4 h-4 mr-2" /> Cancel
+                      <X className="w-3.5 h-3.5 mr-1.5" /> Cancel
                     </Button>
                   )}
 
-                  {['pending', 'confirmed', 'preparing', 'out_for_delivery'].includes(order.status || '') && (
+                  {['pending', 'confirmed', 'preparing', 'ready', 'out_for_delivery'].includes(order.status || '') ? (
                     <Button
                       size="sm"
-                      className="bg-orange-600 hover:bg-orange-700 text-white border-none shadow-lg shadow-orange-900/20 font-bold rounded-lg px-4"
+                      className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-md shadow-primary/20 font-bold rounded-xl px-4 text-xs sm:text-sm"
                       onClick={() => router.push(`/customer/orders/${order.id}`)}
                     >
-                      Track Order <ChevronRight className="w-4 h-4 ml-1" />
+                      Track Live <ChevronRight className="w-4 h-4 ml-1" />
+                    </Button>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      className="bg-muted hover:bg-muted/80 text-foreground border border-border/80 font-bold rounded-xl px-4 text-xs sm:text-sm"
+                      onClick={() => router.push(`/customer/orders/${order.id}`)}
+                    >
+                      Order Details <ChevronRight className="w-3.5 h-3.5 ml-1 text-primary" />
                     </Button>
                   )}
                 </div>
@@ -313,14 +335,14 @@ export default function OrdersPage() {
 
         {/* Rating Dialog */}
         <Dialog open={!!ratingOrder} onOpenChange={(open) => !open && setRatingOrder(null)}>
-          <DialogContent className="bg-gray-900 border-gray-800 text-white sm:max-w-md">
+          <DialogContent className="bg-card border-border text-card-foreground sm:max-w-md">
             <DialogHeader>
-              <DialogTitle className="text-xl font-bold flex items-center gap-2">
-                Rate <span className="text-orange-500">{ratingItem?.name}</span>
+              <DialogTitle className="text-lg sm:text-xl font-bold flex items-center gap-2">
+                Rate <span className="text-primary">{ratingItem?.name}</span>
               </DialogTitle>
             </DialogHeader>
 
-            <div className="flex flex-col items-center py-6 space-y-6">
+            <div className="flex flex-col items-center py-4 space-y-5">
               {/* Star Rating */}
               <div className="flex gap-2">
                 {[1, 2, 3, 4, 5].map((star) => (
@@ -328,23 +350,24 @@ export default function OrdersPage() {
                     key={star}
                     onClick={() => setRatingValue(star)}
                     className={`transition-transform hover:scale-110 ${ratingValue >= star ? 'scale-110' : ''}`}
+                    aria-label={`Rate ${star} stars`}
                   >
                     <Star
-                      className={`w-10 h-10 ${ratingValue >= star ? 'fill-yellow-500 text-yellow-500' : 'text-gray-700'}`}
+                      className={`w-9 h-9 sm:w-10 sm:h-10 ${ratingValue >= star ? 'fill-amber-500 text-amber-500' : 'text-muted-foreground/30'}`}
                     />
                   </button>
                 ))}
               </div>
-              <p className="text-lg font-bold text-yellow-500">
-                {ratingValue === 5 ? 'Excellent!' : ratingValue === 4 ? 'Good' : ratingValue === 3 ? 'Average' : 'Poor'}
+              <p className="text-base font-bold text-amber-500">
+                {ratingValue === 5 ? 'Excellent! 🌟' : ratingValue === 4 ? 'Good 👍' : ratingValue === 3 ? 'Average 👌' : 'Could be better'}
               </p>
 
               {/* Comment Area */}
               <div className="w-full">
-                <label className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2 block">Leave a comment</label>
+                <label className="text-xs text-muted-foreground font-bold uppercase tracking-wider mb-2 block">Leave a comment</label>
                 <Textarea
-                  className="bg-black/50 border-gray-700 text-white"
-                  placeholder="Tell us what you liked..."
+                  className="bg-muted/40 border-border text-foreground placeholder:text-muted-foreground"
+                  placeholder="Tell us what you liked about this dish..."
                   value={ratingComment}
                   onChange={(e) => setRatingComment(e.target.value)}
                 />
@@ -352,7 +375,7 @@ export default function OrdersPage() {
 
               <Button
                 onClick={submitRating}
-                className="w-full bg-white text-black hover:bg-gray-200 font-bold h-12 rounded-xl"
+                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold h-11 rounded-xl shadow-md"
                 disabled={submittingRating}
               >
                 {submittingRating ? 'Submitting...' : 'Submit Review'}
@@ -361,10 +384,7 @@ export default function OrdersPage() {
           </DialogContent>
         </Dialog>
 
-        {/* Helper for Cancel Dialog - implemented inline or via new state if preferred, 
-            but for succinctness adding a separate component or inline logic is good. 
-            Here sticking to simple state-based dialogs for consistency with Ratings. 
-        */}
+        {/* Cancel Dialog */}
         <CancelOrderDialog
           order={cancelOrderData}
           isOpen={!!cancelOrderData}
@@ -376,13 +396,13 @@ export default function OrdersPage() {
   );
 }
 
-// Add Cancel Dialog Component
 function CancelOrderDialog({ order, isOpen, onClose }: { order: Order | null, isOpen: boolean, onClose: () => void }) {
   const [loading, setLoading] = useState(false);
 
   if (!order) return null;
 
   const handleCancel = async () => {
+    if (!order.id) return;
     setLoading(true);
     try {
       await updateDoc(doc(db, 'orders', order.id), {
@@ -401,32 +421,32 @@ function CancelOrderDialog({ order, isOpen, onClose }: { order: Order | null, is
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="bg-gray-900 border-gray-800 text-white w-[90vw] max-w-[400px] rounded-2xl p-6 gap-6">
+      <DialogContent className="bg-card border-border text-card-foreground w-[90vw] max-w-[400px] rounded-2xl p-6 gap-5">
         <DialogHeader>
-          <DialogTitle className="text-xl sm:text-2xl font-bold text-red-500 text-center">Cancel Order?</DialogTitle>
+          <DialogTitle className="text-xl font-bold text-destructive text-center">Cancel Order?</DialogTitle>
         </DialogHeader>
 
         <div className="text-center space-y-2">
-          <p className="text-gray-300 text-sm sm:text-base">
-            Are you sure you want to cancel Order <span className="font-bold text-white">#{order.id.slice(-6).toUpperCase()}</span>?
+          <p className="text-foreground text-sm sm:text-base">
+            Are you sure you want to cancel Order <span className="font-bold text-primary">#{order.id ? order.id.slice(-6).toUpperCase() : 'ORDER'}</span>?
           </p>
-          <p className="text-xs sm:text-sm text-gray-500">
+          <p className="text-xs text-muted-foreground">
             This action cannot be undone.
           </p>
         </div>
 
         <div className="flex flex-col-reverse sm:flex-row gap-3 mt-2">
           <Button
-            variant="ghost"
+            variant="outline"
             onClick={onClose}
-            className="flex-1 h-11 sm:h-12 rounded-xl text-gray-400 hover:text-white hover:bg-white/10 text-sm sm:text-base font-medium transition-colors"
+            className="flex-1 h-11 rounded-xl border-border text-foreground hover:bg-muted text-sm font-medium transition-colors"
           >
             No, Keep Order
           </Button>
           <Button
             onClick={handleCancel}
             disabled={loading}
-            className="flex-1 h-11 sm:h-12 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold text-sm sm:text-base shadow-lg shadow-red-900/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+            className="flex-1 h-11 bg-destructive hover:bg-destructive/90 text-destructive-foreground rounded-xl font-bold text-sm shadow-md transition-all active:scale-[0.98]"
           >
             {loading ? 'Cancelling...' : 'Yes, Cancel Order'}
           </Button>

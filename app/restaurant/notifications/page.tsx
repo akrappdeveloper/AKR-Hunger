@@ -113,17 +113,17 @@ export default function NotificationsPage() {
     const getNotificationIcon = (type: string) => {
         switch (type) {
             case 'order':
-                return <ShoppingCart className="w-6 h-6 text-blue-400" />;
+                return <ShoppingCart className="w-6 h-6 text-blue-500" />;
             case 'menu':
-                return <Menu className="w-6 h-6 text-orange-400" />;
+                return <Menu className="w-6 h-6 text-orange-500" />;
             case 'review':
-                return <Star className="w-6 h-6 text-yellow-400" />;
+                return <Star className="w-6 h-6 text-amber-500" />;
             case 'payment':
-                return <DollarSign className="w-6 h-6 text-green-400" />;
+                return <DollarSign className="w-6 h-6 text-emerald-500" />;
             case 'campaign':
-                return <TrendingUp className="w-6 h-6 text-purple-400" />;
+                return <TrendingUp className="w-6 h-6 text-purple-500" />;
             default:
-                return <Bell className="w-6 h-6 text-gray-400" />;
+                return <Bell className="w-6 h-6 text-muted-foreground" />;
         }
     };
 
@@ -131,10 +131,10 @@ export default function NotificationsPage() {
         switch (type) {
             case 'order': return 'from-blue-500/10 to-blue-600/5 border-blue-500/20 hover:border-blue-500/40';
             case 'menu': return 'from-orange-500/10 to-orange-600/5 border-orange-500/20 hover:border-orange-500/40';
-            case 'review': return 'from-yellow-500/10 to-yellow-600/5 border-yellow-500/20 hover:border-yellow-500/40';
-            case 'payment': return 'from-green-500/10 to-green-600/5 border-green-500/20 hover:border-green-500/40';
+            case 'review': return 'from-amber-500/10 to-amber-600/5 border-amber-500/20 hover:border-amber-500/40';
+            case 'payment': return 'from-emerald-500/10 to-emerald-600/5 border-emerald-500/20 hover:border-emerald-500/40';
             case 'campaign': return 'from-purple-500/10 to-purple-600/5 border-purple-500/20 hover:border-purple-500/40';
-            default: return 'from-gray-800/50 to-gray-900/50 border-gray-700 hover:border-gray-600';
+            default: return 'from-muted/40 to-muted/20 border-border hover:border-muted-foreground/30';
         }
     };
 
@@ -160,7 +160,7 @@ export default function NotificationsPage() {
             const date = new Date(n.createdAt);
             const yesterday = new Date();
             yesterday.setDate(yesterday.getDate() - 1);
-            return date < yesterday && date.toDateString() !== new Date().toDateString(); // Ensure strictly earlier
+            return date < yesterday && date.toDateString() !== new Date().toDateString();
         })
     };
 
@@ -168,15 +168,15 @@ export default function NotificationsPage() {
         return (
             <div className="p-8 flex items-center justify-center h-[calc(100vh-100px)]">
                 <div className="flex flex-col items-center gap-4">
-                    <div className="w-16 h-16 border-4 border-t-blue-500 border-r-indigo-500 border-b-purple-500 border-l-pink-500 rounded-full animate-spin"></div>
-                    <p className="text-gray-400 animate-pulse">Loading notifications...</p>
+                    <div className="w-16 h-16 border-4 border-t-primary border-r-indigo-500 border-b-purple-500 border-l-pink-500 rounded-full animate-spin"></div>
+                    <p className="text-muted-foreground animate-pulse font-medium">Loading notifications...</p>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="p-4 md:p-8 space-y-6 min-h-screen bg-[#0B0F17]/50">
+        <div className="p-4 md:p-8 space-y-6 min-h-screen bg-background text-foreground transition-colors duration-300">
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
@@ -185,13 +185,13 @@ export default function NotificationsPage() {
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ duration: 0.5 }}
                     >
-                        <h1 className="text-4xl md:text-5xl font-extrabold bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400 bg-clip-text text-transparent flex items-center gap-3 drop-shadow-lg">
+                        <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 bg-clip-text text-transparent flex items-center gap-3 drop-shadow-sm">
                             Notifications
                         </h1>
-                        <p className="text-gray-400 mt-2 text-lg font-light tracking-wide flex items-center gap-2">
+                        <p className="text-muted-foreground mt-2 text-base sm:text-lg font-light tracking-wide flex items-center gap-2">
                             Stay updated with your restaurant's activity
                             {unreadCount > 0 && (
-                                <Badge className="bg-blue-600 hover:bg-blue-700 text-white border-none">{unreadCount} New</Badge>
+                                <Badge className="bg-primary text-primary-foreground border-none font-bold">{unreadCount} New</Badge>
                             )}
                         </p>
                     </motion.div>
@@ -202,7 +202,7 @@ export default function NotificationsPage() {
                         <Button
                             onClick={markAllAsRead}
                             variant="outline"
-                            className="gap-2 bg-gray-800/80 border-gray-700 text-white hover:bg-blue-600 hover:border-blue-600 transition-all shadow-lg"
+                            className="gap-2 bg-card border-border text-foreground hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all shadow-sm font-semibold"
                         >
                             <CheckCircle className="w-4 h-4" />
                             Mark All Read
@@ -212,15 +212,15 @@ export default function NotificationsPage() {
             </div>
 
             {/* Filters */}
-            <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between sticky top-4 z-10 bg-[#0B0F17]/80 p-2 rounded-xl backdrop-blur-md border border-white/5 shadow-xl">
-                <div className="flex overflow-x-auto w-full md:w-auto scrollbar-hide gap-1 bg-gray-900/50 p-1 rounded-lg">
+            <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between sticky top-4 z-10 bg-card/90 p-2.5 rounded-2xl backdrop-blur-md border border-border shadow-md">
+                <div className="flex overflow-x-auto w-full md:w-auto scrollbar-hide gap-1 bg-muted/80 p-1 rounded-xl">
                     {['all', 'unread', 'read'].map((f) => (
                         <button
                             key={f}
                             onClick={() => setFilter(f as any)}
-                            className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${filter === f
-                                    ? 'bg-gray-700 text-white shadow-md'
-                                    : 'text-gray-400 hover:text-white hover:bg-gray-800'
+                            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${filter === f
+                                    ? 'bg-card text-foreground shadow-sm'
+                                    : 'text-muted-foreground hover:text-foreground'
                                 }`}
                         >
                             {f.charAt(0).toUpperCase() + f.slice(1)}
@@ -234,9 +234,9 @@ export default function NotificationsPage() {
                             key={type}
                             variant="outline"
                             onClick={() => setTypeFilter(type)}
-                            className={`cursor-pointer px-3 py-1.5 capitalize transition-all border-none ${typeFilter === type
-                                    ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/20'
-                                    : 'bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-white'
+                            className={`cursor-pointer px-3.5 py-1.5 capitalize transition-all font-semibold ${typeFilter === type
+                                    ? 'bg-primary text-primary-foreground border-primary shadow-sm'
+                                    : 'bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground border-border'
                                 }`}
                         >
                             {type === 'all' ? 'All Types' : type}
@@ -251,11 +251,11 @@ export default function NotificationsPage() {
                     <motion.div
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        className="p-16 text-center border border-gray-800 rounded-3xl bg-gray-900/30"
+                        className="p-16 text-center border border-border rounded-3xl bg-card text-card-foreground shadow-sm"
                     >
-                        <Bell className="w-20 h-20 mx-auto text-gray-700 mb-6" />
-                        <h3 className="text-2xl font-bold text-white mb-2">All Caught Up!</h3>
-                        <p className="text-gray-500 text-lg">You have no new notifications.</p>
+                        <Bell className="w-16 h-16 mx-auto text-muted-foreground/40 mb-4" />
+                        <h3 className="text-2xl font-bold text-foreground mb-2">All Caught Up!</h3>
+                        <p className="text-muted-foreground text-base">You have no new notifications.</p>
                     </motion.div>
                 ) : (
                     <>
@@ -280,7 +280,7 @@ function NotificationGroup({ title, notifications, getIcon, getGradient, markRea
 
     return (
         <div className="space-y-4">
-            <h2 className="text-sm font-bold text-gray-500 uppercase tracking-widest pl-2 flex items-center gap-2">
+            <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-widest pl-2 flex items-center gap-2">
                 <Calendar className="w-4 h-4" /> {title}
             </h2>
             <div className="grid grid-cols-1 gap-3">
@@ -295,7 +295,7 @@ function NotificationGroup({ title, notifications, getIcon, getGradient, markRea
                             layout
                         >
                             <div
-                                className={`relative group p-5 rounded-2xl border bg-gradient-to-br backdrop-blur-sm cursor-pointer transition-all duration-300 shadow-lg hover:shadow-2xl hover:-translate-y-1 ${getGradient(notification.type)} ${!notification.isRead ? 'ring-1 ring-blue-500/50 bg-blue-900/10' : 'bg-gray-900/30'
+                                className={`relative group p-5 rounded-2xl border bg-card/60 backdrop-blur-sm cursor-pointer transition-all duration-300 shadow-sm hover:shadow-md hover:-translate-y-0.5 ${getGradient(notification.type)} ${!notification.isRead ? 'ring-2 ring-primary/40 bg-card' : 'bg-card/40'
                                     }`}
                                 onClick={() => {
                                     if (!notification.isRead) markRead(notification.id);
@@ -303,36 +303,36 @@ function NotificationGroup({ title, notifications, getIcon, getGradient, markRea
                                 }}
                             >
                                 {!notification.isRead && (
-                                    <div className="absolute top-4 right-4 w-3 h-3 bg-blue-500 rounded-full shadow-[0_0_10px_#3b82f6] animate-pulse" />
+                                    <div className="absolute top-4 right-4 w-2.5 h-2.5 bg-primary rounded-full shadow-[0_0_10px_currentColor] animate-pulse" />
                                 )}
 
-                                <div className="flex gap-5 items-start">
-                                    <div className={`p-3 rounded-xl bg-gray-800/80 shadow-lg shrink-0 ${!notification.isRead ? 'text-white' : 'text-gray-400'}`}>
+                                <div className="flex gap-4 sm:gap-5 items-start">
+                                    <div className={`p-3 rounded-xl bg-muted/80 shadow-sm shrink-0 border border-border`}>
                                         {getIcon(notification.type)}
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <div className="flex justify-between items-start mb-1">
-                                            <h3 className={`font-semibold text-lg truncate pr-6 ${!notification.isRead ? 'text-white' : 'text-gray-300'}`}>
+                                            <h3 className={`font-bold text-base sm:text-lg truncate pr-6 ${!notification.isRead ? 'text-foreground' : 'text-foreground/80'}`}>
                                                 {notification.title}
                                             </h3>
                                         </div>
-                                        <p className="text-gray-400 text-sm leading-relaxed mb-3 line-clamp-2">
+                                        <p className="text-muted-foreground text-sm leading-relaxed mb-3 line-clamp-2">
                                             {notification.message}
                                         </p>
-                                        <div className="flex items-center gap-4 text-xs font-medium text-gray-500">
-                                            <span className="flex items-center gap-1 bg-gray-800/50 px-2 py-1 rounded-md">
-                                                <Clock className="w-3 h-3" />
+                                        <div className="flex items-center gap-4 text-xs font-medium text-muted-foreground">
+                                            <span className="flex items-center gap-1.5 bg-muted/80 px-2.5 py-1 rounded-md border border-border">
+                                                <Clock className="w-3.5 h-3.5" />
                                                 {new Date(notification.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                             </span>
                                             {notification.actionLink && (
-                                                <span className="text-blue-400 hover:text-blue-300 hover:underline">View Details →</span>
+                                                <span className="text-primary hover:underline font-semibold">View Details →</span>
                                             )}
                                         </div>
                                     </div>
                                     <Button
                                         variant="ghost"
                                         size="icon"
-                                        className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity text-gray-600 hover:text-red-500 hover:bg-red-500/10"
+                                        className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-red-500 hover:bg-red-500/10"
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             deleteNotif(notification.id);
