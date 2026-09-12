@@ -8,6 +8,7 @@ import { RestaurantAuthProvider } from '@/context/RestaurantAuthContext'
 import CustomerNavbar from '@/components/customer/CustomerNavbar'
 import FCMInitializer from '@/components/fcm-initializer'
 import { ThemeProvider } from '@/components/theme-provider'
+import { Toaster } from '@/components/ui/sonner'
 import './globals.css'
 import '../styles/animations.css'
 
@@ -155,6 +156,7 @@ export default function RootLayout({
               </CartProvider>
             </RestaurantAuthProvider>
           </AuthProvider>
+          <Toaster />
         </ThemeProvider>
       </body>
     </html>

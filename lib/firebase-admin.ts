@@ -42,7 +42,7 @@ export async function initAdmin() {
 }
 
 // Ensure we have a singleton or re-use existing app
-let app: admin.app.App;
+let app: admin.app.App | undefined = undefined;
 
 if (!admin.apps.length) {
     // We check for values to avoid errors during build time if env vars are missing

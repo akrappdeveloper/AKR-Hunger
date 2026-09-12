@@ -3,13 +3,22 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
-import { doc, setDoc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
 import { useAuth } from '@/context/AuthContext';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { toast } from 'sonner';
 import {
   User,
   Mail,
@@ -27,7 +36,8 @@ import {
   Bike,
   Flame,
   CheckCircle2,
-  HeartHandshake
+  HeartHandshake,
+  Smartphone
 } from 'lucide-react';
 import ThemeToggle from '@/components/customer/ThemeToggle';
 
@@ -43,12 +53,25 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // Redirect if already logged in
+  // Google Auth & Phone Dialog State
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [isGoogleSigningIn, setIsGoogleSigningIn] = useState(false);
+  const [isPhoneModalOpen, setIsPhoneModalOpen] = useState(false);
+  const [phoneInput, setPhoneInput] = useState('');
+  const [phoneError, setPhoneError] = useState('');
+  const [savingPhone, setSavingPhone] = useState(false);
+  const [authenticatedGoogleUser, setAuthenticatedGoogleUser] = useState<{
+    uid: string;
+    name: string;
+    email: string;
+  } | null>(null);
+
+  // Redirect if already logged in (pause redirect while Google sign-in or phone setup dialog is active)
   useEffect(() => {
-    if (user) {
+    if (user && !isGoogleSigningIn && !isPhoneModalOpen) {
       router.push('/customer');
     }
-  }, [user, router]);
+  }, [user, isGoogleSigningIn, isPhoneModalOpen, router]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -130,6 +153,133 @@ export default function LoginPage() {
       handleLogin(e);
     } else {
       handleSignup(e);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setError('');
+    setGoogleLoading(true);
+    setIsGoogleSigningIn(true);
+
+    try {
+      const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: 'select_account' });
+      const result = await signInWithPopup(auth, provider);
+      const googleUser = result.user;
+
+      // 1. Verify account is not a registered restaurant partner
+      const restaurantsQuery = query(collection(db, 'restaurants'), where('email', '==', googleUser.email));
+      const restaurantSnapshot = await getDocs(restaurantsQuery);
+
+      if (!restaurantSnapshot.empty) {
+        await auth.signOut();
+        setError('This Google account is already registered as a restaurant partner. Please use the restaurant portal.');
+        setGoogleLoading(false);
+        setIsGoogleSigningIn(false);
+        return;
+      }
+
+      // 2. Fetch or create customer document in Firestore
+      const customerRef = doc(db, 'customers', googleUser.uid);
+      const customerDoc = await getDoc(customerRef);
+
+      if (!customerDoc.exists()) {
+        // First-time Customer: Create profile
+        await setDoc(customerRef, {
+          email: googleUser.email || '',
+          name: googleUser.displayName || 'Customer',
+          phone: googleUser.phoneNumber || '',
+          avatar: googleUser.photoURL || '',
+          addresses: [],
+          defaultAddressId: null,
+          walletBalance: 0,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        });
+
+        // Prompt for phone number since Google account doesn't provide phone
+        if (!googleUser.phoneNumber) {
+          setAuthenticatedGoogleUser({
+            uid: googleUser.uid,
+            name: googleUser.displayName || 'Customer',
+            email: googleUser.email || '',
+          });
+          setPhoneInput('');
+          setPhoneError('');
+          setIsPhoneModalOpen(true);
+          setGoogleLoading(false);
+          setIsGoogleSigningIn(false);
+          return;
+        }
+      } else {
+        // Customer profile exists: check if phone is present and not empty
+        const customerData = customerDoc.data();
+        const existingPhone = customerData?.phone ? String(customerData.phone).trim() : '';
+
+        if (!existingPhone) {
+          setAuthenticatedGoogleUser({
+            uid: googleUser.uid,
+            name: customerData?.name || googleUser.displayName || 'Customer',
+            email: customerData?.email || googleUser.email || '',
+          });
+          setPhoneInput('');
+          setPhoneError('');
+          setIsPhoneModalOpen(true);
+          setGoogleLoading(false);
+          setIsGoogleSigningIn(false);
+          return;
+        }
+      }
+
+      // Already has phone number: proceed to customer portal
+      setIsGoogleSigningIn(false);
+      setGoogleLoading(false);
+      toast.success(`Welcome back, ${googleUser.displayName || 'Foodie'}!`);
+      router.push('/customer');
+    } catch (err: any) {
+      console.error('Google Sign-In Error:', err);
+      setIsGoogleSigningIn(false);
+      setGoogleLoading(false);
+      if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
+        setError(err.message || 'Google sign-in failed. Please try again.');
+      }
+    }
+  };
+
+  const handleSavePhone = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    setPhoneError('');
+
+    const digitsOnly = phoneInput.replace(/\D/g, '');
+    if (digitsOnly.length < 10) {
+      setPhoneError('Please enter a valid 10-digit mobile number.');
+      return;
+    }
+
+    const last10 = digitsOnly.slice(-10);
+    const formattedPhone = `+91 ${last10.slice(0, 5)} ${last10.slice(5)}`;
+
+    const targetUid = authenticatedGoogleUser?.uid || user?.uid;
+    if (!targetUid) {
+      setPhoneError('Authentication session expired. Please sign in again.');
+      return;
+    }
+
+    setSavingPhone(true);
+    try {
+      await updateDoc(doc(db, 'customers', targetUid), {
+        phone: formattedPhone,
+        updatedAt: new Date(),
+      });
+
+      toast.success('Mobile number saved! Welcome to AKR Hunger.');
+      setIsPhoneModalOpen(false);
+      router.push('/customer');
+    } catch (err: any) {
+      console.error('Error saving phone number:', err);
+      setPhoneError(err.message || 'Failed to save phone number. Please try again.');
+    } finally {
+      setSavingPhone(false);
     }
   };
 
@@ -311,6 +461,52 @@ export default function LoginPage() {
                     </div>
                   )}
 
+                  {/* Google Authentication Button */}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleGoogleSignIn}
+                    disabled={googleLoading || loading}
+                    className="w-full h-11 sm:h-12 rounded-xl border border-border/80 hover:border-primary/40 bg-card/60 hover:bg-muted/50 text-foreground font-bold flex items-center justify-center gap-3 shadow-xs transition-all text-xs sm:text-sm cursor-pointer mb-5 group"
+                  >
+                    {googleLoading ? (
+                      <div className="flex items-center gap-2">
+                        <Spinner className="w-4 h-4 text-primary" />
+                        <span className="text-muted-foreground">Connecting with Google...</span>
+                      </div>
+                    ) : (
+                      <>
+                        <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24">
+                          <path
+                            fill="#4285F4"
+                            d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                          />
+                          <path
+                            fill="#34A853"
+                            d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                          />
+                          <path
+                            fill="#FBBC05"
+                            d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+                          />
+                          <path
+                            fill="#EA4335"
+                            d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+                          />
+                        </svg>
+                        <span>Continue with Google</span>
+                      </>
+                    )}
+                  </Button>
+
+                  {/* Separator */}
+                  <div className="relative flex items-center justify-center mb-5">
+                    <div className="border-t border-border/70 w-full" />
+                    <span className="bg-card px-3 text-[11px] font-bold tracking-wider text-muted-foreground uppercase absolute">
+                      Or with email
+                    </span>
+                  </div>
+
                   {/* Interactive Auth Form */}
                   <form onSubmit={handleSubmit} className="space-y-4">
                     {!isLogin && (
@@ -468,6 +664,85 @@ export default function LoginPage() {
       <footer className="w-full py-4 text-center text-xs text-muted-foreground z-10">
         © {new Date().getFullYear()} AKR Hunger Technologies Inc. All rights reserved.
       </footer>
+
+      {/* Google Sign-in Mandatory Phone Setup Dialog */}
+      <Dialog open={isPhoneModalOpen} onOpenChange={(open) => {
+        // Keep open until phone is saved
+        if (!open && !savingPhone && phoneInput.length === 10) {
+          handleSavePhone();
+        }
+      }}>
+        <DialogContent
+          className="max-w-md rounded-3xl p-6 sm:p-7 bg-card border border-border shadow-2xl"
+          showCloseButton={false}
+        >
+          <DialogHeader className="text-center sm:text-left space-y-2">
+            <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mx-auto sm:mx-0 shadow-sm ring-1 ring-primary/25">
+              <Phone className="w-6 h-6" />
+            </div>
+            <DialogTitle className="text-xl sm:text-2xl font-black text-foreground tracking-tight">
+              One Last Step: Enter Phone Number
+            </DialogTitle>
+            <DialogDescription className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+              Welcome to AKR Hunger, <strong className="text-foreground">{authenticatedGoogleUser?.name || 'Foodie'}</strong>! To coordinate your food deliveries and share your delivery OTP, please enter your mobile number.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleSavePhone} className="space-y-4 my-2">
+            <div>
+              <label className="text-xs font-bold text-foreground block mb-1.5">
+                Mobile Number
+              </label>
+              <div className="relative flex items-center">
+                <div className="absolute left-3.5 flex items-center gap-1 text-xs font-bold text-muted-foreground pointer-events-none select-none">
+                  <span>🇮🇳</span>
+                  <span>+91</span>
+                </div>
+                <Input
+                  type="tel"
+                  inputMode="numeric"
+                  autoFocus
+                  maxLength={10}
+                  placeholder="98765 43210"
+                  value={phoneInput}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/\D/g, '').slice(0, 10);
+                    setPhoneInput(val);
+                    if (phoneError) setPhoneError('');
+                  }}
+                  className="pl-16 h-12 rounded-xl bg-muted/40 border-border/80 text-foreground placeholder:text-muted-foreground text-sm font-semibold tracking-wider transition-all focus:border-primary focus:bg-background"
+                />
+              </div>
+              {phoneError && (
+                <p className="text-xs text-destructive mt-1.5 font-medium flex items-center gap-1 animate-in fade-in">
+                  <span className="w-1 h-1 rounded-full bg-destructive inline-block" />
+                  {phoneError}
+                </p>
+              )}
+            </div>
+
+            <DialogFooter className="pt-2 sm:pt-3">
+              <Button
+                type="submit"
+                disabled={savingPhone || phoneInput.length !== 10}
+                className="w-full h-12 rounded-xl font-bold bg-primary hover:bg-primary/90 text-primary-foreground text-sm shadow-md shadow-primary/20 gap-2 cursor-pointer transition-all"
+              >
+                {savingPhone ? (
+                  <>
+                    <Spinner className="w-4 h-4 text-primary-foreground" />
+                    <span>Saving Phone Number...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Confirm & Save Phone Number</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

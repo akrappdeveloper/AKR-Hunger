@@ -37,6 +37,10 @@ import {
   Tag,
   X,
   Check,
+  Phone,
+  Edit2,
+  CheckCircle2,
+  Smartphone,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import SafeImage from '@/components/ui/safe-image';
@@ -70,6 +74,12 @@ export default function CartPage() {
   const [razorpayKeyId, setRazorpayKeyId] = useState<string>('');
   const [isAddressDialogOpen, setIsAddressDialogOpen] = useState(false);
   const [isLowBalanceModalOpen, setIsLowBalanceModalOpen] = useState(false);
+
+  // Customer Contact Phone State
+  const [customerPhoneInput, setCustomerPhoneInput] = useState('');
+  const [isEditingPhone, setIsEditingPhone] = useState(false);
+  const [phoneSaveLoading, setPhoneSaveLoading] = useState(false);
+  const [phoneError, setPhoneError] = useState('');
 
   // Coupon & Promotions State
   const [appliedPromotion, setAppliedPromotion] = useState<Promotion | null>(null);
@@ -169,6 +179,45 @@ export default function CartPage() {
     if (user && !realtimeCustomer) setRealtimeCustomer(customer);
   }, [customer, user]);
 
+  const activeCustomerPhone = realtimeCustomer?.phone || customer?.phone || '';
+  const hasSavedPhone = Boolean(activeCustomerPhone && activeCustomerPhone.trim().length > 0);
+
+  // Sync initial phone input if user hasn't edited
+  useEffect(() => {
+    if (activeCustomerPhone && !customerPhoneInput && !isEditingPhone) {
+      setCustomerPhoneInput(activeCustomerPhone.replace(/\D/g, '').slice(-10));
+    }
+  }, [activeCustomerPhone]);
+
+  const handleSavePhoneInCart = async () => {
+    if (!user) return;
+    setPhoneError('');
+    const rawDigits = customerPhoneInput.replace(/\D/g, '');
+    if (rawDigits.length < 10) {
+      setPhoneError('Please enter a valid 10-digit mobile number.');
+      return;
+    }
+
+    setPhoneSaveLoading(true);
+    const last10 = rawDigits.slice(-10);
+    const formattedPhone = `+91 ${last10.slice(0, 5)} ${last10.slice(5)}`;
+
+    try {
+      await updateDoc(doc(db, 'customers', user.uid), {
+        phone: formattedPhone,
+        updatedAt: new Date(),
+      });
+      setIsEditingPhone(false);
+      toast.success('Phone number saved successfully!');
+    } catch (err: any) {
+      console.error('Failed to save phone number:', err);
+      setPhoneError(err.message || 'Failed to save phone number');
+      toast.error('Could not save phone number');
+    } finally {
+      setPhoneSaveLoading(false);
+    }
+  };
+
   const subtotal = getSubtotal();
   const deliveryCharge = restaurant?.deliveryCharge || 40;
   const taxes = Math.round(subtotal * 0.05);
@@ -225,6 +274,30 @@ export default function CartPage() {
     if (!deliveryAddress) {
       toast.error('Please select a delivery address!');
       return;
+    }
+
+    // Mandatory Phone Number Validation
+    const cleanDigits = (customerPhoneInput || realtimeCustomer?.phone || customer?.phone || '').replace(/\D/g, '');
+    const currentSavedPhone = (realtimeCustomer?.phone || customer?.phone || '').trim();
+
+    if (cleanDigits.length < 10) {
+      toast.error('Contact phone number is mandatory! Please enter and save your phone number before confirming your order.');
+      setIsEditingPhone(true);
+      return;
+    }
+
+    let verifiedPhone = currentSavedPhone;
+    if (!currentSavedPhone || (customerPhoneInput && customerPhoneInput.replace(/\D/g, '').length === 10 && !currentSavedPhone.includes(customerPhoneInput.slice(-10)))) {
+      const last10 = cleanDigits.slice(-10);
+      verifiedPhone = `+91 ${last10.slice(0, 5)} ${last10.slice(5)}`;
+      try {
+        await updateDoc(doc(db, 'customers', user.uid), {
+          phone: verifiedPhone,
+          updatedAt: new Date(),
+        });
+      } catch (err) {
+        console.error('Failed to auto-save phone in cart:', err);
+      }
     }
 
     // Service Area Validation
@@ -304,7 +377,7 @@ export default function CartPage() {
           createdAt: new Date(),
           updatedAt: new Date(),
           customerName: realtimeCustomer?.name || 'Guest',
-          customerPhone: realtimeCustomer?.phone || '',
+          customerPhone: verifiedPhone || realtimeCustomer?.phone || '',
           restaurantName: restaurant?.name || 'Unknown Restaurant',
           deliveryOtp: Math.floor(1000 + Math.random() * 9000).toString(),
         };
@@ -363,7 +436,7 @@ export default function CartPage() {
         createdAt: new Date(),
         updatedAt: new Date(),
         customerName: realtimeCustomer?.name || 'Guest',
-        customerPhone: realtimeCustomer?.phone || '',
+        customerPhone: verifiedPhone || realtimeCustomer?.phone || '',
         restaurantName: restaurant?.name || 'Unknown Restaurant',
         deliveryOtp: Math.floor(1000 + Math.random() * 9000).toString(), // Generate 4-digit OTP
       };
@@ -390,7 +463,7 @@ export default function CartPage() {
         clearCart();
         router.push(`/customer/orders/${docRef.id}`);
       } else {
-        await handleOnlinePayment(docRef.id, total);
+        await handleOnlinePayment(docRef.id, total, verifiedPhone);
       }
     } catch (error: any) {
       console.error('Order placement failed:', error);
@@ -399,8 +472,9 @@ export default function CartPage() {
     }
   };
 
-  const handleOnlinePayment = async (orderId: string, amount: number) => {
+  const handleOnlinePayment = async (orderId: string, amount: number, contactPhone?: string) => {
     try {
+      const phoneToUse = contactPhone || realtimeCustomer?.phone || '';
       const res = await fetch('/api/payment/create-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -409,7 +483,7 @@ export default function CartPage() {
           orderId,
           customerName: realtimeCustomer?.name,
           customerEmail: user?.email,
-          customerPhone: realtimeCustomer?.phone
+          customerPhone: phoneToUse
         }),
       });
 
@@ -461,7 +535,7 @@ export default function CartPage() {
         prefill: {
           name: realtimeCustomer?.name,
           email: user?.email,
-          contact: realtimeCustomer?.phone,
+          contact: phoneToUse || realtimeCustomer?.phone,
         },
         theme: { color: '#F97316' },
         modal: {
@@ -604,7 +678,139 @@ export default function CartPage() {
             />
           </div>
 
-          {/* 2. Items Section */}
+          {/* 2. Contact Phone Number Section */}
+          <div className="bg-card/90 backdrop-blur-md rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-border/60 shadow-sm relative z-10">
+            <div className="flex items-center justify-between mb-4 sm:mb-5">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-primary/15 flex items-center justify-center text-primary">
+                  <Phone className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-bold text-base sm:text-lg text-foreground">Contact Phone Number</h3>
+                    {hasSavedPhone && (
+                      <Badge className="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 text-[10px] font-bold py-0.5 px-2">
+                        <CheckCircle2 className="w-3 h-3 mr-1 inline" /> Saved
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground">Required for delivery coordination & order OTP</p>
+                </div>
+              </div>
+
+              {hasSavedPhone && !isEditingPhone && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setIsEditingPhone(true);
+                    setCustomerPhoneInput(activeCustomerPhone.replace(/\D/g, '').slice(-10));
+                    setPhoneError('');
+                  }}
+                  className="text-primary border-primary/30 hover:bg-primary/10 rounded-xl font-bold text-xs h-8 px-3 gap-1.5"
+                >
+                  <Edit2 className="w-3.5 h-3.5" /> Change
+                </Button>
+              )}
+            </div>
+
+            {hasSavedPhone && !isEditingPhone ? (
+              <div className="bg-muted/40 rounded-2xl p-4 border border-border/60 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center shrink-0">
+                    <Smartphone className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-black text-foreground text-base tracking-wide">
+                        {realtimeCustomer?.phone || customer?.phone}
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Driver and restaurant partner will call this number if needed.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-3 bg-muted/30 p-4 rounded-2xl border border-dashed border-border/80">
+                <div className="flex items-start gap-2 text-xs text-muted-foreground">
+                  <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                  <span>
+                    {hasSavedPhone
+                      ? 'Enter a new 10-digit mobile number to update your contact details.'
+                      : 'Please enter and save your 10-digit mobile number to proceed with your order.'}
+                  </span>
+                </div>
+
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 pt-1">
+                  <div className="relative flex-1">
+                    <div className="absolute left-3.5 top-1/2 -translate-y-1/2 flex items-center gap-1 text-xs font-bold text-muted-foreground pointer-events-none select-none">
+                      <span>🇮🇳</span>
+                      <span>+91</span>
+                    </div>
+                    <Input
+                      type="tel"
+                      inputMode="numeric"
+                      maxLength={10}
+                      placeholder="Enter 10-digit mobile number"
+                      value={customerPhoneInput}
+                      onChange={(e) => {
+                        const cleaned = e.target.value.replace(/\D/g, '').slice(0, 10);
+                        setCustomerPhoneInput(cleaned);
+                        if (phoneError) setPhoneError('');
+                      }}
+                      className="pl-16 h-11 rounded-xl bg-background border-border/80 text-foreground text-sm font-semibold tracking-wider transition-all focus:border-primary"
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      onClick={handleSavePhoneInCart}
+                      disabled={phoneSaveLoading || customerPhoneInput.replace(/\D/g, '').length !== 10}
+                      className="h-11 px-4 rounded-xl font-bold text-xs bg-primary hover:bg-primary/90 text-primary-foreground gap-1.5 shadow-xs shrink-0 cursor-pointer"
+                    >
+                      {phoneSaveLoading ? (
+                        <>
+                          <Spinner className="w-3.5 h-3.5 text-primary-foreground" />
+                          <span>Saving...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Check className="w-4 h-4" />
+                          <span>Save Phone Number</span>
+                        </>
+                      )}
+                    </Button>
+
+                    {isEditingPhone && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        onClick={() => {
+                          setIsEditingPhone(false);
+                          setPhoneError('');
+                        }}
+                        className="h-11 px-3 rounded-xl font-semibold text-xs text-muted-foreground hover:text-foreground shrink-0 cursor-pointer"
+                      >
+                        Cancel
+                      </Button>
+                    )}
+                  </div>
+                </div>
+
+                {phoneError && (
+                  <p className="text-xs text-destructive font-medium flex items-center gap-1.5 animate-in fade-in">
+                    <span className="w-1.5 h-1.5 rounded-full bg-destructive inline-block" />
+                    {phoneError}
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* 3. Items Section */}
           <div className="bg-card/90 backdrop-blur-md rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-border/60 shadow-sm relative z-10">
             <div className="flex items-center justify-between mb-4 sm:mb-6">
               <div className="flex items-center gap-2 sm:gap-3">
@@ -666,7 +872,7 @@ export default function CartPage() {
             </div>
           </div>
 
-          {/* 3. Payment Method */}
+          {/* 4. Payment Method */}
           <div className="bg-card/90 backdrop-blur-md rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-border/60 shadow-sm relative z-10">
             <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
               <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-emerald-500/15 flex items-center justify-center text-emerald-500">
@@ -1027,6 +1233,10 @@ export default function CartPage() {
               >
                 {loading ? (
                   <Spinner className="w-5 h-5 text-primary-foreground" />
+                ) : !hasSavedPhone && customerPhoneInput.replace(/\D/g, '').length !== 10 ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <Phone className="w-5 h-5" /> Add Phone Number to Place Order
+                  </span>
                 ) : paymentMethod === 'wallet' ? (
                   isWalletSufficient ? (
                     <span className="flex items-center gap-2">
@@ -1043,6 +1253,13 @@ export default function CartPage() {
                   'Proceed to Online Payment'
                 )}
               </Button>
+
+              {!hasSavedPhone && customerPhoneInput.replace(/\D/g, '').length !== 10 && (
+                <p className="text-[11px] text-amber-600 dark:text-amber-400 text-center font-medium mt-2 flex items-center justify-center gap-1">
+                  <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                  <span>A contact phone number is required before confirming your order.</span>
+                </p>
+              )}
 
               {paymentMethod === 'wallet' && !isWalletSufficient && (
                 <p className="text-[11px] text-amber-600 dark:text-amber-400 text-center font-medium mt-2">

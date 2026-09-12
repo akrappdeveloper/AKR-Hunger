@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User, onAuthStateChanged, signOut } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, onSnapshot } from 'firebase/firestore';
 import { Customer } from '@/lib/types';
 
 interface AuthContextType {
@@ -21,30 +21,46 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let customerUnsub: (() => void) | null = null;
+
     const unsubscribe = onAuthStateChanged(auth, async (authUser) => {
       setUser(authUser);
 
-      if (authUser) {
-        // Fetch customer profile from Firestore
-        try {
-          const customerDoc = await getDoc(doc(db, 'customers', authUser.uid));
-          if (customerDoc.exists()) {
-            setCustomer({
-              ...customerDoc.data(),
-              id: customerDoc.id,
-            } as Customer);
-          }
-        } catch (error) {
-          console.error('Error fetching customer profile:', error);
-        }
-      } else {
-        setCustomer(null);
+      if (customerUnsub) {
+        customerUnsub();
+        customerUnsub = null;
       }
 
-      setLoading(false);
+      if (authUser) {
+        // Set up real-time listener for customer profile from Firestore
+        customerUnsub = onSnapshot(
+          doc(db, 'customers', authUser.uid),
+          (customerDoc) => {
+            if (customerDoc.exists()) {
+              setCustomer({
+                ...customerDoc.data(),
+                id: customerDoc.id,
+              } as Customer);
+            } else {
+              setCustomer(null);
+            }
+            setLoading(false);
+          },
+          (error) => {
+            console.error('Error listening to customer profile:', error);
+            setLoading(false);
+          }
+        );
+      } else {
+        setCustomer(null);
+        setLoading(false);
+      }
     });
 
-    return unsubscribe;
+    return () => {
+      if (customerUnsub) customerUnsub();
+      unsubscribe();
+    };
   }, []);
 
   const logout = async () => {

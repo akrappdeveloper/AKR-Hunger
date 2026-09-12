@@ -35,7 +35,9 @@ import {
   updateDoc,
   doc,
   serverTimestamp,
-  getDoc
+  getDoc,
+  runTransaction,
+  increment
 } from 'firebase/firestore';
 import { toast } from 'sonner';
 import {
@@ -627,7 +629,7 @@ export default function DeliveryDashboard() {
                     </div>
                     <div>
                       <h4 className="text-white font-bold text-lg">{selectedOrder.restaurantName}</h4>
-                      <p className="text-gray-400 text-sm">{order.restaurantAddress || 'Restaurant Location'}</p>
+                      <p className="text-gray-400 text-sm">{selectedOrder.restaurantAddress || 'Restaurant Location'}</p>
                     </div>
                   </div>
 
