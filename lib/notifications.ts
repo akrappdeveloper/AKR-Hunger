@@ -1,5 +1,10 @@
 // Real-time notification types and utilities
 export type NotificationType = 
+  | 'order'
+  | 'payment'
+  | 'wallet'
+  | 'promo'
+  | 'system'
   | 'order-placed' 
   | 'order-confirmed' 
   | 'order-preparing' 
@@ -9,19 +14,25 @@ export type NotificationType =
   | 'order-cancelled'
   | 'delivery-assigned'
   | 'payment-failed'
+  | 'payment-success'
   | 'restaurant-verified'
-  | 'system-alert';
+  | 'system-alert'
+  | string;
 
 export interface Notification {
   id: string;
   type: NotificationType;
+  subType?: string;
   title: string;
   message: string;
   data?: Record<string, any>;
+  metadata?: Record<string, any>;
   read: boolean;
+  isRead?: boolean;
+  deleted?: boolean;
   createdAt: Date;
   userId: string;
-  userType: 'customer' | 'restaurant' | 'delivery' | 'admin';
+  userType: 'customer' | 'restaurant' | 'delivery' | 'admin' | string;
   orderId?: string;
   icon?: string;
   actionUrl?: string;

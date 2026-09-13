@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
+import { useNotifications } from '@/context/NotificationContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -29,6 +30,7 @@ export default function CustomerNavbar() {
   const pathname = usePathname();
   const { user, customer, logout } = useAuth();
   const { items, deliveryAddress, setDeliveryAddress } = useCart();
+  const { unreadCount } = useNotifications();
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
 
   const [isScrolled, setIsScrolled] = useState(false);
@@ -142,6 +144,25 @@ export default function CustomerNavbar() {
             {/* Theme Toggle Button */}
             <ThemeToggle />
 
+            {/* Notification Bell - Logged in customer */}
+            {user && (
+              <Link href="/customer/notifications">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="relative text-foreground/80 hover:text-foreground hover:bg-muted/60 rounded-full w-10 h-10 border border-border/40"
+                  aria-label="Notifications"
+                >
+                  <Bell className="w-4 h-4 sm:w-5 sm:h-5" />
+                  {unreadCount > 0 && (
+                    <Badge className="absolute -top-1 -right-1 h-5 min-w-[20px] px-1 flex items-center justify-center p-0 bg-red-500 text-white text-[10px] font-black border-2 border-background rounded-full shadow-md animate-bounce-subtle">
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </Badge>
+                  )}
+                </Button>
+              </Link>
+            )}
+
             {/* Cart - Only visible when user is logged in */}
             {user && (
               <Link href="/customer/cart">
@@ -184,9 +205,16 @@ export default function CustomerNavbar() {
                     <Wallet className="w-4 h-4 mr-2 text-muted-foreground" />
                     Wallet
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => router.push('/customer/notifications')} className="cursor-pointer rounded-xl my-0.5">
-                    <Bell className="w-4 h-4 mr-2 text-muted-foreground" />
-                    Notifications
+                  <DropdownMenuItem onClick={() => router.push('/customer/notifications')} className="cursor-pointer rounded-xl my-0.5 justify-between">
+                    <div className="flex items-center">
+                      <Bell className="w-4 h-4 mr-2 text-muted-foreground" />
+                      Notifications
+                    </div>
+                    {unreadCount > 0 && (
+                      <Badge className="bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">
+                        {unreadCount > 9 ? '9+' : unreadCount}
+                      </Badge>
+                    )}
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => router.push('/customer/favorites')} className="cursor-pointer rounded-xl my-0.5">
                     <Heart className="w-4 h-4 mr-2 text-muted-foreground" />
@@ -278,9 +306,16 @@ export default function CustomerNavbar() {
                       <div className="w-8 h-8 rounded-xl bg-purple-500/10 text-purple-500 flex items-center justify-center"><User className="w-4 h-4" /></div>
                       <span className="font-semibold text-sm">Profile</span>
                     </Link>
-                    <Link href="/customer/notifications" className="flex items-center gap-3 p-3 rounded-2xl hover:bg-muted/60 text-foreground transition-colors">
-                      <div className="w-8 h-8 rounded-xl bg-red-500/10 text-red-500 flex items-center justify-center"><Bell className="w-4 h-4" /></div>
-                      <span className="font-semibold text-sm">Notifications</span>
+                    <Link href="/customer/notifications" className="flex items-center justify-between p-3 rounded-2xl hover:bg-muted/60 text-foreground transition-colors">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-xl bg-red-500/10 text-red-500 flex items-center justify-center"><Bell className="w-4 h-4" /></div>
+                        <span className="font-semibold text-sm">Notifications</span>
+                      </div>
+                      {unreadCount > 0 && (
+                        <Badge className="bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full font-bold">
+                          {unreadCount} New
+                        </Badge>
+                      )}
                     </Link>
                   </div>
 

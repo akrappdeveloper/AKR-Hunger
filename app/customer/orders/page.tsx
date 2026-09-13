@@ -16,6 +16,7 @@ import { useCart } from '@/context/CartContext';
 import { useRouter } from 'next/navigation';
 import InvoiceButton from './InvoiceButton';
 import { toast } from 'sonner';
+import { notifyOrderStatusUpdate } from '@/lib/customer-notifications';
 
 export default function OrdersPage() {
   const { user, customer } = useAuth();
@@ -409,6 +410,16 @@ function CancelOrderDialog({ order, isOpen, onClose }: { order: Order | null, is
         status: 'cancelled',
         cancelledAt: serverTimestamp(),
       });
+      // Notify customer of cancellation
+      if (order.customerId) {
+        notifyOrderStatusUpdate({
+          orderId: order.id,
+          customerId: order.customerId,
+          status: 'cancelled',
+          restaurantName: order.restaurantName,
+        }).catch((e) => console.error('Failed to notify cancellation:', e));
+      }
+
       toast.success("Order cancelled successfully");
       onClose();
     } catch (error) {

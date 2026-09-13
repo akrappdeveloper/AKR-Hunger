@@ -630,4 +630,8 @@ export interface IssuedCard {
   status: 'active' | 'blocked' | 'expired';
   issuedAt: Date;
   issuedBy?: string;
+  tier?: string;
+  cardType?: string;
+  balance?: number;
+  updatedAt?: Date;
 }

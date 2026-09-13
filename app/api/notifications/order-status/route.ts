@@ -25,48 +25,93 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Customer ID not found on order' }, { status: 404 });
         }
 
-        // 2. Fetch the Customer to get FCM Token
-        const customerSnap = await admin.firestore().collection('users').doc(customerId).get();
-        // Also try 'customers' collection just in case, logic in hooks uses 'users' but let's be safe if profiles differ
-        let customerData = customerSnap.data();
+        const shortId = orderId.slice(-6).toUpperCase();
+        const restaurantName = orderData?.restaurantName || 'Restaurant';
+        const deliveryOtp = orderData?.deliveryOtp;
 
-        if (!customerData || !customerData.fcmToken) {
-            // Fallback or retry logic if needed, but for now just check users
-            console.log(`No FCM token found for customer ${customerId}`);
-            return NextResponse.json({ message: 'No FCM token for customer', success: false });
+        let notifTitle = 'Order Update 🍽️';
+        let notifBody = `Your order #${shortId} status has been updated to ${status.replace(/_/g, ' ')}.`;
+
+        switch (status) {
+            case 'confirmed':
+                notifTitle = 'Order Confirmed! 👨‍🍳';
+                notifBody = `${restaurantName} confirmed your order #${shortId}. Cooking will begin shortly!`;
+                break;
+            case 'preparing':
+                notifTitle = 'Kitchen is Preparing Food 🍳';
+                notifBody = `Chef at ${restaurantName} is preparing your delicious meal for Order #${shortId}!`;
+                break;
+            case 'ready':
+                notifTitle = 'Order Ready for Pickup 📦';
+                notifBody = `Order #${shortId} is freshly packed and awaiting delivery partner pickup.`;
+                break;
+            case 'out_for_delivery':
+                notifTitle = 'Out for Delivery! 🛵';
+                notifBody = deliveryOtp
+                    ? `Your order #${shortId} is on the way! Give Delivery OTP ${deliveryOtp} to the driver.`
+                    : `Your order #${shortId} is on the way with your delivery partner!`;
+                break;
+            case 'delivered':
+                notifTitle = 'Order Delivered! 🍽️';
+                notifBody = `Order #${shortId} from ${restaurantName} was delivered. Enjoy your meal!`;
+                break;
+            case 'cancelled':
+                notifTitle = 'Order Cancelled ❌';
+                notifBody = `Your order #${shortId} has been cancelled.`;
+                break;
         }
 
-        const fcmToken = customerData.fcmToken;
+        // 2. Always persist notification in Firestore
+        await admin.firestore().collection('notifications').add({
+            userId: customerId,
+            userType: 'customer',
+            type: 'order',
+            subType: `order-${status}`,
+            title: notifTitle,
+            message: notifBody,
+            orderId: orderId,
+            read: false,
+            isRead: false,
+            deleted: false,
+            actionUrl: `/customer/orders/${orderId}`,
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            metadata: {
+                orderId,
+                status,
+                restaurantName,
+                deliveryOtp,
+            }
+        });
 
-        // 3. Format Status Message
-        const statusMessages: Record<string, string> = {
-            'confirmed': 'being prepared',
-            'preparing': 'being prepared',
-            'ready': 'ready for pickup/delivery',
-            'out_for_delivery': 'out for delivery',
-            'delivered': 'delivered',
-            'cancelled': 'cancelled',
-        };
+        // 3. Try to send FCM push notification if token exists
+        let fcmSent = false;
+        try {
+            const customerSnap = await admin.firestore().collection('users').doc(customerId).get();
+            let customerData = customerSnap.data();
+            const fcmToken = customerData?.fcmToken;
 
-        const friendlyStatus = statusMessages[status] || status.replace('_', ' ');
+            if (fcmToken && messaging) {
+                const message = {
+                    notification: {
+                        title: notifTitle,
+                        body: notifBody,
+                    },
+                    data: {
+                        orderId: orderId,
+                        type: 'order_status',
+                        status: status,
+                        actionUrl: `/customer/orders/${orderId}`
+                    },
+                    token: fcmToken,
+                };
+                await messaging.send(message);
+                fcmSent = true;
+            }
+        } catch (fcmError) {
+            console.warn('[FCM] Push delivery failed (in-app notification saved successfully):', fcmError);
+        }
 
-        // 4. Send Notification
-        const message = {
-            notification: {
-                title: 'Order Update 🍽️',
-                body: `Your order is ${friendlyStatus}!`,
-            },
-            data: {
-                orderId: orderId,
-                type: 'order_status',
-                status: status
-            },
-            token: fcmToken,
-        };
-
-        await messaging.send(message);
-
-        return NextResponse.json({ success: true, message: 'Notification sent' });
+        return NextResponse.json({ success: true, message: 'Notification created in Firestore', fcmSent });
     } catch (error: any) {
         console.error('Error sending order status notification:', error);
         return NextResponse.json({ error: error.message }, { status: 500 });

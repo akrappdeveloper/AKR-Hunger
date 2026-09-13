@@ -2,6 +2,7 @@ import React from "react"
 import CustomerNavbar from '@/components/customer/CustomerNavbar';
 import CustomerMobileNav from '@/components/customer/MobileNav';
 import FloatingAIChatWidget from '@/components/ai/FloatingAIChatWidget';
+import { NotificationProvider } from '@/context/NotificationContext';
 import { Metadata } from 'next';
 import { generateFoodDeliverySchema, generateWebSiteSchema, generateOrganizationSchema, generateFAQSchema } from '@/lib/seo/schemas';
 
@@ -64,29 +65,31 @@ export default function CustomerLayout({
   const faqSchema = generateFAQSchema();
 
   return (
-    <div className="min-h-screen bg-background text-foreground transition-colors duration-300 selection:bg-primary/20">
-      <CustomerNavbar />
-      <main className="pt-0 pb-16 md:pb-0">{children}</main>
-      <CustomerMobileNav />
-      <FloatingAIChatWidget role="customer" buttonText="Help AI" />
+    <NotificationProvider>
+      <div className="min-h-screen bg-background text-foreground transition-colors duration-300 selection:bg-primary/20">
+        <CustomerNavbar />
+        <main className="pt-0 pb-16 md:pb-0">{children}</main>
+        <CustomerMobileNav />
+        <FloatingAIChatWidget role="customer" buttonText="Help AI" />
 
-      {/* JSON-LD Schema for SEO */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(foodDeliverySchema) }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
-      />
-    </div>
+        {/* JSON-LD Schema for SEO */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(foodDeliverySchema) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+        />
+      </div>
+    </NotificationProvider>
   );
 }

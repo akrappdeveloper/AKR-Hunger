@@ -77,6 +77,30 @@ export async function verifyAndAddFunds(
             createdAt: serverTimestamp()
         });
 
+        // Create in-app customer notification for wallet top-up
+        try {
+            await addDoc(collection(db, 'notifications'), {
+                userId: customerId,
+                userType: 'customer',
+                type: 'wallet',
+                subType: 'wallet-credit',
+                title: 'Wallet Top-up Successful 💰',
+                message: `₹${amount.toFixed(2)} was successfully added to your AKR Wallet balance!`,
+                read: false,
+                isRead: false,
+                deleted: false,
+                actionUrl: '/customer/wallet',
+                createdAt: serverTimestamp(),
+                metadata: {
+                    amount,
+                    paymentId,
+                    type: 'deposit',
+                }
+            });
+        } catch (notifErr) {
+            console.error("Failed to create wallet notification:", notifErr);
+        }
+
         return { success: true };
     } catch (error) {
         console.error("Error adding funds:", error);

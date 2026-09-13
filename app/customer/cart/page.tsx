@@ -9,6 +9,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
 import { Restaurant, Order, OrderItem, Promotion } from '@/lib/types';
 import { validatePromotionCode, calculateDiscount, recordPromotionUsage } from '@/lib/promotions';
+import { notifyOrderPlaced, notifyPaymentResult } from '@/lib/customer-notifications';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -410,6 +411,15 @@ export default function CartPage() {
           body: JSON.stringify({ orderId: docRef.id }),
         }).catch((err) => console.error('Failed to trigger notification', err));
 
+        // Notify Customer of Order & Wallet Payment
+        notifyOrderPlaced({
+          orderId: docRef.id,
+          customerId: user.uid,
+          restaurantName: restaurant?.name || 'Restaurant',
+          total,
+          paymentMethod: 'wallet',
+        }).catch((e) => console.error('Error sending wallet notification:', e));
+
         toast.success(`₹${total} paid securely from your AKR Wallet! Order confirmed.`);
         clearCart();
         router.push(`/customer/orders/${docRef.id}`);
@@ -459,6 +469,15 @@ export default function CartPage() {
           body: JSON.stringify({ orderId: docRef.id }),
         }).catch((err) => console.error('Failed to trigger notification', err));
 
+        // Notify Customer of Order & COD Payment
+        notifyOrderPlaced({
+          orderId: docRef.id,
+          customerId: user.uid,
+          restaurantName: restaurant?.name || 'Restaurant',
+          total,
+          paymentMethod: 'cod',
+        }).catch((e) => console.error('Error sending COD notification:', e));
+
         toast.success('Order placed successfully!');
         clearCart();
         router.push(`/customer/orders/${docRef.id}`);
@@ -473,6 +492,8 @@ export default function CartPage() {
   };
 
   const handleOnlinePayment = async (orderId: string, amount: number, contactPhone?: string) => {
+    if (!user) return;
+    const currentUserId = user.uid;
     try {
       const phoneToUse = contactPhone || realtimeCustomer?.phone || '';
       const res = await fetch('/api/payment/create-order', {
@@ -482,7 +503,7 @@ export default function CartPage() {
           amount: Math.round(amount * 100),
           orderId,
           customerName: realtimeCustomer?.name,
-          customerEmail: user?.email,
+          customerEmail: user.email,
           customerPhone: phoneToUse
         }),
       });
@@ -524,17 +545,35 @@ export default function CartPage() {
               body: JSON.stringify({ orderId: orderId })
             }).catch(err => console.error("Failed to trigger notification", err));
 
+            // Notify Customer of Payment Success & Confirmed Order
+            notifyPaymentResult({
+              orderId,
+              customerId: currentUserId,
+              amount,
+              status: 'completed',
+              method: 'online',
+              paymentId: response.razorpay_payment_id,
+            }).catch((e) => console.error('Error sending online payment notification:', e));
+
             clearCart();
             toast.success('Payment successful!');
             router.push(`/customer/orders/${orderId}`);
           } else {
+            notifyPaymentResult({
+              orderId,
+              customerId: currentUserId,
+              amount,
+              status: 'failed',
+              method: 'online',
+              errorReason: 'Payment verification failed',
+            }).catch((e) => console.error('Error sending payment failed notification:', e));
             toast.error('Payment verification failed');
             setLoading(false);
           }
         },
         prefill: {
           name: realtimeCustomer?.name,
-          email: user?.email,
+          email: user.email,
           contact: phoneToUse || realtimeCustomer?.phone,
         },
         theme: { color: '#F97316' },
@@ -542,6 +581,14 @@ export default function CartPage() {
           ondismiss: () => {
             setLoading(false);
             toast.info('Payment cancelled');
+            notifyPaymentResult({
+              orderId,
+              customerId: currentUserId,
+              amount,
+              status: 'cancelled',
+              method: 'online',
+              errorReason: 'Payment dismissed by user',
+            }).catch((e) => console.error('Error sending cancel notification:', e));
             router.push(`/customer/orders/${orderId}`);
           }
         }

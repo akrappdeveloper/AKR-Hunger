@@ -19,10 +19,11 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   IdCard, Users, CheckCircle, XCircle, Clock, CreditCard,
-  Search, Shield, Award, AlertCircle, Ban, Eye
+  Search, Shield, Award, AlertCircle, Ban, Eye, Edit2, Sparkles
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { serverTimestamp } from 'firebase/firestore';
+import EditIssuedCardDialog from '@/components/admin/EditIssuedCardDialog';
 
 export default function AdminMembershipsPage() {
   const [requests, setRequests] = useState<MembershipRequest[]>([]);
@@ -34,6 +35,8 @@ export default function AdminMembershipsPage() {
   const [rejectionReason, setRejectionReason] = useState('');
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const [detailRequest, setDetailRequest] = useState<MembershipRequest | null>(null);
+  const [selectedCardToEdit, setSelectedCardToEdit] = useState<IssuedCard | null>(null);
+  const [editCardDialogOpen, setEditCardDialogOpen] = useState(false);
 
   useEffect(() => {
     const unsubRequests = onSnapshot(
@@ -403,10 +406,32 @@ export default function AdminMembershipsPage() {
                     </TableHeader>
                     <TableBody>
                       {cards.map((card) => (
-                        <TableRow key={card.id} className="border-white/5 hover:bg-white/5 transition-colors">
-                          <TableCell className="text-white font-medium text-sm">{card.customerName}</TableCell>
+                        <TableRow
+                          key={card.id}
+                          onClick={() => {
+                            setSelectedCardToEdit(card);
+                            setEditCardDialogOpen(true);
+                          }}
+                          className="border-white/5 hover:bg-white/10 transition-colors cursor-pointer group"
+                        >
+                          <TableCell className="text-white font-medium text-sm">
+                            <div className="flex items-center gap-2.5">
+                              <div className="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-400 flex items-center justify-center border border-blue-500/20 group-hover:scale-105 transition-transform">
+                                <CreditCard className="w-4 h-4" />
+                              </div>
+                              <div>
+                                <p className="text-white font-semibold">{card.customerName}</p>
+                                <span className="text-[11px] text-gray-500 font-mono">#{card.id.slice(0, 8)}</span>
+                              </div>
+                            </div>
+                          </TableCell>
                           <TableCell className="text-gray-300 font-mono text-sm">
-                            •••• •••• •••• {card.cardNumber?.slice(-4) || '****'}
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold tracking-wider text-white">•••• •••• •••• {card.cardNumber?.slice(-4) || '****'}</span>
+                              <Badge variant="outline" className="text-[10px] text-blue-400 border-blue-500/30 bg-blue-500/10 py-0 px-1.5 opacity-80 group-hover:opacity-100 transition-opacity">
+                                Click to Edit
+                              </Badge>
+                            </div>
                           </TableCell>
                           <TableCell className="text-center">
                             <Badge variant="outline" className={`text-xs capitalize ${getCardStatusColor(card.status)}`}>
@@ -416,18 +441,31 @@ export default function AdminMembershipsPage() {
                           <TableCell className="text-gray-400 text-sm">
                             {(card.issuedAt as any)?.toDate ? (card.issuedAt as any).toDate().toLocaleDateString() : (card.issuedAt ? new Date(card.issuedAt).toLocaleDateString() : '-')}
                           </TableCell>
-                          <TableCell className="text-center">
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => handleBlockCard(card)}
-                              className={`h-8 gap-1 text-xs ${card.status === 'active'
-                                ? 'text-red-400 hover:bg-red-500/10'
-                                : 'text-emerald-400 hover:bg-emerald-500/10'
-                                }`}
-                            >
-                              {card.status === 'active' ? <><Ban size={12} /> Block</> : <><CheckCircle size={12} /> Unblock</>}
-                            </Button>
+                          <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
+                            <div className="flex items-center justify-center gap-1.5">
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => {
+                                  setSelectedCardToEdit(card);
+                                  setEditCardDialogOpen(true);
+                                }}
+                                className="h-8 gap-1 text-xs text-blue-400 hover:text-blue-300 hover:bg-blue-500/15"
+                              >
+                                <Edit2 size={12} /> Edit Details
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleBlockCard(card)}
+                                className={`h-8 gap-1 text-xs ${card.status === 'active'
+                                  ? 'text-red-400 hover:bg-red-500/10'
+                                  : 'text-emerald-400 hover:bg-emerald-500/10'
+                                  }`}
+                              >
+                                {card.status === 'active' ? <><Ban size={12} /> Block</> : <><CheckCircle size={12} /> Unblock</>}
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -514,6 +552,13 @@ export default function AdminMembershipsPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Reusable Edit Issued Card Dialog */}
+      <EditIssuedCardDialog
+        card={selectedCardToEdit}
+        open={editCardDialogOpen}
+        onOpenChange={setEditCardDialogOpen}
+      />
     </div>
   );
 }

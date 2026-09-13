@@ -319,6 +319,10 @@ export default function DeliveryDashboard() {
       status: 'out_for_delivery',
       deliveryStatus: 'going_to_customer',
     });
+    fetch('/api/notifications/order-status', {
+      method: 'POST',
+      body: JSON.stringify({ orderId, status: 'out_for_delivery' })
+    }).catch(err => console.error("Failed to trigger status notification", err));
     toast.success('Order picked up! Navigate to customer.');
   };
 
@@ -414,6 +418,10 @@ export default function DeliveryDashboard() {
       });
 
       toast.success('Order delivered & Wallet Updated!');
+      fetch('/api/notifications/order-status', {
+        method: 'POST',
+        body: JSON.stringify({ orderId, status: 'delivered' })
+      }).catch(err => console.error("Failed to trigger delivered notification", err));
       setShowOtpDialog(false);
       setVerifyingOrderId(null);
     } catch (error) {

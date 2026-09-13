@@ -8,9 +8,10 @@ import { approveMembership, rejectMembership } from '@/lib/membership-actions';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, CheckCircle2, XCircle, CreditCard, User, Phone, Mail, MapPin, Calendar, Search, AlertCircle, ChevronRight, Filter, Wallet, Clock, ArrowUpRight } from 'lucide-react';
+import { Loader2, CheckCircle2, XCircle, CreditCard, User, Phone, Mail, MapPin, Calendar, Search, AlertCircle, ChevronRight, Filter, Wallet, Clock, ArrowUpRight, Edit2, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
+import EditIssuedCardDialog from '@/components/admin/EditIssuedCardDialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
     Dialog,
@@ -34,6 +35,8 @@ export default function CardRequestsPage() {
     const [isDetailsOpen, setIsDetailsOpen] = useState(false);
     const [rejectionReason, setRejectionReason] = useState('');
     const [isRejectOpen, setIsRejectOpen] = useState(false);
+    const [selectedCardToEdit, setSelectedCardToEdit] = useState<IssuedCard | null>(null);
+    const [editCardDialogOpen, setEditCardDialogOpen] = useState(false);
 
     // Filters
     const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
@@ -397,25 +400,56 @@ export default function CardRequestsPage() {
                     ) : (
                         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                             {cards.map((card) => (
-                                <div key={card.id} className="relative overflow-hidden rounded-2xl p-6 aspect-[1.586/1] flex flex-col justify-between shadow-2xl group border border-white/10 bg-black/40 backdrop-blur-md hover:border-blue-500/40 transition-all duration-500">
+                                <div
+                                    key={card.id}
+                                    onClick={() => {
+                                        setSelectedCardToEdit(card);
+                                        setEditCardDialogOpen(true);
+                                    }}
+                                    className="relative overflow-hidden rounded-2xl p-6 aspect-[1.586/1] flex flex-col justify-between shadow-2xl group border border-white/10 bg-black/40 backdrop-blur-md hover:border-blue-500/50 hover:shadow-blue-500/10 cursor-pointer transition-all duration-500"
+                                >
                                     {/* Decorative Elements */}
-                                    <div className="absolute top-[-50%] left-[-50%] w-[100%] h-[100%] bg-blue-500/10 blur-[80px] rounded-full group-hover:bg-blue-500/20 transition-all duration-700" />
-                                    <div className="absolute bottom-[-50%] right-[-50%] w-[100%] h-[100%] bg-purple-500/10 blur-[80px] rounded-full group-hover:bg-purple-500/20 transition-all duration-700" />
+                                    <div className="absolute top-[-50%] left-[-50%] w-[100%] h-[100%] bg-blue-500/10 blur-[80px] rounded-full group-hover:bg-blue-500/20 transition-all duration-700 pointer-events-none" />
+                                    <div className="absolute bottom-[-50%] right-[-50%] w-[100%] h-[100%] bg-purple-500/10 blur-[80px] rounded-full group-hover:bg-purple-500/20 transition-all duration-700 pointer-events-none" />
 
                                     <div className="relative z-10 flex justify-between items-start">
                                         <div>
-                                            <h3 className="font-bold text-sm tracking-wider text-white">AKR<span className="text-blue-500">PREMIUM</span></h3>
-                                            <span className="text-[10px] text-gray-400 uppercase tracking-widest">Membership Card</span>
+                                            <h3 className="font-bold text-sm tracking-wider text-white flex items-center gap-1.5">
+                                                AKR<span className="text-blue-500">PREMIUM</span>
+                                            </h3>
+                                            <span className="text-[10px] text-gray-400 uppercase tracking-widest">
+                                                {card.tier || 'VIP'} Membership Card
+                                            </span>
                                         </div>
-                                        <div className="px-2 py-0.5 rounded bg-white/10 border border-white/5 text-[10px] font-mono text-white/70">
-                                            {card.status.toUpperCase()}
+                                        <div className="flex items-center gap-2">
+                                            <Button
+                                                size="sm"
+                                                variant="ghost"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setSelectedCardToEdit(card);
+                                                    setEditCardDialogOpen(true);
+                                                }}
+                                                className="h-6 px-2 text-[11px] bg-blue-500/15 text-blue-400 hover:bg-blue-500/25 border border-blue-500/30 rounded-lg gap-1 font-semibold"
+                                            >
+                                                <Edit2 className="w-2.5 h-2.5" /> Edit
+                                            </Button>
+                                            <div className={`px-2 py-0.5 rounded border text-[10px] font-mono uppercase tracking-wider ${
+                                                card.status === 'active'
+                                                    ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+                                                    : card.status === 'blocked'
+                                                    ? 'bg-red-500/10 border-red-500/20 text-red-400'
+                                                    : 'bg-white/10 border-white/5 text-white/70'
+                                            }`}>
+                                                {card.status}
+                                            </div>
                                         </div>
                                     </div>
 
                                     <div className="relative z-10">
                                         <div className="flex items-center gap-2 mb-1">
-                                            <CreditCard className="w-4 h-4 text-gray-400" />
-                                            <div className="text-xl font-mono text-white tracking-widest">
+                                            <CreditCard className="w-4 h-4 text-blue-400" />
+                                            <div className="text-xl font-mono text-white tracking-widest font-bold">
                                                 {card.cardNumber?.match(/.{1,4}/g)?.join(' ') || '**** **** **** ****'}
                                             </div>
                                         </div>
@@ -423,7 +457,10 @@ export default function CardRequestsPage() {
                                             <span>EXP: {card.expiryDate instanceof Date ? card.expiryDate.toLocaleDateString(undefined, { month: '2-digit', year: '2-digit' }) : 'MM/YY'}</span>
                                             <span
                                                 className="cursor-pointer hover:text-white transition-colors flex items-center gap-1"
-                                                onClick={() => setVisibleCvvId(visibleCvvId === card.id ? null : card.id)}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setVisibleCvvId(visibleCvvId === card.id ? null : card.id);
+                                                }}
                                                 title="Click to toggle CVV"
                                             >
                                                 CVV: {visibleCvvId === card.id ? card.cvv : '***'}
@@ -437,9 +474,9 @@ export default function CardRequestsPage() {
                                             <div className="font-medium text-sm text-gray-200 uppercase truncate max-w-[150px]">{card.customerName}</div>
                                         </div>
                                         <div className="text-right">
-                                            <div className="text-[9px] text-gray-500 uppercase tracking-wider mb-0.5">Issued</div>
-                                            <div className="font-medium text-xs text-gray-300">
-                                                {card.issuedAt instanceof Date ? card.issuedAt.toLocaleDateString() : 'N/A'}
+                                            <div className="text-[9px] text-gray-500 uppercase tracking-wider mb-0.5">Click to edit</div>
+                                            <div className="font-medium text-xs text-blue-400 flex items-center gap-1 justify-end group-hover:underline">
+                                                <Edit2 className="w-3 h-3" /> Edit Details
                                             </div>
                                         </div>
                                     </div>
@@ -684,6 +721,13 @@ export default function CardRequestsPage() {
                     </DialogFooter>
                 </DialogContent>
             </Dialog >
+
+            {/* Reusable Edit Issued Card Dialog */}
+            <EditIssuedCardDialog
+                card={selectedCardToEdit}
+                open={editCardDialogOpen}
+                onOpenChange={setEditCardDialogOpen}
+            />
 
         </div >
     );
