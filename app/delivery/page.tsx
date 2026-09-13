@@ -22,9 +22,12 @@ import {
   Bike,
   ArrowRight,
   TrendingUp,
-  Calendar
+  Calendar,
+  Satellite,
+  Signal,
+  Map
 } from 'lucide-react';
-import { Order } from '@/lib/types';
+import { Order, DeliveryStage, DeliveryFlow, getStageLabel, getStageColor, getRouteDestination } from '@/lib/types';
 import { db } from '@/lib/firebase';
 import {
   collection,
@@ -49,6 +52,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { motion, AnimatePresence } from 'framer-motion';
+import { useDriverLocation } from '@/hooks/useDriverLocation';
 
 export default function DeliveryDashboard() {
   const router = useRouter();
@@ -59,6 +63,15 @@ export default function DeliveryDashboard() {
   const [isOnline, setIsOnline] = useState(false);
   const [showAcceptDialog, setShowAcceptDialog] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+
+  // GPS Tracking - auto starts when online
+  const activeOrdersList = myOrders.filter(o => !['delivered', 'cancelled'].includes(o.status || ''));
+  const { position: gpsPosition, isTracking: gpsActive, accuracy: gpsAccuracy, speedKmh, permissionStatus: gpsPermission } = useDriverLocation({
+    driverId: user?.uid || null,
+    isOnline,
+    hasActiveDelivery: activeOrdersList.length > 0,
+    activeOrderId: activeOrdersList[0]?.id,
+  });
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -187,17 +200,52 @@ export default function DeliveryDashboard() {
 
     try {
       let currentRestaurantAddress = order.restaurantAddress;
-      if (!currentRestaurantAddress && order.restaurantId) {
+      let restaurantLat = order.restaurantLocation?.lat || 0;
+      let restaurantLng = order.restaurantLocation?.lng || 0;
+
+      if (order.restaurantId) {
         try {
           const restaurantDoc = await getDoc(doc(db, 'restaurants', order.restaurantId));
           if (restaurantDoc.exists()) {
             const data = restaurantDoc.data();
-            currentRestaurantAddress = data.address || '';
+            if (!currentRestaurantAddress) currentRestaurantAddress = data.address || '';
+            if (!restaurantLat && data.latitude) restaurantLat = data.latitude;
+            if (!restaurantLng && data.longitude) restaurantLng = data.longitude;
           }
         } catch (fetchErr) {
-          console.error("Error fetching restaurant address:", fetchErr);
+          console.error("Error fetching restaurant data:", fetchErr);
         }
       }
+
+      // Build customer drop coordinates
+      let dropLat = 0, dropLng = 0, dropAddress = '';
+      const addr = order.deliveryAddress;
+      if (addr && typeof addr !== 'string' && addr.latitude && addr.longitude) {
+        dropLat = addr.latitude;
+        dropLng = addr.longitude;
+        dropAddress = `${addr.street || ''}, ${addr.city || ''} ${addr.pincode || ''}`.trim();
+      } else if (typeof addr === 'string') {
+        dropAddress = addr;
+      }
+
+      // Build professional delivery flow object
+      const deliveryFlow: DeliveryFlow = {
+        driverId: user.uid,
+        stage: 'TO_PICKUP',
+        pickup: {
+          restaurantId: order.restaurantId || '',
+          latitude: restaurantLat,
+          longitude: restaurantLng,
+          address: currentRestaurantAddress || order.restaurantName || 'Restaurant',
+        },
+        drop: {
+          customerId: order.customerId || '',
+          latitude: dropLat,
+          longitude: dropLng,
+          address: dropAddress || 'Customer',
+        },
+        assignedAt: serverTimestamp(),
+      };
 
       await updateDoc(doc(db, 'orders', order.id!), {
         deliveryPersonId: user.uid,
@@ -207,6 +255,7 @@ export default function DeliveryDashboard() {
         restaurantAddress: currentRestaurantAddress || order.restaurantName || 'Unknown Location',
         status: 'ready',
         deliveryStatus: 'going_to_restaurant',
+        delivery: deliveryFlow,
         updatedAt: serverTimestamp()
       });
 
@@ -227,17 +276,57 @@ export default function DeliveryDashboard() {
     setSelectedOrder(null);
   };
 
-  const markPickedUp = async (orderId: string) => {
+  // ==========================================
+  // Stage Transition Functions
+  // ==========================================
+  const updateDeliveryStage = async (orderId: string, newStage: DeliveryStage, extraFields: Record<string, any> = {}) => {
     try {
-      await updateDoc(doc(db, 'orders', orderId), {
-        status: 'out_for_delivery',
-        deliveryStatus: 'going_to_customer',
-        updatedAt: serverTimestamp()
-      });
-      toast.success('Picked up! Now deliver to customer.');
+      const stageTimestampMap: Record<string, string> = {
+        'ARRIVED_PICKUP': 'delivery.arrivedPickupAt',
+        'PICKED_UP': 'delivery.pickedUpAt',
+        'TO_CUSTOMER': 'delivery.pickedUpAt',
+        'ARRIVED_CUSTOMER': 'delivery.arrivedCustomerAt',
+        'DELIVERED': 'delivery.deliveredAt',
+      };
+
+      const updates: Record<string, any> = {
+        'delivery.stage': newStage,
+        updatedAt: serverTimestamp(),
+        ...extraFields,
+      };
+
+      if (stageTimestampMap[newStage]) {
+        updates[stageTimestampMap[newStage]] = serverTimestamp();
+      }
+
+      await updateDoc(doc(db, 'orders', orderId), updates);
     } catch (error) {
-      toast.error("Failed to update");
+      console.error(`Failed to update stage to ${newStage}:`, error);
+      toast.error('Failed to update status');
+      throw error;
     }
+  };
+
+  const markArrivedAtRestaurant = async (orderId: string) => {
+    await updateDeliveryStage(orderId, 'ARRIVED_PICKUP', {
+      deliveryStatus: 'going_to_restaurant',
+    });
+    toast.success('Marked arrived at restaurant!');
+  };
+
+  const markPickedUp = async (orderId: string) => {
+    await updateDeliveryStage(orderId, 'TO_CUSTOMER', {
+      status: 'out_for_delivery',
+      deliveryStatus: 'going_to_customer',
+    });
+    toast.success('Order picked up! Navigate to customer.');
+  };
+
+  const markArrivedAtCustomer = async (orderId: string) => {
+    await updateDeliveryStage(orderId, 'ARRIVED_CUSTOMER', {
+      deliveryStatus: 'going_to_customer',
+    });
+    toast.success('Arrived at customer! Complete delivery.');
   };
 
   const [showOtpDialog, setShowOtpDialog] = useState(false);
@@ -297,6 +386,8 @@ export default function DeliveryDashboard() {
         transaction.update(orderRef, {
           status: 'delivered',
           deliveryStatus: 'delivered',
+          'delivery.stage': 'DELIVERED',
+          'delivery.deliveredAt': serverTimestamp(),
           paymentStatus: 'paid',
           deliveredAt: serverTimestamp(),
           updatedAt: serverTimestamp()
@@ -391,7 +482,7 @@ export default function DeliveryDashboard() {
 
   const itemVariants = {
     hidden: { y: 20, opacity: 0 },
-    visible: { y: 0, opacity: 1, transition: { type: "spring", stiffness: 100 } }
+    visible: { y: 0, opacity: 1, transition: { type: "spring" as const, stiffness: 100 } }
   };
 
   return (
@@ -422,6 +513,34 @@ export default function DeliveryDashboard() {
         </div>
 
         <div className="relative z-10 flex items-center gap-4 w-full md:w-auto">
+          {/* GPS Status Indicator */}
+          {isOnline && (
+            <div className="hidden md:flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-3 py-2">
+              {gpsActive ? (
+                <>
+                  <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                  <span className="text-[10px] font-bold text-green-400">GPS</span>
+                  <span className="text-[10px] text-gray-500">±{gpsAccuracy || '?'}m</span>
+                </>
+              ) : (
+                <>
+                  <div className="w-2 h-2 rounded-full bg-red-500" />
+                  <span className="text-[10px] font-bold text-red-400">No GPS</span>
+                </>
+              )}
+            </div>
+          )}
+
+          {/* Live Map Button */}
+          <Button
+            onClick={() => router.push('/delivery/tracking')}
+            variant="outline"
+            className="border-blue-500/30 text-blue-300 hover:bg-blue-500/10 bg-blue-500/5 rounded-full h-10 gap-2"
+          >
+            <Map className="w-4 h-4" />
+            Live Map
+          </Button>
+
           <div className="flex-1 md:flex-none">
             <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold mb-1">Status</p>
             <div onClick={toggleOnlineStatus} className={`cursor-pointer group relative flex items-center justify-between gap-4 px-1 py-1 rounded-full border border-white/10 backdrop-blur-md transition-all duration-300 ${isOnline ? 'bg-green-500/20 border-green-500/30' : 'bg-red-500/20 border-red-500/30'} w-full md:w-48`}>
@@ -495,109 +614,181 @@ export default function DeliveryDashboard() {
                 </p>
               </motion.div>
             ) : (
-              activeOrders.map((order) => (
-                <motion.div
-                  layout
-                  key={order.id}
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  className="group relative overflow-hidden rounded-3xl border border-white/10 bg-black/40 backdrop-blur-xl shadow-2xl transition-all hover:border-blue-500/30"
-                >
-                  {/* Status Bar */}
-                  <div className={`h-1.5 w-full bg-gradient-to-r ${order.deliveryStatus === 'going_to_restaurant' ? 'from-orange-500 via-yellow-500 to-orange-500' :
-                    'from-blue-500 via-indigo-500 to-blue-500'
-                    } animate-progress-flow`} />
+              activeOrders.map((order) => {
+                const stage = order.delivery?.stage || (order.deliveryStatus === 'going_to_restaurant' ? 'TO_PICKUP' : order.deliveryStatus === 'going_to_customer' ? 'TO_CUSTOMER' : 'TO_PICKUP') as DeliveryStage;
+                const stageColors = getStageColor(stage);
+                const isPickupPhase = stage === 'TO_PICKUP' || stage === 'ARRIVED_PICKUP';
+                const isDeliveryPhase = stage === 'PICKED_UP' || stage === 'TO_CUSTOMER' || stage === 'ARRIVED_CUSTOMER';
 
-                  <div className="p-6 md:p-8 relative">
-                    {/* Background Glows */}
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-b from-blue-600/10 to-transparent blur-3xl opacity-50" />
+                // Stage progress: 6 steps
+                const stageSteps: { key: DeliveryStage; label: string; icon: string }[] = [
+                  { key: 'TO_PICKUP', label: 'En Route', icon: '🛵' },
+                  { key: 'ARRIVED_PICKUP', label: 'At Restaurant', icon: '🍔' },
+                  { key: 'TO_CUSTOMER', label: 'Picked Up', icon: '📦' },
+                  { key: 'ARRIVED_CUSTOMER', label: 'At Customer', icon: '🏠' },
+                  { key: 'DELIVERED', label: 'Delivered', icon: '✅' },
+                ];
+                const currentStepIdx = stageSteps.findIndex(s => s.key === stage);
 
-                    <div className="relative z-10 flex flex-col md:flex-row gap-8">
-                      {/* Order Info */}
-                      <div className="flex-1 space-y-6">
+                return (
+                  <motion.div
+                    layout
+                    key={order.id}
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    className="group relative overflow-hidden rounded-3xl border border-white/10 bg-black/40 backdrop-blur-xl shadow-2xl transition-all hover:border-blue-500/30"
+                  >
+                    {/* Stage Progress Bar */}
+                    <div className={`h-1.5 w-full bg-gradient-to-r ${isPickupPhase ? 'from-orange-500 via-yellow-500 to-orange-500' : 'from-blue-500 via-indigo-500 to-blue-500'} animate-progress-flow`} />
+
+                    <div className="p-6 md:p-8 relative">
+                      <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-b from-blue-600/10 to-transparent blur-3xl opacity-50" />
+
+                      <div className="relative z-10 flex flex-col gap-6">
+                        {/* Header */}
                         <div className="flex justify-between items-start">
                           <div>
                             <div className="flex items-center gap-3 mb-2">
-                              <Badge className={`border-none px-3 py-1 font-bold ${order.deliveryStatus === 'going_to_restaurant' ? 'bg-orange-500/20 text-orange-300' : 'bg-blue-500/20 text-blue-300'
-                                }`}>
-                                {order.deliveryStatus === 'going_to_restaurant' ? 'PICKUP PHASE' : 'DELIVERY PHASE'}
+                              <Badge className={`border ${stageColors.border} px-3 py-1 font-bold ${stageColors.bg} ${stageColors.text}`}>
+                                {getStageLabel(stage)}
                               </Badge>
                               <span className="text-xs text-gray-500 font-mono">#{order.id?.slice(0, 8)}</span>
                             </div>
                             <h3 className="text-2xl font-black text-white">{order.restaurantName}</h3>
                           </div>
                           <div className="text-right">
-                            <p className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-br from-white to-gray-400">₹{order.total?.toFixed(0)}</p>
-                            <p className="text-[10px] uppercase tracking-widest text-gray-500 font-bold mt-1">Cash on Delivery</p>
+                            <p className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-br from-white to-gray-400">₹{order.total?.toFixed(0)}</p>
+                            <p className="text-[10px] uppercase tracking-widest text-gray-500 font-bold mt-1">{order.paymentMethod === 'cod' ? 'Cash on Delivery' : 'Online Paid'}</p>
                           </div>
                         </div>
 
-                        <div className="space-y-4">
-                          {/* Steps */}
-                          <div className="relative pl-6 space-y-6 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-white/10">
-                            {/* Pickup Point */}
-                            <div className={`relative transition-opacity ${order.deliveryStatus !== 'going_to_restaurant' ? 'opacity-50' : 'opacity-100'}`}>
-                              <div className={`absolute -left-[29px] top-1 w-4 h-4 rounded-full border-2 ${order.deliveryStatus === 'going_to_restaurant' ? 'border-orange-500 bg-orange-500 animate-pulse' : 'border-gray-600 bg-black'}`} />
-                              <p className="text-xs text-orange-400 font-bold uppercase tracking-wider mb-1">Pickup</p>
-                              <p
-                                onClick={() => openMaps(order.restaurantAddress || order.restaurantName || '')}
-                                className="text-white hover:text-blue-400 cursor-pointer transition-colors text-lg font-medium underline underline-offset-4 decoration-white/20"
-                              >
-                                {order.restaurantAddress || order.restaurantName || 'Restaurant Location'}
-                              </p>
-                            </div>
+                        {/* Mini Stage Progress */}
+                        <div className="flex items-center gap-1">
+                          {stageSteps.map((step, i) => (
+                            <React.Fragment key={step.key}>
+                              <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-bold transition-all ${
+                                i <= currentStepIdx
+                                  ? i === currentStepIdx ? `${stageColors.bg} ${stageColors.text} ring-1 ring-current scale-105` : 'bg-white/10 text-gray-400'
+                                  : 'bg-white/5 text-gray-600'
+                              }`}>
+                                <span>{step.icon}</span>
+                                <span className="hidden sm:inline">{step.label}</span>
+                              </div>
+                              {i < stageSteps.length - 1 && (
+                                <div className={`flex-1 h-0.5 rounded-full ${i < currentStepIdx ? 'bg-white/20' : 'bg-white/5'}`} />
+                              )}
+                            </React.Fragment>
+                          ))}
+                        </div>
 
-                            {/* Dropoff Point */}
-                            <div className={`relative transition-opacity ${order.deliveryStatus === 'going_to_customer' ? 'opacity-100' : 'opacity-50'}`}>
-                              <div className={`absolute -left-[29px] top-1 w-4 h-4 rounded-full border-2 ${order.deliveryStatus === 'going_to_customer' ? 'border-blue-500 bg-blue-500 animate-pulse' : 'border-gray-600 bg-black'}`} />
-                              <p className="text-xs text-blue-400 font-bold uppercase tracking-wider mb-1">Dropoff</p>
-                              <p
-                                onClick={() => openMaps(formatAddress(order.deliveryAddress))}
-                                className="text-white hover:text-blue-400 cursor-pointer transition-colors text-lg font-medium underline underline-offset-4 decoration-white/20"
-                              >
-                                {formatAddress(order.deliveryAddress)}
-                              </p>
-                              <div className="flex items-center gap-4 mt-2">
-                                <a href={`tel:${order.customerPhone}`} className="flex items-center gap-2 text-xs font-bold text-gray-400 hover:text-white bg-white/5 px-3 py-1.5 rounded-full border border-white/5 transition-colors">
-                                  <Phone className="w-3 h-3" />
-                                  Call Customer
-                                </a>
+                        <div className="flex flex-col md:flex-row gap-6">
+                          {/* Route Points */}
+                          <div className="flex-1 space-y-4">
+                            <div className="relative pl-6 space-y-5 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-white/10">
+                              {/* Pickup */}
+                              <div className={`relative transition-opacity ${isDeliveryPhase ? 'opacity-40' : 'opacity-100'}`}>
+                                <div className={`absolute -left-[29px] top-1 w-4 h-4 rounded-full border-2 ${
+                                  isPickupPhase ? 'border-orange-500 bg-orange-500 animate-pulse' :
+                                  isDeliveryPhase ? 'border-green-500 bg-green-500' : 'border-gray-600 bg-black'
+                                }`} />
+                                <p className="text-xs text-orange-400 font-bold uppercase tracking-wider mb-1">
+                                  {isDeliveryPhase ? '✓ Picked Up' : 'Pickup'}
+                                </p>
+                                <p onClick={() => openMaps(order.restaurantAddress || order.restaurantName || '')} className="text-white hover:text-blue-400 cursor-pointer transition-colors text-base font-medium">
+                                  {order.delivery?.pickup?.address || order.restaurantAddress || order.restaurantName || 'Restaurant'}
+                                </p>
+                              </div>
+
+                              {/* Dropoff */}
+                              <div className={`relative transition-opacity ${isDeliveryPhase ? 'opacity-100' : 'opacity-50'}`}>
+                                <div className={`absolute -left-[29px] top-1 w-4 h-4 rounded-full border-2 ${
+                                  isDeliveryPhase ? 'border-blue-500 bg-blue-500 animate-pulse' : 'border-gray-600 bg-black'
+                                }`} />
+                                <p className="text-xs text-blue-400 font-bold uppercase tracking-wider mb-1">Dropoff</p>
+                                <p onClick={() => openMaps(formatAddress(order.deliveryAddress))} className="text-white hover:text-blue-400 cursor-pointer transition-colors text-base font-medium">
+                                  {order.delivery?.drop?.address || formatAddress(order.deliveryAddress)}
+                                </p>
+                                <div className="flex items-center gap-3 mt-2">
+                                  {order.customerPhone && (
+                                    <a href={`tel:${order.customerPhone}`} className="flex items-center gap-1.5 text-xs font-bold text-gray-400 hover:text-white bg-white/5 px-3 py-1.5 rounded-full border border-white/5 transition-colors">
+                                      <Phone className="w-3 h-3" /> Call
+                                    </a>
+                                  )}
+                                </div>
                               </div>
                             </div>
                           </div>
+
+                          {/* Stage-Aware Action Buttons */}
+                          <div className="md:w-72 flex flex-col gap-3 justify-center">
+                            {stage === 'TO_PICKUP' && (
+                              <>
+                                <Button
+                                  onClick={() => markArrivedAtRestaurant(order.id!)}
+                                  className="h-14 text-base font-bold bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 shadow-xl shadow-orange-900/40 border-0 gap-2"
+                                >
+                                  <MapPin className="w-5 h-5" />
+                                  Arrived at Restaurant
+                                </Button>
+                                <p className="text-[11px] text-center text-gray-500">Press when you reach the restaurant</p>
+                              </>
+                            )}
+                            {stage === 'ARRIVED_PICKUP' && (
+                              <>
+                                <div className="text-center py-2">
+                                  <div className="w-10 h-10 rounded-full bg-amber-500/20 border border-amber-500/30 flex items-center justify-center mx-auto mb-2 animate-pulse">
+                                    <ShoppingBag className="w-5 h-5 text-amber-400" />
+                                  </div>
+                                  <p className="text-amber-400 text-xs font-bold">Waiting for food handover...</p>
+                                </div>
+                                <Button
+                                  onClick={() => markPickedUp(order.id!)}
+                                  className="h-14 text-base font-bold bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 shadow-xl shadow-orange-900/40 border-0 gap-2"
+                                >
+                                  <Package className="w-5 h-5" />
+                                  Order Picked Up
+                                </Button>
+                                <p className="text-[11px] text-center text-gray-500">Press after collecting the food</p>
+                              </>
+                            )}
+                            {(stage === 'PICKED_UP' || stage === 'TO_CUSTOMER') && (
+                              <>
+                                <Button
+                                  onClick={() => markArrivedAtCustomer(order.id!)}
+                                  className="h-14 text-base font-bold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 shadow-xl shadow-blue-900/40 border-0 gap-2"
+                                >
+                                  <Navigation className="w-5 h-5" />
+                                  Arrived at Customer
+                                </Button>
+                                <p className="text-[11px] text-center text-gray-500">Press when you reach the delivery location</p>
+                              </>
+                            )}
+                            {stage === 'ARRIVED_CUSTOMER' && (
+                              <>
+                                <div className="text-center py-2">
+                                  <div className="w-10 h-10 rounded-full bg-green-500/20 border border-green-500/30 flex items-center justify-center mx-auto mb-2 animate-pulse">
+                                    <CheckCircle className="w-5 h-5 text-green-400" />
+                                  </div>
+                                  <p className="text-green-400 text-xs font-bold">At customer's location</p>
+                                </div>
+                                <Button
+                                  onClick={() => markDelivered(order.id!, order.deliveryOtp)}
+                                  className="h-14 text-base font-bold bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 shadow-xl shadow-green-900/40 border-0 gap-2"
+                                >
+                                  <CheckCircle className="w-5 h-5" />
+                                  Complete Delivery
+                                </Button>
+                                <p className="text-[11px] text-center text-gray-500">Verify OTP with customer to complete</p>
+                              </>
+                            )}
+                          </div>
                         </div>
                       </div>
-
-                      {/* Actions */}
-                      <div className="md:w-72 flex flex-col gap-3 justify-center">
-                        {order.deliveryStatus === 'going_to_restaurant' ? (
-                          <Button
-                            onClick={() => markPickedUp(order.id!)}
-                            className="h-16 text-lg font-bold bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 shadow-xl shadow-orange-900/40 border-0"
-                          >
-                            <Package className="w-5 h-5 mr-3" />
-                            Confirm Pickup
-                          </Button>
-                        ) : (
-                          <Button
-                            onClick={() => markDelivered(order.id!, order.deliveryOtp)}
-                            className="h-16 text-lg font-bold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 shadow-xl shadow-blue-900/40 border-0"
-                          >
-                            <CheckCircle className="w-5 h-5 mr-3" />
-                            Complete Delivery
-                          </Button>
-                        )}
-                        <p className="text-xs text-center text-gray-500">
-                          {order.deliveryStatus === 'going_to_restaurant'
-                            ? "Swipe or click to confirm you have the food"
-                            : "Verify OTP with customer to complete"}
-                        </p>
-                      </div>
                     </div>
-                  </div>
-                </motion.div>
-              ))
+                  </motion.div>
+                );
+              })
             )}
           </AnimatePresence>
         </div>

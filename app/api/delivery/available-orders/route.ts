@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     let orders = snapshot.docs.map((doc) => ({
       ...doc.data(),
       id: doc.id,
-    }));
+    })) as any[];
 
     // Sort based on preference
     if (sortBy === 'earning') {

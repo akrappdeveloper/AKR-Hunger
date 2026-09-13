@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { Order, Restaurant, DeliveryPerson } from '@/lib/types';
+import { Order, Restaurant, DeliveryPerson, DeliveryStage, getStageLabel, getStageColor } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -28,7 +28,8 @@ import {
   CheckCircle2,
   Mail,
   ShieldCheck,
-  RefreshCw
+  RefreshCw,
+  Navigation
 } from 'lucide-react';
 import Link from 'next/link';
 import SafeImage from '@/components/ui/safe-image';
@@ -125,7 +126,12 @@ export default function OrderTrackingPage() {
       key: 'out_for_delivery',
       label: 'Out for Delivery',
       icon: Bike,
-      description: 'Your delivery hero is speeding towards your doorstep.',
+      description: order?.delivery?.stage
+        ? (order.delivery.stage === 'TO_PICKUP' ? 'Driver is heading to the restaurant to collect your food.' :
+           order.delivery.stage === 'ARRIVED_PICKUP' ? 'Driver has arrived at the restaurant, awaiting food handover.' :
+           order.delivery.stage === 'ARRIVED_CUSTOMER' ? 'Driver has arrived at your location! Please collect your order.' :
+           'Your delivery hero has picked up your food and is speeding towards your doorstep.')
+        : 'Your delivery hero is speeding towards your doorstep.',
       getTime: (ord: Order) => getCalculatedTime(ord.createdAt, 25, (ord as any).outForDeliveryAt)
     },
     {
@@ -281,6 +287,16 @@ export default function OrderTrackingPage() {
             <Badge className={`${getStatusColor(order.status || 'pending')} border px-3.5 py-1.5 text-xs sm:text-sm font-bold uppercase tracking-wider rounded-xl`}>
               {(order.status === 'pending' ? 'Order Placed' : order.status || '').replace('_', ' ')}
             </Badge>
+
+            {/* Live Tracking Button */}
+            {order.deliveryPersonId && ['ready', 'out_for_delivery'].includes(order.status || '') && (
+              <Link href={`/customer/orders/${orderId}/tracking`}>
+                <Badge className="bg-green-500/10 text-green-600 hover:bg-green-500/20 border border-green-500/20 px-3.5 py-1.5 text-xs sm:text-sm font-bold uppercase tracking-wider rounded-xl cursor-pointer gap-1.5 transition-colors">
+                  <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                  Track Live
+                </Badge>
+              </Link>
+            )}
 
             <InvoiceButton order={order} customer={customer} />
           </div>
@@ -471,23 +487,39 @@ export default function OrderTrackingPage() {
                 </div>
 
                 <div className="flex-1 text-center sm:text-left">
-                  <h3 className="font-bold text-base sm:text-lg text-foreground mb-0.5">
-                    {deliveryPerson.name}
-                    <span className="ml-2 text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-md font-normal border border-border">Delivery Partner</span>
-                  </h3>
+                  <div className="flex items-center gap-2 justify-center sm:justify-start flex-wrap mb-0.5">
+                    <h3 className="font-bold text-base sm:text-lg text-foreground">
+                      {deliveryPerson.name}
+                    </h3>
+                    <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-md font-normal border border-border">Delivery Partner</span>
+                    {order.delivery?.stage && (
+                      <Badge className={`border text-[11px] font-bold ${getStageColor(order.delivery.stage).bg} ${getStageColor(order.delivery.stage).text} ${getStageColor(order.delivery.stage).border}`}>
+                        {getStageLabel(order.delivery.stage)}
+                      </Badge>
+                    )}
+                  </div>
                   <p className="text-muted-foreground text-xs sm:text-sm mb-1.5">{deliveryPerson.vehicle} • {deliveryPerson.vehicleNumber}</p>
                   <div className="flex items-center justify-center sm:justify-start gap-1 text-amber-500 text-xs font-bold">
                     <Star className="w-3.5 h-3.5 fill-amber-500" /> {(deliveryPerson.rating || 4.8).toFixed(1)} Rating
                   </div>
                 </div>
 
-                {deliveryPerson.phone && (
-                  <a href={`tel:${deliveryPerson.phone}`} className="w-full sm:w-auto">
-                    <Button className="w-full sm:w-auto rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 shadow-md">
-                      <Phone className="w-4 h-4 mr-2" /> Call Driver
-                    </Button>
-                  </a>
-                )}
+                <div className="flex items-center gap-2 w-full sm:w-auto flex-col sm:flex-row">
+                  {order.status !== 'delivered' && order.status !== 'cancelled' && (
+                    <Link href={`/customer/orders/${orderId}/tracking`} className="w-full sm:w-auto">
+                      <Button className="w-full sm:w-auto rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-bold px-5 shadow-md gap-1.5">
+                        <Navigation className="w-4 h-4" /> Track Live
+                      </Button>
+                    </Link>
+                  )}
+                  {deliveryPerson.phone && (
+                    <a href={`tel:${deliveryPerson.phone}`} className="w-full sm:w-auto">
+                      <Button variant="outline" className="w-full sm:w-auto rounded-xl border-border hover:bg-muted font-bold px-4 shadow-sm">
+                        <Phone className="w-4 h-4 mr-2 text-emerald-500" /> Call
+                      </Button>
+                    </a>
+                  )}
+                </div>
               </div>
             ) : (
               order.status !== 'delivered' && order.status !== 'cancelled' && (

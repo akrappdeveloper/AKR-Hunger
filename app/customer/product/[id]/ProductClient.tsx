@@ -216,7 +216,7 @@ export default function ProductClient({
 
     // Initial sizes & add-on choices based on product configuration
     const configuredSizes = product?.sizes && product.sizes.length > 0
-        ? product.sizes.map((s, idx) => ({ id: s.id || `size_${idx}`, name: s.name, price: Number(s.price) || 0 }))
+        ? product.sizes.map((s, idx) => ({ id: s.id || `size_${idx}`, name: s.name, price: Number(s.price) || 0, desc: (s as any).desc || '' }))
         : DEFAULT_SIZES;
 
     const configuredAddOns = product?.addOns && product.addOns.length > 0
@@ -379,7 +379,7 @@ export default function ProductClient({
         if (copied) {
             toast.success("Dish link copied to clipboard!");
         } else {
-            toast.info(`Dish: ${product.name}`);
+            toast.info(`Dish: ${product?.name || 'Item'}`);
         }
     };
 

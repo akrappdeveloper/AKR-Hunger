@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import SafeImage from '@/components/ui/safe-image';
-import { Restaurant, MenuItem } from '@/lib/types';
+import { Restaurant, MenuItem, Promotion } from '@/lib/types';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -103,7 +103,7 @@ export default function RestaurantClient({
                             ...data,
                             validFrom: data.validFrom?.toDate ? data.validFrom.toDate() : new Date(data.validFrom || Date.now()),
                             validUntil: data.validUntil?.toDate ? data.validUntil.toDate() : new Date(data.validUntil || Date.now()),
-                        };
+                        } as Promotion;
                     })
                     .filter(promo => {
                         // Check date validity

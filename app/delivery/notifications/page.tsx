@@ -22,7 +22,7 @@ export default function DeliveryNotificationsPage() {
 
     const itemVariants = {
         hidden: { x: -20, opacity: 0 },
-        visible: { x: 0, opacity: 1, transition: { type: "spring", stiffness: 100 } },
+        visible: { x: 0, opacity: 1, transition: { type: "spring" as const, stiffness: 100 } },
         exit: { x: 20, opacity: 0 }
     };
 
@@ -104,7 +104,7 @@ export default function DeliveryNotificationsPage() {
                                             ? 'bg-blue-500/10 border-blue-500/20 text-blue-400'
                                             : 'bg-gray-800/50 border-gray-700/50 text-gray-500'
                                             }`}>
-                                            {notification.type === 'success' ? <CheckCircle2 className="w-5 h-5 text-green-400" /> : <Info className="w-5 h-5" />}
+                                            {(notification.type as string) === 'success' ? <CheckCircle2 className="w-5 h-5 text-green-400" /> : <Info className="w-5 h-5" />}
                                         </div>
 
                                         <div className="flex-1 space-y-1">

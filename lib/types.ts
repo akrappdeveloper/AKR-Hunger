@@ -108,6 +108,7 @@ export interface MenuItem {
   dietary?: ('vegetarian' | 'non-vegetarian' | 'vegan')[];
   // Admin approval workflow
   approvalStatus?: 'pending' | 'approved' | 'rejected';
+  rejectionReason?: string;
   isLive?: boolean;
   submittedAt?: Date;
   // Customization & Add-on options provided by restaurant
@@ -151,6 +152,88 @@ export interface CartItem {
   addedAt: Date;
 }
 
+// ==========================================
+// Delivery Stage Flow (Professional Route System)
+// ==========================================
+export type DeliveryStage =
+  | 'TO_PICKUP'         // Driver heading to restaurant
+  | 'ARRIVED_PICKUP'    // Driver arrived at restaurant, waiting for food
+  | 'PICKED_UP'         // Food picked up, about to head to customer
+  | 'TO_CUSTOMER'       // Driver heading to customer
+  | 'ARRIVED_CUSTOMER'  // Driver arrived at customer location
+  | 'DELIVERED';        // Order delivered, GPS tracking stops
+
+export interface DeliveryFlow {
+  driverId: string;
+  stage: DeliveryStage;
+  pickup: {
+    restaurantId: string;
+    latitude: number;
+    longitude: number;
+    address: string;
+  };
+  drop: {
+    customerId: string;
+    latitude: number;
+    longitude: number;
+    address: string;
+  };
+  // Stage timestamps
+  assignedAt?: any;
+  arrivedPickupAt?: any;
+  pickedUpAt?: any;
+  arrivedCustomerAt?: any;
+  deliveredAt?: any;
+}
+
+/** Get route destination based on delivery stage */
+export function getRouteDestination(stage?: DeliveryStage): 'restaurant' | 'customer' | null {
+  switch (stage) {
+    case 'TO_PICKUP':
+    case 'ARRIVED_PICKUP':
+      return 'restaurant';
+    case 'PICKED_UP':
+    case 'TO_CUSTOMER':
+    case 'ARRIVED_CUSTOMER':
+      return 'customer';
+    case 'DELIVERED':
+    default:
+      return null;
+  }
+}
+
+/** Get human-readable stage label */
+export function getStageLabel(stage?: DeliveryStage): string {
+  switch (stage) {
+    case 'TO_PICKUP': return 'Heading to Restaurant';
+    case 'ARRIVED_PICKUP': return 'Arrived at Restaurant';
+    case 'PICKED_UP': return 'Order Picked Up';
+    case 'TO_CUSTOMER': return 'On the way to Customer';
+    case 'ARRIVED_CUSTOMER': return 'Arrived at Customer';
+    case 'DELIVERED': return 'Delivered';
+    default: return 'Pending';
+  }
+}
+
+/** Get stage color for badges */
+export function getStageColor(stage?: DeliveryStage): { bg: string; text: string; border: string } {
+  switch (stage) {
+    case 'TO_PICKUP':
+      return { bg: 'bg-orange-500/15', text: 'text-orange-400', border: 'border-orange-500/25' };
+    case 'ARRIVED_PICKUP':
+      return { bg: 'bg-amber-500/15', text: 'text-amber-400', border: 'border-amber-500/25' };
+    case 'PICKED_UP':
+    case 'TO_CUSTOMER':
+      return { bg: 'bg-blue-500/15', text: 'text-blue-400', border: 'border-blue-500/25' };
+    case 'ARRIVED_CUSTOMER':
+      return { bg: 'bg-green-500/15', text: 'text-green-400', border: 'border-green-500/25' };
+    case 'DELIVERED':
+      return { bg: 'bg-emerald-500/15', text: 'text-emerald-400', border: 'border-emerald-500/25' };
+    default:
+      return { bg: 'bg-gray-500/15', text: 'text-gray-400', border: 'border-gray-500/25' };
+  }
+}
+
 export interface Order {
   id?: string;
   customerId?: string;
@@ -189,6 +272,8 @@ export interface Order {
   deliveredAt?: Date | any;
   targetDeliveryIds?: string[]; // IDs of specific delivery partners this order is broadcast to
   deliveryOtp?: string; // OTP for delivery verification
+  // Professional delivery flow (stage-based)
+  delivery?: DeliveryFlow;
 }
 
 export interface OrderItem {
@@ -237,6 +322,19 @@ export type DeliveryPartner = DeliveryPerson & {
   vehicleNumber?: string;
   completedDeliveries?: number;
 };
+
+// GPS Live Location (stored in driverLocations/{driverId})
+export interface DriverLocation {
+  driverId: string;
+  latitude: number;
+  longitude: number;
+  accuracy: number;
+  speed: number; // km/h
+  heading: number; // degrees from north
+  isOnline: boolean;
+  activeOrderId?: string;
+  updatedAt: any; // serverTimestamp
+}
 
 // Review Interface removed from here as it is consolidated below
 

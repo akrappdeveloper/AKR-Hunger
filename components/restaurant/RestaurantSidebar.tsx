@@ -16,7 +16,8 @@ import {
   Bell,
   Star,
   Wallet,
-  HelpCircle
+  HelpCircle,
+  MapPin
 } from 'lucide-react';
 import NotificationBell from '@/components/notifications/NotificationBell';
 import ThemeToggle from '@/components/ThemeToggle';
@@ -127,6 +128,11 @@ export default function RestaurantSidebar({ isMobile = false, onClose }: Restaur
       href: '/restaurant/analytics',
       label: 'Analytics',
       icon: BarChart3
+    },
+    {
+      href: '/restaurant/orders/tracking',
+      label: 'Live Tracking',
+      icon: MapPin
     },
     {
       href: '/restaurant/settings',

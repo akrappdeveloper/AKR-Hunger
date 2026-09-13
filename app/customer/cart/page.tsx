@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { doc, getDoc, addDoc, collection, updateDoc, Timestamp, onSnapshot, runTransaction, increment, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, addDoc, collection, updateDoc, Timestamp, onSnapshot, runTransaction, increment, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { loadRazorpayScript } from '@/lib/razorpay';
 import { useAuth } from '@/context/AuthContext';
@@ -99,7 +99,7 @@ export default function CartPage() {
         const now = new Date();
 
         const validPromotions = snapshot.docs
-          .map((doc) => {
+          .map((doc: any) => {
             const data = doc.data();
             return {
               id: doc.id,
@@ -108,7 +108,7 @@ export default function CartPage() {
               validUntil: data.validUntil?.toDate ? data.validUntil.toDate() : new Date(data.validUntil || Date.now()),
             } as Promotion;
           })
-          .filter((promo) => {
+          .filter((promo: Promotion) => {
             if (now < promo.validFrom || now > promo.validUntil) return false;
             if (promo.usageLimit && promo.usageCount >= promo.usageLimit) return false;
             if (promo.applicableRestaurants && promo.applicableRestaurants.length > 0) {

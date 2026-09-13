@@ -45,6 +45,7 @@ export default function DeliverySidebar({ isMobile = false, onClose }: DeliveryS
 
   const menuItems = [
     { href: '/delivery', label: 'Dashboard', icon: LayoutDashboard },
+    { href: '/delivery/tracking', label: 'Live Map', icon: MapPin },
     { href: '/delivery/available', label: 'Marketplace', icon: ShoppingBag },
     { href: '/delivery/history', label: 'History', icon: Clock },
     { href: '/delivery/earnings', label: 'Earnings', icon: TrendingUp },

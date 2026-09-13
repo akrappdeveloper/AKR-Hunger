@@ -13,7 +13,7 @@ interface DeliveryAuthContextType {
   login: (email: string, password: string) => Promise<void>;
   register: (data: Omit<DeliveryPerson, 'id' | 'rating' | 'status' | 'createdAt'>, password: string) => Promise<void>;
   logout: () => Promise<void>;
-  updateLocation: (latitude: number, longitude: number) => Promise<void>;
+  updateLocation: (latitude: number, longitude: number, extra?: { accuracy?: number; speed?: number; heading?: number }) => Promise<void>;
   updateStatus: (status: 'online' | 'offline' | 'on_delivery') => Promise<void>;
 }
 
@@ -143,12 +143,22 @@ export function DeliveryAuthProvider({ children }: { children: React.ReactNode }
     }
   };
 
-  const updateLocation = async (latitude: number, longitude: number) => {
+  const updateLocation = async (latitude: number, longitude: number, extra?: { accuracy?: number; speed?: number; heading?: number }) => {
     if (user && deliveryPartner) {
       try {
         await updateDoc(doc(db, 'deliveryPersons', user.uid), {
           currentLocation: { latitude, longitude }
         });
+        await setDoc(doc(db, 'driverLocations', user.uid), {
+          driverId: user.uid,
+          latitude,
+          longitude,
+          accuracy: extra?.accuracy ?? 10,
+          speed: extra?.speed ?? 0,
+          heading: extra?.heading ?? 0,
+          isOnline: true,
+          updatedAt: serverTimestamp(),
+        }, { merge: true });
         console.log('[v0] Location updated:', { latitude, longitude });
       } catch (error) {
         console.error('[v0] Failed to update location:', error);
@@ -162,6 +172,12 @@ export function DeliveryAuthProvider({ children }: { children: React.ReactNode }
         await updateDoc(doc(db, 'deliveryPersons', user.uid), {
           status: status
         });
+        if (status === 'offline') {
+          await updateDoc(doc(db, 'driverLocations', user.uid), {
+            isOnline: false,
+            updatedAt: serverTimestamp(),
+          }).catch(() => {});
+        }
         console.log('[v0] Status updated:', status);
         // Optimistic update
         setDeliveryPartner(prev => prev ? { ...prev, status } : null);

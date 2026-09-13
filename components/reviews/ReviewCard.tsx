@@ -25,7 +25,7 @@ export function ReviewCard({ review, onHelpfulUpdate }: ReviewCardProps) {
     );
 
     const handleHelpfulClick = async () => {
-        if (!user) {
+        if (!user || !review.id) {
             return;
         }
 
@@ -35,10 +35,10 @@ export function ReviewCard({ review, onHelpfulUpdate }: ReviewCardProps) {
 
             // Optimistic update
             if (hasVoted) {
-                setLocalHelpful(prev => prev - 1);
+                setLocalHelpful(prev => (prev ?? 0) - 1);
                 setHasVoted(false);
             } else {
-                setLocalHelpful(prev => prev + 1);
+                setLocalHelpful(prev => (prev ?? 0) + 1);
                 setHasVoted(true);
             }
 
@@ -141,11 +141,13 @@ export function ReviewCard({ review, onHelpfulUpdate }: ReviewCardProps) {
                                         Restaurant Response
                                     </Badge>
                                     <span className="text-xs text-muted-foreground">
-                                        {format(review.response.respondedAt, 'MMM dd, yyyy')}
+                                        {typeof review.response === 'object' && review.response.respondedAt
+                                            ? format(review.response.respondedAt, 'MMM dd, yyyy')
+                                            : ''}
                                     </span>
                                 </div>
                                 <p className="text-sm leading-relaxed">
-                                    {review.response.message}
+                                    {typeof review.response === 'object' ? review.response.message : review.response}
                                 </p>
                             </div>
                         </div>

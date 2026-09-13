@@ -5,17 +5,17 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { LayoutDashboard, Users, Store, Bike, MoreVertical, Truck } from 'lucide-react';
+import { LayoutDashboard, ShoppingBag, TrendingUp, Truck, MoreVertical } from 'lucide-react';
 import AdminSidebar from './AdminSidebar';
 
 export default function AdminBottomNav() {
     const pathname = usePathname();
     const [open, setOpen] = useState(false);
 
-    // Using top-level admin links
     const mainLinks = [
         { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
-        { href: '/admin/restaurants', label: 'Rest.', icon: Store },
+        { href: '/admin/orders', label: 'Orders', icon: ShoppingBag },
+        { href: '/admin/analytics', label: 'Analytics', icon: TrendingUp },
         { href: '/admin/delivery', label: 'Delivery', icon: Truck },
     ];
 
@@ -60,23 +60,6 @@ export default function AdminBottomNav() {
                 </SheetTrigger>
                 <SheetContent side="left" className="p-0 w-[85%] max-w-[300px] border-r-gray-800 bg-gray-900 text-white">
                     <div className="h-full overflow-y-auto">
-                        {/* 
-                           We need to make AdminSidebar generic or extract its content if it's not exported.
-                           Checking AdminSidebar, it has internal state for mobile toggle.
-                           Ideally we just render it here or refactor it to accept 'mobile' props.
-                           Based on my previous view, AdminSidebar had a mobile sheet built-in.
-                           I should probably reuse that or just import the sidebar content.
-                           AdminSidebar has 'isMobile' prop? I didn't see it in my view_file earlier (it had internal state).
-                           Let's check AdminSidebar content again or assume I need to modify it.
-                           Wait, I saw AdminSidebar earlier. It had a desktop aside and a mobile sheet block.
-                           It did NOT export a props-based component.
-                           I will assume I can just instantiate <AdminSidebar /> but that might double render the desktop one if I'm not careful.
-                           Actually, AdminSidebar handles its own visibility 'hidden lg:flex'.
-                           So simply placing <AdminSidebar /> inside this Sheet might work if we force it visible?
-                           No, <AdminSidebar /> returns an <aside> component.
-                           
-                           Better strategy: I'll modify AdminSidebar to accept 'isMobile' prop like DeliverySidebar.
-                        */}
                         <AdminSidebar isMobile={true} onClose={() => setOpen(false)} />
                     </div>
                 </SheetContent>

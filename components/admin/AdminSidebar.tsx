@@ -21,7 +21,22 @@ import {
   ShoppingBag,
   DollarSign,
   Bell,
-  CreditCard // Added CreditCard icon
+  CreditCard,
+  TrendingUp,
+  Megaphone,
+  Shield,
+  MapPin,
+  Navigation,
+  Award,
+  Star,
+  FileText,
+  ChevronDown,
+  ChevronRight,
+  Tag,
+  Activity,
+  Map,
+  IdCard,
+  BookOpen,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -32,10 +47,20 @@ interface AdminSidebarProps {
   onClose?: () => void;
 }
 
+interface SidebarSection {
+  title: string;
+  items: {
+    href: string;
+    label: string;
+    icon: any;
+  }[];
+}
+
 const AdminSidebar = ({ isMobile = false, onClose }: AdminSidebarProps) => {
   const pathname = usePathname();
   const router = useRouter();
   const { admin, logout } = useAdminAuth();
+  const [collapsedSections, setCollapsedSections] = useState<string[]>([]);
 
   const handleLogout = async () => {
     await logout();
@@ -43,21 +68,72 @@ const AdminSidebar = ({ isMobile = false, onClose }: AdminSidebarProps) => {
     if (onClose) onClose();
   };
 
-  const menuItems = [
-    { href: '/admin', label: 'Dashboard', icon: BarChart3 },
-    { href: '/admin/customers', label: 'Customers', icon: Users },
-    { href: '/admin/restaurants', label: 'Restaurants', icon: Store },
-    { href: '/admin/customer-wallet', label: 'Customer Wallet', icon: Wallet },
-    { href: '/admin/card-requests', label: 'Card Requests', icon: CreditCard }, // Added link
-    { href: '/admin/menu-approvals', label: 'Menu Approvals', icon: UtensilsCrossed },
-    { href: '/admin/delivery', label: 'Delivery Partners', icon: Truck },
-    { href: '/admin/orders', label: 'Orders', icon: ShoppingBag },
-    { href: '/admin/payments', label: 'Restaurant Payments', icon: Wallet },
-    { href: '/admin/delivery-payments', label: 'Delivery Payments', icon: DollarSign },
-    { href: '/admin/points', label: 'Points / Wallet', icon: Wallet },
-    { href: '/admin/notifications', label: 'Notifications', icon: Bell },
-    { href: '/admin/settings', label: 'Settings', icon: Settings },
-    { href: '/admin/support', label: 'Support', icon: LifeBuoy },
+  const toggleSection = (title: string) => {
+    setCollapsedSections(prev =>
+      prev.includes(title) ? prev.filter(s => s !== title) : [...prev, title]
+    );
+  };
+
+  const sections: SidebarSection[] = [
+    {
+      title: 'Main',
+      items: [
+        { href: '/admin', label: 'Dashboard', icon: BarChart3 },
+      ],
+    },
+    {
+      title: 'Management',
+      items: [
+        { href: '/admin/customers', label: 'Customers', icon: Users },
+        { href: '/admin/restaurants', label: 'Restaurants', icon: Store },
+        { href: '/admin/delivery', label: 'Delivery Partners', icon: Truck },
+        { href: '/admin/orders', label: 'Orders', icon: ShoppingBag },
+      ],
+    },
+    {
+      title: 'Financial',
+      items: [
+        { href: '/admin/payments', label: 'Restaurant Payments', icon: Wallet },
+        { href: '/admin/delivery-payments', label: 'Delivery Payments', icon: DollarSign },
+        { href: '/admin/customer-wallet', label: 'Customer Wallet', icon: Wallet },
+        { href: '/admin/points', label: 'Points / Wallet', icon: Wallet },
+      ],
+    },
+    {
+      title: 'Content',
+      items: [
+        { href: '/admin/menus', label: 'Menu Management', icon: BookOpen },
+        { href: '/admin/menu-approvals', label: 'Menu Approvals', icon: UtensilsCrossed },
+        { href: '/admin/campaigns', label: 'Campaigns', icon: Megaphone },
+        { href: '/admin/promotions', label: 'Promotions', icon: Tag },
+      ],
+    },
+    {
+      title: 'Monitoring',
+      items: [
+        { href: '/admin/analytics', label: 'Analytics', icon: TrendingUp },
+        { href: '/admin/quality', label: 'Quality Control', icon: Shield },
+        { href: '/admin/tracking', label: 'Live Tracking', icon: Navigation },
+        { href: '/admin/zones', label: 'Delivery Zones', icon: Map },
+      ],
+    },
+    {
+      title: 'Members',
+      items: [
+        { href: '/admin/memberships', label: 'Memberships', icon: IdCard },
+        { href: '/admin/card-requests', label: 'Card Requests', icon: CreditCard },
+      ],
+    },
+    {
+      title: 'System',
+      items: [
+        { href: '/admin/reviews', label: 'Reviews', icon: Star },
+        { href: '/admin/notifications', label: 'Notifications', icon: Bell },
+        { href: '/admin/reports', label: 'Reports', icon: FileText },
+        { href: '/admin/support', label: 'Support', icon: LifeBuoy },
+        { href: '/admin/settings', label: 'Settings', icon: Settings },
+      ],
+    },
   ];
 
   return (
@@ -75,32 +151,62 @@ const AdminSidebar = ({ isMobile = false, onClose }: AdminSidebarProps) => {
         {!isMobile && <NotificationBell />}
       </div>
 
-      <div className="flex-1 px-3 py-6 overflow-y-auto custom-scrollbar">
-        <div className="space-y-1">
-          {menuItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = pathname === item.href;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => {
-                  if (isMobile && onClose) onClose();
-                }}
-                className={`group flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 border border-transparent ${isActive
-                  ? 'bg-blue-600/10 text-white border-blue-500/20 shadow-[0_0_20px_rgba(37,99,235,0.1)]'
-                  : 'text-gray-400 hover:text-white hover:bg-white/5'
-                  }`}
-              >
-                <Icon size={20} className={`transition-colors duration-200 ${isActive ? 'text-blue-400' : 'text-gray-500 group-hover:text-gray-300'}`} />
-                {item.label}
-                {isActive && (
-                  <div className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-400 shadow-[0_0_10px_rgba(96,165,250,0.8)]" />
-                )}
-              </Link>
-            );
-          })}
-        </div>
+      <div className="flex-1 px-3 py-4 overflow-y-auto custom-scrollbar">
+        {sections.map((section) => {
+          const isCollapsed = collapsedSections.includes(section.title);
+          const hasActiveItem = section.items.some(item =>
+            item.href === '/admin' ? pathname === item.href : pathname.startsWith(item.href)
+          );
+
+          return (
+            <div key={section.title} className="mb-1">
+              {section.title !== 'Main' && (
+                <button
+                  onClick={() => toggleSection(section.title)}
+                  className="w-full flex items-center justify-between px-4 py-2 mt-2 mb-0.5 group"
+                >
+                  <span className={`text-[10px] font-bold uppercase tracking-[0.15em] transition-colors ${hasActiveItem ? 'text-blue-400/80' : 'text-gray-500 group-hover:text-gray-400'}`}>
+                    {section.title}
+                  </span>
+                  <ChevronDown
+                    size={12}
+                    className={`text-gray-600 transition-transform duration-200 ${isCollapsed ? '-rotate-90' : ''}`}
+                  />
+                </button>
+              )}
+
+              {!isCollapsed && (
+                <div className="space-y-0.5">
+                  {section.items.map((item) => {
+                    const Icon = item.icon;
+                    const isActive = item.href === '/admin'
+                      ? pathname === item.href
+                      : pathname.startsWith(item.href);
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={() => {
+                          if (isMobile && onClose) onClose();
+                        }}
+                        className={`group flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 border border-transparent ${isActive
+                          ? 'bg-blue-600/10 text-white border-blue-500/20 shadow-[0_0_20px_rgba(37,99,235,0.1)]'
+                          : 'text-gray-400 hover:text-white hover:bg-white/5'
+                          }`}
+                      >
+                        <Icon size={18} className={`transition-colors duration-200 ${isActive ? 'text-blue-400' : 'text-gray-500 group-hover:text-gray-300'}`} />
+                        <span className="truncate">{item.label}</span>
+                        {isActive && (
+                          <div className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-400 shadow-[0_0_10px_rgba(96,165,250,0.8)]" />
+                        )}
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
 
       <div className="p-4 border-t border-white/5 space-y-4 bg-black/20">

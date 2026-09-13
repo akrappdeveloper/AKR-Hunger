@@ -1,2 +1,2 @@
-email : - [firebase-adminsdk-fbsvc@akr-mail.iam.gserviceaccount.com]
-password : - [HXNiXhMQmv09rwfj8tNbuNJThAjKpGDOZm8rc1Bm]
+email : - [firebase-adminsdk-fbsvc@akr-hunger.iam.gserviceaccount.com]
+password : - [CF1TneQEpqWONK8gRLxAMhcGSfL2]

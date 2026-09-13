@@ -35,7 +35,7 @@ export function AnalyticsChart({
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={height}>
-          {type === 'line' && (
+          {type === 'line' ? (
             <LineChart data={data}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
               <XAxis dataKey="name" stroke="#888" />
@@ -44,9 +44,7 @@ export function AnalyticsChart({
               <Legend />
               <Line type="monotone" dataKey={dataKey} stroke={color} strokeWidth={2} dot={{ fill: color }} />
             </LineChart>
-          )}
-          
-          {type === 'bar' && (
+          ) : type === 'bar' ? (
             <BarChart data={data}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
               <XAxis dataKey="name" stroke="#888" />
@@ -55,9 +53,7 @@ export function AnalyticsChart({
               <Legend />
               <Bar dataKey={dataKey} fill={color} radius={[8, 8, 0, 0]} />
             </BarChart>
-          )}
-
-          {type === 'pie' && (
+          ) : (
             <PieChart>
               <Pie
                 data={data}
