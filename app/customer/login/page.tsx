@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, User as FirebaseUser } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
 import { doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
@@ -18,6 +18,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog';
+import GoogleAuthModal from '@/components/customer/GoogleAuthModal';
 import { toast } from 'sonner';
 import {
   User,
@@ -54,8 +55,12 @@ export default function LoginPage() {
   const [error, setError] = useState('');
 
   // Google Auth & Phone Dialog State
+  const [isGoogleAuthModalOpen, setIsGoogleAuthModalOpen] = useState(false);
+  const [isPopupBlocked, setIsPopupBlocked] = useState(false);
+  const [googleModalError, setGoogleModalError] = useState('');
   const [googleLoading, setGoogleLoading] = useState(false);
   const [isGoogleSigningIn, setIsGoogleSigningIn] = useState(false);
+  const [isRedirectChecking, setIsRedirectChecking] = useState(true);
   const [isPhoneModalOpen, setIsPhoneModalOpen] = useState(false);
   const [phoneInput, setPhoneInput] = useState('');
   const [phoneError, setPhoneError] = useState('');
@@ -66,12 +71,119 @@ export default function LoginPage() {
     email: string;
   } | null>(null);
 
+  // Reusable unified handler for Google user authentication (Popup & Redirect)
+  const processGoogleUser = async (googleUser: FirebaseUser) => {
+    // 1. Verify account is not a registered restaurant partner
+    const restaurantsQuery = query(collection(db, 'restaurants'), where('email', '==', googleUser.email));
+    const restaurantSnapshot = await getDocs(restaurantsQuery);
+
+    if (!restaurantSnapshot.empty) {
+      await auth.signOut();
+      setError('This Google account is already registered as a restaurant partner. Please use the restaurant portal.');
+      setGoogleLoading(false);
+      setIsGoogleSigningIn(false);
+      setIsGoogleAuthModalOpen(false);
+      return;
+    }
+
+    // 2. Fetch or create customer document in Firestore
+    const customerRef = doc(db, 'customers', googleUser.uid);
+    const customerDoc = await getDoc(customerRef);
+
+    if (!customerDoc.exists()) {
+      // First-time Customer: Create profile
+      await setDoc(customerRef, {
+        email: googleUser.email || '',
+        name: googleUser.displayName || 'Customer',
+        phone: googleUser.phoneNumber || '',
+        avatar: googleUser.photoURL || '',
+        addresses: [],
+        defaultAddressId: null,
+        walletBalance: 0,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+
+      // Prompt for phone number since Google account doesn't provide phone
+      if (!googleUser.phoneNumber) {
+        setAuthenticatedGoogleUser({
+          uid: googleUser.uid,
+          name: googleUser.displayName || 'Customer',
+          email: googleUser.email || '',
+        });
+        setPhoneInput('');
+        setPhoneError('');
+        setIsGoogleAuthModalOpen(false);
+        setIsPhoneModalOpen(true);
+        setGoogleLoading(false);
+        setIsGoogleSigningIn(false);
+        return;
+      }
+    } else {
+      // Customer profile exists: check if phone is present and not empty
+      const customerData = customerDoc.data();
+      const existingPhone = customerData?.phone ? String(customerData.phone).trim() : '';
+
+      if (!existingPhone) {
+        setAuthenticatedGoogleUser({
+          uid: googleUser.uid,
+          name: customerData?.name || googleUser.displayName || 'Customer',
+          email: customerData?.email || googleUser.email || '',
+        });
+        setPhoneInput('');
+        setPhoneError('');
+        setIsGoogleAuthModalOpen(false);
+        setIsPhoneModalOpen(true);
+        setGoogleLoading(false);
+        setIsGoogleSigningIn(false);
+        return;
+      }
+    }
+
+    // Already has phone number: proceed to customer portal
+    setIsGoogleAuthModalOpen(false);
+    setIsGoogleSigningIn(false);
+    setGoogleLoading(false);
+    toast.success(`Welcome back, ${googleUser.displayName || 'Foodie'}!`);
+    router.push('/customer');
+  };
+
+  // Check for returning Google Redirect sign-in result on page mount
+  useEffect(() => {
+    let isMounted = true;
+    const checkRedirect = async () => {
+      try {
+        const result = await getRedirectResult(auth);
+        if (result && result.user && isMounted) {
+          setIsGoogleSigningIn(true);
+          setGoogleLoading(true);
+          await processGoogleUser(result.user);
+        }
+      } catch (err: any) {
+        if (isMounted) {
+          console.error('Google Redirect Result Error:', err);
+          setError(err.message || 'Google redirect sign-in failed. Please try again.');
+        }
+      } finally {
+        if (isMounted) {
+          setIsRedirectChecking(false);
+          setGoogleLoading(false);
+        }
+      }
+    };
+
+    checkRedirect();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   // Redirect if already logged in (pause redirect while Google sign-in or phone setup dialog is active)
   useEffect(() => {
-    if (user && !isGoogleSigningIn && !isPhoneModalOpen) {
+    if (user && !isRedirectChecking && !isGoogleSigningIn && !isPhoneModalOpen) {
       router.push('/customer');
     }
-  }, [user, isGoogleSigningIn, isPhoneModalOpen, router]);
+  }, [user, isRedirectChecking, isGoogleSigningIn, isPhoneModalOpen, router]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -156,7 +268,9 @@ export default function LoginPage() {
     }
   };
 
-  const handleGoogleSignIn = async () => {
+  // Google Sign-In with Floating Window (Popup)
+  const handleGooglePopupSignIn = async () => {
+    setGoogleModalError('');
     setError('');
     setGoogleLoading(true);
     setIsGoogleSigningIn(true);
@@ -165,84 +279,38 @@ export default function LoginPage() {
       const provider = new GoogleAuthProvider();
       provider.setCustomParameters({ prompt: 'select_account' });
       const result = await signInWithPopup(auth, provider);
-      const googleUser = result.user;
-
-      // 1. Verify account is not a registered restaurant partner
-      const restaurantsQuery = query(collection(db, 'restaurants'), where('email', '==', googleUser.email));
-      const restaurantSnapshot = await getDocs(restaurantsQuery);
-
-      if (!restaurantSnapshot.empty) {
-        await auth.signOut();
-        setError('This Google account is already registered as a restaurant partner. Please use the restaurant portal.');
-        setGoogleLoading(false);
-        setIsGoogleSigningIn(false);
-        return;
-      }
-
-      // 2. Fetch or create customer document in Firestore
-      const customerRef = doc(db, 'customers', googleUser.uid);
-      const customerDoc = await getDoc(customerRef);
-
-      if (!customerDoc.exists()) {
-        // First-time Customer: Create profile
-        await setDoc(customerRef, {
-          email: googleUser.email || '',
-          name: googleUser.displayName || 'Customer',
-          phone: googleUser.phoneNumber || '',
-          avatar: googleUser.photoURL || '',
-          addresses: [],
-          defaultAddressId: null,
-          walletBalance: 0,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        });
-
-        // Prompt for phone number since Google account doesn't provide phone
-        if (!googleUser.phoneNumber) {
-          setAuthenticatedGoogleUser({
-            uid: googleUser.uid,
-            name: googleUser.displayName || 'Customer',
-            email: googleUser.email || '',
-          });
-          setPhoneInput('');
-          setPhoneError('');
-          setIsPhoneModalOpen(true);
-          setGoogleLoading(false);
-          setIsGoogleSigningIn(false);
-          return;
-        }
-      } else {
-        // Customer profile exists: check if phone is present and not empty
-        const customerData = customerDoc.data();
-        const existingPhone = customerData?.phone ? String(customerData.phone).trim() : '';
-
-        if (!existingPhone) {
-          setAuthenticatedGoogleUser({
-            uid: googleUser.uid,
-            name: customerData?.name || googleUser.displayName || 'Customer',
-            email: customerData?.email || googleUser.email || '',
-          });
-          setPhoneInput('');
-          setPhoneError('');
-          setIsPhoneModalOpen(true);
-          setGoogleLoading(false);
-          setIsGoogleSigningIn(false);
-          return;
-        }
-      }
-
-      // Already has phone number: proceed to customer portal
-      setIsGoogleSigningIn(false);
-      setGoogleLoading(false);
-      toast.success(`Welcome back, ${googleUser.displayName || 'Foodie'}!`);
-      router.push('/customer');
+      await processGoogleUser(result.user);
     } catch (err: any) {
-      console.error('Google Sign-In Error:', err);
-      setIsGoogleSigningIn(false);
+      console.error('Google Popup Sign-In Error:', err);
       setGoogleLoading(false);
-      if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
-        setError(err.message || 'Google sign-in failed. Please try again.');
+      setIsGoogleSigningIn(false);
+
+      if (err.code === 'auth/popup-blocked') {
+        setIsPopupBlocked(true);
+        setIsGoogleAuthModalOpen(true);
+        setGoogleModalError('');
+      } else if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
+        setGoogleModalError(err.message || 'Google sign-in failed. Please try again.');
       }
+    }
+  };
+
+  // Google Sign-In with Direct Redirect (100% immune to popup blockers)
+  const handleGoogleRedirectSignIn = async () => {
+    setGoogleModalError('');
+    setError('');
+    setGoogleLoading(true);
+    setIsGoogleSigningIn(true);
+
+    try {
+      const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: 'select_account' });
+      await signInWithRedirect(auth, provider);
+    } catch (err: any) {
+      console.error('Google Redirect Sign-In Error:', err);
+      setGoogleLoading(false);
+      setIsGoogleSigningIn(false);
+      setGoogleModalError(err.message || 'Failed to start redirect sign-in. Please try again.');
     }
   };
 
@@ -461,15 +529,19 @@ export default function LoginPage() {
                     </div>
                   )}
 
-                  {/* Google Authentication Button */}
+                  {/* Google Authentication Button - Opens our Custom Google Auth Popup */}
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={handleGoogleSignIn}
+                    onClick={() => {
+                      setError('');
+                      setGoogleModalError('');
+                      setIsGoogleAuthModalOpen(true);
+                    }}
                     disabled={googleLoading || loading}
                     className="w-full h-11 sm:h-12 rounded-xl border border-border/80 hover:border-primary/40 bg-card/60 hover:bg-muted/50 text-foreground font-bold flex items-center justify-center gap-3 shadow-xs transition-all text-xs sm:text-sm cursor-pointer mb-5 group"
                   >
-                    {googleLoading ? (
+                    {googleLoading && isGoogleSigningIn && !isGoogleAuthModalOpen ? (
                       <div className="flex items-center gap-2">
                         <Spinner className="w-4 h-4 text-primary" />
                         <span className="text-muted-foreground">Connecting with Google...</span>
@@ -743,6 +815,21 @@ export default function LoginPage() {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Our Custom Google Auth Popup Modal */}
+      <GoogleAuthModal
+        isOpen={isGoogleAuthModalOpen}
+        onClose={() => {
+          setIsGoogleAuthModalOpen(false);
+          setGoogleModalError('');
+        }}
+        onPopupSignIn={handleGooglePopupSignIn}
+        onRedirectSignIn={handleGoogleRedirectSignIn}
+        loading={googleLoading}
+        isPopupBlocked={isPopupBlocked}
+        error={googleModalError}
+      />
     </div>
   );
 }
+
