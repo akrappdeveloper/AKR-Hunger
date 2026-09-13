@@ -10,6 +10,7 @@ import { useRestaurantAuth } from '@/context/RestaurantAuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
+import { toast } from 'sonner';
 import {
   Store,
   ChefHat,
@@ -31,7 +32,10 @@ import {
   Bike,
   User,
   ShieldCheck,
-  BarChart3
+  BarChart3,
+  LocateFixed,
+  Navigation,
+  Compass
 } from 'lucide-react';
 import ThemeToggle from '@/components/ThemeToggle';
 
@@ -46,9 +50,21 @@ export default function RestaurantLoginPage() {
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
   const [cuisines, setCuisines] = useState('');
+  const [latitude, setLatitude] = useState('');
+  const [longitude, setLongitude] = useState('');
+  const [locatingGps, setLocatingGps] = useState(false);
+  const [detectedArea, setDetectedArea] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Derived indicator for valid coordinates
+  const hasGpsCoordinates = Boolean(
+    latitude.trim() &&
+    longitude.trim() &&
+    !isNaN(Number(latitude)) &&
+    !isNaN(Number(longitude))
+  );
 
   // Redirect if already logged in
   useEffect(() => {
@@ -66,25 +82,116 @@ export default function RestaurantLoginPage() {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const userId = userCredential.user.uid;
 
-      // Check if this user is actually a restaurant
-      const restaurantDoc = await getDoc(doc(db, 'restaurants', userId));
+      // Check if this user is actually registered as a restaurant (check doc ID first, then ownerId)
+      let isRestaurant = false;
+      try {
+        const restaurantDoc = await getDoc(doc(db, 'restaurants', userId));
+        if (restaurantDoc.exists()) {
+          isRestaurant = true;
+        } else {
+          const ownerQuery = query(collection(db, 'restaurants'), where('ownerId', '==', userId));
+          const ownerSnapshot = await getDocs(ownerQuery);
+          if (!ownerSnapshot.empty) {
+            isRestaurant = true;
+          }
+        }
+      } catch (checkErr: any) {
+        console.warn('[Restaurant Login] Role verification notice:', checkErr);
+      }
 
-      if (!restaurantDoc.exists()) {
+      if (!isRestaurant) {
         await auth.signOut();
-        setError('This account is not registered as a restaurant partner. Please check your credentials or register your restaurant.');
+        setError('This account is not registered as a restaurant partner. Please verify your credentials or register your restaurant.');
         setLoading(false);
         return;
       }
+
       router.push('/restaurant');
     } catch (err: any) {
-      const message =
-        err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password'
-          ? 'Invalid email or password. Please verify your merchant credentials.'
-          : err.message || 'Failed to login. Please check your credentials.';
+      console.error('[Restaurant Login] Authentication error:', err);
+      let message = 'Failed to login. Please check your credentials.';
+      if (
+        err.code === 'auth/invalid-credential' ||
+        err.code === 'auth/user-not-found' ||
+        err.code === 'auth/wrong-password' ||
+        err.code === 'auth/invalid-email'
+      ) {
+        message = 'Invalid email or password. Please verify your merchant credentials.';
+      } else if (
+        err.code === 'permission-denied' ||
+        err.message?.includes('Missing or insufficient permissions')
+      ) {
+        message = 'Access Denied: This account is not authorized as a restaurant partner. Please verify your credentials.';
+      } else if (err.message) {
+        message = err.message;
+      }
       setError(message);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleDetectGPS = () => {
+    if (typeof window === 'undefined' || !navigator.geolocation) {
+      toast.error('Geolocation is not supported by your browser. You can enter coordinates manually.');
+      return;
+    }
+
+    setLocatingGps(true);
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+          setLatitude(lat.toFixed(6));
+          setLongitude(lng.toFixed(6));
+
+          // Attempt reverse geocoding via OpenStreetMap Nominatim
+          try {
+            const res = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`
+            );
+            if (res.ok) {
+              const data = await res.json();
+              const road = data?.address?.road || data?.address?.suburb || data?.address?.neighbourhood || '';
+              const city = data?.address?.city || data?.address?.town || data?.address?.state_district || data?.address?.county || '';
+              const state = data?.address?.state || '';
+              const postcode = data?.address?.postcode || '';
+
+              const areaParts = [road, city, state, postcode].filter(Boolean);
+              if (areaParts.length > 0) {
+                const fullArea = areaParts.join(', ');
+                setDetectedArea(fullArea);
+                if (!address.trim()) {
+                  setAddress(fullArea);
+                }
+              }
+            }
+          } catch (e) {
+            console.warn('[GPS] Reverse geocoding notice:', e);
+          }
+
+          toast.success(`Kitchen GPS locked: ${lat.toFixed(4)}°, ${lng.toFixed(4)}°`);
+        } catch (posErr) {
+          console.warn('[GPS] Position processing notice:', posErr);
+        } finally {
+          setLocatingGps(false);
+        }
+      },
+      (err) => {
+        console.warn('[GPS] Geolocation notice (code ' + err.code + '):', err.message);
+        setLocatingGps(false);
+        if (err.code === 1) {
+          toast.error('Location permission was denied. You can enter your street address or coordinates manually.');
+        } else if (err.code === 2) {
+          toast.error('Location unavailable on this device. You can enter coordinates manually.');
+        } else {
+          toast.error('GPS request timed out. You can enter coordinates manually.');
+        }
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 }
+    );
   };
 
   const handleSignup = async (e: React.FormEvent) => {
@@ -93,18 +200,24 @@ export default function RestaurantLoginPage() {
     setLoading(true);
 
     try {
-      // First check if this email is already used by a customer
-      const customersQuery = query(collection(db, 'customers'), where('email', '==', email));
-      const customerSnapshot = await getDocs(customersQuery);
+      // 1. Check if email is already registered to a restaurant (restaurants has public read permission)
+      const cleanEmail = email.trim().toLowerCase();
+      try {
+        const restaurantQuery = query(collection(db, 'restaurants'), where('email', '==', cleanEmail));
+        const restaurantSnapshot = await getDocs(restaurantQuery);
 
-      if (!customerSnapshot.empty) {
-        setError('This email is already registered as a customer account. Please use a distinct business email for your restaurant.');
-        setLoading(false);
-        return;
+        if (!restaurantSnapshot.empty) {
+          setError('This email is already registered as a restaurant partner. Please sign in instead.');
+          setLoading(false);
+          return;
+        }
+      } catch (checkErr) {
+        // If querying restaurants fails for any reason, continue to Firebase Auth which enforces uniqueness
+        console.warn('[Restaurant Signup] Email check notice:', checkErr);
       }
 
-      // Create user in Firebase Auth
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      // 2. Create user in Firebase Auth (enforces unique email across all users)
+      const userCredential = await createUserWithEmailAndPassword(auth, cleanEmail, password);
       const userId = userCredential.user.uid;
 
       // Parse cuisines into array
@@ -113,34 +226,55 @@ export default function RestaurantLoginPage() {
         .map((c) => c.trim())
         .filter((c) => c);
 
-      // Create restaurant document in Firestore
+      // Parse coordinates (convert string to float, fallback to Delhi defaults if not supplied)
+      const latNum = latitude ? parseFloat(latitude) : 28.7041;
+      const lngNum = longitude ? parseFloat(longitude) : 77.1025;
+
+      // 3. Create restaurant document in Firestore
       await setDoc(doc(db, 'restaurants', userId), {
-        name: restaurantName,
-        ownerName,
+        name: restaurantName.trim(),
+        ownerName: ownerName.trim(),
         ownerId: userId,
-        email,
-        phone,
-        address,
+        email: cleanEmail,
+        phone: phone.trim(),
+        address: address.trim(),
+        latitude: latNum,
+        longitude: lngNum,
+        coordinates: {
+          latitude: latNum,
+          longitude: lngNum,
+        },
         cuisines: cuisineArray.length > 0 ? cuisineArray : ['Multi-Cuisine'],
-        description: `Delicious ${cuisineArray.join(', ')} cuisine`,
+        description: `Delicious ${cuisineArray.join(', ') || 'Multi-Cuisine'} cuisine`,
         rating: 0,
         reviews: 0,
         deliveryTime: 30,
         deliveryCharge: 40,
         minimumOrder: 100,
         isOpen: true,
+        isActive: true,
         createdAt: new Date(),
         updatedAt: new Date(),
       });
 
       router.push('/restaurant');
     } catch (err: any) {
-      const message =
-        err.code === 'auth/email-already-in-use'
-          ? 'An account with this email already exists. Please sign in.'
-          : err.code === 'auth/weak-password'
-          ? 'Password must be at least 6 characters.'
-          : err.message || 'Failed to create restaurant account. Please try again.';
+      console.error('[Restaurant Signup] Error:', err);
+      let message = 'Failed to create restaurant account. Please try again.';
+      if (err.code === 'auth/email-already-in-use') {
+        message = 'An account with this email already exists. Please sign in or use a different email.';
+      } else if (err.code === 'auth/weak-password') {
+        message = 'Password must be at least 6 characters.';
+      } else if (err.code === 'auth/invalid-email') {
+        message = 'Please provide a valid email address.';
+      } else if (
+        err.code === 'permission-denied' ||
+        err.message?.includes('Missing or insufficient permissions')
+      ) {
+        message = 'Permission error creating restaurant profile. Please ensure Firestore rules are updated.';
+      } else if (err.message) {
+        message = err.message;
+      }
       setError(message);
     } finally {
       setLoading(false);
@@ -167,27 +301,27 @@ export default function RestaurantLoginPage() {
 
       {/* Top Header Navigation */}
       <header className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex items-center justify-between z-20">
-        <Link
-          href="/customer"
-          className="flex items-center gap-2 group text-muted-foreground hover:text-foreground transition-all duration-200"
-        >
+        <div className="flex items-center gap-2 group text-muted-foreground hover:text-foreground transition-all duration-200">
           <Button
+            asChild
             variant="ghost"
             size="sm"
             className="rounded-xl gap-2 font-semibold text-xs sm:text-sm h-9 px-3 bg-card/60 backdrop-blur-md border border-border/50 hover:border-amber-500/40 hover:bg-card shadow-sm"
           >
-            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-            <span>Storefront</span>
+            <Link href="/customer">
+              <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+              <span>Storefront</span>
+            </Link>
           </Button>
-          <div className="flex items-center gap-2.5 pl-3 border-l border-border/60">
+          <Link href="/customer" className="flex items-center gap-2.5 pl-3 border-l border-border/60">
             <div className="w-8 h-8 rounded-xl bg-amber-500/15 flex items-center justify-center p-1.5 ring-1 ring-amber-500/25">
               <Store className="w-full h-full text-amber-500" />
             </div>
             <span className="font-extrabold text-base sm:text-lg tracking-tight">
               AKR<span className="text-amber-500 font-black">Merchant</span>
             </span>
-          </div>
-        </Link>
+          </Link>
+        </div>
 
         <div className="flex items-center gap-2 sm:gap-3">
           <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-card/60 backdrop-blur-md border border-border/50 text-xs font-medium text-muted-foreground shadow-sm">
@@ -419,6 +553,113 @@ export default function RestaurantLoginPage() {
                               required={!isLogin}
                               className="pl-10 h-11 rounded-xl bg-muted/40 border-border/70 text-foreground placeholder:text-muted-foreground focus:bg-background focus:border-amber-500 text-sm font-medium transition-all"
                             />
+                          </div>
+                        </div>
+
+                        {/* Interactive Kitchen GPS Location Pinpoint */}
+                        <div className="p-3.5 rounded-2xl bg-amber-500/5 border border-amber-500/25 space-y-3">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                            <div className="flex items-center gap-2">
+                              <div className="w-8 h-8 rounded-xl bg-amber-500/15 text-amber-500 flex items-center justify-center ring-1 ring-amber-500/25 flex-shrink-0">
+                                <Navigation className="w-4 h-4" />
+                              </div>
+                              <div>
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <h4 className="text-xs font-bold text-foreground">
+                                    Kitchen GPS Pinpoint
+                                  </h4>
+                                  {hasGpsCoordinates ? (
+                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold">
+                                      <CheckCircle2 className="w-3 h-3" /> GPS Locked
+                                    </span>
+                                  ) : (
+                                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-muted text-[10px] font-medium text-muted-foreground">
+                                      Optional but recommended
+                                    </span>
+                                  )}
+                                </div>
+                                <p className="text-[11px] text-muted-foreground">
+                                  Guides delivery riders directly to your pickup counter
+                                </p>
+                              </div>
+                            </div>
+
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              onClick={handleDetectGPS}
+                              disabled={locatingGps}
+                              className="h-8 px-3 rounded-xl border-amber-500/40 hover:bg-amber-500/10 hover:border-amber-500 text-amber-600 dark:text-amber-400 font-bold text-xs gap-1.5 transition-all shadow-sm cursor-pointer self-start sm:self-auto"
+                            >
+                              {locatingGps ? (
+                                <>
+                                  <Spinner className="w-3.5 h-3.5 text-amber-500" />
+                                  <span>Detecting GPS...</span>
+                                </>
+                              ) : (
+                                <>
+                                  <LocateFixed className="w-3.5 h-3.5 text-amber-500 animate-pulse" />
+                                  <span>Auto-Detect GPS</span>
+                                </>
+                              )}
+                            </Button>
+                          </div>
+
+                          {/* Detected Area Pill if Nominatim succeeded */}
+                          {detectedArea && (
+                            <div className="text-[11px] bg-card/80 rounded-xl p-2.5 border border-border/60 flex items-center justify-between gap-2">
+                              <div className="flex items-center gap-1.5 text-muted-foreground min-w-0">
+                                <MapPin className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />
+                                <span className="truncate">
+                                  Detected: <strong className="text-foreground">{detectedArea}</strong>
+                                </span>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => setAddress(detectedArea)}
+                                className="text-[10px] font-bold text-amber-500 hover:underline flex-shrink-0 cursor-pointer"
+                              >
+                                Use as Address
+                              </button>
+                            </div>
+                          )}
+
+                          {/* Latitude and Longitude Dual Input Fields */}
+                          <div className="grid grid-cols-2 gap-2.5">
+                            <div>
+                              <label className="text-[11px] font-semibold text-muted-foreground block mb-1">
+                                Latitude (°N)
+                              </label>
+                              <div className="relative">
+                                <Compass className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
+                                <Input
+                                  type="number"
+                                  step="any"
+                                  placeholder="e.g. 28.7041"
+                                  value={latitude}
+                                  onChange={(e) => setLatitude(e.target.value)}
+                                  className="pl-8 h-9 rounded-lg bg-card/80 border-border/70 text-foreground text-xs font-mono transition-all"
+                                />
+                              </div>
+                            </div>
+
+                            <div>
+                              <label className="text-[11px] font-semibold text-muted-foreground block mb-1">
+                                Longitude (°E)
+                              </label>
+                              <div className="relative">
+                                <Compass className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
+                                <Input
+                                  type="number"
+                                  step="any"
+                                  placeholder="e.g. 77.1025"
+                                  value={longitude}
+                                  onChange={(e) => setLongitude(e.target.value)}
+                                  className="pl-8 h-9 rounded-lg bg-card/80 border-border/70 text-foreground text-xs font-mono transition-all"
+                                />
+                              </div>
+                            </div>
                           </div>
                         </div>
                       </div>

@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { Restaurant } from '@/lib/types';
 
 interface RestaurantUser extends User {
@@ -31,17 +31,41 @@ export function RestaurantAuthProvider({ children }: { children: ReactNode }) {
       if (firebaseUser) {
         // Get restaurant data
         try {
+          let restaurantData: Restaurant | null = null;
+          let restaurantId = '';
+
           const restaurantDoc = await getDoc(doc(db, 'restaurants', firebaseUser.uid));
           if (restaurantDoc.exists()) {
-            const restaurantData = {
+            restaurantData = {
               ...restaurantDoc.data(),
               id: restaurantDoc.id,
             } as Restaurant;
-            setRestaurant(restaurantData);
-            setUser({ ...firebaseUser, restaurantId: restaurantDoc.id } as RestaurantUser);
+            restaurantId = restaurantDoc.id;
+          } else {
+            // Also check by ownerId if restaurant was saved with a custom or auto ID
+            const ownerQuery = query(collection(db, 'restaurants'), where('ownerId', '==', firebaseUser.uid));
+            const ownerSnap = await getDocs(ownerQuery);
+            if (!ownerSnap.empty) {
+              const firstDoc = ownerSnap.docs[0];
+              restaurantData = {
+                ...firstDoc.data(),
+                id: firstDoc.id,
+              } as Restaurant;
+              restaurantId = firstDoc.id;
+            }
           }
-        } catch (error) {
-          console.error('[v0] Error fetching restaurant:', error);
+
+          if (restaurantData) {
+            setRestaurant(restaurantData);
+            setUser({ ...firebaseUser, restaurantId } as RestaurantUser);
+          } else {
+            setRestaurant(null);
+            setUser(null);
+          }
+        } catch (error: any) {
+          console.error('[RestaurantAuth] Error fetching restaurant:', error);
+          setRestaurant(null);
+          setUser(null);
         }
       } else {
         setUser(null);

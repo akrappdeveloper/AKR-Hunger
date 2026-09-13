@@ -11,7 +11,11 @@ service cloud.firestore {
     // ==========================================
     match /restaurants/{restaurantId} {
       allow read, list: if true; // Public browsing, search, and email validation
-      allow create: if request.auth.uid != null && request.auth.uid == restaurantId;
+      allow create: if request.auth.uid != null && (
+        request.auth.uid == restaurantId || 
+        request.resource.data.ownerId == request.auth.uid ||
+        isAdmin(request.auth.uid)
+      );
       allow update, delete: if request.auth.uid != null && (
         isAdmin(request.auth.uid) || 
         request.auth.uid == restaurantId || 
@@ -162,7 +166,8 @@ service cloud.firestore {
     // 13. Notifications
     // ==========================================
     match /notifications/{notifId} {
-      allow read, update: if request.auth.uid != null && (resource.data.userId == request.auth.uid || isAdmin(request.auth.uid));
+      allow read, list: if request.auth.uid != null;
+      allow update, delete: if request.auth.uid != null && (resource.data.userId == request.auth.uid || isAdmin(request.auth.uid));
       allow create: if request.auth.uid != null || isAdmin(request.auth.uid);
     }
 

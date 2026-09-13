@@ -24,33 +24,23 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const [userId, setUserId] = useState<string>('');
   const [userType, setUserType] = useState<'customer' | 'restaurant' | 'delivery' | 'admin'>('customer');
 
-  // Listen for current user (via Firebase auth or localStorage fallback)
+  // Listen for current user (only set userId for Firestore queries if actively authenticated)
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
       if (user) {
         setUserId(user.uid);
       } else {
-        const stored = localStorage.getItem('notif_user');
-        if (stored) {
-          try {
-            const parsed = JSON.parse(stored);
-            setUserId(parsed.userId || '');
-            setUserType(parsed.userType || 'customer');
-          } catch (e) {
-            setUserId('');
-          }
-        } else {
-          setUserId('');
-        }
+        setUserId('');
+        setNotifications([]);
       }
     });
 
     return () => unsubscribeAuth();
   }, []);
 
-  // Setup real-time listener for notifications
+  // Setup real-time listener for notifications (strictly require authenticated user)
   useEffect(() => {
-    if (!userId) {
+    if (!userId || !auth.currentUser) {
       setNotifications([]);
       return;
     }
@@ -88,7 +78,9 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         setNotifications(notifs);
       },
       (error) => {
-        console.error('[NotificationContext] Real-time listener error:', error);
+        if (error.code !== 'permission-denied') {
+          console.error('[NotificationContext] Real-time listener notice:', error);
+        }
       }
     );
 

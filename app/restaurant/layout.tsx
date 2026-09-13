@@ -1,8 +1,6 @@
 import React from "react"
-import { RestaurantAuthProvider } from '@/context/RestaurantAuthContext';
 import { NotificationProvider } from '@/context/NotificationContext';
 import { RestaurantLayoutWrapper } from './RestaurantLayoutWrapper';
-import { Toaster } from '@/components/ui/sonner';
 import { Metadata } from 'next';
 import { generateRestaurantPortalSchema, generateOrganizationSchema, generateFAQSchema } from '@/lib/seo/schemas';
 
@@ -64,27 +62,24 @@ export default function RestaurantLayout({
   const faqSchema = generateFAQSchema();
 
   return (
-    <RestaurantAuthProvider>
-      <NotificationProvider>
-        <RestaurantLayoutWrapper>
-          {children}
-        </RestaurantLayoutWrapper>
-        <Toaster position="top-right" />
+    <NotificationProvider>
+      <RestaurantLayoutWrapper>
+        {children}
+      </RestaurantLayoutWrapper>
 
-        {/* JSON-LD Schema for SEO */}
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
-        />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(restaurantPortalSchema) }}
-        />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
-        />
-      </NotificationProvider>
-    </RestaurantAuthProvider>
+      {/* JSON-LD Schema for SEO */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(restaurantPortalSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+      />
+    </NotificationProvider>
   );
 }
