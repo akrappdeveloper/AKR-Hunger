@@ -11,8 +11,8 @@ export const metadata: Metadata = {
   title: 'Hunger - Order Food Online | Fast Delivery from Best Restaurants',
   applicationName: 'Hunger',
   icons: {
-    icon: '/akrhunger.png',
-    apple: '/akrhunger.png',
+    icon: '/hunger.png',
+    apple: '/apple-icon.png',
   },
   description: 'Order delicious food online from your favorite restaurants with Hunger. Fast delivery, great prices, wide selection of cuisines. Download now!',
   keywords: [
@@ -37,7 +37,7 @@ export const metadata: Metadata = {
     siteName: 'Hunger',
     images: [
       {
-        url: 'https://akrhunger.vercel.app/akrhunger.png',
+        url: 'https://akrhunger.vercel.app/hunger.png',
         width: 1200,
         height: 630,
         alt: 'Hunger Food Delivery',
@@ -48,7 +48,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Hunger - Order Food Online | Fast Delivery',
     description: 'Order delicious food online from your favorite restaurants',
-    images: ['https://akrhunger.vercel.app/akrhunger.png'],
+    images: ['https://akrhunger.vercel.app/hunger.png'],
   },
   verification: {
     google: "K8s0MzX1Az9Dc3Mh9SeLVJFVcqQH_LsLdlXgWLhbvHw",

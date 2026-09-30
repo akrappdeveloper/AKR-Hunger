@@ -19,7 +19,7 @@ export function generateOrganizationSchema() {
         '@type': 'Organization',
         name: 'Hunger',
         url: baseUrl,
-        logo: `${baseUrl}/akrhunger.png`,
+        logo: `${baseUrl}/hunger.png`,
         description: 'Leading food delivery platform connecting customers with restaurants',
         sameAs: [
             // Add social media links here when available

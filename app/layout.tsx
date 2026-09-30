@@ -81,7 +81,7 @@ export const metadata: Metadata = {
     description: 'Order delicious food online, partner with us as a restaurant, or earn as a delivery partner. Join thousands using Hunger!',
     images: [
       {
-        url: 'https://akrhunger.vercel.app/akrhunger.png',
+        url: 'https://akrhunger.vercel.app/hunger.png',
         width: 1200,
         height: 630,
         alt: 'Hunger - Food Delivery Platform',
@@ -96,7 +96,7 @@ export const metadata: Metadata = {
     creator: '@Hunger',
     title: 'Hunger - Food Delivery & Restaurant Platform',
     description: 'Order food, grow your restaurant, or earn as delivery partner',
-    images: ['https://akrhunger.vercel.app/akrhunger.png'],
+    images: ['https://akrhunger.vercel.app/hunger.png'],
   },
 
   // Verification
@@ -106,9 +106,16 @@ export const metadata: Metadata = {
 
   // Icons
   icons: {
-    icon: '/akrhunger.png',
-    apple: '/akrhunger.png',
-    shortcut: '/akrhunger.png',
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/hunger.png', type: 'image/png' },
+      { url: '/icon-light-32x32.png', sizes: '32x32', type: 'image/png' },
+    ],
+    apple: [
+      { url: '/apple-icon.png', sizes: '180x180', type: 'image/png' },
+      { url: '/hunger.png' },
+    ],
+    shortcut: '/favicon.ico',
   },
 
   // Manifest for PWA support

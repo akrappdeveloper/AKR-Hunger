@@ -76,9 +76,9 @@ export default function WalletPage() {
                 key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_YourKeyHere', // Fallback for dev
                 amount: amountToPay * 100,
                 currency: "INR",
-                name: "AKR Hunger",
+                name: "Hunger",
                 description: "Clear Cash in Hand Dues",
-                image: "/akrhunger.png",
+                image: "/hunger.png",
                 handler: async function (response: any) {
                     try {
                         // Verify Payment on Backend

@@ -4,20 +4,20 @@ import { Metadata } from 'next';
 import { generateDeliveryJobSchema, generateOrganizationSchema, generateFAQSchema } from '@/lib/seo/schemas';
 
 export const metadata: Metadata = {
-  title: 'AKR Hunger Delivery Partner - Earn Money Delivering Food | Flexible Jobs',
-  applicationName: 'AKR Hunger Delivery',
+  title: 'Hunger Delivery Partner - Earn Money Delivering Food | Flexible Jobs',
+  applicationName: 'Hunger Delivery',
   icons: {
-    icon: '/akrhunger.png',
-    apple: '/akrhunger.png',
+    icon: '/hunger.png',
+    apple: '/apple-icon.png',
   },
-  description: 'Become a delivery partner with AKR Hunger. Flexible hours, competitive earnings, weekly payouts. Join thousands of delivery partners earning great income!',
+  description: 'Become a delivery partner with Hunger. Flexible hours, competitive earnings, weekly payouts. Join thousands of delivery partners earning great income!',
   keywords: [
-    'AKR Hunger delivery',
+    'Hunger delivery',
     'delivery partner',
     'food delivery jobs',
     'become delivery driver',
     'delivery partner jobs',
-    'AKR Hunger for delivery',
+    'Hunger for delivery',
     'delivery earnings',
     'part time delivery jobs',
   ],
@@ -28,23 +28,23 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'en_IN',
     url: 'https://akrhunger.vercel.app/delivery/login',
-    title: 'AKR Hunger Delivery Partner - Earn Money Delivering Food',
+    title: 'Hunger Delivery Partner - Earn Money Delivering Food',
     description: 'Flexible hours, competitive earnings, weekly payouts. Join as a delivery partner.',
-    siteName: 'AKR Hunger Delivery Partners',
+    siteName: 'Hunger Delivery Partners',
     images: [
       {
-        url: 'https://akrhunger.vercel.app/akrhunger.png',
+        url: 'https://akrhunger.vercel.app/hunger.png',
         width: 1200,
         height: 630,
-        alt: 'AKR Hunger Delivery Partner',
+        alt: 'Hunger Delivery Partner',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'AKR Hunger Delivery Partner - Earn Money Delivering',
+    title: 'Hunger Delivery Partner - Earn Money Delivering',
     description: 'Flexible hours, competitive earnings. Join as delivery partner.',
-    images: ['https://akrhunger.vercel.app/akrhunger.png'],
+    images: ['https://akrhunger.vercel.app/hunger.png'],
   },
   verification: {
     google: "K8s0MzX1Az9Dc3Mh9SeLVJFVcqQH_LsLdlXgWLhbvHw",

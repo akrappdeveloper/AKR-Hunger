@@ -81,7 +81,7 @@ export default function InvoiceButton({ order, customer }: InvoiceButtonProps) {
       const breakdown = calculateInvoice(order, restaurant, fullCustomer, baseUrl);
 
       // 4. Generate Base64 assets (Logo & Real Verification QR Code)
-      const logoBase64 = await getBase64Logo('/akrhunger.png');
+      const logoBase64 = await getBase64Logo('/hunger.png');
       const qrBase64 = await generateInvoiceQRDataURL(breakdown.verificationUrl, {
         width: 120,
         margin: 1,

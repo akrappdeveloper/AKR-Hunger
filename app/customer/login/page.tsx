@@ -377,10 +377,10 @@ export default function LoginPage() {
           </Button>
           <div className="flex items-center gap-2.5 pl-3 border-l border-border/60">
             <div className="w-8 h-8 rounded-xl bg-primary/15 flex items-center justify-center p-1 ring-1 ring-primary/25">
-              <img src="/akrhunger.png" alt="AKR Hunger Logo" className="w-full h-full object-contain" />
+              <img src="/hunger.png" alt="Hunger Logo" className="w-full h-full object-contain rounded-lg" />
             </div>
-            <span className="font-extrabold text-base sm:text-lg tracking-tight">
-              AKR<span className="text-primary font-black">Hunger</span>
+            <span className="font-extrabold text-base sm:text-lg tracking-tight text-primary">
+              Hunger
             </span>
           </div>
         </Link>
@@ -476,8 +476,8 @@ export default function LoginPage() {
                 <div className="p-6 sm:p-8">
                   {/* Brand & Title Header */}
                   <div className="text-center mb-6">
-                    <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-primary/10 text-primary mb-3 shadow-md shadow-primary/15 ring-2 ring-primary/20">
-                      <img src="/akrhunger.png" alt="AKR Hunger" className="w-8 h-8 object-contain" />
+                    <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-primary/10 text-primary mb-3 shadow-md shadow-primary/15 ring-2 ring-primary/20 overflow-hidden">
+                      <img src="/hunger.png" alt="Hunger" className="w-10 h-10 object-contain rounded-xl" />
                     </div>
                     <h2 className="text-2xl sm:text-3xl font-black text-foreground tracking-tight flex items-center justify-center gap-1.5">
                       {isLogin ? 'Welcome Back' : 'Create Account'}

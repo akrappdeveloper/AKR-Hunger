@@ -93,7 +93,7 @@ export default function CustomerNavbar() {
           {/* Logo & Location */}
           <div className="flex items-center gap-3 sm:gap-6 flex-shrink-0">
             <Link href="/customer" className="flex items-center gap-2 flex-shrink-0">
-              <img src="/akrhunger.png" alt="Hunger" className="w-9 h-9 sm:w-10 sm:h-10 object-contain" />
+              <img src="/hunger.png" alt="Hunger" className="w-9 h-9 sm:w-10 sm:h-10 object-contain rounded-xl shadow-sm" />
               <span className="text-lg sm:text-xl font-black text-primary hidden sm:block tracking-tight">
                 Hunger
               </span>
