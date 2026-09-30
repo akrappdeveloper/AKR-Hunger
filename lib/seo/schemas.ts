@@ -17,7 +17,7 @@ export function generateOrganizationSchema() {
     return {
         '@context': 'https://schema.org',
         '@type': 'Organization',
-        name: 'AKR Hunger',
+        name: 'Hunger',
         url: baseUrl,
         logo: `${baseUrl}/akrhunger.png`,
         description: 'Leading food delivery platform connecting customers with restaurants',
@@ -37,7 +37,7 @@ export function generateFoodDeliverySchema() {
         serviceType: 'Food Delivery',
         provider: {
             '@type': 'Organization',
-            name: 'AKR Hunger',
+            name: 'Hunger',
             url: baseUrl,
         },
         areaServed: {

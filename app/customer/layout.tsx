@@ -8,17 +8,17 @@ import { Metadata } from 'next';
 import { generateFoodDeliverySchema, generateWebSiteSchema, generateOrganizationSchema, generateFAQSchema } from '@/lib/seo/schemas';
 
 export const metadata: Metadata = {
-  title: 'AKR Hunger - Order Food Online | Fast Delivery from Best Restaurants',
-  applicationName: 'AKR Hunger',
+  title: 'Hunger - Order Food Online | Fast Delivery from Best Restaurants',
+  applicationName: 'Hunger',
   icons: {
     icon: '/akrhunger.png',
     apple: '/akrhunger.png',
   },
-  description: 'Order delicious food online from your favorite restaurants with AKR Hunger. Fast delivery, great prices, wide selection of cuisines. Download now!',
+  description: 'Order delicious food online from your favorite restaurants with Hunger. Fast delivery, great prices, wide selection of cuisines. Download now!',
   keywords: [
     'food delivery',
     'order food online',
-    'AKR Hunger',
+    'Hunger',
     'restaurant delivery',
     'online food order',
     'food delivery app',
@@ -32,21 +32,21 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'en_IN',
     url: 'https://akrhunger.vercel.app/customer',
-    title: 'AKR Hunger - Order Food Online | Fast Delivery',
+    title: 'Hunger - Order Food Online | Fast Delivery',
     description: 'Order delicious food online from your favorite restaurants. Fast delivery, great prices, wide selection.',
-    siteName: 'AKR Hunger',
+    siteName: 'Hunger',
     images: [
       {
         url: 'https://akrhunger.vercel.app/akrhunger.png',
         width: 1200,
         height: 630,
-        alt: 'AKR Hunger Food Delivery',
+        alt: 'Hunger Food Delivery',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'AKR Hunger - Order Food Online | Fast Delivery',
+    title: 'Hunger - Order Food Online | Fast Delivery',
     description: 'Order delicious food online from your favorite restaurants',
     images: ['https://akrhunger.vercel.app/akrhunger.png'],
   },

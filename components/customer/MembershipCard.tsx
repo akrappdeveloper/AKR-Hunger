@@ -33,7 +33,7 @@ export default function MembershipCard({
             <div className="relative z-10 flex justify-between items-start">
                 <div>
                     <h3 className="font-black text-lg tracking-wider text-white flex items-center gap-1.5">
-                        AKR<span className="text-primary font-extrabold">PREMIUM</span>
+                        <span className="text-primary font-extrabold">HUNGER</span> PREMIUM
                     </h3>
                     <span className="text-[11px] text-zinc-300 font-semibold uppercase tracking-widest">VIP Membership Pass</span>
                 </div>

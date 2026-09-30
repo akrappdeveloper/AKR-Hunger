@@ -69,9 +69,9 @@ export default function GoogleAuthModal({
           {/* Header with Dual Brand Identity */}
           <DialogHeader className="text-center space-y-3">
             <div className="flex items-center justify-center gap-3 pt-1">
-              {/* AKR Hunger Brand Badge */}
+              {/* Hunger Brand Badge */}
               <div className="w-12 h-12 rounded-2xl bg-primary/10 border border-primary/25 flex items-center justify-center p-2 shadow-sm ring-2 ring-primary/15 transition-transform hover:scale-105">
-                <img src="/akrhunger.png" alt="AKR Hunger" className="w-full h-full object-contain" />
+                <img src="/akrhunger.png" alt="Hunger" className="w-full h-full object-contain" />
               </div>
 
               {/* Connected Glow Icon */}
