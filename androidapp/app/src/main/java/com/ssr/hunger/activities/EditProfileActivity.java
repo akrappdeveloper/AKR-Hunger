@@ -147,7 +147,7 @@ public class EditProfileActivity extends BaseActivity {
 
             // Long press to delete
             card.setOnLongClickListener(v -> {
-                new AlertDialog.Builder(this)
+                new com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
                         .setTitle("Delete Address")
                         .setMessage("Remove this address?")
                         .setPositiveButton("Delete", (d, w) -> deleteAddress(addrMap))

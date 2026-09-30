@@ -9,17 +9,19 @@
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1">
+        android:layout_weight="1"
+        android:clipToPadding="false"
+        android:paddingBottom="24dp">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <!-- Product Image -->
+            <!-- Hero Product Image Container -->
             <FrameLayout
                 android:layout_width="match_parent"
-                android:layout_height="280dp">
+                android:layout_height="300dp">
 
                 <ImageView
                     android:id="@+id/iv_product_image"
@@ -27,194 +29,308 @@
                     android:layout_height="match_parent"
                     android:scaleType="centerCrop" />
 
+                <!-- Gradient Scrim for Top & Bottom Controls -->
                 <View
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:background="@drawable/gradient_bottom_overlay" />
 
-                <!-- Back Button -->
-                <ImageView
-                    android:id="@+id/btn_back"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:layout_gravity="start|top"
-                    android:layout_margin="16dp"
-                    android:background="@drawable/bg_add_button"
-                    android:padding="10dp"
-                    android:src="@drawable/ic_back"
-                    android:tint="@color/on_primary" />
+                <!-- Top Floating Action Bar -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="top"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="16dp">
 
-                <!-- Favorite Button -->
-                <ImageView
-                    android:id="@+id/btn_favorite"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:layout_gravity="end|top"
-                    android:layout_margin="16dp"
-                    android:background="@drawable/bg_add_button"
-                    android:padding="10dp"
-                    android:src="@drawable/ic_favorite"
-                    android:tint="@color/on_primary" />
+                    <!-- Back Button -->
+                    <FrameLayout
+                        android:id="@+id/btn_back"
+                        android:layout_width="42dp"
+                        android:layout_height="42dp"
+                        android:background="@drawable/bg_pill_white"
+                        android:clickable="true"
+                        android:elevation="3dp"
+                        android:focusable="true"
+                        android:foreground="?attr/selectableItemBackgroundBorderless">
 
-                <!-- Veg Indicator -->
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:layout_gravity="center"
+                            android:src="@drawable/ic_back"
+                            android:tint="@color/text_primary" />
+                    </FrameLayout>
+
+                    <View
+                        android:layout_width="0dp"
+                        android:layout_height="1dp"
+                        android:layout_weight="1" />
+
+                    <!-- Favorite Button -->
+                    <FrameLayout
+                        android:id="@+id/btn_favorite"
+                        android:layout_width="42dp"
+                        android:layout_height="42dp"
+                        android:background="@drawable/bg_pill_white"
+                        android:clickable="true"
+                        android:elevation="3dp"
+                        android:focusable="true"
+                        android:foreground="?attr/selectableItemBackgroundBorderless">
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:layout_gravity="center"
+                            android:src="@drawable/ic_favorite"
+                            android:tint="@color/primary" />
+                    </FrameLayout>
+                </LinearLayout>
+
+                <!-- Veg Indicator Floating Badge -->
                 <FrameLayout
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
                     android:layout_gravity="start|bottom"
                     android:layout_margin="16dp"
                     android:background="@color/surface"
-                    android:elevation="2dp"
+                    android:elevation="3dp"
                     android:padding="4dp">
+
                     <View
                         android:id="@+id/veg_dot"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        android:background="@color/veg_green" />
+                        android:background="@drawable/bg_badge" />
                 </FrameLayout>
             </FrameLayout>
 
-            <!-- Product Info -->
+            <!-- Product Details Section -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="20dp">
+                android:paddingHorizontal="20dp"
+                android:paddingTop="18dp">
 
+                <!-- Title -->
                 <TextView
                     android:id="@+id/tv_product_name"
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:textColor="@color/text_primary"
-                    android:textSize="24sp"
+                    android:textSize="22sp"
                     android:textStyle="bold" />
 
+                <!-- Restaurant Origin Subtitle -->
                 <TextView
                     android:id="@+id/tv_product_restaurant"
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
+                    android:drawableStart="@drawable/ic_home"
+                    android:drawablePadding="6dp"
+                    android:drawableTint="@color/text_hint"
                     android:textColor="@color/text_secondary"
-                    android:textSize="14sp" />
+                    android:textSize="13sp" />
 
+                <!-- Price Row -->
                 <TextView
                     android:id="@+id/tv_product_price"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="12dp"
                     android:textColor="@color/primary"
-                    android:textSize="28sp"
+                    android:textSize="26sp"
                     android:textStyle="bold" />
 
-                <!-- Info Chips Row -->
+                <!-- Pill Badges Row -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    android:gravity="center_vertical">
+                    android:layout_marginTop="14dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
 
+                    <!-- Prep Time Pill -->
                     <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:background="@drawable/bg_info_chip"
+                        android:background="@drawable/bg_pill_soft"
                         android:gravity="center_vertical"
-                        android:paddingHorizontal="12dp"
-                        android:paddingVertical="6dp">
-                        <ImageView android:layout_width="16dp" android:layout_height="16dp"
-                            android:src="@drawable/ic_clock" android:tint="@color/primary" />
+                        android:paddingHorizontal="10dp"
+                        android:paddingVertical="5dp">
+
+                        <ImageView
+                            android:layout_width="14dp"
+                            android:layout_height="14dp"
+                            android:src="@drawable/ic_clock"
+                            android:tint="@color/primary" />
+
                         <TextView
                             android:id="@+id/tv_prep_time"
-                            android:layout_width="wrap_content" android:layout_height="wrap_content"
-                            android:layout_marginStart="6dp" android:text="25 min"
-                            android:textColor="@color/text_secondary" android:textSize="13sp" android:textStyle="bold" />
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="4dp"
+                            android:text="25 min"
+                            android:textColor="@color/primary"
+                            android:textSize="12sp"
+                            android:textStyle="bold" />
                     </LinearLayout>
 
+                    <!-- Rating Pill -->
                     <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
-                        android:background="@drawable/bg_info_chip"
+                        android:background="@drawable/bg_pill_white"
+                        android:elevation="1dp"
                         android:gravity="center_vertical"
-                        android:paddingHorizontal="12dp"
-                        android:paddingVertical="6dp">
-                        <ImageView android:layout_width="16dp" android:layout_height="16dp"
-                            android:src="@drawable/ic_star" android:tint="@color/rating_star" />
+                        android:paddingHorizontal="10dp"
+                        android:paddingVertical="5dp">
+
+                        <ImageView
+                            android:layout_width="14dp"
+                            android:layout_height="14dp"
+                            android:src="@drawable/ic_star"
+                            android:tint="@color/rating_star" />
+
                         <TextView
                             android:id="@+id/tv_rating"
-                            android:layout_width="wrap_content" android:layout_height="wrap_content"
-                            android:layout_marginStart="6dp" android:text="New"
-                            android:textColor="@color/text_primary" android:textSize="13sp" android:textStyle="bold" />
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="4dp"
+                            android:text="4.8"
+                            android:textColor="@color/text_primary"
+                            android:textSize="12sp"
+                            android:textStyle="bold" />
                     </LinearLayout>
                 </LinearLayout>
 
-                <!-- Description -->
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginTop="18dp"
+                    android:background="@color/divider" />
+
+                <!-- Description Card -->
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="20dp"
-                    android:text="@string/description"
-                    android:textColor="@color/text_primary"
-                    android:textSize="16sp"
+                    android:layout_marginTop="16dp"
+                    android:letterSpacing="0.03"
+                    android:text="ABOUT THIS DISH"
+                    android:textColor="@color/text_hint"
+                    android:textSize="11sp"
                     android:textStyle="bold" />
 
                 <TextView
                     android:id="@+id/tv_product_description"
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:lineSpacingMultiplier="1.4"
+                    android:layout_marginTop="6dp"
+                    android:lineSpacingExtra="3dp"
                     android:textColor="@color/text_secondary"
                     android:textSize="14sp" />
 
-                <!-- Quantity Selector -->
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginTop="18dp"
+                    android:background="@color/divider" />
+
+                <!-- Quantity Stepper Row -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="24dp"
-                    android:gravity="center_vertical">
-
-                    <TextView android:layout_width="0dp" android:layout_height="wrap_content"
-                        android:layout_weight="1" android:text="Quantity"
-                        android:textColor="@color/text_primary" android:textSize="16sp" android:textStyle="bold" />
+                    android:layout_marginTop="16dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
 
                     <LinearLayout
-                        android:layout_width="wrap_content"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:background="@drawable/bg_category_chip"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Portion Quantity"
+                            android:textColor="@color/text_primary"
+                            android:textSize="15sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:text="Select number of servings"
+                            android:textColor="@color/text_hint"
+                            android:textSize="12sp" />
+                    </LinearLayout>
+
+                    <!-- Modern Pill Stepper -->
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="40dp"
+                        android:background="@drawable/bg_pill_soft"
                         android:gravity="center_vertical"
-                        android:padding="4dp">
+                        android:paddingHorizontal="6dp">
 
                         <TextView
                             android:id="@+id/btn_minus"
-                            android:layout_width="40dp" android:layout_height="40dp"
-                            android:gravity="center" android:text="−"
-                            android:textColor="@color/primary" android:textSize="20sp" android:textStyle="bold"
-                            android:background="?attr/selectableItemBackgroundBorderless" />
+                            android:layout_width="34dp"
+                            android:layout_height="34dp"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:gravity="center"
+                            android:text="−"
+                            android:textColor="@color/primary"
+                            android:textSize="20sp"
+                            android:textStyle="bold" />
 
                         <TextView
                             android:id="@+id/tv_quantity"
-                            android:layout_width="40dp" android:layout_height="wrap_content"
-                            android:gravity="center" android:text="1"
-                            android:textColor="@color/text_primary" android:textSize="16sp" android:textStyle="bold" />
+                            android:layout_width="34dp"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:text="1"
+                            android:textColor="@color/text_primary"
+                            android:textSize="16sp"
+                            android:textStyle="bold" />
 
                         <TextView
                             android:id="@+id/btn_plus"
-                            android:layout_width="40dp" android:layout_height="40dp"
-                            android:gravity="center" android:text="+"
-                            android:textColor="@color/primary" android:textSize="20sp" android:textStyle="bold"
-                            android:background="?attr/selectableItemBackgroundBorderless" />
+                            android:layout_width="34dp"
+                            android:layout_height="34dp"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:gravity="center"
+                            android:text="+"
+                            android:textColor="@color/primary"
+                            android:textSize="20sp"
+                            android:textStyle="bold" />
                     </LinearLayout>
                 </LinearLayout>
             </LinearLayout>
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 
-    <!-- Add to Cart Button -->
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btn_add_to_cart"
-        style="@style/Widget.AKR.Button.Primary"
+    <!-- Bottom Bar with Pill Add To Cart Button -->
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:layout_margin="16dp"
-        android:text="@string/add_to_cart"
-        android:textSize="16sp" />
+        android:layout_height="wrap_content"
+        android:background="@color/surface"
+        android:elevation="6dp"
+        android:padding="16dp">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_add_to_cart"
+            style="@style/Widget.AKR.Button.Pill"
+            android:layout_width="match_parent"
+            android:layout_height="54dp"
+            android:text="@string/add_to_cart"
+            android:textSize="16sp"
+            app:backgroundTint="@color/primary" />
+    </LinearLayout>
 </LinearLayout>

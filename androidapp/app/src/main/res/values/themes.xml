@@ -16,6 +16,8 @@
         <item name="android:navigationBarColor">@color/surface</item>
         <item name="android:windowLightNavigationBar">true</item>
         <item name="android:fontFamily">sans-serif</item>
+        <item name="materialAlertDialogTheme">@style/ThemeOverlay.AKR.MaterialAlertDialog</item>
+        <item name="bottomSheetDialogTheme">@style/ThemeOverlay.AKR.BottomSheetDialog</item>
     </style>
 
     <!-- Splash Theme -->
@@ -154,5 +156,23 @@
         <item name="android:paddingEnd">6dp</item>
         <item name="android:paddingTop">2dp</item>
         <item name="android:paddingBottom">2dp</item>
+    </style>
+
+    <!-- Dialog Style with 24dp Rounded Corners -->
+    <style name="ThemeOverlay.AKR.MaterialAlertDialog" parent="ThemeOverlay.Material3.MaterialAlertDialog">
+        <item name="shapeAppearance">@style/ShapeAppearance.AKR.Dialog</item>
+        <item name="shapeAppearanceOverlay">@style/ShapeAppearance.AKR.Dialog</item>
+        <item name="colorSurface">@color/surface</item>
+        <item name="android:backgroundDimAmount">0.5</item>
+    </style>
+
+    <style name="ShapeAppearance.AKR.Dialog" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">24dp</item>
+    </style>
+
+    <!-- Bottom Sheet Dialog Style -->
+    <style name="ThemeOverlay.AKR.BottomSheetDialog" parent="ThemeOverlay.Material3.BottomSheetDialog">
+        <item name="bottomSheetStyle">@style/Widget.AKR.BottomSheet</item>
     </style>
 </resources>

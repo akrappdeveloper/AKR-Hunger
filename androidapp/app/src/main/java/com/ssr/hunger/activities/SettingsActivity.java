@@ -142,7 +142,7 @@ public class SettingsActivity extends BaseActivity {
         calculateAndDisplayCacheSize();
 
         findViewById(R.id.btn_clear_cache).setOnClickListener(v -> {
-            new AlertDialog.Builder(this)
+            new com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
                     .setTitle("Clear App Cache")
                     .setMessage("Are you sure you want to clear temporary image and network cache?")
                     .setPositiveButton("Clear", (dialog, which) -> clearAppCache())
@@ -231,7 +231,7 @@ public class SettingsActivity extends BaseActivity {
     }
 
     private void showInfoDialog(String title, String message) {
-        new AlertDialog.Builder(this)
+        new com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
                 .setTitle(title)
                 .setMessage(message)
                 .setPositiveButton("OK", null)

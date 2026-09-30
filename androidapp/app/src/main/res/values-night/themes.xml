@@ -16,6 +16,8 @@
         <item name="android:navigationBarColor">@color/surface</item>
         <item name="android:windowLightNavigationBar">false</item>
         <item name="android:fontFamily">sans-serif</item>
+        <item name="materialAlertDialogTheme">@style/ThemeOverlay.AKR.MaterialAlertDialog</item>
+        <item name="bottomSheetDialogTheme">@style/ThemeOverlay.AKR.BottomSheetDialog</item>
     </style>
 
     <!-- Splash Theme - Dark Mode -->

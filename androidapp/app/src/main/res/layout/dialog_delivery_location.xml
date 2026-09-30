@@ -3,11 +3,19 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@color/surface"
+    android:background="@drawable/bg_bottom_nav_ios"
     android:orientation="vertical"
     android:padding="20dp">
 
-    <!-- Title -->
+    <!-- iOS Drag Handle Indicator -->
+    <View
+        android:layout_width="40dp"
+        android:layout_height="4dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginBottom="14dp"
+        android:background="@drawable/bg_pill_soft" />
+
+    <!-- Title & Subtitle -->
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -19,8 +27,8 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
-        android:text="Select or add a delivery address"
+        android:layout_marginTop="2dp"
+        android:text="Select or add your precise delivery address"
         android:textColor="@color/text_secondary"
         android:textSize="13sp" />
 
@@ -31,18 +39,17 @@
         android:layout_marginTop="16dp"
         android:orientation="vertical">
 
-        <!-- Use GPS Button -->
+        <!-- Use GPS Pill Button -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_use_gps"
+            style="@style/Widget.AKR.Button.Pill"
             android:layout_width="match_parent"
             android:layout_height="48dp"
-            android:text="📍 Use GPS Location"
+            android:text="📍 Use Current GPS Location"
             android:textSize="14sp"
-            app:backgroundTint="@color/primary_10"
-            android:textColor="@color/primary"
-            app:cornerRadius="12dp"
+            app:backgroundTint="@color/primary"
             app:icon="@drawable/ic_location"
-            app:iconTint="@color/primary" />
+            app:iconTint="@color/on_primary" />
 
         <!-- IP Address and Open Maps Row -->
         <LinearLayout
@@ -53,33 +60,27 @@
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_use_ip"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                style="@style/Widget.AKR.Button.PillSoft"
                 android:layout_width="0dp"
                 android:layout_height="46dp"
-                android:layout_weight="1"
                 android:layout_marginEnd="4dp"
+                android:layout_weight="1"
                 android:text="🌐 IP Location"
                 android:textSize="12sp"
-                app:cornerRadius="12dp"
                 app:icon="@drawable/ic_globe"
-                app:iconTint="@color/primary"
-                app:strokeColor="@color/primary"
-                android:textColor="@color/primary" />
+                app:iconTint="@color/primary" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_open_maps"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                style="@style/Widget.AKR.Button.PillSoft"
                 android:layout_width="0dp"
                 android:layout_height="46dp"
-                android:layout_weight="1"
                 android:layout_marginStart="4dp"
+                android:layout_weight="1"
                 android:text="🗺️ Open Maps"
                 android:textSize="12sp"
-                app:cornerRadius="12dp"
                 app:icon="@drawable/ic_map"
-                app:iconTint="@color/primary"
-                app:strokeColor="@color/primary"
-                android:textColor="@color/primary" />
+                app:iconTint="@color/primary" />
         </LinearLayout>
 
         <!-- Detection Status / Progress Bar -->
@@ -88,7 +89,7 @@
             style="?android:attr/progressBarStyleHorizontal"
             android:layout_width="match_parent"
             android:layout_height="4dp"
-            android:layout_marginTop="6dp"
+            android:layout_marginTop="8dp"
             android:indeterminate="true"
             android:indeterminateTint="@color/primary"
             android:visibility="gone" />
@@ -99,9 +100,10 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="20dp"
-        android:text="Saved Addresses"
-        android:textColor="@color/text_primary"
-        android:textSize="15sp"
+        android:letterSpacing="0.03"
+        android:text="SAVED ADDRESSES"
+        android:textColor="@color/text_hint"
+        android:textSize="12sp"
         android:textStyle="bold" />
 
     <LinearLayout
@@ -114,15 +116,12 @@
     <!-- Add New Address Toggle -->
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btn_add_new"
-        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+        style="@style/Widget.AKR.Button.PillSoft"
         android:layout_width="match_parent"
-        android:layout_height="44dp"
+        android:layout_height="46dp"
         android:layout_marginTop="12dp"
         android:text="＋ Add New Address"
-        android:textColor="@color/primary"
-        android:textSize="14sp"
-        app:cornerRadius="12dp"
-        app:strokeColor="@color/primary" />
+        android:textSize="13sp" />
 
     <!-- Add New Address Form -->
     <LinearLayout
@@ -139,79 +138,161 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal">
-            <RadioButton android:id="@+id/rb_home" android:layout_width="0dp"
-                android:layout_height="wrap_content" android:layout_weight="1"
-                android:text="🏠 Home" android:checked="true"
-                android:textColor="@color/text_primary" android:textSize="13sp" />
-            <RadioButton android:id="@+id/rb_work" android:layout_width="0dp"
-                android:layout_height="wrap_content" android:layout_weight="1"
+
+            <RadioButton
+                android:id="@+id/rb_home"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:checked="true"
+                android:text="🏠 Home"
+                android:textColor="@color/text_primary"
+                android:textSize="13sp" />
+
+            <RadioButton
+                android:id="@+id/rb_work"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
                 android:text="💼 Work"
-                android:textColor="@color/text_primary" android:textSize="13sp" />
-            <RadioButton android:id="@+id/rb_other" android:layout_width="0dp"
-                android:layout_height="wrap_content" android:layout_weight="1"
+                android:textColor="@color/text_primary"
+                android:textSize="13sp" />
+
+            <RadioButton
+                android:id="@+id/rb_other"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
                 android:text="📍 Other"
-                android:textColor="@color/text_primary" android:textSize="13sp" />
+                android:textColor="@color/text_primary"
+                android:textSize="13sp" />
         </RadioGroup>
 
         <com.google.android.material.textfield.TextInputLayout
             style="@style/Widget.AKR.TextInput"
-            android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:layout_marginTop="12dp" android:hint="Street Address *">
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:hint="Street Address *"
+            app:boxCornerRadiusBottomEnd="14dp"
+            app:boxCornerRadiusBottomStart="14dp"
+            app:boxCornerRadiusTopEnd="14dp"
+            app:boxCornerRadiusTopStart="14dp">
+
             <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/et_street" android:layout_width="match_parent"
-                android:layout_height="wrap_content" android:inputType="textPostalAddress" />
+                android:id="@+id/et_street"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textPostalAddress"
+                android:textColor="@color/text_primary"
+                android:textSize="14sp" />
         </com.google.android.material.textfield.TextInputLayout>
 
-        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:layout_marginTop="8dp">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:orientation="horizontal">
+
             <com.google.android.material.textfield.TextInputLayout
                 style="@style/Widget.AKR.TextInput"
-                android:layout_width="0dp" android:layout_height="wrap_content"
-                android:layout_weight="1" android:hint="Pincode *">
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="Pincode *"
+                app:boxCornerRadiusBottomEnd="14dp"
+                app:boxCornerRadiusBottomStart="14dp"
+                app:boxCornerRadiusTopEnd="14dp"
+                app:boxCornerRadiusTopStart="14dp">
+
                 <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/et_pincode" android:layout_width="match_parent"
-                    android:layout_height="wrap_content" android:inputType="number"
-                    android:maxLength="6" />
+                    android:id="@+id/et_pincode"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="number"
+                    android:maxLength="6"
+                    android:textColor="@color/text_primary"
+                    android:textSize="14sp" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
                 style="@style/Widget.AKR.TextInput"
-                android:layout_width="0dp" android:layout_height="wrap_content"
-                android:layout_weight="1" android:layout_marginStart="8dp" android:hint="City *">
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_weight="1"
+                android:hint="City *"
+                app:boxCornerRadiusBottomEnd="14dp"
+                app:boxCornerRadiusBottomStart="14dp"
+                app:boxCornerRadiusTopEnd="14dp"
+                app:boxCornerRadiusTopStart="14dp">
+
                 <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/et_city" android:layout_width="match_parent"
-                    android:layout_height="wrap_content" android:inputType="text" />
+                    android:id="@+id/et_city"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="text"
+                    android:textColor="@color/text_primary"
+                    android:textSize="14sp" />
             </com.google.android.material.textfield.TextInputLayout>
         </LinearLayout>
 
-        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:layout_marginTop="8dp">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:orientation="horizontal">
+
             <com.google.android.material.textfield.TextInputLayout
                 style="@style/Widget.AKR.TextInput"
-                android:layout_width="0dp" android:layout_height="wrap_content"
-                android:layout_weight="1" android:hint="State">
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="State"
+                app:boxCornerRadiusBottomEnd="14dp"
+                app:boxCornerRadiusBottomStart="14dp"
+                app:boxCornerRadiusTopEnd="14dp"
+                app:boxCornerRadiusTopStart="14dp">
+
                 <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/et_state" android:layout_width="match_parent"
-                    android:layout_height="wrap_content" android:inputType="text" />
+                    android:id="@+id/et_state"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="text"
+                    android:textColor="@color/text_primary"
+                    android:textSize="14sp" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
                 style="@style/Widget.AKR.TextInput"
-                android:layout_width="0dp" android:layout_height="wrap_content"
-                android:layout_weight="1" android:layout_marginStart="8dp" android:hint="Landmark">
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_weight="1"
+                android:hint="Landmark"
+                app:boxCornerRadiusBottomEnd="14dp"
+                app:boxCornerRadiusBottomStart="14dp"
+                app:boxCornerRadiusTopEnd="14dp"
+                app:boxCornerRadiusTopStart="14dp">
+
                 <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/et_landmark" android:layout_width="match_parent"
-                    android:layout_height="wrap_content" android:inputType="text" />
+                    android:id="@+id/et_landmark"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="text"
+                    android:textColor="@color/text_primary"
+                    android:textSize="14sp" />
             </com.google.android.material.textfield.TextInputLayout>
         </LinearLayout>
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_save_address"
-            style="@style/Widget.AKR.Button.Primary"
+            style="@style/Widget.AKR.Button.Pill"
             android:layout_width="match_parent"
             android:layout_height="48dp"
             android:layout_marginTop="16dp"
             android:text="Save Address"
-            android:textSize="14sp" />
+            android:textSize="14sp"
+            app:backgroundTint="@color/primary" />
     </LinearLayout>
 </LinearLayout>

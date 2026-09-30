@@ -9,6 +9,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.ssr.hunger.R;
 import com.ssr.hunger.utils.Constants;
 import com.ssr.hunger.utils.PerformanceHelper;
@@ -41,6 +42,7 @@ public class WalletActivity extends BaseActivity implements PaymentResultListene
     private ListenerRegistration balanceListener;
     private ListenerRegistration txListener;
     private double pendingAddAmount = 0;
+    private double currentWalletBalance = 0;
     private Trace walletTrace;
 
     @Override
@@ -82,8 +84,9 @@ public class WalletActivity extends BaseActivity implements PaymentResultListene
                     }
                     if (doc == null || !doc.exists()) return;
                     Double balance = doc.getDouble("walletBalance");
-                    tvBalance.setText(String.format(Locale.getDefault(), "₹%.2f", balance != null ? balance : 0.0));
-                    crashlyticsHelper.setCustomKey("wallet_balance", balance != null ? balance : 0.0);
+                    currentWalletBalance = balance != null ? balance : 0.0;
+                    tvBalance.setText(String.format(Locale.getDefault(), "₹%.2f", currentWalletBalance));
+                    crashlyticsHelper.setCustomKey("wallet_balance", currentWalletBalance);
                 });
     }
 
@@ -148,19 +151,23 @@ public class WalletActivity extends BaseActivity implements PaymentResultListene
     }
 
     private void showAddFundsDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("💰 Add Funds");
-        builder.setMessage("Add funds to your AKR Wallet. No minimum limit!");
+        BottomSheetDialog dialog = new BottomSheetDialog(this);
+        View sheetView = LayoutInflater.from(this).inflate(R.layout.dialog_add_funds, null);
+        dialog.setContentView(sheetView);
 
-        final EditText input = new EditText(this);
-        input.setHint("Enter amount in ₹ (No limit)");
-        input.setInputType(android.text.InputType.TYPE_CLASS_NUMBER | android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL);
-        input.setPadding(48, 32, 48, 32);
-        builder.setView(input);
+        EditText etAmount = sheetView.findViewById(R.id.et_dialog_amount);
+        sheetView.findViewById(R.id.chip_100).setOnClickListener(v -> etAmount.setText("100"));
+        sheetView.findViewById(R.id.chip_200).setOnClickListener(v -> etAmount.setText("200"));
+        sheetView.findViewById(R.id.chip_500).setOnClickListener(v -> etAmount.setText("500"));
+        sheetView.findViewById(R.id.chip_1000).setOnClickListener(v -> etAmount.setText("1000"));
 
-        builder.setPositiveButton("Add via Razorpay", (dialog, which) -> {
-            String amountStr = input.getText().toString().trim();
-            if (TextUtils.isEmpty(amountStr)) return;
+        sheetView.findViewById(R.id.btn_dialog_cancel).setOnClickListener(v -> dialog.dismiss());
+        sheetView.findViewById(R.id.btn_dialog_proceed).setOnClickListener(v -> {
+            String amountStr = etAmount.getText().toString().trim();
+            if (TextUtils.isEmpty(amountStr)) {
+                Toast.makeText(this, "Please enter an amount", Toast.LENGTH_SHORT).show();
+                return;
+            }
 
             try {
                 double amount = Double.parseDouble(amountStr);
@@ -168,15 +175,15 @@ public class WalletActivity extends BaseActivity implements PaymentResultListene
                     Toast.makeText(this, "Please enter a valid amount greater than 0", Toast.LENGTH_SHORT).show();
                     return;
                 }
-                // No minimum limit restriction
                 pendingAddAmount = amount;
+                dialog.dismiss();
                 startRazorpayPayment(amount);
             } catch (NumberFormatException e) {
                 Toast.makeText(this, "Please enter a valid amount", Toast.LENGTH_SHORT).show();
             }
         });
-        builder.setNegativeButton("Cancel", null);
-        builder.show();
+
+        dialog.show();
     }
 
     private void startRazorpayPayment(double amount) {
@@ -242,42 +249,61 @@ public class WalletActivity extends BaseActivity implements PaymentResultListene
     }
 
     private void showWithdrawDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("💸 Withdraw Funds");
-        builder.setMessage("Withdrawal requests are processed within 5-7 business days to your linked bank account.");
+        BottomSheetDialog dialog = new BottomSheetDialog(this);
+        View sheetView = LayoutInflater.from(this).inflate(R.layout.dialog_withdraw, null);
+        dialog.setContentView(sheetView);
 
-        final EditText input = new EditText(this);
-        input.setHint("Enter amount (₹)");
-        input.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);
-        input.setPadding(48, 32, 48, 32);
-        builder.setView(input);
+        TextView tvAvail = sheetView.findViewById(R.id.tv_dialog_avail_bal);
+        tvAvail.setText(String.format(Locale.getDefault(), "₹%.2f", currentWalletBalance));
 
-        builder.setPositiveButton("Request Withdrawal", (dialog, which) -> {
-            String amountStr = input.getText().toString().trim();
-            if (TextUtils.isEmpty(amountStr)) return;
+        EditText etAmount = sheetView.findViewById(R.id.et_withdraw_amount);
+        sheetView.findViewById(R.id.btn_withdraw_all).setOnClickListener(v ->
+                etAmount.setText(String.format(Locale.getDefault(), "%.2f", currentWalletBalance)));
 
-            double amount = Double.parseDouble(amountStr);
-            FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-            if (user == null) return;
+        sheetView.findViewById(R.id.btn_withdraw_cancel).setOnClickListener(v -> dialog.dismiss());
+        sheetView.findViewById(R.id.btn_confirm_withdraw).setOnClickListener(v -> {
+            String amountStr = etAmount.getText().toString().trim();
+            if (TextUtils.isEmpty(amountStr)) {
+                Toast.makeText(this, "Please enter withdrawal amount", Toast.LENGTH_SHORT).show();
+                return;
+            }
 
-            // Firebase Analytics - wallet withdraw
-            analyticsHelper.logWalletWithdrawRequest(amount);
-            logBreadcrumb("Submitted withdrawal request for ₹" + amount);
+            try {
+                double amount = Double.parseDouble(amountStr);
+                if (amount <= 0) {
+                    Toast.makeText(this, "Please enter a valid amount greater than 0", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                if (amount > currentWalletBalance) {
+                    Toast.makeText(this, "Amount exceeds current wallet balance", Toast.LENGTH_SHORT).show();
+                    return;
+                }
 
-            Map<String, Object> tx = new HashMap<>();
-            tx.put("customerId", user.getUid());
-            tx.put("type", "withdrawal_request");
-            tx.put("amount", amount);
-            tx.put("status", "pending");
-            tx.put("description", "Withdrawal request");
-            tx.put("createdAt", Timestamp.now());
-            db.collection(Constants.COLLECTION_WALLET_TRANSACTIONS).add(tx)
-                    .addOnSuccessListener(ref ->
-                            Toast.makeText(this, "Withdrawal request submitted! 📤", Toast.LENGTH_LONG).show())
-                    .addOnFailureListener(e -> recordException("withdrawal_request_failed", e));
+                FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+                if (user == null) return;
+
+                analyticsHelper.logWalletWithdrawRequest(amount);
+                logBreadcrumb("Submitted withdrawal request for ₹" + amount);
+
+                Map<String, Object> tx = new HashMap<>();
+                tx.put("customerId", user.getUid());
+                tx.put("type", "withdrawal_request");
+                tx.put("amount", amount);
+                tx.put("status", "pending");
+                tx.put("description", "Withdrawal request");
+                tx.put("createdAt", Timestamp.now());
+                db.collection(Constants.COLLECTION_WALLET_TRANSACTIONS).add(tx)
+                        .addOnSuccessListener(ref -> {
+                            dialog.dismiss();
+                            Toast.makeText(this, "Withdrawal request submitted! 📤", Toast.LENGTH_LONG).show();
+                        })
+                        .addOnFailureListener(e -> recordException("withdrawal_request_failed", e));
+            } catch (NumberFormatException e) {
+                Toast.makeText(this, "Please enter a valid amount", Toast.LENGTH_SHORT).show();
+            }
         });
-        builder.setNegativeButton("Cancel", null);
-        builder.show();
+
+        dialog.show();
     }
 
     @Override

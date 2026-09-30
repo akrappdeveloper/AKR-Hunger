@@ -106,7 +106,7 @@ public class ProfileFragment extends Fragment {
         }
 
         view.findViewById(R.id.btn_logout).setOnClickListener(v -> {
-            new AlertDialog.Builder(requireContext())
+            new com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
                     .setTitle("Logout")
                     .setMessage(R.string.logout_confirm)
                     .setPositiveButton(R.string.yes, (dialog, which) -> {

@@ -6,48 +6,55 @@
     android:background="@color/surface"
     android:orientation="vertical">
 
-    <!-- Header -->
+    <!-- iOS Top Header -->
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
+        android:layout_height="60dp"
+        android:background="@color/surface"
+        android:elevation="1dp"
         android:gravity="center_vertical"
-        android:paddingStart="20dp"
-        android:paddingEnd="16dp"
-        android:paddingTop="16dp"
-        android:paddingBottom="12dp">
+        android:orientation="horizontal"
+        android:paddingHorizontal="12dp">
+
+        <FrameLayout
+            android:id="@+id/btn_close_map"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="@drawable/bg_icon_circle_gray"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackgroundBorderless">
+
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_back"
+                android:tint="@color/text_primary" />
+        </FrameLayout>
 
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_marginStart="14dp"
             android:layout_weight="1"
             android:orientation="vertical">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="🗺️ Open Maps Picker"
+                android:text="Choose Location on Map"
                 android:textColor="@color/text_primary"
-                android:textSize="18sp"
+                android:textSize="17sp"
                 android:textStyle="bold" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:text="Pan the map to pinpoint your exact address"
-                android:textColor="@color/text_secondary"
-                android:textSize="12sp" />
+                android:text="Pan the map to pinpoint your location"
+                android:textColor="@color/text_hint"
+                android:textSize="11sp" />
         </LinearLayout>
-
-        <ImageButton
-            android:id="@+id/btn_close_map"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Close"
-            android:src="@drawable/ic_back"
-            app:tint="@color/text_primary" />
     </LinearLayout>
 
     <!-- Map Container with Center Pin -->
@@ -81,8 +88,9 @@
             android:contentDescription="My Location"
             android:src="@drawable/ic_location"
             app:backgroundTint="@color/surface"
-            app:tint="@color/primary"
-            app:fabSize="mini" />
+            app:elevation="4dp"
+            app:fabSize="mini"
+            app:tint="@color/primary" />
 
         <!-- Loading indicator -->
         <ProgressBar
@@ -95,17 +103,20 @@
     </FrameLayout>
 
     <!-- Bottom Address Info & Action Card -->
-    <androidx.cardview.widget.CardView
+    <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:cardBackgroundColor="@color/surface"
-        app:cardElevation="8dp">
+        app:cardCornerRadius="24dp"
+        app:cardElevation="6dp"
+        app:strokeColor="@color/card_border"
+        app:strokeWidth="1dp">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="16dp">
+            android:padding="20dp">
 
             <!-- Selected Address Text -->
             <TextView
@@ -114,7 +125,7 @@
                 android:layout_height="wrap_content"
                 android:text="📍 Pin Location"
                 android:textColor="@color/text_primary"
-                android:textSize="15sp"
+                android:textSize="16sp"
                 android:textStyle="bold" />
 
             <TextView
@@ -122,6 +133,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
+                android:lineSpacingExtra="2dp"
                 android:text="Detecting location..."
                 android:textColor="@color/text_secondary"
                 android:textSize="13sp" />
@@ -130,36 +142,32 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
+                android:layout_marginTop="16dp"
                 android:orientation="horizontal">
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btn_open_external_map"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    style="@style/Widget.AKR.Button.PillSoft"
                     android:layout_width="0dp"
                     android:layout_height="48dp"
-                    android:layout_weight="1"
                     android:layout_marginEnd="6dp"
+                    android:layout_weight="1"
                     android:text="Google Maps"
-                    android:textSize="13sp"
-                    app:cornerRadius="12dp"
+                    android:textSize="12sp"
                     app:icon="@drawable/ic_map"
-                    app:iconTint="@color/primary"
-                    app:strokeColor="@color/primary"
-                    android:textColor="@color/primary" />
+                    app:iconTint="@color/primary" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btn_confirm_location"
-                    style="@style/Widget.AKR.Button.Primary"
+                    style="@style/Widget.AKR.Button.Pill"
                     android:layout_width="0dp"
                     android:layout_height="48dp"
-                    android:layout_weight="1.2"
                     android:layout_marginStart="6dp"
+                    android:layout_weight="1.2"
                     android:text="Confirm Location"
                     android:textSize="13sp"
-                    app:cornerRadius="12dp" />
+                    app:backgroundTint="@color/primary" />
             </LinearLayout>
         </LinearLayout>
-    </androidx.cardview.widget.CardView>
-
+    </com.google.android.material.card.MaterialCardView>
 </LinearLayout>
