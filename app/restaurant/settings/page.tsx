@@ -11,7 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { uploadToImgBB } from '@/lib/imgbb';
+import { uploadImage } from '@/lib/imageUpload';
 import {
   Settings as SettingsIcon,
   Store,
@@ -390,10 +390,10 @@ export default function RestaurantSettingsPage() {
                           if (!file) return;
                           setUploadingImage(true);
                           try {
-                            const url = await uploadToImgBB(file);
+                            const url = await uploadImage(file, 'restaurant-logos', user?.uid || 'restaurant');
                             setSettings(prev => ({ ...prev, image: url }));
                             toast.success("Logo uploaded!");
-                          } catch (e) { toast.error("Upload failed"); }
+                          } catch (e: any) { toast.error(e?.message || "Upload failed"); }
                           finally { setUploadingImage(false); }
                         }} />
                       </label>

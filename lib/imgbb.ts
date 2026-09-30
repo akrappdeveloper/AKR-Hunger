@@ -1,9 +1,9 @@
 // ImgBB API Configuration with multiple keys for automatic failover
+const envKey = process.env.NEXT_PUBLIC_IMGBB_API_KEY;
 const IMGBB_API_KEYS = [
+    ...(envKey ? [envKey] : []),
     '3df2767515cb1bd10226fbf228fe3b14', // Primary key
-    // Add more API keys here as needed
     '60a7cee875f118da8292eed17cc0c0c3', // 2nd key
-    // '3rd-api-key-here',
 ];
 
 let currentKeyIndex = 0;

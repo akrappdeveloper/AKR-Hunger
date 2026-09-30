@@ -11,10 +11,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { collection, query, where, getDocs, addDoc, deleteDoc, doc } from 'firebase/firestore';
+import { collection, query, where, getDocs, addDoc, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { uploadToImgBB } from '@/lib/imgbb';
+import { uploadImage } from '@/lib/imageUpload';
 import { MenuItem } from '@/lib/types';
+import { toast } from 'sonner';
 import {
   Plus, Trash2, ChevronDown, ChevronUp, Upload, Image as ImageIcon,
   Clock, CheckCircle, XCircle, X, Star, Flame, Tag, Users, AlertCircle, Utensils,
@@ -26,7 +27,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 export default function MenuManagementPage() {
   const router = useRouter();
-  const { user, loading: authLoading } = useRestaurantAuth();
+  const { user, restaurant, loading: authLoading } = useRestaurantAuth();
 
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -36,6 +37,7 @@ export default function MenuManagementPage() {
   const [submitting, setSubmitting] = useState(false);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [imageUrlInput, setImageUrlInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
 
   const [newItem, setNewItem] = useState({
@@ -72,14 +74,21 @@ export default function MenuManagementPage() {
     try {
       setLoading(true);
       const menuRef = collection(db, 'menuItems');
-      const q = query(menuRef, where('restaurantId', '==', user.uid));
-      const snapshot = await getDocs(q);
+      const targetIds = Array.from(new Set([user.uid, user.restaurantId, restaurant?.id].filter(Boolean))) as string[];
 
-      const items = snapshot.docs.map((doc) => ({
-        ...doc.data(),
-        id: doc.id,
-      })) as MenuItem[];
+      const itemsMap = new Map<string, MenuItem>();
+      for (const targetId of targetIds) {
+        const q = query(menuRef, where('restaurantId', '==', targetId));
+        const snapshot = await getDocs(q);
+        snapshot.docs.forEach((d) => {
+          itemsMap.set(d.id, {
+            ...d.data(),
+            id: d.id,
+          } as MenuItem);
+        });
+      }
 
+      const items = Array.from(itemsMap.values());
       setMenuItems(items);
 
       if (items.length > 0 && !expandedCategory) {
@@ -110,116 +119,152 @@ export default function MenuManagementPage() {
     });
   };
 
+  const handleAddImageUrl = () => {
+    const trimmed = imageUrlInput.trim();
+    if (!trimmed) return;
+    if (!trimmed.startsWith('http://') && !trimmed.startsWith('https://') && !trimmed.startsWith('data:image/')) {
+      alert('Please enter a valid image URL starting with http://, https://, or data:image/');
+      return;
+    }
+    if (imagePreviews.length >= 5) {
+      alert('Maximum 5 images allowed per menu item');
+      return;
+    }
+    setImagePreviews(prev => [...prev, trimmed]);
+    setImageUrlInput('');
+  };
+
   const removeImage = (index: number) => {
     setImageFiles(prev => prev.filter((_, i) => i !== index));
     setImagePreviews(prev => prev.filter((_, i) => i !== index));
   };
 
   const uploadImages = async (files: File[]): Promise<string[]> => {
-    const uploadPromises = files.map(file => uploadToImgBB(file));
+    const uploadPromises = files.map(file => uploadImage(file, 'menu-items', user?.uid || 'restaurant'));
     return await Promise.all(uploadPromises);
   };
 
   const handleEditItem = (item: MenuItem) => {
     setEditingId(item.id!);
     setNewItem({
-      name: item.name,
-      description: item.description,
-      price: item.price.toString(),
-      category: item.category,
+      name: item.name || '',
+      description: item.description || '',
+      price: item.price ? item.price.toString() : '',
+      category: item.category || '',
       preparationTime: (item.preparationTime || 30).toString(),
       servings: (item.servings || 1).toString(),
-      calories: item.calories?.toString() || '',
-      allergens: item.allergens?.join(', ') || '',
-      tags: item.tags?.join(', ') || '',
-      isVegetarian: item.vegetarian,
-      isSpicy: item.spicy,
-      isAvailable: item.available,
-      isBestSeller: item.isBestSeller || false,
-      isNew: item.isNew || false,
+      calories: item.calories ? item.calories.toString() : '',
+      allergens: item.allergens ? item.allergens.join(', ') : '',
+      tags: item.tags ? item.tags.join(', ') : '',
+      isVegetarian: Boolean(item.vegetarian),
+      isSpicy: Boolean(item.spicy),
+      isAvailable: item.available !== undefined ? item.available : true,
+      isBestSeller: Boolean(item.isBestSeller),
+      isNew: Boolean(item.isNew),
     });
-    // For images, we just show previews of existing URLs initially
-    // If they add new files, those get uploaded. Existing URLs stay unless removed (logic simplified here)
-    // NOTE: For simplicity in this edit flow, we'll re-use previews for existing images.
-    // Handling removal of existing remote images vs new local files requires more complex state,
-    // but we'll treat previews as the source of truth for display.
-    setImagePreviews(item.images || [item.image]);
-    setImageFiles([]); // Clear new files
+    setImagePreviews(item.images && item.images.length > 0 ? item.images : item.image ? [item.image] : []);
+    setImageFiles([]);
+    setImageUrlInput('');
     setDialogOpen(true);
   };
 
   const handleAddItem = async () => {
-    if (!newItem.name || !newItem.price || !newItem.category) {
+    if (!user) {
+      alert('You must be logged in to add menu items');
+      return;
+    }
+
+    if (!newItem.name.trim() || !newItem.price.trim() || !newItem.category.trim()) {
       alert('Please fill in all required fields (Name, Category, Price)');
       return;
     }
 
-    if (imagePreviews.length === 0) {
-      alert('Please provide at least one image for the menu item');
+    if (imagePreviews.length === 0 && imageFiles.length === 0) {
+      alert('Please provide at least one image (upload a file or paste an image URL)');
       return;
     }
 
     try {
       setSubmitting(true);
 
-      // Upload NEW images
-      let imageUrls: string[] = [];
+      // 1. Upload any newly selected local files via our robust multi-tier uploadImage
+      let uploadedUrls: string[] = [];
       if (imageFiles.length > 0) {
         console.log('[Menu] Uploading', imageFiles.length, 'new images...');
-        const newUrls = await uploadImages(imageFiles);
-        imageUrls = [...newUrls];
+        uploadedUrls = await uploadImages(imageFiles);
       }
 
-      // Combine with existing images (if editing and strictly keeping existing ones)
-      // For this implementation, we append new uploads to existing remote URLs in preview
-      const existingUrls = imagePreviews.filter(url => url.startsWith('http'));
-      const finalImageUrls = [...existingUrls, ...imageUrls];
+      // 2. Combine with existing or manually added image URLs
+      const existingUrls = imagePreviews.filter(url => 
+        (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:image/')) &&
+        !uploadedUrls.includes(url)
+      );
+
+      const finalImageUrls = Array.from(new Set([...uploadedUrls, ...existingUrls]));
 
       if (finalImageUrls.length === 0) {
-        // Fallback if something went wrong
-        alert('Image processing failed.');
+        alert('Image processing failed. Please select an image file or provide a valid image URL.');
         return;
       }
 
-      // Parse tags
-      const tagArray = newItem.tags.split(',').map(t => t.trim()).filter(t => t);
-      const allergenArray = newItem.allergens.split(',').map(a => a.trim()).filter(a => a);
+      const parsedPrice = parseFloat(newItem.price);
+      if (isNaN(parsedPrice) || parsedPrice < 0) {
+        alert('Please enter a valid price');
+        return;
+      }
 
-      const itemData = {
-        name: newItem.name,
-        description: newItem.description,
-        price: parseFloat(newItem.price),
-        category: newItem.category,
-        vegetarian: newItem.isVegetarian,
-        spicy: newItem.isSpicy,
-        available: newItem.isAvailable,
-        image: finalImageUrls[0], // Primary image
-        images: finalImageUrls, // All images
+      // 3. Parse tags and allergens
+      const tagArray = newItem.tags ? newItem.tags.split(',').map(t => t.trim()).filter(Boolean) : [];
+      const allergenArray = newItem.allergens ? newItem.allergens.split(',').map(a => a.trim()).filter(Boolean) : [];
+
+      // 4. Construct payload with strict sanitation against undefined values
+      const rawItemData: Record<string, any> = {
+        name: newItem.name.trim(),
+        description: newItem.description?.trim() || '',
+        price: parsedPrice,
+        category: newItem.category.trim(),
+        vegetarian: Boolean(newItem.isVegetarian),
+        spicy: Boolean(newItem.isSpicy),
+        available: newItem.isAvailable !== undefined ? Boolean(newItem.isAvailable) : true,
+        image: finalImageUrls[0] || '',
+        images: finalImageUrls,
         preparationTime: parseInt(newItem.preparationTime) || 30,
         servings: parseInt(newItem.servings) || 1,
-        calories: newItem.calories ? parseInt(newItem.calories) : undefined,
         allergens: allergenArray,
         tags: tagArray,
-        isBestSeller: newItem.isBestSeller,
-        isNew: newItem.isNew,
-        restaurantId: user!.uid,
-        approvalStatus: 'pending', // Always reset to pending on edit
-        isLive: false, // Reset live status
+        isBestSeller: Boolean(newItem.isBestSeller),
+        isNew: Boolean(newItem.isNew),
+        restaurantId: user.uid,
+        ownerId: user.uid,
+        restaurantName: restaurant?.name || '',
+        approvalStatus: 'pending',
+        isLive: false,
         submittedAt: new Date(),
         updatedAt: new Date(),
       };
 
+      // Only add calories if user actually specified a valid number (NEVER leave undefined!)
+      if (newItem.calories && newItem.calories.trim() !== '') {
+        const cal = parseInt(newItem.calories.trim());
+        if (!isNaN(cal)) {
+          rawItemData.calories = cal;
+        }
+      }
+
+      // CRITICAL: Strip any undefined fields before sending to Firestore
+      const cleanItemData = Object.fromEntries(
+        Object.entries(rawItemData).filter(([_, v]) => v !== undefined)
+      );
+
       if (editingId) {
-        // Update existing doc
-        // @ts-ignore
-        await updateDoc(doc(db, 'menuItems', editingId), itemData);
+        await updateDoc(doc(db, 'menuItems', editingId), cleanItemData);
+        toast.success('Menu item updated successfully!');
       } else {
-        // Create new doc
-        // @ts-ignore
         await addDoc(collection(db, 'menuItems'), {
-          ...itemData,
+          ...cleanItemData,
           createdAt: new Date(),
         });
+        toast.success('Menu item added successfully!');
       }
 
       // Reset form
@@ -241,15 +286,17 @@ export default function MenuManagementPage() {
       });
       setImageFiles([]);
       setImagePreviews([]);
+      setImageUrlInput('');
       setEditingId(null);
       setDialogOpen(false);
 
       await fetchMenuItems();
-
       setSuccessDialog(true);
-    } catch (error) {
+    } catch (error: any) {
       console.error('[Menu] Error saving item:', error);
-      alert('Failed to save item. Please try again.');
+      const errMsg = error?.message || 'Failed to save item. Please check network and try again.';
+      toast.error(`Save failed: ${errMsg}`);
+      alert(`Failed to save item: ${errMsg}`);
     } finally {
       setSubmitting(false);
     }
@@ -454,6 +501,30 @@ export default function MenuManagementPage() {
                           className="hidden"
                           onChange={handleImageChange}
                         />
+
+                        {/* Optional Direct Image URL Input */}
+                        <div className="mt-4 pt-4 border-t border-border/40 flex flex-col sm:flex-row gap-2">
+                          <Input
+                            placeholder="Or paste image URL (https://... or data:image/...)"
+                            value={imageUrlInput}
+                            onChange={(e) => setImageUrlInput(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                handleAddImageUrl();
+                              }
+                            }}
+                            className="bg-card border-border text-foreground placeholder:text-muted-foreground h-11 text-xs rounded-xl flex-1"
+                          />
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            onClick={handleAddImageUrl}
+                            className="h-11 rounded-xl px-4 font-semibold text-xs whitespace-nowrap"
+                          >
+                            Add URL
+                          </Button>
+                        </div>
                       </div>
                     </div>
 

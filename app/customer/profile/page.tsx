@@ -15,7 +15,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Link from 'next/link';
 import { Camera, MapPin, Phone, Mail, User, Save, Edit2, Plus, Home, Briefcase, Trash2, LogOut, ChevronRight, CheckCircle2, Loader2, Sparkles, LifeBuoy, ShieldCheck, AlertCircle } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
-import { uploadToImgBB } from '@/lib/imgbb';
+import { uploadImage } from '@/lib/imageUpload';
 import ImageUploadDialog from '@/components/ImageUploadDialog';
 import PhoneVerificationDialog from '@/components/customer/PhoneVerificationDialog';
 import MembershipCard from '@/components/customer/MembershipCard';
@@ -169,8 +169,8 @@ export default function ProfilePage() {
       // Convert Blob to File
       const file = new File([croppedImageBlob], `profile_${user.uid}_${Date.now()}.jpg`, { type: 'image/jpeg' });
 
-      // Upload to ImgBB
-      const downloadURL = await uploadToImgBB(file);
+      // Upload using multi-tier upload utility
+      const downloadURL = await uploadImage(file, 'avatars', user.uid);
 
       // Update Firestore
       await updateDoc(doc(db, 'customers', user.uid), {
