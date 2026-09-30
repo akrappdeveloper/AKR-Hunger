@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import com.ssr.hunger.R;
 import com.ssr.hunger.activities.CartActivity;
+import com.ssr.hunger.activities.NotificationsActivity;
 import com.ssr.hunger.activities.ProductDetailActivity;
 import com.ssr.hunger.activities.RestaurantDetailActivity;
 import com.ssr.hunger.activities.SearchActivity;
