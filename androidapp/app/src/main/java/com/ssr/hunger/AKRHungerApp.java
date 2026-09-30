@@ -10,6 +10,7 @@ import com.ssr.hunger.utils.CrashlyticsHelper;
 import com.ssr.hunger.utils.PerformanceHelper;
 import com.ssr.hunger.utils.ReleaseMonitoringHelper;
 import com.ssr.hunger.utils.RemoteConfigHelper;
+import com.ssr.hunger.utils.ThemeHelper;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.inappmessaging.FirebaseInAppMessaging;
 import com.google.firebase.messaging.FirebaseMessaging;
@@ -40,6 +41,9 @@ public class AKRHungerApp extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
+
+        // 0. Apply User Theme (Light / Dark / System)
+        ThemeHelper.applyTheme(this);
 
         // 1. Initialize Firebase Core
         FirebaseApp.initializeApp(this);

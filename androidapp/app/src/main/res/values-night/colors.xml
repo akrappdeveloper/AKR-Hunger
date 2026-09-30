@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Primary Brand Colors (Dark Mode) -->
+    <color name="primary">#FF6B35</color>
+    <color name="primary_dark">#E55A25</color>
+    <color name="primary_light">#FF8A5C</color>
+    <color name="primary_variant">#FF8C42</color>
+    <color name="primary_tint">#2A1A14</color>
+    <color name="primary_tint_border">#4DFF6B35</color>
+    <color name="on_primary">#FFFFFF</color>
+
+    <!-- Secondary / Accent Colors -->
+    <color name="secondary">#F59E0B</color>
+    <color name="secondary_dark">#D97706</color>
+    <color name="secondary_light">#2E230B</color>
+    <color name="on_secondary">#FFFFFF</color>
+
+    <!-- Dark Mode Canvas & Surfaces -->
+    <color name="background">#121212</color>
+    <color name="surface">#1E1E1E</color>
+    <color name="surface_variant">#26262A</color>
+    <color name="surface_elevated">#2C2C30</color>
+    <color name="on_background">#F9FAFB</color>
+    <color name="on_surface">#F9FAFB</color>
+
+    <!-- Dark Mode Card & Borders -->
+    <color name="card_background">#1E1E1E</color>
+    <color name="card_border">#2E2E32</color>
+    <color name="card_border_subtle">#3A3A40</color>
+
+    <!-- Status Colors -->
+    <color name="success">#10B981</color>
+    <color name="success_light">#133826</color>
+    <color name="warning">#F59E0B</color>
+    <color name="warning_light">#3A2A0B</color>
+    <color name="error">#EF4444</color>
+    <color name="error_light">#3B1414</color>
+    <color name="info">#3B82F6</color>
+    <color name="info_light">#142542</color>
+
+    <!-- Dark Mode Typography -->
+    <color name="text_primary">#F9FAFB</color>
+    <color name="text_secondary">#9CA3AF</color>
+    <color name="text_tertiary">#6B7280</color>
+    <color name="text_hint">#6B7280</color>
+    <color name="text_disabled">#4B5563</color>
+
+    <!-- Veg/Non-Veg (Dark Mode) -->
+    <color name="veg_green">#22C55E</color>
+    <color name="veg_bg">#143820</color>
+    <color name="non_veg_red">#EF4444</color>
+    <color name="non_veg_bg">#3B1414</color>
+
+    <!-- Rating -->
+    <color name="rating_star">#FBBF24</color>
+    <color name="rating_bg">#16A34A</color>
+
+    <!-- Divider & Shadow -->
+    <color name="divider">#26262A</color>
+    <color name="divider_hairline">#2E2E32</color>
+
+    <!-- Shimmer (Dark Mode) -->
+    <color name="shimmer_base">#222224</color>
+    <color name="shimmer_highlight">#2C2C30</color>
+
+    <!-- Category Colors -->
+    <color name="cat_pizza">#F97316</color>
+    <color name="cat_burger">#F59E0B</color>
+    <color name="cat_biryani">#EF4444</color>
+    <color name="cat_chinese">#3B82F6</color>
+    <color name="cat_dessert">#EC4899</color>
+    <color name="cat_healthy">#10B981</color>
+    <color name="cat_drinks">#8B5CF6</color>
+    <color name="cat_kebabs">#D97706</color>
+
+    <!-- Order Status Colors -->
+    <color name="status_pending">#9CA3AF</color>
+    <color name="status_confirmed">#8B5CF6</color>
+    <color name="status_preparing">#F59E0B</color>
+    <color name="status_out_delivery">#0EA5E9</color>
+    <color name="status_delivered">#10B981</color>
+    <color name="status_cancelled">#EF4444</color>
+
+    <!-- Alpha / Overlays -->
+    <color name="black_overlay">#B3000000</color>
+    <color name="black_scrim_light">#4D000000</color>
+    <color name="white_overlay">#33FFFFFF</color>
+    <color name="primary_08">#14FF6B35</color>
+    <color name="primary_10">#1AFF6B35</color>
+    <color name="primary_15">#26FF6B35</color>
+    <color name="primary_20">#33FF6B35</color>
+    <color name="primary_30">#4DFF6B35</color>
+
+    <!-- Pill & iOS Controls -->
+    <color name="pill_bg">#26262A</color>
+    <color name="pill_bg_active">#FF6B35</color>
+    <color name="pill_text_active">#FFFFFF</color>
+    <color name="pill_border">#38383E</color>
+
+    <!-- App Icon & Splash Screen -->
+    <color name="ic_launcher_background">#121212</color>
+    <color name="splash_bg">#121212</color>
+    <color name="splash_glow">#14FF6B35</color>
+</resources>

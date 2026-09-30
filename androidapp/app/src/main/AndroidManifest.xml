@@ -146,6 +146,11 @@
             android:name=".activities.NotificationsActivity"
             android:exported="false" />
 
+        <!-- Settings Activity -->
+        <activity
+            android:name=".activities.SettingsActivity"
+            android:exported="false" />
+
 
         <!-- FCM Service -->
         <service

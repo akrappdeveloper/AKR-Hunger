@@ -14,6 +14,7 @@ import com.ssr.hunger.R;
 import com.ssr.hunger.activities.EditProfileActivity;
 import com.ssr.hunger.activities.LoginActivity;
 import com.ssr.hunger.activities.NotificationsActivity;
+import com.ssr.hunger.activities.SettingsActivity;
 import com.ssr.hunger.activities.SupportActivity;
 import com.ssr.hunger.activities.WalletActivity;
 import com.ssr.hunger.utils.Constants;
@@ -97,6 +98,12 @@ public class ProfileFragment extends Fragment {
 
         view.findViewById(R.id.card_support).setOnClickListener(v ->
                 startActivity(new Intent(getContext(), SupportActivity.class)));
+
+        View cardSettings = view.findViewById(R.id.card_settings);
+        if (cardSettings != null) {
+            cardSettings.setOnClickListener(v ->
+                    startActivity(new Intent(getContext(), SettingsActivity.class)));
+        }
 
         view.findViewById(R.id.btn_logout).setOnClickListener(v -> {
             new AlertDialog.Builder(requireContext())

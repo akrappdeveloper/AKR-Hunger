@@ -48,6 +48,19 @@ public abstract class BaseActivity extends AppCompatActivity {
             crashlyticsHelper.setUser(user);
             analyticsHelper.setUser(user);
         }
+
+        updateSystemBarAppearance();
+    }
+
+    protected void updateSystemBarAppearance() {
+        if (getWindow() == null) return;
+        boolean isDark = com.ssr.hunger.utils.ThemeHelper.isDarkMode(this);
+        androidx.core.view.WindowInsetsControllerCompat controller =
+                androidx.core.view.WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+        if (controller != null) {
+            controller.setAppearanceLightStatusBars(!isDark);
+            controller.setAppearanceLightNavigationBars(!isDark);
+        }
     }
 
     @Override
