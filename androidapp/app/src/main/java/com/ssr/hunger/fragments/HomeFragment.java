@@ -192,6 +192,15 @@ public class HomeFragment extends Fragment {
             startActivity(new Intent(getContext(), SearchActivity.class));
         });
 
+        View btnHomeVoiceSearch = rootView.findViewById(R.id.btn_home_voice_search);
+        if (btnHomeVoiceSearch != null) {
+            btnHomeVoiceSearch.setOnClickListener(v -> {
+                Intent voiceIntent = new Intent(getContext(), SearchActivity.class);
+                voiceIntent.putExtra(Constants.EXTRA_START_VOICE_SEARCH, true);
+                startActivity(voiceIntent);
+            });
+        }
+
         // Cart button
         rootView.findViewById(R.id.btn_cart).setOnClickListener(v -> {
             startActivity(new Intent(getContext(), CartActivity.class));

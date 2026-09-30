@@ -42,7 +42,8 @@
             android:background="@drawable/bg_pill_soft"
             android:gravity="center_vertical"
             android:orientation="horizontal"
-            android:paddingHorizontal="14dp">
+            android:paddingStart="14dp"
+            android:paddingEnd="6dp">
 
             <ImageView
                 android:layout_width="18dp"
@@ -52,9 +53,10 @@
 
             <EditText
                 android:id="@+id/et_search"
-                android:layout_width="match_parent"
+                android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_marginStart="10dp"
+                android:layout_weight="1"
                 android:background="@null"
                 android:fontFamily="sans-serif"
                 android:hint="@string/search_hint"
@@ -64,15 +66,181 @@
                 android:textColor="@color/text_primary"
                 android:textColorHint="@color/text_hint"
                 android:textSize="14sp" />
+
+            <!-- Clear Text Button -->
+            <ImageView
+                android:id="@+id/btn_clear"
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:layout_marginEnd="6dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true"
+                android:padding="2dp"
+                android:src="@drawable/ic_close"
+                android:tint="@color/text_hint"
+                android:visibility="gone" />
+
+            <!-- Voice Search Button -->
+            <FrameLayout
+                android:id="@+id/btn_voice_search"
+                android:layout_width="34dp"
+                android:layout_height="34dp"
+                android:background="@drawable/bg_voice_mic_button"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackgroundBorderless">
+
+                <ImageView
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_mic"
+                    android:tint="@color/on_primary" />
+            </FrameLayout>
         </LinearLayout>
     </LinearLayout>
 
-    <!-- Search Results Grid -->
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rv_results"
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:clipToPadding="false"
-        android:overScrollMode="never"
-        android:padding="8dp" />
+        android:layout_height="match_parent">
+
+        <!-- Initial Voice Search Prompt & Trending Suggestions -->
+        <LinearLayout
+            android:id="@+id/layout_suggestions_container"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <!-- Premium Voice Search Callout Card -->
+            <LinearLayout
+                android:id="@+id/card_voice_banner"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_card_ios"
+                android:clickable="true"
+                android:elevation="1dp"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="16dp">
+
+                <FrameLayout
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:background="@drawable/bg_voice_mic_button">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/ic_mic"
+                        android:tint="@color/on_primary" />
+                </FrameLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="14dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="sans-serif-bold"
+                        android:text="Try Voice Search 🎙️"
+                        android:textColor="@color/text_primary"
+                        android:textSize="15sp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:fontFamily="sans-serif"
+                        android:text="Tap to speak your favorite dish or restaurant"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="12sp" />
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_pill_voice_status"
+                    android:fontFamily="sans-serif-bold"
+                    android:paddingHorizontal="10dp"
+                    android:paddingVertical="4dp"
+                    android:text="Speak"
+                    android:textColor="@color/primary"
+                    android:textSize="11sp" />
+            </LinearLayout>
+
+            <!-- Popular Suggestions Header -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:fontFamily="sans-serif-bold"
+                android:text="Trending Dishes 🔥"
+                android:textColor="@color/text_primary"
+                android:textSize="16sp" />
+
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/chip_group_search_trending"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                app:chipSpacingHorizontal="8dp"
+                app:chipSpacingVertical="8dp" />
+        </LinearLayout>
+
+        <!-- Search Results Grid -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rv_results"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:overScrollMode="never"
+            android:padding="8dp"
+            android:visibility="gone" />
+
+        <!-- Empty Results View -->
+        <LinearLayout
+            android:id="@+id/layout_empty_results"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:padding="32dp"
+            android:visibility="gone">
+
+            <ImageView
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:alpha="0.4"
+                android:src="@drawable/ic_search"
+                android:tint="@color/text_hint" />
+
+            <TextView
+                android:id="@+id/tv_empty_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:fontFamily="sans-serif-bold"
+                android:text="No items found"
+                android:textColor="@color/text_primary"
+                android:textSize="16sp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:gravity="center"
+                android:text="We couldn't find any dishes matching your query. Try another search or speak your craving."
+                android:textColor="@color/text_hint"
+                android:textSize="13sp" />
+        </LinearLayout>
+    </FrameLayout>
 </LinearLayout>

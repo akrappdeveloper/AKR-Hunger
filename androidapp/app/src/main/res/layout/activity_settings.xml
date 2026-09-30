@@ -573,7 +573,7 @@
                 android:layout_gravity="center_horizontal"
                 android:layout_marginTop="28dp"
                 android:gravity="center"
-                android:text="AKR Hunger Food Delivery Platform\nCrafted with ❤️ for Food Lovers"
+                android:text="AKR Hunger Food Delivery Platform\nPower By SSR TecoGen"
                 android:textColor="@color/text_hint"
                 android:textSize="12sp" />
         </LinearLayout>

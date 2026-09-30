@@ -170,11 +170,21 @@
                     android:textColor="@color/text_hint"
                     android:textSize="14sp" />
 
-                <ImageView
-                    android:layout_width="18dp"
-                    android:layout_height="18dp"
-                    android:src="@drawable/ic_orders"
-                    android:tint="@color/primary" />
+                <FrameLayout
+                    android:id="@+id/btn_home_voice_search"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:background="@drawable/bg_voice_mic_button"
+                    android:clickable="true"
+                    android:focusable="true">
+
+                    <ImageView
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/ic_mic"
+                        android:tint="@color/on_primary" />
+                </FrameLayout>
             </LinearLayout>
 
             <!-- Categories Section Header -->

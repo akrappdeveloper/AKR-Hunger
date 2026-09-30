@@ -1,40 +1,55 @@
 package com.ssr.hunger.fragments;
 
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.text.Editable;
 import android.text.TextUtils;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import com.ssr.hunger.R;
-import com.ssr.hunger.activities.ProductDetailActivity;
-import com.ssr.hunger.adapters.MenuItemAdapter;
-import com.ssr.hunger.models.CartItem;
-import com.ssr.hunger.models.MenuItem;
-import com.ssr.hunger.utils.CartManager;
-import com.ssr.hunger.utils.Constants;
+
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.ssr.hunger.R;
+import com.ssr.hunger.activities.ProductDetailActivity;
+import com.ssr.hunger.adapters.MenuItemAdapter;
+import com.ssr.hunger.dialogs.VoiceSearchDialog;
+import com.ssr.hunger.models.CartItem;
+import com.ssr.hunger.models.MenuItem;
+import com.ssr.hunger.utils.CartManager;
+import com.ssr.hunger.utils.Constants;
+
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Search Fragment - mirrors the web app's search page with
- * trending tags, popular cuisines, and full-text search across menu items.
+ * trending tags, popular cuisines, voice search, and full-text search across menu items.
  */
 public class SearchFragment extends Fragment {
 
     private EditText etSearch;
+    private ImageView btnClear;
+    private View btnVoiceSearch;
     private View trendingSection, cuisinesSection, resultsSection;
     private ChipGroup chipGroupTrending;
     private RecyclerView rvResults;
@@ -42,10 +57,23 @@ public class SearchFragment extends Fragment {
     private MenuItemAdapter resultsAdapter;
     private FirebaseFirestore db;
 
+    private VoiceSearchDialog voiceSearchDialog;
+
     private final String[] TRENDING_TAGS = {
             "Dum Biryani", "Woodfired Pizza", "Truffle Burger", "Butter Chicken",
             "Cold Brew", "Crispy Dimsum", "Hakka Noodles", "Sizzling Brownie"
     };
+
+    private final ActivityResultLauncher<String> audioPermissionLauncher =
+            registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
+                if (isGranted) {
+                    openVoiceSearch();
+                } else {
+                    if (isAdded()) {
+                        Toast.makeText(requireContext(), "Microphone permission is required for voice search", Toast.LENGTH_SHORT).show();
+                    }
+                }
+            });
 
     @Nullable
     @Override
@@ -53,6 +81,8 @@ public class SearchFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_search, container, false);
 
         etSearch = view.findViewById(R.id.et_search);
+        btnClear = view.findViewById(R.id.btn_clear);
+        btnVoiceSearch = view.findViewById(R.id.btn_voice_search);
         trendingSection = view.findViewById(R.id.trending_section);
         cuisinesSection = view.findViewById(R.id.cuisines_section);
         resultsSection = view.findViewById(R.id.results_section);
@@ -65,6 +95,7 @@ public class SearchFragment extends Fragment {
         setupTrendingTags();
         setupSearchResults();
         setupSearchInput();
+        setupVoiceSearch();
 
         return view;
     }
@@ -77,6 +108,7 @@ public class SearchFragment extends Fragment {
             chip.setClickable(true);
             chip.setOnClickListener(v -> {
                 etSearch.setText(tag);
+                etSearch.setSelection(tag.length());
                 performSearch(tag);
             });
             chipGroupTrending.addView(chip);
@@ -96,7 +128,7 @@ public class SearchFragment extends Fragment {
                                     item.getPrice(), 1, item.getImage(),
                                     item.getRestaurantName() != null ? item.getRestaurantName() : "")
                     );
-                    android.widget.Toast.makeText(getContext(), item.getName() + " added to cart", android.widget.Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), item.getName() + " added to cart", Toast.LENGTH_SHORT).show();
                 }
         );
 
@@ -116,17 +148,82 @@ public class SearchFragment extends Fragment {
             }
             return false;
         });
+
+        etSearch.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (btnClear != null) {
+                    btnClear.setVisibility(s.length() > 0 ? View.VISIBLE : View.GONE);
+                }
+                if (s.length() == 0) {
+                    resetSearchSections();
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+            }
+        });
+
+        if (btnClear != null) {
+            btnClear.setOnClickListener(v -> {
+                etSearch.setText("");
+                resetSearchSections();
+            });
+        }
+    }
+
+    private void setupVoiceSearch() {
+        if (btnVoiceSearch != null) {
+            btnVoiceSearch.setOnClickListener(v -> {
+                if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+                    openVoiceSearch();
+                } else {
+                    audioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO);
+                }
+            });
+        }
+    }
+
+    private void openVoiceSearch() {
+        if (!isAdded() || getActivity() == null) return;
+
+        if (voiceSearchDialog != null && voiceSearchDialog.isShowing()) {
+            voiceSearchDialog.dismiss();
+        }
+
+        voiceSearchDialog = new VoiceSearchDialog(requireActivity(), recognizedQuery -> {
+            if (!TextUtils.isEmpty(recognizedQuery)) {
+                etSearch.setText(recognizedQuery);
+                etSearch.setSelection(recognizedQuery.length());
+                performSearch(recognizedQuery);
+            }
+        });
+
+        voiceSearchDialog.show();
+    }
+
+    private void resetSearchSections() {
+        if (trendingSection != null) trendingSection.setVisibility(View.VISIBLE);
+        if (cuisinesSection != null) cuisinesSection.setVisibility(View.VISIBLE);
+        if (resultsSection != null) resultsSection.setVisibility(View.GONE);
     }
 
     private void performSearch(String term) {
         if (TextUtils.isEmpty(term)) return;
 
-        trendingSection.setVisibility(View.GONE);
-        cuisinesSection.setVisibility(View.GONE);
-        resultsSection.setVisibility(View.VISIBLE);
+        if (trendingSection != null) trendingSection.setVisibility(View.GONE);
+        if (cuisinesSection != null) cuisinesSection.setVisibility(View.GONE);
+        if (resultsSection != null) resultsSection.setVisibility(View.VISIBLE);
 
         db.collection(Constants.COLLECTION_MENU_ITEMS).get()
                 .addOnSuccessListener(querySnapshot -> {
+                    if (!isAdded()) return;
+
                     List<MenuItem> results = new ArrayList<>();
                     String lowerTerm = term.toLowerCase();
 
@@ -144,8 +241,20 @@ public class SearchFragment extends Fragment {
                         }
                     }
 
-                    tvResultsCount.setText(results.size() + " results found");
-                    resultsAdapter.updateData(results);
+                    if (tvResultsCount != null) {
+                        tvResultsCount.setText(results.size() + " results found");
+                    }
+                    if (resultsAdapter != null) {
+                        resultsAdapter.updateData(results);
+                    }
                 });
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        if (voiceSearchDialog != null && voiceSearchDialog.isShowing()) {
+            voiceSearchDialog.dismiss();
+        }
     }
 }

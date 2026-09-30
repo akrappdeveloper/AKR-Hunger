@@ -23,6 +23,7 @@ public class Constants {
     public static final String EXTRA_RESTAURANT_ID = "restaurant_id";
     public static final String EXTRA_PRODUCT_ID = "product_id";
     public static final String EXTRA_ORDER_ID = "order_id";
+    public static final String EXTRA_START_VOICE_SEARCH = "start_voice_search";
 
     // Tax Rate
     public static final double TAX_RATE = 0.05; // 5%
