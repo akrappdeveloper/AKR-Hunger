@@ -250,7 +250,7 @@ export default function RestaurantLoginPage() {
         reviews: 0,
         deliveryTime: 30,
         deliveryCharge: 40,
-        minimumOrder: 100,
+        minimumOrder: 0,
         isOpen: true,
         isActive: true,
         createdAt: new Date(),

@@ -422,7 +422,7 @@ export default function CartPage() {
 
         toast.success(`₹${total} paid securely from your AKR Wallet! Order confirmed.`);
         clearCart();
-        router.push(`/customer/orders/${docRef.id}`);
+        router.push(`/customer/orders/${docRef.id}/tracking`);
         return;
       }
 
@@ -480,7 +480,7 @@ export default function CartPage() {
 
         toast.success('Order placed successfully!');
         clearCart();
-        router.push(`/customer/orders/${docRef.id}`);
+        router.push(`/customer/orders/${docRef.id}/tracking`);
       } else {
         await handleOnlinePayment(docRef.id, total, verifiedPhone);
       }
@@ -557,7 +557,7 @@ export default function CartPage() {
 
             clearCart();
             toast.success('Payment successful!');
-            router.push(`/customer/orders/${orderId}`);
+            router.push(`/customer/orders/${orderId}/tracking`);
           } else {
             notifyPaymentResult({
               orderId,
@@ -1234,6 +1234,12 @@ export default function CartPage() {
 
             {/* Bill Summary Card */}
             <div className="bg-card border border-border/70 rounded-2xl sm:rounded-3xl p-5 sm:p-6 shadow-md">
+              {/* No Minimum Order Guarantee Badge */}
+              <div className="flex items-center gap-2 p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-bold mb-4">
+                <Sparkles className="w-4 h-4 shrink-0 text-emerald-500" />
+                <span>No Minimum Order Limit • Order any amount freely!</span>
+              </div>
+
               <div className="flex items-center gap-2 mb-4 pb-3 border-b border-border/70">
                 <ChefHat className="w-5 h-5 text-primary" />
                 <h3 className="font-bold text-base sm:text-lg text-foreground">Bill Summary</h3>

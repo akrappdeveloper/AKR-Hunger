@@ -544,14 +544,15 @@ export default function RestaurantSettingsPage() {
                 />
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className="space-y-2">
-                    <Label className="text-foreground">Minimum Order Value</Label>
+                    <Label className="text-foreground">Minimum Order Value (₹)</Label>
                     <StyledInput
                       icon={DollarSign}
                       type="number"
-                      placeholder="0"
+                      placeholder="0 (No Minimum Limit)"
                       value={settings.minimumOrder}
                       onChange={(e: any) => setSettings({ ...settings, minimumOrder: e.target.value })}
                     />
+                    <p className="text-[11px] text-muted-foreground">Set 0 for No Minimum Limit (Customers can order any amount)</p>
                   </div>
                   <div className="space-y-2">
                     <Label className="text-foreground">Delivery Charge</Label>

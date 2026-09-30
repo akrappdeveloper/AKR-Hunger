@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Primary Brand Colors (Modern Vibrant Food Orange) -->
+    <color name="primary">#FF6B35</color>
+    <color name="primary_dark">#E55A25</color>
+    <color name="primary_light">#FF8A5C</color>
+    <color name="primary_variant">#FF8C42</color>
+    <color name="primary_tint">#FFF0EB</color>
+    <color name="primary_tint_border">#FFDCD0</color>
+    <color name="on_primary">#FFFFFF</color>
+
+    <!-- Secondary / Accent Colors -->
+    <color name="secondary">#F59E0B</color>
+    <color name="secondary_dark">#D97706</color>
+    <color name="secondary_light">#FEF3C7</color>
+    <color name="on_secondary">#111827</color>
+
+    <!-- iOS Canvas & Surfaces (Clean White & Soft Off-White) -->
+    <color name="background">#F8F9FA</color>
+    <color name="surface">#FFFFFF</color>
+    <color name="surface_variant">#F3F4F6</color>
+    <color name="surface_elevated">#FFFFFF</color>
+    <color name="on_background">#111827</color>
+    <color name="on_surface">#111827</color>
+
+    <!-- iOS Card & Borders -->
+    <color name="card_background">#FFFFFF</color>
+    <color name="card_border">#F0F2F5</color>
+    <color name="card_border_subtle">#E5E7EB</color>
+
+    <!-- Status Colors -->
+    <color name="success">#10B981</color>
+    <color name="success_light">#D1FAE5</color>
+    <color name="warning">#F59E0B</color>
+    <color name="warning_light">#FEF3C7</color>
+    <color name="error">#EF4444</color>
+    <color name="error_light">#FEE2E2</color>
+    <color name="info">#3B82F6</color>
+    <color name="info_light">#DBEAFE</color>
+
+    <!-- Modern Typography (Charcoal & Cool Grays) -->
+    <color name="text_primary">#111827</color>
+    <color name="text_secondary">#4B5563</color>
+    <color name="text_tertiary">#6B7280</color>
+    <color name="text_hint">#9CA3AF</color>
+    <color name="text_disabled">#D1D5DB</color>
+
+    <!-- Veg/Non-Veg -->
+    <color name="veg_green">#16A34A</color>
+    <color name="veg_bg">#DCFCE7</color>
+    <color name="non_veg_red">#DC2626</color>
+    <color name="non_veg_bg">#FEE2E2</color>
+
+    <!-- Rating -->
+    <color name="rating_star">#F59E0B</color>
+    <color name="rating_bg">#16A34A</color>
+
+    <!-- Divider & Shadow -->
+    <color name="divider">#F3F4F6</color>
+    <color name="divider_hairline">#E5E7EB</color>
+
+    <!-- Shimmer -->
+    <color name="shimmer_base">#EAECEF</color>
+    <color name="shimmer_highlight">#F8F9FA</color>
+
+    <!-- Category Colors -->
+    <color name="cat_pizza">#F97316</color>
+    <color name="cat_burger">#F59E0B</color>
+    <color name="cat_biryani">#EF4444</color>
+    <color name="cat_chinese">#3B82F6</color>
+    <color name="cat_dessert">#EC4899</color>
+    <color name="cat_healthy">#10B981</color>
+    <color name="cat_drinks">#8B5CF6</color>
+    <color name="cat_kebabs">#D97706</color>
+
+    <!-- Order Status Colors -->
+    <color name="status_pending">#9CA3AF</color>
+    <color name="status_confirmed">#8B5CF6</color>
+    <color name="status_preparing">#F59E0B</color>
+    <color name="status_out_delivery">#0EA5E9</color>
+    <color name="status_delivered">#10B981</color>
+    <color name="status_cancelled">#EF4444</color>
+
+    <!-- Alpha / Overlays -->
+    <color name="black_overlay">#80000000</color>
+    <color name="black_scrim_light">#26000000</color>
+    <color name="white_overlay">#80FFFFFF</color>
+    <color name="primary_08">#14FF6B35</color>
+    <color name="primary_10">#1AFF6B35</color>
+    <color name="primary_15">#26FF6B35</color>
+    <color name="primary_20">#33FF6B35</color>
+    <color name="primary_30">#4DFF6B35</color>
+
+    <!-- Pill & iOS Controls -->
+    <color name="pill_bg">#F3F4F6</color>
+    <color name="pill_bg_active">#FF6B35</color>
+    <color name="pill_text_active">#FFFFFF</color>
+    <color name="pill_border">#E5E7EB</color>
+
+    <!-- App Icon & Splash Screen -->
+    <color name="ic_launcher_background">#FFFFFF</color>
+    <color name="splash_bg">#FFFFFF</color>
+    <color name="splash_glow">#14FF6B35</color>
+</resources>

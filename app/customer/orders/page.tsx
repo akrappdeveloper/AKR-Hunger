@@ -8,7 +8,7 @@ import { Order, MenuItem } from '@/lib/types';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Package, RefreshCw, ChevronRight, Clock, ShoppingBag, MapPin, ChefHat, Star, X } from 'lucide-react';
+import { Package, RefreshCw, ChevronRight, Clock, ShoppingBag, MapPin, ChefHat, Star, X, Navigation, Bike } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import Link from 'next/link';
@@ -311,13 +311,23 @@ export default function OrdersPage() {
                   )}
 
                   {['pending', 'confirmed', 'preparing', 'ready', 'out_for_delivery'].includes(order.status || '') ? (
-                    <Button
-                      size="sm"
-                      className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-md shadow-primary/20 font-bold rounded-xl px-4 text-xs sm:text-sm"
-                      onClick={() => router.push(`/customer/orders/${order.id}`)}
-                    >
-                      Track Live <ChevronRight className="w-4 h-4 ml-1" />
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="border-border hover:bg-muted text-foreground font-semibold rounded-xl px-3 text-xs sm:text-sm"
+                        onClick={() => router.push(`/customer/orders/${order.id}`)}
+                      >
+                        Details
+                      </Button>
+                      <Button
+                        size="sm"
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-600/20 font-black rounded-xl px-4 text-xs sm:text-sm gap-1.5"
+                        onClick={() => router.push(`/customer/orders/${order.id}/tracking`)}
+                      >
+                        <Navigation className="w-3.5 h-3.5" /> Track Live Map ➔
+                      </Button>
+                    </div>
                   ) : (
                     <Button
                       size="sm"

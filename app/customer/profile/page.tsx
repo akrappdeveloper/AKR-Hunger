@@ -13,10 +13,11 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Link from 'next/link';
-import { Camera, MapPin, Phone, Mail, User, Save, Edit2, Plus, Home, Briefcase, Trash2, LogOut, ChevronRight, CheckCircle2, Loader2, Sparkles, LifeBuoy } from 'lucide-react';
+import { Camera, MapPin, Phone, Mail, User, Save, Edit2, Plus, Home, Briefcase, Trash2, LogOut, ChevronRight, CheckCircle2, Loader2, Sparkles, LifeBuoy, ShieldCheck, AlertCircle } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { uploadToImgBB } from '@/lib/imgbb';
 import ImageUploadDialog from '@/components/ImageUploadDialog';
+import PhoneVerificationDialog from '@/components/customer/PhoneVerificationDialog';
 import MembershipCard from '@/components/customer/MembershipCard';
 import ThemeToggle from '@/components/customer/ThemeToggle';
 import {
@@ -60,6 +61,9 @@ export default function ProfilePage() {
     phone: '',
     email: '',
   });
+
+  // Phone Verification Dialog State
+  const [isPhoneDialogOpen, setIsPhoneDialogOpen] = useState(false);
 
   // Real-time Profile Listener
   useEffect(() => {
@@ -111,9 +115,14 @@ export default function ProfilePage() {
       setSaveStatus('saving');
       const handler = setTimeout(async () => {
         try {
+          const cleanNew = (formData.phone || '').replace(/\D/g, '').slice(-10);
+          const cleanOldVerified = (profile.verifiedPhone || '').replace(/\D/g, '').slice(-10);
+          const stillVerified = Boolean(profile.phoneVerified && cleanNew.length === 10 && cleanNew === cleanOldVerified);
+
           await updateDoc(doc(db, 'customers', user.uid), {
             name: formData.name,
             phone: formData.phone,
+            phoneVerified: stillVerified,
             updatedAt: new Date(),
           });
           setSaveStatus('saved');
@@ -475,15 +484,102 @@ export default function ProfilePage() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-semibold text-muted-foreground">Phone Number</Label>
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs font-semibold text-muted-foreground">Phone Number</Label>
+                    {(() => {
+                      const cleanCurrent = (formData.phone || '').replace(/\D/g, '').slice(-10);
+                      const cleanVerified = (profile?.verifiedPhone || (profile?.phoneVerified ? profile?.phone : '') || '').replace(/\D/g, '').slice(-10);
+                      const isVerified = Boolean(profile?.phoneVerified && cleanCurrent.length === 10 && cleanCurrent === cleanVerified);
+
+                      if (isVerified) {
+                        return (
+                          <Badge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 text-[10px] font-black uppercase px-2 py-0.5 rounded-md inline-flex items-center gap-1 shadow-xs">
+                            <CheckCircle2 className="w-3 h-3 text-emerald-500" /> Verified
+                          </Badge>
+                        );
+                      }
+
+                      return (
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={() => {
+                            if (cleanCurrent.length < 10) {
+                              toast.error('Please enter a valid 10-digit mobile number first');
+                              return;
+                            }
+                            setIsPhoneDialogOpen(true);
+                          }}
+                          disabled={cleanCurrent.length < 10}
+                          className="h-6 text-[11px] font-black rounded-lg bg-amber-500 hover:bg-amber-600 text-white shadow-xs gap-1 px-2.5 transition-all"
+                        >
+                          <ShieldCheck className="w-3.5 h-3.5" /> Verify
+                        </Button>
+                      );
+                    })()}
+                  </div>
+
                   <div className="relative">
                     <Phone className="absolute left-4 top-3.5 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      value={formData.phone}
-                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      className="pl-11 bg-muted/40 border-border text-foreground focus:border-primary/50 h-11 rounded-xl"
-                      placeholder="+91 00000 00000"
-                    />
+                    {(() => {
+                      const cleanCurrent = (formData.phone || '').replace(/\D/g, '').slice(-10);
+                      const cleanVerified = (profile?.verifiedPhone || (profile?.phoneVerified ? profile?.phone : '') || '').replace(/\D/g, '').slice(-10);
+                      const isVerified = Boolean(profile?.phoneVerified && cleanCurrent.length === 10 && cleanCurrent === cleanVerified);
+
+                      return (
+                        <>
+                          <Input
+                            value={formData.phone}
+                            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                            className={`pl-11 pr-24 bg-muted/40 border text-foreground focus:border-primary/50 h-11 rounded-xl font-medium transition-colors ${
+                              isVerified ? 'border-emerald-500/40 focus:border-emerald-500' : 'border-border'
+                            }`}
+                            placeholder="+91 00000 00000"
+                          />
+                          <div className="absolute right-2 top-2">
+                            {isVerified ? (
+                              <span className="h-7 px-2.5 bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 text-xs font-bold rounded-lg flex items-center gap-1">
+                                <CheckCircle2 className="w-3.5 h-3.5" /> Verified
+                              </span>
+                            ) : (
+                              <Button
+                                type="button"
+                                size="sm"
+                                onClick={() => {
+                                  if (cleanCurrent.length < 10) {
+                                    toast.error('Please enter a valid 10-digit mobile number first');
+                                    return;
+                                  }
+                                  setIsPhoneDialogOpen(true);
+                                }}
+                                disabled={cleanCurrent.length < 10}
+                                className="h-7 text-xs font-black bg-amber-500 hover:bg-amber-600 text-white rounded-lg px-3 shadow-xs gap-1"
+                              >
+                                <ShieldCheck className="w-3.5 h-3.5" /> Verify
+                              </Button>
+                            )}
+                          </div>
+                        </>
+                      );
+                    })()}
+                  </div>
+
+                  <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+                    <span>Used for order delivery coordination & driver OTP</span>
+                    {(() => {
+                      const cleanCurrent = (formData.phone || '').replace(/\D/g, '').slice(-10);
+                      const cleanVerified = (profile?.verifiedPhone || (profile?.phoneVerified ? profile?.phone : '') || '').replace(/\D/g, '').slice(-10);
+                      const isVerified = Boolean(profile?.phoneVerified && cleanCurrent.length === 10 && cleanCurrent === cleanVerified);
+
+                      if (!isVerified && cleanCurrent.length >= 10) {
+                        return (
+                          <span className="text-amber-600 dark:text-amber-400 font-semibold flex items-center gap-1">
+                            <AlertCircle className="w-3 h-3" /> Unverified Number
+                          </span>
+                        );
+                      }
+                      return null;
+                    })()}
                   </div>
                 </div>
               </div>
@@ -656,6 +752,29 @@ export default function ProfilePage() {
 
         </div>
       </div>
+
+      {/* Luxury Phone Verification OTP Dialog */}
+      {user && (
+        <PhoneVerificationDialog
+          isOpen={isPhoneDialogOpen}
+          onClose={() => setIsPhoneDialogOpen(false)}
+          phoneNumber={formData.phone}
+          customerId={user.uid}
+          onSuccess={(verifiedPhone) => {
+            setFormData((prev) => ({ ...prev, phone: verifiedPhone }));
+            setProfile((prev) =>
+              prev
+                ? {
+                    ...prev,
+                    phone: verifiedPhone,
+                    phoneVerified: true,
+                    verifiedPhone: verifiedPhone.replace(/\D/g, '').slice(-10),
+                  }
+                : null
+            );
+          }}
+        />
+      )}
     </div>
   );
 }

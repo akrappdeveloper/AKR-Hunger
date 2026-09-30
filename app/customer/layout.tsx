@@ -1,6 +1,7 @@
 import React from "react"
 import CustomerNavbar from '@/components/customer/CustomerNavbar';
 import CustomerMobileNav from '@/components/customer/MobileNav';
+import ActiveOrderFloatingTracker from '@/components/customer/ActiveOrderFloatingTracker';
 import FloatingAIChatWidget from '@/components/ai/FloatingAIChatWidget';
 import { NotificationProvider } from '@/context/NotificationContext';
 import { Metadata } from 'next';
@@ -70,6 +71,7 @@ export default function CustomerLayout({
         <CustomerNavbar />
         <main className="pt-0 pb-16 md:pb-0">{children}</main>
         <CustomerMobileNav />
+        <ActiveOrderFloatingTracker />
         <FloatingAIChatWidget role="customer" buttonText="Help AI" />
 
         {/* JSON-LD Schema for SEO */}

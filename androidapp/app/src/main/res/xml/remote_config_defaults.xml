@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<defaultsMap>
+    <entry>
+        <key>free_delivery_threshold</key>
+        <value>199.0</value>
+    </entry>
+    <entry>
+        <key>delivery_fee</key>
+        <value>30.0</value>
+    </entry>
+    <entry>
+        <key>tax_rate</key>
+        <value>0.05</value>
+    </entry>
+    <entry>
+        <key>cod_enabled</key>
+        <value>true</value>
+    </entry>
+    <entry>
+        <key>online_payment_enabled</key>
+        <value>true</value>
+    </entry>
+    <entry>
+        <key>wallet_enabled</key>
+        <value>true</value>
+    </entry>
+    <entry>
+        <key>maintenance_mode</key>
+        <value>false</value>
+    </entry>
+    <entry>
+        <key>min_supported_version</key>
+        <value>1</value>
+    </entry>
+    <entry>
+        <key>promo_banner_text</key>
+        <value>Order fresh food from top restaurants delivered fast to your doorstep! 🍕🍔</value>
+    </entry>
+    <entry>
+        <key>customer_support_phone</key>
+        <value>+91 98765 43210</value>
+    </entry>
+</defaultsMap>

@@ -289,11 +289,11 @@ export default function OrderTrackingPage() {
             </Badge>
 
             {/* Live Tracking Button */}
-            {order.deliveryPersonId && ['ready', 'out_for_delivery'].includes(order.status || '') && (
+            {order.status !== 'delivered' && order.status !== 'cancelled' && (
               <Link href={`/customer/orders/${orderId}/tracking`}>
-                <Badge className="bg-green-500/10 text-green-600 hover:bg-green-500/20 border border-green-500/20 px-3.5 py-1.5 text-xs sm:text-sm font-bold uppercase tracking-wider rounded-xl cursor-pointer gap-1.5 transition-colors">
-                  <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                  Track Live
+                <Badge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/30 px-3.5 py-1.5 text-xs sm:text-sm font-bold uppercase tracking-wider rounded-xl cursor-pointer gap-1.5 transition-colors shadow-xs">
+                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  Track Live Map ➔
                 </Badge>
               </Link>
             )}
@@ -526,7 +526,16 @@ export default function OrderTrackingPage() {
                 <div className="bg-card border border-dashed border-border rounded-3xl p-6 text-center text-muted-foreground">
                   <Bike className="w-8 h-8 mx-auto mb-2 opacity-60 text-primary" />
                   <p className="text-sm font-semibold text-foreground">Delivery Partner Assignment in Progress</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">The nearest delivery rider will be assigned as soon as the kitchen prepares your items.</p>
+                  <p className="text-xs text-muted-foreground mt-0.5 max-w-md mx-auto">
+                    The kitchen is preparing your meal. Live GPS route is active on our interactive map.
+                  </p>
+                  <div className="mt-4">
+                    <Link href={`/customer/orders/${orderId}/tracking`}>
+                      <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl px-5 text-xs gap-1.5 shadow-md shadow-emerald-600/20">
+                        <Navigation className="w-3.5 h-3.5" /> Open Live Map Tracking ➔
+                      </Button>
+                    </Link>
+                  </div>
                 </div>
               )
             )}

@@ -24,8 +24,12 @@ import {
     ShieldCheck,
     Store,
     ChevronRight,
-    Tag
+    Tag,
+    Bike,
+    Navigation,
+    CheckCircle2
 } from 'lucide-react';
+import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
@@ -65,8 +69,45 @@ export default function RestaurantClient({
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isFavorite, setIsFavorite] = useState(false);
     const [activePromotions, setActivePromotions] = useState<any[]>([]);
+    const [activeOrder, setActiveOrder] = useState<any | null>(null);
 
     const categoryRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+
+    // Listen for customer's ongoing active order with this restaurant
+    useEffect(() => {
+        if (!user || !restaurantId) {
+            setActiveOrder(null);
+            return;
+        }
+
+        try {
+            const { collection, query, where, onSnapshot } = require('firebase/firestore');
+            const ordersRef = collection(db, 'orders');
+            const q = query(
+                ordersRef,
+                where('customerId', '==', user.uid),
+                where('restaurantId', '==', restaurantId)
+            );
+
+            const unsubscribe = onSnapshot(q, (snapshot: any) => {
+                const active = snapshot.docs
+                    .map((d: any) => ({ id: d.id, ...d.data() }))
+                    .filter((ord: any) => ['pending', 'confirmed', 'preparing', 'ready', 'out_for_delivery'].includes(ord.status))
+                    .sort((a: any, b: any) => {
+                        const timeA = a.createdAt?.seconds || 0;
+                        const timeB = b.createdAt?.seconds || 0;
+                        return timeB - timeA;
+                    })[0];
+                setActiveOrder(active || null);
+            }, (err: any) => {
+                console.error('Error tracking active restaurant order:', err);
+            });
+
+            return () => unsubscribe();
+        } catch (e) {
+            console.error('Active order listener setup error:', e);
+        }
+    }, [user, restaurantId]);
 
     // Fetch active promotions specifically applicable to this restaurant or global platform
     useEffect(() => {
@@ -434,6 +475,36 @@ export default function RestaurantClient({
 
             {/* 2. LUXURY RESTAURANT HERO CARD & DETAILS SECTION */}
             <div className="max-w-7xl mx-auto px-3 sm:px-6 pt-4 sm:pt-6">
+                {/* Active Order In-Progress Alert Banner */}
+                {activeOrder && (
+                    <div className="mb-4 p-4 rounded-3xl bg-gradient-to-r from-emerald-500/15 via-teal-500/10 to-primary/15 border-2 border-emerald-500/30 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-lg shadow-emerald-500/5 animate-pulse-subtle">
+                        <div className="flex items-center gap-3.5 w-full sm:w-auto">
+                            <div className="w-11 h-11 rounded-2xl bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-md">
+                                <Bike className="w-6 h-6 animate-bounce" />
+                            </div>
+                            <div>
+                                <div className="flex items-center gap-2 flex-wrap">
+                                    <span className="text-xs font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping inline-block" />
+                                        Order in Progress
+                                    </span>
+                                    <Badge className="bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 text-[10px] uppercase font-black px-2 py-0.5">
+                                        {activeOrder.status === 'out_for_delivery' ? 'Rider on the way' : activeOrder.status?.replace('_', ' ')}
+                                    </Badge>
+                                </div>
+                                <p className="text-xs font-bold text-foreground mt-0.5">
+                                    Order #{activeOrder.id.slice(-6).toUpperCase()} • {activeOrder.items?.length || 0} item{(activeOrder.items?.length || 0) > 1 ? 's' : ''}
+                                </p>
+                            </div>
+                        </div>
+                        <Link href={`/customer/orders/${activeOrder.id}/tracking`} className="w-full sm:w-auto shrink-0">
+                            <Button size="sm" className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-md gap-1.5 text-xs px-5 py-2.5">
+                                <Navigation className="w-3.5 h-3.5" /> Track Live Map ➔
+                            </Button>
+                        </Link>
+                    </div>
+                )}
+
                 <div className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-card via-card/95 to-primary/5 border border-border/80 shadow-lg p-5 sm:p-7 md:p-8">
                     
                     {/* Top Accent Line */}
@@ -512,15 +583,15 @@ export default function RestaurantClient({
                                 </div>
                             </div>
 
-                            {/* Min Order */}
+                            {/* Order Limit / Min Order */}
                             <div className="flex items-center gap-2 bg-muted/60 px-3 py-2 rounded-xl border border-border/70 text-foreground text-xs sm:text-sm font-semibold flex-1 md:flex-none">
-                                <div className="w-6 h-6 rounded-lg bg-amber-500/10 text-amber-500 flex items-center justify-center shrink-0">
+                                <div className="w-6 h-6 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center shrink-0">
                                     <ShoppingBag className="w-3.5 h-3.5" />
                                 </div>
                                 <div>
-                                    <span className="text-[10px] text-muted-foreground uppercase font-bold block leading-none">Min Order</span>
-                                    <span className="font-bold">
-                                        {restaurant.minimumOrder && restaurant.minimumOrder > 0 ? `₹${restaurant.minimumOrder}` : 'No Min. Order'}
+                                    <span className="text-[10px] text-muted-foreground uppercase font-bold block leading-none">Order Limit</span>
+                                    <span className="font-bold text-emerald-600 dark:text-emerald-400">
+                                        No Min. Order
                                     </span>
                                 </div>
                             </div>

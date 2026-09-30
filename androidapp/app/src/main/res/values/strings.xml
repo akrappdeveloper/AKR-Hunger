@@ -1,0 +1,158 @@
+<resources>
+    <string name="app_name">AKR Hunger</string>
+    <string name="app_tagline">Order Food Online • Fast Delivery</string>
+
+    <!-- Login -->
+    <string name="login_title">Welcome Back!</string>
+    <string name="login_subtitle">Sign in to order delicious food</string>
+    <string name="signup_title">Create Account</string>
+    <string name="signup_subtitle">Join AKR Hunger for amazing food</string>
+    <string name="email_hint">Email address</string>
+    <string name="password_hint">Password</string>
+    <string name="name_hint">Full Name</string>
+    <string name="phone_hint">Phone Number</string>
+    <string name="login_button">Sign In</string>
+    <string name="signup_button">Create Account</string>
+    <string name="google_signin">Continue with Google</string>
+    <string name="no_account">Don\'t have an account?</string>
+    <string name="have_account">Already have an account?</string>
+
+    <!-- Bottom Nav -->
+    <string name="nav_home">Home</string>
+    <string name="nav_search">Search</string>
+    <string name="nav_orders">Orders</string>
+    <string name="nav_favorites">Favorites</string>
+    <string name="nav_profile">Profile</string>
+
+    <!-- Home -->
+    <string name="eat_happy">Eat what makes you happy</string>
+    <string name="all_food">All</string>
+    <string name="featured_restaurants">Featured Restaurants</string>
+    <string name="popular_near">Popular Near You</string>
+    <string name="free_delivery">Free Delivery</string>
+    <string name="view_all">View all</string>
+    <string name="offer_title">50% OFF</string>
+    <string name="offer_subtitle">On Your First Order</string>
+    <string name="offer_code">Use code TASTY50 at checkout. Valid on orders above ₹199.</string>
+    <string name="order_now">Order Now</string>
+    <string name="limited_offer">Limited Time Offer</string>
+
+    <!-- Search -->
+    <string name="search_hint">Search for food, restaurants…</string>
+    <string name="trending">Trending Now 🔥</string>
+    <string name="popular_cuisines">Popular Cuisines</string>
+    <string name="recent_searches">Recent Searches</string>
+    <string name="no_results">No items found</string>
+    <string name="clear_all">Clear All</string>
+
+    <!-- Cart -->
+    <string name="your_cart">Your Cart</string>
+    <string name="empty_cart">Your cart is empty</string>
+    <string name="empty_cart_desc">Add items from a restaurant or menu to get started</string>
+    <string name="browse_menu">Browse Menu</string>
+    <string name="special_instructions">Special Instructions</string>
+    <string name="special_instructions_hint">E.g., Extra spicy, no onions…</string>
+    <string name="order_summary">Order Summary</string>
+    <string name="subtotal">Subtotal</string>
+    <string name="delivery_fee">Delivery Fee</string>
+    <string name="taxes">Taxes (5%)</string>
+    <string name="total">Total</string>
+    <string name="apply_coupon">Apply Coupon</string>
+    <string name="coupon_hint">Enter promo code</string>
+    <string name="apply">Apply</string>
+    <string name="payment_method">Payment Method</string>
+    <string name="cash_on_delivery">Cash on Delivery</string>
+    <string name="pay_online">Pay Online</string>
+    <string name="pay_wallet">AKR Wallet</string>
+    <string name="place_order">Place Order</string>
+    <string name="delivery_address">Delivery Address</string>
+    <string name="change">Change</string>
+
+    <!-- Orders -->
+    <string name="my_orders">My Orders</string>
+    <string name="no_orders">No orders yet</string>
+    <string name="no_orders_desc">Start ordering delicious food from our amazing restaurants</string>
+    <string name="reorder">Reorder</string>
+    <string name="rate_order">Rate</string>
+    <string name="cancel_order">Cancel Order</string>
+    <string name="track_order">Track Order</string>
+    <string name="order_placed">Order Placed</string>
+    <string name="order_confirmed">Confirmed</string>
+    <string name="order_preparing">Preparing</string>
+    <string name="order_on_way">On the Way</string>
+    <string name="order_delivered">Delivered</string>
+    <string name="order_cancelled">Cancelled</string>
+
+    <!-- Profile -->
+    <string name="my_profile">My Profile</string>
+    <string name="edit_profile">Edit Profile</string>
+    <string name="my_addresses">My Addresses</string>
+    <string name="add_address">Add Address</string>
+    <string name="wallet">Wallet</string>
+    <string name="notifications">Notifications</string>
+    <string name="help_support">Help &amp; Support</string>
+    <string name="logout">Logout</string>
+    <string name="logout_confirm">Are you sure you want to logout?</string>
+    <string name="save">Save</string>
+    <string name="cancel">Cancel</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+
+    <!-- Favorites -->
+    <string name="my_favorites">My Favorites</string>
+    <string name="no_favorites">No favorites yet</string>
+    <string name="no_favorites_desc">Save items and restaurants you love to find them quickly</string>
+    <string name="explore_food">Explore Food</string>
+    <string name="favorite_dishes">Favorite Dishes</string>
+    <string name="favorite_restaurants">Favorite Restaurants</string>
+
+    <!-- Wallet -->
+    <string name="my_wallet">My Wallet</string>
+    <string name="balance">Balance</string>
+    <string name="add_money">Add Money</string>
+    <string name="withdraw">Withdraw</string>
+    <string name="transaction_history">Transaction History</string>
+    <string name="no_transactions">No transactions yet</string>
+
+    <!-- Notifications -->
+    <string name="my_notifications">Notifications</string>
+    <string name="no_notifications">No notifications</string>
+    <string name="mark_all_read">Mark all as read</string>
+
+    <!-- Support -->
+    <string name="support_title">Help &amp; Support Center</string>
+    <string name="support_subtitle">Get help with your orders and account</string>
+    <string name="faq">FAQ</string>
+    <string name="submit_ticket">Submit Ticket</string>
+    <string name="contact_us">Contact Us</string>
+
+    <!-- Restaurant Detail -->
+    <string name="menu">Menu</string>
+    <string name="reviews">Reviews</string>
+    <string name="info">Info</string>
+    <string name="closed">Closed</string>
+    <string name="open_now">Open Now</string>
+    <string name="min_order">Min. Order ₹%1$d</string>
+    <string name="delivery_time">%1$d min</string>
+
+    <!-- Product Detail -->
+    <string name="add_to_cart">Add to Cart</string>
+    <string name="go_to_cart">Go to Cart</string>
+    <string name="description">Description</string>
+    <string name="preparation_time">Preparation Time</string>
+    <string name="similar_items">Similar Items</string>
+
+    <!-- General -->
+    <string name="loading">Loading…</string>
+    <string name="error_occurred">An error occurred</string>
+    <string name="retry">Retry</string>
+    <string name="ok">OK</string>
+    <string name="done">Done</string>
+    <string name="continue_text">Continue</string>
+    <string name="skip">Skip</string>
+    <string name="rupee_symbol">₹</string>
+    <string name="save_changes">Save Changes</string>
+
+    <!-- Google Sign-In - Replace with your actual Web Client ID from Firebase Console -->
+    <string name="default_web_client_id">YOUR_WEB_CLIENT_ID_HERE</string>
+</resources>

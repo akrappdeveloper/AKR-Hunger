@@ -73,10 +73,8 @@ export default function RestaurantCard({ restaurant }: RestaurantCardProps) {
               <Truck className="w-3 h-3" />
               <span>₹{restaurant.deliveryCharge}</span>
             </div>
-            <span>
-              {restaurant.minimumOrder && restaurant.minimumOrder > 0
-                ? `Min ₹${restaurant.minimumOrder}`
-                : 'No Min Order'}
+            <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+              No Min Order
             </span>
           </div>
         </div>

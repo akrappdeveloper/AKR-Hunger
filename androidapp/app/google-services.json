@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "670606536695",
+    "project_id": "akr-hunger",
+    "storage_bucket": "akr-hunger.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:670606536695:android:c3abd7545d160daa5508f2",
+        "android_client_info": {
+          "package_name": "com.ssr.hunger"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "670606536695-93so6an04lju2amlng232bhlubvgd19l.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAHx-UZYdZezFUnZ9ntgEdJPGyNh9vndr8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "670606536695-93so6an04lju2amlng232bhlubvgd19l.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

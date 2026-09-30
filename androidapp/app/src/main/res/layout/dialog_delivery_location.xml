@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/surface"
+    android:orientation="vertical"
+    android:padding="20dp">
+
+    <!-- Title -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="📍 Delivery Location"
+        android:textColor="@color/text_primary"
+        android:textSize="20sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:text="Select or add a delivery address"
+        android:textColor="@color/text_secondary"
+        android:textSize="13sp" />
+
+    <!-- Location Detection Panel (GPS, IP Address, Open Maps) -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:orientation="vertical">
+
+        <!-- Use GPS Button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_use_gps"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:text="📍 Use GPS Location"
+            android:textSize="14sp"
+            app:backgroundTint="@color/primary_10"
+            android:textColor="@color/primary"
+            app:cornerRadius="12dp"
+            app:icon="@drawable/ic_location"
+            app:iconTint="@color/primary" />
+
+        <!-- IP Address and Open Maps Row -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:orientation="horizontal">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_use_ip"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="46dp"
+                android:layout_weight="1"
+                android:layout_marginEnd="4dp"
+                android:text="🌐 IP Location"
+                android:textSize="12sp"
+                app:cornerRadius="12dp"
+                app:icon="@drawable/ic_globe"
+                app:iconTint="@color/primary"
+                app:strokeColor="@color/primary"
+                android:textColor="@color/primary" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_open_maps"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="46dp"
+                android:layout_weight="1"
+                android:layout_marginStart="4dp"
+                android:text="🗺️ Open Maps"
+                android:textSize="12sp"
+                app:cornerRadius="12dp"
+                app:icon="@drawable/ic_map"
+                app:iconTint="@color/primary"
+                app:strokeColor="@color/primary"
+                android:textColor="@color/primary" />
+        </LinearLayout>
+
+        <!-- Detection Status / Progress Bar -->
+        <ProgressBar
+            android:id="@+id/location_detect_progress"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="4dp"
+            android:layout_marginTop="6dp"
+            android:indeterminate="true"
+            android:indeterminateTint="@color/primary"
+            android:visibility="gone" />
+    </LinearLayout>
+
+    <!-- Saved Addresses -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:text="Saved Addresses"
+        android:textColor="@color/text_primary"
+        android:textSize="15sp"
+        android:textStyle="bold" />
+
+    <LinearLayout
+        android:id="@+id/address_list"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:orientation="vertical" />
+
+    <!-- Add New Address Toggle -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_add_new"
+        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:layout_marginTop="12dp"
+        android:text="＋ Add New Address"
+        android:textColor="@color/primary"
+        android:textSize="14sp"
+        app:cornerRadius="12dp"
+        app:strokeColor="@color/primary" />
+
+    <!-- Add New Address Form -->
+    <LinearLayout
+        android:id="@+id/add_new_form"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <!-- Address Type Radio -->
+        <RadioGroup
+            android:id="@+id/rg_address_type"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <RadioButton android:id="@+id/rb_home" android:layout_width="0dp"
+                android:layout_height="wrap_content" android:layout_weight="1"
+                android:text="🏠 Home" android:checked="true"
+                android:textColor="@color/text_primary" android:textSize="13sp" />
+            <RadioButton android:id="@+id/rb_work" android:layout_width="0dp"
+                android:layout_height="wrap_content" android:layout_weight="1"
+                android:text="💼 Work"
+                android:textColor="@color/text_primary" android:textSize="13sp" />
+            <RadioButton android:id="@+id/rb_other" android:layout_width="0dp"
+                android:layout_height="wrap_content" android:layout_weight="1"
+                android:text="📍 Other"
+                android:textColor="@color/text_primary" android:textSize="13sp" />
+        </RadioGroup>
+
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.AKR.TextInput"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="12dp" android:hint="Street Address *">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/et_street" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:inputType="textPostalAddress" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="8dp">
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.AKR.TextInput"
+                android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:hint="Pincode *">
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/et_pincode" android:layout_width="match_parent"
+                    android:layout_height="wrap_content" android:inputType="number"
+                    android:maxLength="6" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.AKR.TextInput"
+                android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:layout_marginStart="8dp" android:hint="City *">
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/et_city" android:layout_width="match_parent"
+                    android:layout_height="wrap_content" android:inputType="text" />
+            </com.google.android.material.textfield.TextInputLayout>
+        </LinearLayout>
+
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="8dp">
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.AKR.TextInput"
+                android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:hint="State">
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/et_state" android:layout_width="match_parent"
+                    android:layout_height="wrap_content" android:inputType="text" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.AKR.TextInput"
+                android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:layout_marginStart="8dp" android:hint="Landmark">
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/et_landmark" android:layout_width="match_parent"
+                    android:layout_height="wrap_content" android:inputType="text" />
+            </com.google.android.material.textfield.TextInputLayout>
+        </LinearLayout>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_save_address"
+            style="@style/Widget.AKR.Button.Primary"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginTop="16dp"
+            android:text="Save Address"
+            android:textSize="14sp" />
+    </LinearLayout>
+</LinearLayout>

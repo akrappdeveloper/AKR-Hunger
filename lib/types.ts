@@ -4,6 +4,8 @@ export interface Customer {
   email: string;
   name: string;
   phone?: string;
+  phoneVerified?: boolean;
+  verifiedPhone?: string;
   avatar?: string;
   addresses?: Address[];
   defaultAddressId?: string;
