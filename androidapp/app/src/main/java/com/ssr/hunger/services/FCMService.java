@@ -19,14 +19,14 @@ import com.google.firebase.messaging.RemoteMessage;
  */
 public class FCMService extends FirebaseMessagingService {
 
-    private static final String CHANNEL_ID = "akr_hunger_channel";
-    private static final String CHANNEL_NAME = "AKR Hunger Notifications";
+    private static final String CHANNEL_ID = "hunger_channel";
+    private static final String CHANNEL_NAME = "Hunger Notifications";
 
     @Override
     public void onMessageReceived(@NonNull RemoteMessage remoteMessage) {
         super.onMessageReceived(remoteMessage);
 
-        String title = "AKR Hunger";
+        String title = "Hunger";
         String body = "You have a new notification";
 
         if (remoteMessage.getNotification() != null) {
@@ -65,7 +65,7 @@ public class FCMService extends FirebaseMessagingService {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel channel = new NotificationChannel(
                     CHANNEL_ID, CHANNEL_NAME, NotificationManager.IMPORTANCE_HIGH);
-            channel.setDescription("Order updates and promotions from AKR Hunger");
+            channel.setDescription("Order updates and promotions from Hunger");
             notificationManager.createNotificationChannel(channel);
         }
 

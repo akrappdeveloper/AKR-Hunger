@@ -55,7 +55,7 @@ public class CrashlyticsHelper {
                     .putString("build_type", BuildConfig.BUILD_TYPE)
                     .putInt("version_code", BuildConfig.VERSION_CODE)
                     .putString("version_name", BuildConfig.VERSION_NAME)
-                    .putString("app_name", "AKRHunger")
+                    .putString("app_name", "Hunger")
                     .putString("device_manufacturer", Build.MANUFACTURER)
                     .putString("device_model", Build.MODEL)
                     .putInt("android_sdk_version", Build.VERSION.SDK_INT)
@@ -213,6 +213,6 @@ public class CrashlyticsHelper {
      */
     public void simulateCrashForTesting() {
         log("Crashlytics test crash triggered intentionally!");
-        throw new RuntimeException("Firebase Crashlytics Test Crash - AKRHunger App Verification");
+        throw new RuntimeException("Firebase Crashlytics Test Crash - Hunger App Verification");
     }
 }

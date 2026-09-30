@@ -58,10 +58,10 @@ public class Constants {
             {"How do I cancel an order?",
                     "You can cancel free of charge within 5 minutes of placing it from the order details page before preparation starts."},
             {"When will I get my refund?",
-                    "Refunds to AKR Wallet are instant! Refunds to bank cards or UPI take 5-7 business days via Razorpay."},
+                    "Refunds to Hunger Wallet are instant! Refunds to bank cards or UPI take 5-7 business days via Razorpay."},
             {"Food quality or missing item issue?",
                     "We apologize for the inconvenience! Submit a support ticket with order details for immediate resolution."},
             {"How do loyalty reward points work?",
-                    "You earn loyalty reward points on every order placed on AKR Hunger. Points can be redeemed for instant discounts during checkout."}
+                    "You earn loyalty reward points on every order placed on Hunger. Points can be redeemed for instant discounts during checkout."}
     };
 }

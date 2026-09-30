@@ -221,12 +221,12 @@ public class SettingsActivity extends BaseActivity {
 
         findViewById(R.id.row_terms).setOnClickListener(v -> showInfoDialog(
                 "Terms & Conditions",
-                "By using AKR Hunger, you agree to our service terms regarding orders, payments, refunds, and delivery commitments. All orders are processed in real-time."
+                "By using Hunger, you agree to our service terms regarding orders, payments, refunds, and delivery commitments. All orders are processed in real-time."
         ));
 
         findViewById(R.id.row_privacy).setOnClickListener(v -> showInfoDialog(
                 "Privacy Policy",
-                "AKR Hunger respects your privacy. We securely store your delivery address, phone number, and order history strictly for providing food delivery services. We never sell your personal data."
+                "Hunger respects your privacy. We securely store your delivery address, phone number, and order history strictly for providing food delivery services. We never sell your personal data."
         ));
     }
 

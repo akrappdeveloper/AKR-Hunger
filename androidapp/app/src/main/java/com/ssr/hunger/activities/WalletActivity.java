@@ -195,7 +195,7 @@ public class WalletActivity extends BaseActivity implements PaymentResultListene
             checkout.setKeyID(Constants.RAZORPAY_KEY_ID);
 
             JSONObject options = new JSONObject();
-            options.put("name", "AKR Hunger Wallet");
+            options.put("name", "Hunger Wallet");
             options.put("description", String.format(Locale.getDefault(), "Add ₹%.2f to wallet", amount));
             options.put("amount", Math.round(amount * 100)); // Amount in paise
             options.put("currency", "INR");

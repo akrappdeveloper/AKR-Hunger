@@ -281,7 +281,7 @@ public class MapPickerDialog extends BottomSheetDialogFragment {
                             "https://nominatim.openstreetmap.org/reverse?format=json&lat=%.6f&lon=%.6f&zoom=18&addressdetails=1",
                             lat, lon));
                     HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                    conn.setRequestProperty("User-Agent", "AKRHungerApp/1.0 (Android Food Delivery)");
+                    conn.setRequestProperty("User-Agent", "HungerApp/1.0 (Android Food Delivery)");
                     conn.setConnectTimeout(5000);
                     conn.setReadTimeout(5000);
 
