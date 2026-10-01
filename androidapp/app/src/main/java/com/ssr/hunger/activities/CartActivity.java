@@ -15,6 +15,7 @@ import com.ssr.hunger.adapters.CartItemAdapter;
 import com.ssr.hunger.models.CartItem;
 import com.ssr.hunger.utils.CartManager;
 import com.ssr.hunger.utils.Constants;
+import com.ssr.hunger.utils.NotificationHelper;
 import com.ssr.hunger.utils.PerformanceHelper;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
@@ -266,8 +267,24 @@ public class CartActivity extends BaseActivity implements CartManager.CartChange
                     );
 
                     logBreadcrumb("Order confirmed successfully in Firestore: " + docRef.getId());
+
+                    // Trigger Order Confirmation Notification (FCM / Local + Firestore persistence)
+                    NotificationHelper.sendOrderNotification(
+                            CartActivity.this,
+                            user.getUid(),
+                            docRef.getId(),
+                            restaurantName != null ? restaurantName : "Restaurant",
+                            total,
+                            "confirmed"
+                    );
+
                     cartManager.clearCart();
                     Toast.makeText(this, "Order placed successfully! 🎉", Toast.LENGTH_LONG).show();
+
+                    // Navigate directly to OrderDetailActivity so user sees real-time tracking
+                    android.content.Intent intent = new android.content.Intent(CartActivity.this, OrderDetailActivity.class);
+                    intent.putExtra(Constants.EXTRA_ORDER_ID, docRef.getId());
+                    startActivity(intent);
                     finish();
                 })
                 .addOnFailureListener(e -> {

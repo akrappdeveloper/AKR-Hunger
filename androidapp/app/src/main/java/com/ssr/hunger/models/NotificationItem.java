@@ -84,6 +84,22 @@ public class NotificationItem {
     }
 
     public String getIconEmoji() {
+        if (title != null) {
+            String lower = title.toLowerCase();
+            if (lower.contains("delivered")) return "🍽️";
+            if (lower.contains("out for delivery") || lower.contains("on the way")) return "🛵";
+            if (lower.contains("cancelled")) return "❌";
+            if (lower.contains("confirmed") || lower.contains("preparing")) return "👨‍🍳";
+            if (lower.contains("ready") || lower.contains("pickup")) return "📦";
+        }
+        if (subType != null) {
+            String lower = subType.toLowerCase();
+            if (lower.contains("delivered")) return "🍽️";
+            if (lower.contains("delivery")) return "🛵";
+            if (lower.contains("cancel")) return "❌";
+            if (lower.contains("confirm")) return "👨‍🍳";
+            if (lower.contains("ready")) return "📦";
+        }
         if (type == null) return "🔔";
         switch (type.toLowerCase()) {
             case "order":

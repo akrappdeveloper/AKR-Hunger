@@ -61,6 +61,16 @@ public class OrderDetailActivity extends BaseActivity {
                     String newStatus = order.getStatus() != null ? order.getStatus() : "";
                     if (!newStatus.equals(lastStatus)) {
                         logBreadcrumb("Order #" + orderId.substring(0, Math.min(8, orderId.length())) + " status: " + newStatus);
+                        if (!lastStatus.isEmpty() && order.getCustomerId() != null) {
+                            com.ssr.hunger.utils.NotificationHelper.sendOrderNotification(
+                                    OrderDetailActivity.this,
+                                    order.getCustomerId(),
+                                    orderId,
+                                    order.getRestaurantName(),
+                                    order.getTotal(),
+                                    newStatus
+                            );
+                        }
                         lastStatus = newStatus;
                     }
 

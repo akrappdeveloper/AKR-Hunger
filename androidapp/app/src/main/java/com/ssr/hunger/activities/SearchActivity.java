@@ -257,9 +257,8 @@ public class SearchActivity extends BaseActivity {
                     String lowerQuery = query.toLowerCase();
 
                     for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
-                        MenuItem item = doc.toObject(MenuItem.class);
+                        MenuItem item = MenuItem.fromSnapshot(doc);
                         if (item != null) {
-                            item.setId(doc.getId());
                             String name = item.getName() != null ? item.getName().toLowerCase() : "";
                             String desc = item.getDescription() != null ? item.getDescription().toLowerCase() : "";
                             String cat = item.getCategory() != null ? item.getCategory().toLowerCase() : "";

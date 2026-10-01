@@ -59,6 +59,10 @@ public class MainActivity extends BaseActivity implements CartManager.CartChange
         }
 
         updateCartBadge();
+
+        // Notification Permission (Android 13+) & FCM Token Sync with Firestore
+        com.ssr.hunger.utils.NotificationHelper.requestNotificationPermission(this);
+        com.ssr.hunger.utils.NotificationHelper.syncFcmToken(this);
     }
 
     private void setupBottomNavigation() {

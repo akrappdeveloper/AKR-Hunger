@@ -1,8 +1,10 @@
 package com.ssr.hunger.models;
 
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.IgnoreExtraProperties;
 import java.util.List;
-import java.util.Map;
 
+@IgnoreExtraProperties
 public class MenuItem {
     private String id;
     private String restaurantId;
@@ -11,10 +13,12 @@ public class MenuItem {
     private String image;
     private List<String> images;
     private double price;
+    private double originalPrice;
+    private int calories;
     private String category;
     private boolean vegetarian;
     private boolean spicy;
-    private boolean available;
+    private boolean available = true;
     private int preparationTime;
     private boolean isBestSeller;
     private boolean isNew;
@@ -35,7 +39,7 @@ public class MenuItem {
     public String getRestaurantId() { return restaurantId; }
     public void setRestaurantId(String restaurantId) { this.restaurantId = restaurantId; }
 
-    public String getName() { return name; }
+    public String getName() { return name != null ? name : "Delicious Item"; }
     public void setName(String name) { this.name = name; }
 
     public String getDescription() { return description; }
@@ -50,7 +54,13 @@ public class MenuItem {
     public double getPrice() { return price; }
     public void setPrice(double price) { this.price = price; }
 
-    public String getCategory() { return category; }
+    public double getOriginalPrice() { return originalPrice; }
+    public void setOriginalPrice(double originalPrice) { this.originalPrice = originalPrice; }
+
+    public int getCalories() { return calories; }
+    public void setCalories(int calories) { this.calories = calories; }
+
+    public String getCategory() { return category != null ? category : "General"; }
     public void setCategory(String category) { this.category = category; }
 
     public boolean isVegetarian() { return vegetarian; }
@@ -92,8 +102,139 @@ public class MenuItem {
     public String getRestaurantName() { return restaurantName; }
     public void setRestaurantName(String restaurantName) { this.restaurantName = restaurantName; }
 
-    /** Check if this item should be shown to customers */
+    /**
+     * Check if this item should be shown to customers.
+     * Items explicitly marked 'rejected' or unapproved 'pending' items are hidden.
+     * Approved items, live items, and standard catalog items are cleanly visible.
+     */
     public boolean isVisibleToCustomers() {
-        return "approved".equals(approvalStatus) && isLive;
+        if ("rejected".equalsIgnoreCase(approvalStatus)) {
+            return false;
+        }
+        if ("pending".equalsIgnoreCase(approvalStatus) && !isLive) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Safe factory to deserialize a Firestore DocumentSnapshot into a MenuItem,
+     * protecting against type mismatches (e.g. Long vs Double, String vs Number).
+     */
+    public static MenuItem fromSnapshot(DocumentSnapshot doc) {
+        if (doc == null || !doc.exists()) return null;
+
+        MenuItem item = null;
+        try {
+            item = doc.toObject(MenuItem.class);
+        } catch (Exception ignored) {}
+
+        if (item == null) {
+            item = new MenuItem();
+        }
+        item.setId(doc.getId());
+
+        // Fill or repair fields
+        if (item.name == null || item.name.isEmpty()) {
+            item.setName(doc.getString("name"));
+        }
+        if (item.description == null) {
+            item.setDescription(doc.getString("description"));
+        }
+        if (item.restaurantId == null || item.restaurantId.isEmpty()) {
+            String rId = doc.getString("restaurantId");
+            if (rId == null) rId = doc.getString("restaurant_id");
+            item.setRestaurantId(rId);
+        }
+        if (item.restaurantName == null || item.restaurantName.isEmpty()) {
+            item.setRestaurantName(doc.getString("restaurantName"));
+        }
+        if (item.category == null || item.category.isEmpty()) {
+            item.setCategory(doc.getString("category"));
+        }
+        if (item.image == null || item.image.isEmpty()) {
+            String img = doc.getString("image");
+            if (img == null) img = doc.getString("imageUrl");
+            item.setImage(img);
+        }
+
+        // Safe price conversion
+        Object priceObj = doc.get("price");
+        if (priceObj instanceof Number) {
+            item.setPrice(((Number) priceObj).doubleValue());
+        } else if (priceObj instanceof String) {
+            try {
+                item.setPrice(Double.parseDouble((String) priceObj));
+            } catch (Exception ignored) {}
+        }
+
+        // Safe original price conversion
+        Object origPriceObj = doc.get("originalPrice");
+        if (origPriceObj instanceof Number) {
+            item.setOriginalPrice(((Number) origPriceObj).doubleValue());
+        }
+
+        // Calories
+        Object calObj = doc.get("calories");
+        if (calObj instanceof Number) {
+            item.setCalories(((Number) calObj).intValue());
+        }
+
+        // Available
+        Boolean avail = doc.getBoolean("available");
+        if (avail == null) avail = doc.getBoolean("isAvailable");
+        if (avail != null) {
+            item.setAvailable(avail);
+        }
+
+        // Live
+        Boolean live = doc.getBoolean("isLive");
+        if (live == null) live = doc.getBoolean("live");
+        if (live != null) {
+            item.setLive(live);
+        }
+
+        // Approval status
+        String status = doc.getString("approvalStatus");
+        if (status != null) {
+            item.setApprovalStatus(status);
+        }
+
+        // Veg / Non-Veg
+        Boolean veg = doc.getBoolean("vegetarian");
+        if (veg == null) veg = doc.getBoolean("isVegetarian");
+        if (veg != null) {
+            item.setVegetarian(veg);
+        }
+
+        // Spicy
+        Boolean spicy = doc.getBoolean("spicy");
+        if (spicy == null) spicy = doc.getBoolean("isSpicy");
+        if (spicy != null) {
+            item.setSpicy(spicy);
+        }
+
+        // Rating
+        Object ratingObj = doc.get("averageRating");
+        if (ratingObj == null) ratingObj = doc.get("rating");
+        if (ratingObj instanceof Number) {
+            item.setAverageRating(((Number) ratingObj).doubleValue());
+        }
+
+        // Reviews count
+        Object revObj = doc.get("totalReviews");
+        if (revObj == null) revObj = doc.get("numReviews");
+        if (revObj instanceof Number) {
+            item.setTotalReviews(((Number) revObj).intValue());
+        }
+
+        // Prep time
+        Object prepObj = doc.get("preparationTime");
+        if (prepObj == null) prepObj = doc.get("pickupPrepTime");
+        if (prepObj instanceof Number) {
+            item.setPreparationTime(((Number) prepObj).intValue());
+        }
+
+        return item;
     }
 }

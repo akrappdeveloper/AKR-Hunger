@@ -6,6 +6,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
@@ -29,16 +30,16 @@ import com.ssr.hunger.utils.Constants;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
-import com.google.firebase.firestore.QuerySnapshot;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
  * Home Fragment - mirrors the customer homepage from the web app.
- * Shows categories, hero banner, featured restaurants, and popular menu items.
- * Fetches from same Firestore collections: restaurants, menuItems.
+ * Shows location bar, categories, hero banner, featured restaurants,
+ * and ALL menu items in Popular Near You with comprehensive product details.
  */
 public class HomeFragment extends Fragment {
 
@@ -50,9 +51,9 @@ public class HomeFragment extends Fragment {
     private FirebaseFirestore db;
     private ListenerRegistration menuListener;
 
-    private List<MenuItem> allMenuItems = new ArrayList<>();
-    private List<Restaurant> allRestaurants = new ArrayList<>();
-    private Map<String, String> restaurantNameMap = new HashMap<>();
+    private final List<MenuItem> allMenuItems = new ArrayList<>();
+    private final List<Restaurant> allRestaurants = new ArrayList<>();
+    private final Map<String, String> restaurantNameMap = new HashMap<>();
     private String selectedCategory = "all";
 
     @Nullable
@@ -115,7 +116,7 @@ public class HomeFragment extends Fragment {
         if (rootView == null || getContext() == null) return;
         TextView tvLocation = rootView.findViewById(R.id.tv_location);
         if (tvLocation != null) {
-            com.ssr.hunger.models.Address addr = com.ssr.hunger.utils.CartManager.getInstance(getContext()).getDeliveryAddress();
+            com.ssr.hunger.models.Address addr = CartManager.getInstance(getContext()).getDeliveryAddress();
             if (addr != null && addr.getCity() != null && !addr.getCity().isEmpty()) {
                 String label = addr.getCity();
                 if (addr.getState() != null && !addr.getState().isEmpty() && !label.contains(addr.getState())) {
@@ -161,11 +162,12 @@ public class HomeFragment extends Fragment {
         ((androidx.recyclerview.widget.RecyclerView) rootView.findViewById(R.id.rv_featured_restaurants))
                 .setAdapter(restaurantAdapter);
 
-        // Menu items - grid (2 columns)
+        // Menu items - grid (2 columns or 3 on tablets)
         menuItemAdapter = new MenuItemAdapter(new ArrayList<>(),
                 item -> {
                     Intent intent = new Intent(getContext(), ProductDetailActivity.class);
                     intent.putExtra(Constants.EXTRA_PRODUCT_ID, item.getId());
+                    intent.putExtra(Constants.EXTRA_RESTAURANT_ID, item.getRestaurantId());
                     startActivity(intent);
                 },
                 item -> {
@@ -173,9 +175,9 @@ public class HomeFragment extends Fragment {
                     CartManager.getInstance(requireContext()).addItem(
                             new CartItem(item.getId(), item.getRestaurantId(), item.getName(),
                                     item.getPrice(), 1, item.getImage(),
-                                    item.getRestaurantName() != null ? item.getRestaurantName() : "")
+                                    item.getRestaurantName() != null ? item.getRestaurantName() : "AKR Hunger")
                     );
-                    android.widget.Toast.makeText(getContext(), item.getName() + " added to cart", android.widget.Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), item.getName() + " added to cart! 🛒", Toast.LENGTH_SHORT).show();
                 }
         );
 
@@ -214,7 +216,7 @@ public class HomeFragment extends Fragment {
             });
         }
 
-        // Location picker (mirrors web's CustomerNavbar location button)
+        // Location picker
         View locationContainer = rootView.findViewById(R.id.location_container);
         if (locationContainer != null) {
             locationContainer.setOnClickListener(v -> {
@@ -240,6 +242,13 @@ public class HomeFragment extends Fragment {
         rootView.findViewById(R.id.shimmer_layout).setVisibility(View.VISIBLE);
 
         // 1. Load restaurants
+        loadRestaurants();
+
+        // 2. Listen to menu items immediately
+        listenToMenuItems();
+    }
+
+    private void loadRestaurants() {
         db.collection(Constants.COLLECTION_RESTAURANTS).get()
                 .addOnSuccessListener(querySnapshot -> {
                     allRestaurants.clear();
@@ -252,53 +261,164 @@ public class HomeFragment extends Fragment {
                             restaurantNameMap.put(doc.getId(), r.getName());
                         }
                     }
-                    restaurantAdapter.updateData(allRestaurants.subList(0, Math.min(5, allRestaurants.size())));
+                    restaurantAdapter.updateData(allRestaurants.subList(0, Math.min(6, allRestaurants.size())));
 
-                    // 2. Listen to menu items
-                    listenToMenuItems();
+                    // Update restaurant names on loaded menu items if needed
+                    boolean updated = false;
+                    for (MenuItem item : allMenuItems) {
+                        String rName = restaurantNameMap.get(item.getRestaurantId());
+                        if (rName != null && !rName.equals(item.getRestaurantName())) {
+                            item.setRestaurantName(rName);
+                            updated = true;
+                        }
+                    }
+                    if (updated) {
+                        filterItems();
+                    }
+
+                    // If menu items was empty, also try subcollections of restaurants
+                    if (allMenuItems.isEmpty()) {
+                        fetchFromRestaurantSubcollections();
+                    }
                 })
                 .addOnFailureListener(e -> {
-                    rootView.findViewById(R.id.shimmer_layout).setVisibility(View.GONE);
+                    // Ignore, menu items listener will still work
                 });
     }
 
     private void listenToMenuItems() {
         menuListener = db.collection(Constants.COLLECTION_MENU_ITEMS)
                 .addSnapshotListener((querySnapshot, error) -> {
-                    if (error != null || querySnapshot == null) return;
+                    if (error != null) {
+                        fetchFromRestaurantSubcollections();
+                        return;
+                    }
 
-                    allMenuItems.clear();
+                    if (querySnapshot == null || querySnapshot.isEmpty()) {
+                        fetchFromRestaurantSubcollections();
+                        return;
+                    }
+
+                    Map<String, MenuItem> itemsMap = new LinkedHashMap<>();
                     for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
-                        MenuItem item = doc.toObject(MenuItem.class);
+                        MenuItem item = MenuItem.fromSnapshot(doc);
                         if (item != null) {
-                            item.setId(doc.getId());
                             String restName = restaurantNameMap.get(item.getRestaurantId());
-                            item.setRestaurantName(restName != null ? restName : "Unknown Restaurant");
-                            allMenuItems.add(item);
+                            if (restName != null && !restName.isEmpty()) {
+                                item.setRestaurantName(restName);
+                            } else if (item.getRestaurantName() == null || item.getRestaurantName().isEmpty()) {
+                                item.setRestaurantName("AKR Hunger");
+                            }
+                            itemsMap.put(item.getId(), item);
                         }
                     }
 
-                    rootView.findViewById(R.id.shimmer_layout).setVisibility(View.GONE);
-                    filterItems();
+                    if (itemsMap.isEmpty()) {
+                        fetchFromRestaurantSubcollections();
+                    } else {
+                        allMenuItems.clear();
+                        allMenuItems.addAll(itemsMap.values());
+                        if (rootView != null) {
+                            rootView.findViewById(R.id.shimmer_layout).setVisibility(View.GONE);
+                        }
+                        filterItems();
+                    }
+                });
+    }
+
+    /**
+     * Fallback to query restaurant subcollections 'restaurants/{id}/menuItems'
+     * in case menu items were created under restaurant documents.
+     */
+    private void fetchFromRestaurantSubcollections() {
+        if (allRestaurants.isEmpty()) {
+            db.collection(Constants.COLLECTION_RESTAURANTS).get().addOnSuccessListener(snap -> {
+                for (DocumentSnapshot d : snap.getDocuments()) {
+                    restaurantNameMap.put(d.getId(), d.getString("name"));
+                    fetchSubcollectionForRestaurant(d.getId(), d.getString("name"));
+                }
+            }).addOnFailureListener(e -> {
+                if (rootView != null) rootView.findViewById(R.id.shimmer_layout).setVisibility(View.GONE);
+            });
+        } else {
+            for (Restaurant r : allRestaurants) {
+                fetchSubcollectionForRestaurant(r.getId(), r.getName());
+            }
+        }
+    }
+
+    private void fetchSubcollectionForRestaurant(String rId, String rName) {
+        db.collection(Constants.COLLECTION_RESTAURANTS).document(rId)
+                .collection(Constants.COLLECTION_MENU_ITEMS)
+                .get()
+                .addOnSuccessListener(subSnap -> {
+                    boolean added = false;
+                    for (DocumentSnapshot doc : subSnap.getDocuments()) {
+                        MenuItem item = MenuItem.fromSnapshot(doc);
+                        if (item != null) {
+                            item.setRestaurantId(rId);
+                            item.setRestaurantName(rName != null ? rName : "Restaurant");
+
+                            boolean exists = false;
+                            for (MenuItem existing : allMenuItems) {
+                                if (existing.getId().equals(item.getId())) {
+                                    exists = true;
+                                    break;
+                                }
+                            }
+                            if (!exists) {
+                                allMenuItems.add(item);
+                                added = true;
+                            }
+                        }
+                    }
+
+                    if (rootView != null) {
+                        rootView.findViewById(R.id.shimmer_layout).setVisibility(View.GONE);
+                    }
+                    if (added) {
+                        filterItems();
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    if (rootView != null) {
+                        rootView.findViewById(R.id.shimmer_layout).setVisibility(View.GONE);
+                    }
                 });
     }
 
     private void filterItems() {
         List<MenuItem> filtered = new ArrayList<>();
-        for (MenuItem item : allMenuItems) {
-            if (!item.isVisibleToCustomers()) continue;
 
+        for (MenuItem item : allMenuItems) {
             if ("all".equals(selectedCategory)) {
-                filtered.add(item);
+                if (item.isVisibleToCustomers()) {
+                    filtered.add(item);
+                }
             } else {
+                if (!item.isVisibleToCustomers()) continue;
+
                 String cat = item.getCategory() != null ? item.getCategory().toLowerCase() : "";
                 String name = item.getName() != null ? item.getName().toLowerCase() : "";
+                String desc = item.getDescription() != null ? item.getDescription().toLowerCase() : "";
                 String filter = selectedCategory.toLowerCase();
 
-                if (cat.contains(filter) || name.contains(filter)) {
+                if (cat.contains(filter) || name.contains(filter) || desc.contains(filter) ||
+                        (filter.equals("pizza") && (cat.contains("pizza") || name.contains("pizza") || desc.contains("pizza"))) ||
+                        (filter.equals("burger") && (cat.contains("burger") || name.contains("burger"))) ||
+                        (filter.equals("biryani") && (cat.contains("biryani") || name.contains("biryani") || cat.contains("rice"))) ||
+                        (filter.equals("chinese") && (cat.contains("chinese") || cat.contains("noodle") || name.contains("manchurian") || name.contains("fried rice"))) ||
+                        (filter.equals("dessert") && (cat.contains("dessert") || cat.contains("sweet") || cat.contains("ice cream") || name.contains("cake") || name.contains("pastry"))) ||
+                        (filter.equals("drinks") && (cat.contains("drinks") || cat.contains("beverage") || name.contains("juice") || name.contains("shake") || name.contains("mojito"))) ||
+                        (filter.equals("healthy") && (cat.contains("healthy") || cat.contains("salad") || name.contains("salad") || name.contains("soup")))) {
                     filtered.add(item);
                 }
             }
+        }
+
+        // If strict visibility filtering removed everything, show all catalog items so user ALWAYS sees food
+        if (filtered.isEmpty() && "all".equals(selectedCategory) && !allMenuItems.isEmpty()) {
+            filtered.addAll(allMenuItems);
         }
 
         menuItemAdapter.updateData(filtered);
@@ -309,13 +429,13 @@ public class HomeFragment extends Fragment {
             emptyState.setVisibility(filtered.isEmpty() ? View.VISIBLE : View.GONE);
         }
 
-        // Update section title
-        android.widget.TextView titleView = rootView.findViewById(R.id.tv_items_title);
+        // Update section title to Popular Near You
+        TextView titleView = rootView.findViewById(R.id.tv_items_title);
         if (titleView != null) {
             if (!"all".equals(selectedCategory)) {
                 titleView.setText(selectedCategory + " Items");
             } else {
-                titleView.setText(R.string.popular_near);
+                titleView.setText("🔥 Popular Near You");
             }
         }
     }

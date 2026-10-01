@@ -27,6 +27,9 @@
 # Keep Razorpay classes
 -keep class com.razorpay.** { *; }
 -keepclassmembers class com.razorpay.** { *; }
+-dontwarn com.razorpay.**
+-dontwarn com.google.android.apps.nbu.paisa.inapp.client.api.**
+-dontwarn proguard.annotation.**
 
 # Keep Glide
 -keep public class * implements com.bumptech.glide.module.GlideModule

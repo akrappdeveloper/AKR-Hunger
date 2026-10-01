@@ -257,6 +257,7 @@ public class LoginActivity extends BaseActivity {
     }
 
     private void navigateToMain() {
+        com.ssr.hunger.utils.NotificationHelper.syncFcmToken(this);
         startActivity(new Intent(this, MainActivity.class));
         finish();
     }

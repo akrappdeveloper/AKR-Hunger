@@ -12,6 +12,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.ListenerRegistration;
 import com.ssr.hunger.R;
 import com.ssr.hunger.adapters.NotificationAdapter;
 import com.ssr.hunger.models.NotificationItem;
@@ -36,6 +37,7 @@ public class NotificationsActivity extends BaseActivity {
     private NotificationAdapter adapter;
     private final List<NotificationItem> notificationList = new ArrayList<>();
     private FirebaseFirestore db;
+    private ListenerRegistration notifListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -100,14 +102,30 @@ public class NotificationsActivity extends BaseActivity {
 
         logBreadcrumb("Loading notifications for user: " + user.getUid());
 
-        // Resilient query: filter by userId without composite orderBy to prevent indexing crashes
-        db.collection(Constants.COLLECTION_NOTIFICATIONS)
+        if (notifListener != null) {
+            notifListener.remove();
+        }
+
+        // Realtime query: filter by userId without composite orderBy to prevent indexing crashes
+        notifListener = db.collection(Constants.COLLECTION_NOTIFICATIONS)
                 .whereEqualTo("userId", user.getUid())
                 .limit(60)
-                .get()
-                .addOnSuccessListener(querySnapshot -> {
+                .addSnapshotListener((querySnapshot, error) -> {
                     loadingIndicator.setVisibility(View.GONE);
                     swipeRefresh.setRefreshing(false);
+
+                    if (error != null) {
+                        recordException("loadNotifications_realtime_failed", error);
+                        if (notificationList.isEmpty()) {
+                            showEmptyState(true);
+                        }
+                        return;
+                    }
+
+                    if (querySnapshot == null) {
+                        if (notificationList.isEmpty()) showEmptyState(true);
+                        return;
+                    }
 
                     notificationList.clear();
                     int unreadCount = 0;
@@ -163,15 +181,6 @@ public class NotificationsActivity extends BaseActivity {
                     } else {
                         showEmptyState(false);
                         adapter.notifyDataSetChanged();
-                        rvNotifications.scheduleLayoutAnimation();
-                    }
-                })
-                .addOnFailureListener(e -> {
-                    recordException("loadNotifications_failed", e);
-                    loadingIndicator.setVisibility(View.GONE);
-                    swipeRefresh.setRefreshing(false);
-                    if (notificationList.isEmpty()) {
-                        showEmptyState(true);
                     }
                 });
     }
@@ -224,6 +233,15 @@ public class NotificationsActivity extends BaseActivity {
         }
         adapter.notifyDataSetChanged();
         updateUnreadUI(0);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (notifListener != null) {
+            notifListener.remove();
+            notifListener = null;
+        }
     }
 
     @Override

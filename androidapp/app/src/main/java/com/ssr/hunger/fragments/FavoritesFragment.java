@@ -92,9 +92,8 @@ public class FavoritesFragment extends Fragment {
                                 .get()
                                 .addOnSuccessListener(itemDoc -> {
                                     if (itemDoc.exists()) {
-                                        MenuItem item = itemDoc.toObject(MenuItem.class);
+                                        MenuItem item = MenuItem.fromSnapshot(itemDoc);
                                         if (item != null) {
-                                            item.setId(itemDoc.getId());
                                             favorites.add(item);
                                         }
                                     }
