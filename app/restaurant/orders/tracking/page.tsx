@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useRestaurantAuth } from '@/context/RestaurantAuthContext';
 import { db } from '@/lib/firebase';
 import { collection, query, where, onSnapshot, orderBy, doc } from 'firebase/firestore';
-import { Order, DeliveryStage, getStageLabel, getStageColor, getRouteDestination } from '@/lib/types';
+import { Order, DeliveryStage, getStageLabel, getStageColor, getRouteDestination, formatOrderId } from '@/lib/types';
 import LiveTrackingMap, { MapMarker } from '@/components/tracking/LiveTrackingMap';
 import DriverInfoPanel from '@/components/tracking/DriverInfoPanel';
 import { Button } from '@/components/ui/button';
@@ -397,13 +397,13 @@ export default function RestaurantLiveTrackingPage() {
                         <p className="text-[9px] uppercase tracking-wider text-muted-foreground">Accuracy</p>
                       </div>
                       <div className="bg-muted/60 rounded-xl p-2 text-center border border-border/40">
-                        <p className="text-xs font-bold text-foreground font-mono">#{order.id?.slice(0, 6).toUpperCase()}</p>
+                        <p className="text-xs font-bold text-foreground font-mono">#{formatOrderId(order.id)}</p>
                         <p className="text-[9px] uppercase tracking-wider text-muted-foreground">Order</p>
                       </div>
                     </div>
                   ) : (
                     <div className="bg-muted/30 rounded-xl p-2 text-center border border-border/30">
-                      <p className="text-xs text-muted-foreground font-mono">Order #{order.id?.slice(0, 8).toUpperCase()}</p>
+                      <p className="text-xs text-muted-foreground font-mono font-bold">Order #{formatOrderId(order.id)}</p>
                     </div>
                   )}
 

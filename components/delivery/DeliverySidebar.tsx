@@ -18,7 +18,8 @@ import {
   Bell,
   Star,
   ChevronRight,
-  Wallet
+  Wallet,
+  User
 } from 'lucide-react';
 import NotificationBell from '@/components/notifications/NotificationBell';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
@@ -50,6 +51,7 @@ export default function DeliverySidebar({ isMobile = false, onClose }: DeliveryS
     { href: '/delivery/history', label: 'History', icon: Clock },
     { href: '/delivery/earnings', label: 'Earnings', icon: TrendingUp },
     { href: '/delivery/wallet', label: 'Wallet', icon: Wallet },
+    { href: '/delivery/profile', label: 'Rider Profile & KYC', icon: User },
     { href: '/delivery/settings', label: 'Settings', icon: Settings },
     { href: '/delivery/notifications', label: 'Notifications', icon: Bell },
     { href: '/delivery/reviews', label: 'Reviews', icon: Star },

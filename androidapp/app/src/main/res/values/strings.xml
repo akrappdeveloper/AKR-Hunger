@@ -155,4 +155,34 @@
 
     <!-- Google Sign-In - Replace with your actual Web Client ID from Firebase Console -->
     <string name="default_web_client_id">YOUR_WEB_CLIENT_ID_HERE</string>
+
+    <!-- Order Tracking -->
+    <string name="live_tracking">🔴 Live Tracking</string>
+    <string name="eta_label">Estimated Arrival</string>
+    <string name="arriving_now">Arriving now! 🎉</string>
+    <string name="step_placed">📦 Order Placed</string>
+    <string name="step_confirmed">✅ Confirmed</string>
+    <string name="step_preparing">👨‍🍳 Kitchen Preparing</string>
+    <string name="step_ready">🍱 Food Ready</string>
+    <string name="step_out">🛵 Out for Delivery</string>
+    <string name="step_delivered">🎉 Delivered!</string>
+    <string name="driver_heading_to_restaurant">🏍️ Driver heading to restaurant</string>
+    <string name="driver_collecting_food">🍱 Driver collecting your food</string>
+    <string name="driver_on_way">🚀 Driver on the way to you</string>
+    <string name="driver_at_door">📍 Driver at your door!</string>
+    <string name="call_driver">Call Driver</string>
+    <string name="your_delivery_partner">Your Delivery Partner</string>
+    <string name="gps_live">📡 GPS Live</string>
+    <string name="order_delivered_msg">🎉 Your order has been delivered! Enjoy your meal!</string>
+
+    <!-- Pincode -->
+    <string name="service_pincodes">Service Pincodes</string>
+    <string name="pincode_filter_on">📍 Pincode filter ON</string>
+    <string name="pincode_filter_off">🌐 Showing all orders</string>
+    <string name="add_pincode">Add 6-digit pincode</string>
+
+    <!-- Support -->
+    <string name="contact_support">Contact Support</string>
+    <string name="having_issue">Having an issue?</string>
 </resources>
+

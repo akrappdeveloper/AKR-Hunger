@@ -2,12 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { doc, getDoc, addDoc, collection, updateDoc, Timestamp, onSnapshot, runTransaction, increment, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
+import { doc, getDoc, setDoc, addDoc, collection, updateDoc, Timestamp, onSnapshot, runTransaction, increment, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { loadRazorpayScript } from '@/lib/razorpay';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
 import { Restaurant, Order, OrderItem, Promotion } from '@/lib/types';
+import { generateProfessionalOrderId } from '@/lib/order-utils';
 import { validatePromotionCode, calculateDiscount, recordPromotionUsage } from '@/lib/promotions';
 import { notifyOrderPlaced, notifyPaymentResult } from '@/lib/customer-notifications';
 import { Button } from '@/components/ui/button';
@@ -170,7 +171,7 @@ export default function CartPage() {
         const data = docSnapshot.data() as any;
         setRealtimeCustomer(data);
       }
-    });
+    }, () => {});
     return () => unsubscribe();
   }, [user]);
 
@@ -220,9 +221,17 @@ export default function CartPage() {
   };
 
   const subtotal = getSubtotal();
+  const packagingCharges = 0; // restaurant?.packagingCharges || 0
   const deliveryCharge = restaurant?.deliveryCharge || 40;
-  const taxes = Math.round(subtotal * 0.05);
-  const total = Math.max(0, subtotal - discountAmount + deliveryCharge + taxes);
+  const platformFee = 0;
+  const discountedSubtotal = Math.max(0, subtotal - discountAmount);
+  const taxableValue = discountedSubtotal; // CGST+SGST on food value
+  const cgst = parseFloat((taxableValue * 0.025).toFixed(2));
+  const sgst = parseFloat((taxableValue * 0.025).toFixed(2));
+  const taxes = parseFloat((cgst + sgst).toFixed(2));
+  const total = parseFloat((discountedSubtotal + packagingCharges + deliveryCharge + platformFee + taxes).toFixed(2));
+  const amountPaid = paymentMethod === 'cod' ? 0 : 0; // 0 before order placed
+  const balanceDue = total;
 
   // Apply Promo Handler
   const handleApplyPromo = async (codeToApply?: string) => {
@@ -358,8 +367,13 @@ export default function CartPage() {
         });
 
         // Create immediately confirmed order
+        // Generate unified professional Order ID (e.g. KRIIEFDI4829)
+        const orderId = generateProfessionalOrderId();
+
         const orderData: Order = {
-          id: '',
+          id: orderId,
+          orderId: orderId,
+          orderNumber: orderId,
           customerId: user.uid,
           restaurantId,
           items: orderItems,
@@ -369,12 +383,19 @@ export default function CartPage() {
           paymentStatus: 'completed',
           walletTransactionId: walletTxId,
           subtotal,
+          packagingCharges,
+          platformFee,
+          taxableValue,
+          cgst,
+          sgst,
           deliveryCharge,
           taxes,
           discountAmount: discountAmount || 0,
           promotionId: appliedPromotion?.id || '',
           specialInstructions: specialInstructions || '',
           total,
+          amountPaid: total,
+          balanceDue: 0,
           createdAt: new Date(),
           updatedAt: new Date(),
           customerName: realtimeCustomer?.name || 'Guest',
@@ -383,7 +404,8 @@ export default function CartPage() {
           deliveryOtp: Math.floor(1000 + Math.random() * 9000).toString(),
         };
 
-        const docRef = await addDoc(collection(db, 'orders'), {
+        // Save order with matching document ID so all panels see the exact same ID
+        await setDoc(doc(db, 'orders', orderId), {
           ...orderData,
           createdAt: Timestamp.now(),
           updatedAt: Timestamp.now(),
@@ -391,7 +413,7 @@ export default function CartPage() {
 
         // Record promotion usage if a promotion was applied
         if (appliedPromotion && user) {
-          recordPromotionUsage(appliedPromotion.id, user.uid, docRef.id, discountAmount).catch(e => console.error('Promo record error:', e));
+          recordPromotionUsage(appliedPromotion.id, user.uid, orderId, discountAmount).catch(e => console.error('Promo record error:', e));
         }
 
         // Record customer wallet debit transaction
@@ -400,35 +422,39 @@ export default function CartPage() {
           amount: total,
           type: 'payment',
           status: 'completed',
-          referenceId: docRef.id,
-          description: `Paid for Order #${docRef.id.slice(-8).toUpperCase()} at ${restaurant?.name || 'AKR Hunger'}`,
+          referenceId: orderId,
+          description: `Paid for Order #${orderId} at ${restaurant?.name || 'AKR Hunger'}`,
           createdAt: serverTimestamp(),
         });
 
         // Trigger Notification (Fire and forget)
         fetch('/api/notifications/new-order', {
           method: 'POST',
-          body: JSON.stringify({ orderId: docRef.id }),
+          body: JSON.stringify({ orderId }),
         }).catch((err) => console.error('Failed to trigger notification', err));
 
         // Notify Customer of Order & Wallet Payment
         notifyOrderPlaced({
-          orderId: docRef.id,
+          orderId,
           customerId: user.uid,
           restaurantName: restaurant?.name || 'Restaurant',
           total,
           paymentMethod: 'wallet',
         }).catch((e) => console.error('Error sending wallet notification:', e));
 
-        toast.success(`₹${total} paid securely from your AKR Wallet! Order confirmed.`);
+        toast.success(`₹${total} paid securely from your AKR Wallet! Order #${orderId} confirmed.`);
         clearCart();
-        router.push(`/customer/orders/${docRef.id}/tracking`);
+        router.push(`/customer/orders/tracking/${orderId}`);
         return;
       }
 
       // ================= COD / ONLINE PAYMENT FLOW =================
+      const orderId = generateProfessionalOrderId();
+
       const orderData: Order = {
-        id: '',
+        id: orderId,
+        orderId: orderId,
+        orderNumber: orderId,
         customerId: user.uid,
         restaurantId,
         items: orderItems,
@@ -437,21 +463,29 @@ export default function CartPage() {
         paymentMethod,
         paymentStatus: 'pending',
         subtotal,
+        packagingCharges,
+        platformFee,
+        taxableValue,
+        cgst,
+        sgst,
         deliveryCharge,
         taxes,
         discountAmount: discountAmount || 0,
         promotionId: appliedPromotion?.id || '',
         specialInstructions: specialInstructions || '',
         total,
+        amountPaid: paymentMethod === 'cod' ? 0 : total,
+        balanceDue: paymentMethod === 'cod' ? total : 0,
         createdAt: new Date(),
         updatedAt: new Date(),
         customerName: realtimeCustomer?.name || 'Guest',
         customerPhone: verifiedPhone || realtimeCustomer?.phone || '',
         restaurantName: restaurant?.name || 'Unknown Restaurant',
-        deliveryOtp: Math.floor(1000 + Math.random() * 9000).toString(), // Generate 4-digit OTP
+        deliveryOtp: Math.floor(1000 + Math.random() * 9000).toString(),
       };
 
-      const docRef = await addDoc(collection(db, 'orders'), {
+      // Save order with matching document ID so all panels see the exact same ID
+      await setDoc(doc(db, 'orders', orderId), {
         ...orderData,
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now(),
@@ -459,30 +493,30 @@ export default function CartPage() {
 
       // Record promotion usage if a promotion was applied
       if (appliedPromotion && user) {
-        recordPromotionUsage(appliedPromotion.id, user.uid, docRef.id, discountAmount).catch(e => console.error('Promo record error:', e));
+        recordPromotionUsage(appliedPromotion.id, user.uid, orderId, discountAmount).catch(e => console.error('Promo record error:', e));
       }
 
       if (paymentMethod === 'cod') {
         // Trigger Notification (Fire and forget)
         fetch('/api/notifications/new-order', {
           method: 'POST',
-          body: JSON.stringify({ orderId: docRef.id }),
+          body: JSON.stringify({ orderId }),
         }).catch((err) => console.error('Failed to trigger notification', err));
 
         // Notify Customer of Order & COD Payment
         notifyOrderPlaced({
-          orderId: docRef.id,
+          orderId,
           customerId: user.uid,
           restaurantName: restaurant?.name || 'Restaurant',
           total,
           paymentMethod: 'cod',
         }).catch((e) => console.error('Error sending COD notification:', e));
 
-        toast.success('Order placed successfully!');
+        toast.success(`Order #${orderId} placed successfully!`);
         clearCart();
-        router.push(`/customer/orders/${docRef.id}/tracking`);
+        router.push(`/customer/orders/tracking/${orderId}`);
       } else {
-        await handleOnlinePayment(docRef.id, total, verifiedPhone);
+        await handleOnlinePayment(orderId, total, verifiedPhone);
       }
     } catch (error: any) {
       console.error('Order placement failed:', error);
@@ -537,6 +571,8 @@ export default function CartPage() {
               paymentStatus: 'completed',
               status: 'confirmed',
               razorpayPaymentId: response.razorpay_payment_id,
+              amountPaid: amount,
+              balanceDue: 0,
               updatedAt: Timestamp.now()
             });
             // Trigger Notification
@@ -557,7 +593,7 @@ export default function CartPage() {
 
             clearCart();
             toast.success('Payment successful!');
-            router.push(`/customer/orders/${orderId}/tracking`);
+            router.push(`/customer/orders/tracking/${orderId}`);
           } else {
             notifyPaymentResult({
               orderId,
@@ -1245,10 +1281,11 @@ export default function CartPage() {
                 <h3 className="font-bold text-base sm:text-lg text-foreground">Bill Summary</h3>
               </div>
 
-              <div className="space-y-3 text-sm">
+              <div className="space-y-2.5 text-sm">
+                {/* Item Subtotal */}
                 <div className="flex justify-between text-muted-foreground">
-                  <span>Item Total</span>
-                  <span className="text-foreground font-semibold">₹{subtotal}</span>
+                  <span>Item Subtotal</span>
+                  <span className="text-foreground font-semibold">₹{subtotal.toFixed(2)}</span>
                 </div>
 
                 {discountAmount > 0 && (
@@ -1262,16 +1299,61 @@ export default function CartPage() {
                 )}
 
                 <div className="flex justify-between text-muted-foreground">
-                  <span>Delivery Partner Fee</span>
-                  <span className="text-foreground font-semibold">₹{deliveryCharge}</span>
+                  <span>Packaging Charges</span>
+                  <span className="text-foreground font-semibold">₹{packagingCharges.toFixed(2)}</span>
                 </div>
+
                 <div className="flex justify-between text-muted-foreground">
-                  <span>Govt. Taxes & Packaging (5%)</span>
-                  <span className="text-foreground font-semibold">₹{taxes}</span>
+                  <span>Delivery Partner Fee</span>
+                  <span className="text-foreground font-semibold">₹{deliveryCharge.toFixed(2)}</span>
                 </div>
-                <div className="border-t border-border/70 pt-3 flex justify-between items-center text-base sm:text-lg">
-                  <span className="font-black text-foreground">Grand Total</span>
-                  <span className="font-black text-primary text-xl sm:text-2xl">₹{total}</span>
+
+                <div className="flex justify-between text-muted-foreground">
+                  <span>Platform Fee</span>
+                  <span className="text-foreground font-semibold">₹{platformFee.toFixed(2)}</span>
+                </div>
+
+                <div className="border-t border-border/40 pt-2 space-y-1.5">
+                  <div className="flex justify-between text-muted-foreground text-xs">
+                    <span>Taxable Supply Value</span>
+                    <span>₹{taxableValue.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-muted-foreground text-xs">
+                    <span>CGST (2.5%)</span>
+                    <span>₹{cgst.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-muted-foreground text-xs">
+                    <span>SGST (2.5%)</span>
+                    <span>₹{sgst.toFixed(2)}</span>
+                  </div>
+                </div>
+
+                <div className="border-t border-border/70 pt-3">
+                  <div className="flex justify-between items-center">
+                    <span className="font-black text-foreground text-base sm:text-lg">GRAND TOTAL</span>
+                    <span className="font-black text-primary text-xl sm:text-2xl">₹{total.toFixed(2)}</span>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground text-right mt-0.5">(All taxes included)</p>
+                </div>
+
+                <div className="border-t border-border/40 pt-2.5 space-y-1.5">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Amount Paid</span>
+                    <span className={`font-bold ${amountPaid > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-muted-foreground'}`}>
+                      ₹{amountPaid.toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Balance Due</span>
+                    <span className={`font-black ${balanceDue > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
+                      ₹{balanceDue.toFixed(2)}
+                    </span>
+                  </div>
+                  {paymentMethod === 'cod' && (
+                    <p className="text-[10px] text-amber-600 dark:text-amber-400 font-medium">
+                      Pay ₹{total.toFixed(2)} cash when order arrives
+                    </p>
+                  )}
                 </div>
               </div>
 

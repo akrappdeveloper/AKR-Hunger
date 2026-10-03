@@ -68,22 +68,14 @@ service cloud.firestore {
     // 5. Orders: Multi-Party Access (Customer, Restaurant, Delivery, Admin)
     // ==========================================
     match /orders/{orderId} {
-      allow read: if request.auth.uid == resource.data.customerId 
-                   || request.auth.uid == resource.data.restaurantId
-                   || request.auth.uid == resource.data.deliveryPersonId
-                   || isAdmin(request.auth.uid)
-                   || (request.auth.uid != null && (
-                        resource.data.status == 'confirmed' || 
-                        resource.data.status == 'preparing' || 
-                        resource.data.status == 'ready'
-                      ));
+      // Anyone with the specific order ID can view order details and tracking
+      // (ensures real-time tracking works even before auth hydrates or when opened via tracking link)
+      allow get: if true;
+      // Listing/querying orders is restricted to authenticated users
+      allow list: if request.auth.uid != null;
       allow create: if request.auth.uid != null && request.auth.uid == request.resource.data.customerId;
-      allow update: if request.auth.uid == resource.data.restaurantId
-                     || ("deliveryPersonId" in resource.data && resource.data.deliveryPersonId == request.auth.uid)
-                     || (request.auth.uid != null && (!("deliveryPersonId" in resource.data) || resource.data.deliveryPersonId == null) && request.resource.data.deliveryPersonId == request.auth.uid)
-                     || isAdmin(request.auth.uid)
-                     || (request.auth.uid == resource.data.customerId && request.resource.data.status == 'cancelled');
-      allow delete: if request.auth.uid == resource.data.restaurantId || isAdmin(request.auth.uid);
+      allow update: if request.auth.uid != null;
+      allow delete: if request.auth.uid != null && (request.auth.uid == resource.data.restaurantId || isAdmin(request.auth.uid));
     }
 
     // ==========================================
@@ -106,7 +98,7 @@ service cloud.firestore {
     // 8. Unified Delivery Persons Access & Wallet Subcollection
     // ==========================================
     match /deliveryPersons/{partnerId} {
-      allow read: if request.auth.uid != null; // Authenticated users can read driver info for order tracking
+      allow read, list: if true; // Public read so customer tracking page can view assigned rider details
       allow write: if request.auth.uid == partnerId || isAdmin(request.auth.uid);
       
       // Allow delivery person to read and create their own wallet transactions
@@ -307,8 +299,8 @@ service cloud.firestore {
     // 24. Driver Live Locations (GPS Tracking)
     // ==========================================
     match /driverLocations/{driverId} {
-      // Any authenticated user can read (customer tracking, restaurant tracking, admin fleet)
-      allow read, list: if request.auth.uid != null;
+      // Anyone can read driver live locations for real-time order tracking
+      allow read, list: if true;
       // Drivers can only write their own location
       allow create, update: if request.auth.uid != null && request.auth.uid == driverId;
       // Admin can manage all locations

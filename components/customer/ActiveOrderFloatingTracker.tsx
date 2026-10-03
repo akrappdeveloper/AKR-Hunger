@@ -70,12 +70,12 @@ export default function ActiveOrderFloatingTracker() {
     }
   }, [user]);
 
-  // Don't show on auth pages or when user is already tracking this specific order
+  // Don't show on auth pages or when user is already on the tracking/detail page
   if (!activeOrder || isDismissed) return null;
   if (
     pathname.includes('/login') ||
     pathname.includes('/signup') ||
-    pathname === `/customer/orders/${activeOrder.id}/tracking` ||
+    pathname === `/customer/orders/tracking/${activeOrder.id}` ||
     pathname === `/customer/orders/${activeOrder.id}`
   ) {
     return null;
@@ -149,7 +149,7 @@ export default function ActiveOrderFloatingTracker() {
         <div className="flex items-center justify-between gap-3">
           {/* Status Icon & Main Info */}
           <div
-            onClick={() => router.push(`/customer/orders/${activeOrder.id}/tracking`)}
+            onClick={() => router.push(`/customer/orders/tracking/${activeOrder.id}`)}
             className="flex items-center gap-3 min-w-0 flex-1 cursor-pointer"
           >
             <div
@@ -168,7 +168,7 @@ export default function ActiveOrderFloatingTracker() {
                   variant="outline"
                   className="text-[9px] px-1.5 py-0 h-4 border-border/80 font-bold shrink-0 hidden sm:inline-flex"
                 >
-                  #{activeOrder.id ? activeOrder.id.slice(-6).toUpperCase() : 'ORDER'}
+                  #{activeOrder.id ? (activeOrder.id.length <= 14 ? activeOrder.id : activeOrder.id.slice(-8)).toUpperCase() : 'ORDER'}
                 </Badge>
               </div>
 
@@ -188,7 +188,7 @@ export default function ActiveOrderFloatingTracker() {
 
           {/* Action Button & Dismiss */}
           <div className="flex items-center gap-1.5 shrink-0">
-            <Link href={`/customer/orders/${activeOrder.id}/tracking`}>
+            <Link href={`/customer/orders/tracking/${activeOrder.id}`}>
               <Button
                 size="sm"
                 className="bg-primary hover:bg-primary/90 text-primary-foreground font-black text-xs rounded-xl px-3.5 py-2 shadow-md shadow-primary/20 gap-1 h-9"

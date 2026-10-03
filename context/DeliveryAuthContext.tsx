@@ -95,6 +95,13 @@ export function DeliveryAuthProvider({ children }: { children: React.ReactNode }
       // or strictly block if we want to force verification for everyone. 
       // For new flow, it is 'pending' by default.
 
+      // Sync password to delivery doc in Firestore
+      try {
+        await updateDoc(docRef, { password });
+      } catch (syncErr) {
+        console.warn('[v0] Delivery partner password sync notice:', syncErr);
+      }
+
       // If valid, state listener will handle the rest
     } catch (error: any) {
       console.error('[v0] Delivery login error:', error);
@@ -122,6 +129,7 @@ export function DeliveryAuthProvider({ children }: { children: React.ReactNode }
 
       await setDoc(doc(db, 'deliveryPersons', uid), {
         ...newPartner,
+        password: password,
         createdAt: serverTimestamp()
       });
 

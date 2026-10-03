@@ -151,6 +151,43 @@
             android:name=".activities.SettingsActivity"
             android:exported="false" />
 
+        <!-- Addresses Activity -->
+        <activity
+            android:name=".activities.AddressesActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- Rewards / Loyalty Activity -->
+        <activity
+            android:name=".activities.RewardsActivity"
+            android:exported="false" />
+
+        <!-- Membership Subscription Activity -->
+        <activity
+            android:name=".activities.MembershipActivity"
+            android:exported="false" />
+
+        <!-- Live Order Tracking Activity -->
+        <activity
+            android:name=".activities.OrderTrackingActivity"
+            android:exported="false" />
+
+        <!-- Write Review Activity -->
+        <activity
+            android:name=".activities.WriteReviewActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- Deals &amp; Offers Activity -->
+        <activity
+            android:name=".activities.DealsActivity"
+            android:exported="false" />
+
+        <!-- Referral Program Activity -->
+        <activity
+            android:name=".activities.ReferralActivity"
+            android:exported="false" />
+
 
         <!-- FCM Service -->
         <service

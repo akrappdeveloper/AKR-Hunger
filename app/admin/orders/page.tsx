@@ -31,7 +31,7 @@ import {
   CheckCheck,
   Ban
 } from 'lucide-react';
-import { Order } from '@/lib/types';
+import { Order, formatOrderId } from '@/lib/types';
 import {
   Card,
   CardContent,
@@ -363,7 +363,7 @@ export default function OrdersPage() {
                             />
                           </TableCell>
                           <TableCell className="font-mono text-xs text-white font-bold">
-                            #{order.id?.slice(0, 8)}
+                            #{formatOrderId(order.id)}
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2">
@@ -448,7 +448,7 @@ export default function OrdersPage() {
             <div className="flex justify-between items-start">
               <div className="space-y-1">
                 <div className="flex items-center gap-3">
-                  <DialogTitle className="text-2xl font-bold text-white">Order #{selectedOrder?.id?.slice(0, 8)}</DialogTitle>
+                  <DialogTitle className="text-2xl font-bold text-white">Order #{formatOrderId(selectedOrder?.id)}</DialogTitle>
                   <Badge variant="outline" className={`${statusConfig[selectedOrder?.status || 'pending'].color} ${statusConfig[selectedOrder?.status || 'pending'].bgColor} border text-sm px-3 py-1 font-bold`}>
                     {statusConfig[selectedOrder?.status || 'pending'].label}
                   </Badge>

@@ -10,7 +10,7 @@
     android:focusable="true"
     android:foreground="?attr/selectableItemBackground"
     app:cardBackgroundColor="@color/surface"
-    app:cardCornerRadius="20dp"
+    app:cardCornerRadius="22dp"
     app:cardElevation="1dp"
     app:strokeColor="@color/card_border"
     app:strokeWidth="1dp">
@@ -25,8 +25,8 @@
         <!-- Icon Badge (Soft Tinted Circle) -->
         <FrameLayout
             android:id="@+id/layout_icon_bg"
-            android:layout_width="46dp"
-            android:layout_height="46dp"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
             android:layout_gravity="top"
             android:background="@drawable/bg_icon_circle_soft">
 
@@ -60,17 +60,18 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:ellipsize="end"
+                    android:fontFamily="sans-serif-bold"
                     android:maxLines="1"
                     android:text="Order Status"
                     android:textColor="@color/text_primary"
-                    android:textSize="15sp"
-                    android:textStyle="bold" />
+                    android:textSize="15sp" />
 
                 <TextView
                     android:id="@+id/tv_notification_time"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
+                    android:fontFamily="sans-serif"
                     android:text="5m ago"
                     android:textColor="@color/text_hint"
                     android:textSize="11sp" />
@@ -83,6 +84,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
                 android:ellipsize="end"
+                android:fontFamily="sans-serif"
                 android:lineSpacingExtra="2dp"
                 android:maxLines="3"
                 android:text="Your order has been confirmed by the kitchen."
@@ -104,10 +106,10 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif-bold"
                     android:text="View Order Tracking"
                     android:textColor="@color/primary"
-                    android:textSize="11sp"
-                    android:textStyle="bold" />
+                    android:textSize="11sp" />
 
                 <ImageView
                     android:layout_width="12dp"
@@ -115,7 +117,7 @@
                     android:layout_marginStart="4dp"
                     android:rotation="180"
                     android:src="@drawable/ic_back"
-                    android:tint="@color/primary" />
+                    app:tint="@color/primary" />
             </LinearLayout>
         </LinearLayout>
 

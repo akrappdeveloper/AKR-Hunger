@@ -8,12 +8,16 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import com.ssr.hunger.R;
+import com.ssr.hunger.activities.AddressesActivity;
+import com.ssr.hunger.activities.DealsActivity;
 import com.ssr.hunger.activities.EditProfileActivity;
 import com.ssr.hunger.activities.LoginActivity;
+import com.ssr.hunger.activities.MembershipActivity;
 import com.ssr.hunger.activities.NotificationsActivity;
+import com.ssr.hunger.activities.ReferralActivity;
+import com.ssr.hunger.activities.RewardsActivity;
 import com.ssr.hunger.activities.SettingsActivity;
 import com.ssr.hunger.activities.SupportActivity;
 import com.ssr.hunger.activities.WalletActivity;
@@ -26,13 +30,14 @@ import de.hdodenhof.circleimageview.CircleImageView;
 import java.util.Locale;
 
 /**
- * Profile Fragment - displays user info and navigation to sub-pages.
- * Mirrors the web app's profile page: edit profile, wallet, notifications, support, logout.
+ * Profile Fragment - displays user info and navigation to all sub-pages.
+ * Mirrors the web app's profile page: edit profile, wallet, notifications,
+ * addresses, rewards, membership, deals, referral, support, logout.
  */
 public class ProfileFragment extends Fragment {
 
     private CircleImageView ivAvatar;
-    private TextView tvName, tvEmail, tvPhone, tvWalletBalance;
+    private TextView tvName, tvEmail, tvPhone, tvWalletBalance, tvRewardPoints;
     private FirebaseFirestore db;
 
     @Nullable
@@ -45,6 +50,7 @@ public class ProfileFragment extends Fragment {
         tvEmail = view.findViewById(R.id.tv_user_email);
         tvPhone = view.findViewById(R.id.tv_user_phone);
         tvWalletBalance = view.findViewById(R.id.tv_wallet_balance);
+        tvRewardPoints = view.findViewById(R.id.tv_reward_points);
 
         db = FirebaseFirestore.getInstance();
 
@@ -58,7 +64,7 @@ public class ProfileFragment extends Fragment {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user == null) return;
 
-        tvEmail.setText(user.getEmail());
+        if (tvEmail != null) tvEmail.setText(user.getEmail());
 
         db.collection(Constants.COLLECTION_CUSTOMERS).document(user.getUid())
                 .addSnapshotListener((doc, error) -> {
@@ -69,12 +75,15 @@ public class ProfileFragment extends Fragment {
                     String phone = doc.getString("phone");
                     String avatar = doc.getString("avatar");
                     Double balance = doc.getDouble("walletBalance");
+                    Long points = doc.getLong("rewardPoints");
 
-                    if (name != null) tvName.setText(name);
-                    if (phone != null && !phone.isEmpty()) tvPhone.setText(phone);
-                    if (balance != null) tvWalletBalance.setText(String.format(Locale.getDefault(), "₹%.2f", balance));
+                    if (name != null && tvName != null) tvName.setText(name);
+                    if (phone != null && !phone.isEmpty() && tvPhone != null) tvPhone.setText(phone);
+                    if (balance != null && tvWalletBalance != null)
+                        tvWalletBalance.setText(String.format(Locale.getDefault(), "₹%.2f", balance));
+                    if (tvRewardPoints != null && points != null) tvRewardPoints.setText(points + " pts");
 
-                    if (avatar != null && !avatar.isEmpty() && isAdded()) {
+                    if (avatar != null && !avatar.isEmpty() && isAdded() && ivAvatar != null) {
                         Glide.with(requireContext())
                                 .load(avatar)
                                 .placeholder(R.drawable.ic_profile)
@@ -83,40 +92,44 @@ public class ProfileFragment extends Fragment {
                 });
     }
 
+    private void nav(Class<?> activityClass) {
+        startActivity(new Intent(getContext(), activityClass));
+    }
+
     private void setupClickListeners(View view) {
-        view.findViewById(R.id.card_edit_profile).setOnClickListener(v ->
-                startActivity(new Intent(getContext(), EditProfileActivity.class)));
+        // --- Existing ---
+        safeClick(view, R.id.card_edit_profile, () -> nav(EditProfileActivity.class));
+        safeClick(view, R.id.card_wallet, () -> nav(WalletActivity.class));
+        safeClick(view, R.id.card_notifications, () -> nav(NotificationsActivity.class));
+        safeClick(view, R.id.card_support, () -> nav(SupportActivity.class));
+        safeClick(view, R.id.card_settings, () -> nav(SettingsActivity.class));
 
-        view.findViewById(R.id.card_wallet).setOnClickListener(v ->
-                startActivity(new Intent(getContext(), WalletActivity.class)));
+        // --- New Customer Activities ---
+        safeClick(view, R.id.card_addresses, () -> nav(AddressesActivity.class));
+        safeClick(view, R.id.card_rewards, () -> nav(RewardsActivity.class));
+        safeClick(view, R.id.card_membership, () -> nav(MembershipActivity.class));
+        safeClick(view, R.id.card_deals, () -> nav(DealsActivity.class));
+        safeClick(view, R.id.card_referral, () -> nav(ReferralActivity.class));
 
-        View cardNotifications = view.findViewById(R.id.card_notifications);
-        if (cardNotifications != null) {
-            cardNotifications.setOnClickListener(v ->
-                    startActivity(new Intent(getContext(), NotificationsActivity.class)));
-        }
+        // --- Logout ---
+        safeClick(view, R.id.btn_logout, () ->
+                new com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
+                        .setTitle("Logout")
+                        .setMessage(R.string.logout_confirm)
+                        .setPositiveButton(R.string.yes, (d, w) -> {
+                            FirebaseAuth.getInstance().signOut();
+                            nav(LoginActivity.class);
+                            requireActivity().finish();
+                        })
+                        .setNegativeButton(R.string.no, null)
+                        .show()
+        );
+    }
 
-        view.findViewById(R.id.card_support).setOnClickListener(v ->
-                startActivity(new Intent(getContext(), SupportActivity.class)));
-
-        View cardSettings = view.findViewById(R.id.card_settings);
-        if (cardSettings != null) {
-            cardSettings.setOnClickListener(v ->
-                    startActivity(new Intent(getContext(), SettingsActivity.class)));
-        }
-
-        view.findViewById(R.id.btn_logout).setOnClickListener(v -> {
-            new com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
-                    .setTitle("Logout")
-                    .setMessage(R.string.logout_confirm)
-                    .setPositiveButton(R.string.yes, (dialog, which) -> {
-                        FirebaseAuth.getInstance().signOut();
-                        startActivity(new Intent(getContext(), LoginActivity.class));
-                        requireActivity().finish();
-                    })
-                    .setNegativeButton(R.string.no, null)
-                    .show();
-        });
+    /** Helper: sets click listener only if view with id exists */
+    private void safeClick(View root, int viewId, Runnable action) {
+        View v = root.findViewById(viewId);
+        if (v != null) v.setOnClickListener(x -> action.run());
     }
 
     @Override

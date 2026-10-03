@@ -35,5 +35,24 @@
 -keep public class * implements com.bumptech.glide.module.GlideModule
 -keep class * extends com.bumptech.glide.module.AppGlideModule { *; }
 
-# Keep model classes
+# Keep model classes and their members for Firebase & Gson serialization
 -keep class com.ssr.hunger.models.** { *; }
+-keepclassmembers class com.ssr.hunger.models.** { *; }
+
+# Gson configuration & Generic Signatures (prevents TypeToken stripping by R8)
+-keepattributes Signature
+-keepattributes InnerClasses
+-keepattributes EnclosingMethod
+
+-keep class com.google.gson.** { *; }
+-keep class com.google.gson.reflect.TypeToken { *; }
+-keep class * extends com.google.gson.reflect.TypeToken
+-keepclassmembers class * extends com.google.gson.reflect.TypeToken {
+    void <init>();
+}
+
+-keepclassmembers enum * { *; }
+-keepclassmembers class * {
+    @com.google.gson.annotations.SerializedName <fields>;
+    @com.google.gson.annotations.Expose <fields>;
+}

@@ -35,6 +35,7 @@ import {
 import { doc, updateDoc } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { toast } from 'sonner';
+import { copyToClipboard } from '@/lib/utils';
 
 interface PhoneVerificationDialogProps {
   isOpen: boolean;
@@ -266,9 +267,9 @@ export default function PhoneVerificationDialog({
   };
 
   // Copy code to clipboard
-  const handleCopyOtp = () => {
+  const handleCopyOtp = async () => {
     if (!virtualOtp) return;
-    navigator.clipboard.writeText(virtualOtp);
+    await copyToClipboard(virtualOtp);
     setCopied(true);
     toast.success('Code copied to clipboard');
     setTimeout(() => setCopied(false), 2000);

@@ -7,6 +7,7 @@ package com.ssr.hunger.utils;
 public class Constants {
     // Firebase Collection Names
     public static final String COLLECTION_CUSTOMERS = "customers";
+    public static final String COLLECTION_USERS = "customers";
     public static final String COLLECTION_RESTAURANTS = "restaurants";
     public static final String COLLECTION_MENU_ITEMS = "menuItems";
     public static final String COLLECTION_ORDERS = "orders";

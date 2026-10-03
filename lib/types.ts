@@ -2,7 +2,9 @@
 export interface Customer {
   id?: string;
   email: string;
+  password?: string;
   name: string;
+  displayName?: string; // alias for name (used by some pages)
   phone?: string;
   phoneVerified?: boolean;
   verifiedPhone?: string;
@@ -19,6 +21,7 @@ export interface Customer {
   membershipStatus?: 'none' | 'pending' | 'approved' | 'rejected';
   isBlocked?: boolean;
   image?: string; // Alias for avatar or separate field
+  rewardPoints?: number; // Loyalty reward points balance
   bankDetails?: {
     bankName: string;
     accountNumber: string;
@@ -65,12 +68,14 @@ export interface Restaurant {
   longitude?: number;
   phone: string;
   email: string;
+  password?: string;
   createdAt?: Date;
   updatedAt?: Date;
   // Enhanced for reviews and search
   averageRating?: number;
   totalReviews?: number;
   popularItems?: string[]; // Menu item IDs
+  imageUrl?: string; // Primary display image URL
   // Bank details for settlements
   bankDetails?: {
     bankName: string;
@@ -238,6 +243,8 @@ export function getStageColor(stage?: DeliveryStage): { bg: string; text: string
 
 export interface Order {
   id?: string;
+  orderId?: string;
+  orderNumber?: string;
   customerId?: string;
   restaurantId?: string;
   items?: OrderItem[];
@@ -249,9 +256,16 @@ export interface Order {
   razorpayPaymentId?: string;
   walletTransactionId?: string;
   subtotal?: number;
+  packagingCharges?: number;
+  platformFee?: number;
+  taxableValue?: number;
+  cgst?: number;
+  sgst?: number;
   deliveryCharge?: number;
   taxes?: number;
   total?: number;
+  amountPaid?: number;
+  balanceDue?: number;
   specialInstructions?: string;
   deliveryPersonId?: string;
   estimatedDeliveryTime?: number;
@@ -276,7 +290,18 @@ export interface Order {
   deliveryOtp?: string; // OTP for delivery verification
   // Professional delivery flow (stage-based)
   delivery?: DeliveryFlow;
+  // Extended fields
+  discount?: number;
+  restaurantPincode?: string;
+  isRated?: boolean;
+  estimatedDeliveryMinutes?: number;
+  outForDeliveryAt?: Date | any;
+  readyAt?: Date | any;
+  confirmedAt?: Date | any;
+  cancelledAt?: Date | any;
+  ratings?: Record<string, { rating: number; comment: string; ratedAt: Date }>;
 }
+
 
 export interface OrderItem {
   menuItemId: string;
@@ -292,8 +317,10 @@ export interface DeliveryPerson {
   name: string;
   phone: string;
   email: string;
+  password?: string;
   avatar?: string;
   rating: number;
+  averageRating?: number; // alias for rating
   vehicle: string;
   vehicleNumber: string;
   status: 'online' | 'offline' | 'on_delivery';
@@ -315,6 +342,8 @@ export interface DeliveryPerson {
     ifscCode: string;
   };
   walletBalance?: number; // Positive = Debt (Cash in Hand), Negative = Earnings
+  servicePincodes?: string[];
+  pincodeFilterActive?: boolean;
 }
 
 // Alias for admin panel
@@ -637,3 +666,5 @@ export interface IssuedCard {
   balance?: number;
   updatedAt?: Date;
 }
+
+export { generateProfessionalOrderId, formatOrderId } from './order-utils';

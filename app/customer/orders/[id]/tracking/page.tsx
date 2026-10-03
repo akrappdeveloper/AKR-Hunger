@@ -29,29 +29,58 @@ export default function CustomerLiveTrackingPage() {
   const [loading, setLoading] = useState(true);
   const [routeInfo, setRouteInfo] = useState<{ distance: string; eta: string } | null>(null);
 
-  // Subscribe to order updates
+  // Redirect to standard professional tracking route /customer/orders/tracking/[id]
+  useEffect(() => {
+    if (orderId) {
+      router.replace(`/customer/orders/tracking/${orderId}`);
+    }
+  }, [orderId, router]);
+
+  // Subscribe to order updates with robust fallback and error handling
   useEffect(() => {
     if (!orderId) return;
 
-    const unsubscribe = onSnapshot(doc(db, 'orders', orderId), async (docSnap) => {
-      if (docSnap.exists()) {
-        const orderData = { ...docSnap.data(), id: docSnap.id } as Order;
-        setOrder(orderData);
+    const unsubscribe = onSnapshot(
+      doc(db, 'orders', orderId),
+      async (docSnap) => {
+        if (docSnap.exists()) {
+          const orderData = { ...docSnap.data(), id: docSnap.id } as Order;
+          setOrder(orderData);
 
-        // Fetch restaurant data
-        if (orderData.restaurantId) {
-          try {
-            const restDoc = await getDoc(doc(db, 'restaurants', orderData.restaurantId));
-            if (restDoc.exists()) {
-              setRestaurant({ ...restDoc.data(), id: restDoc.id } as Restaurant);
+          // Fetch restaurant data
+          if (orderData.restaurantId) {
+            try {
+              const restDoc = await getDoc(doc(db, 'restaurants', orderData.restaurantId));
+              if (restDoc.exists()) {
+                setRestaurant({ ...restDoc.data(), id: restDoc.id } as Restaurant);
+              }
+            } catch (err) {
+              console.error('Failed to fetch restaurant:', err);
             }
-          } catch (err) {
-            console.error('Failed to fetch restaurant:', err);
           }
         }
+        setLoading(false);
+      },
+      async (err) => {
+        // Silently handle snapshot listener errors and try one-time getDoc fallback
+        try {
+          const restDoc = await getDoc(doc(db, 'orders', orderId));
+          if (restDoc.exists()) {
+            const orderData = { ...restDoc.data(), id: restDoc.id } as Order;
+            setOrder(orderData);
+            if (orderData.restaurantId) {
+              try {
+                const rDoc = await getDoc(doc(db, 'restaurants', orderData.restaurantId));
+                if (rDoc.exists()) setRestaurant({ ...rDoc.data(), id: rDoc.id } as Restaurant);
+              } catch {}
+            }
+          }
+        } catch {
+          // Gracefully handled
+        }
+        setLoading(false);
       }
-      setLoading(false);
-    });
+    );
 
     return () => unsubscribe();
   }, [orderId]);

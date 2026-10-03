@@ -37,6 +37,8 @@ import {
   Map,
   IdCard,
   BookOpen,
+  Image as ImageIcon,
+  RotateCcw
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -87,6 +89,7 @@ const AdminSidebar = ({ isMobile = false, onClose }: AdminSidebarProps) => {
         { href: '/admin/customers', label: 'Customers', icon: Users },
         { href: '/admin/restaurants', label: 'Restaurants', icon: Store },
         { href: '/admin/delivery', label: 'Delivery Partners', icon: Truck },
+        { href: '/admin/drivers', label: 'Driver Fleet', icon: Activity },
         { href: '/admin/orders', label: 'Orders', icon: ShoppingBag },
       ],
     },
@@ -96,12 +99,14 @@ const AdminSidebar = ({ isMobile = false, onClose }: AdminSidebarProps) => {
         { href: '/admin/payments', label: 'Restaurant Payments', icon: Wallet },
         { href: '/admin/delivery-payments', label: 'Delivery Payments', icon: DollarSign },
         { href: '/admin/customer-wallet', label: 'Customer Wallet', icon: Wallet },
+        { href: '/admin/refunds', label: 'Refund Dashboard', icon: RotateCcw },
         { href: '/admin/points', label: 'Points / Wallet', icon: Wallet },
       ],
     },
     {
       title: 'Content',
       items: [
+        { href: '/admin/banners', label: 'Banners & Carousels', icon: ImageIcon },
         { href: '/admin/menus', label: 'Menu Management', icon: BookOpen },
         { href: '/admin/menu-approvals', label: 'Menu Approvals', icon: UtensilsCrossed },
         { href: '/admin/campaigns', label: 'Campaigns', icon: Megaphone },

@@ -90,11 +90,24 @@ public class MainActivity extends BaseActivity implements CartManager.CartChange
 
             if (fragment != null) {
                 currentTabName = tabName;
+                animateTabSelection(itemId);
                 loadFragment(fragment, tabName);
                 return true;
             }
             return false;
         });
+    }
+
+    private void animateTabSelection(int itemId) {
+        View tabView = binding.bottomNavigation.findViewById(itemId);
+        if (tabView != null) {
+            tabView.animate()
+                    .scaleX(1.15f)
+                    .scaleY(1.15f)
+                    .setDuration(120)
+                    .withEndAction(() -> tabView.animate().scaleX(1.0f).scaleY(1.0f).setDuration(120).start())
+                    .start();
+        }
     }
 
     private void setupCartFab() {
@@ -139,6 +152,7 @@ public class MainActivity extends BaseActivity implements CartManager.CartChange
 
         getSupportFragmentManager()
                 .beginTransaction()
+                .setCustomAnimations(R.anim.fade_in, R.anim.fade_out)
                 .replace(R.id.fragment_container, fragment)
                 .commit();
     }

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Order, Restaurant, DeliveryPerson, DeliveryStage, getStageLabel, getStageColor } from '@/lib/types';
 import { Button } from '@/components/ui/button';
@@ -37,6 +37,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
 import InvoiceButton from '../InvoiceButton';
 import { toast } from 'sonner';
+import { copyToClipboard as safeCopy } from '@/lib/utils';
 
 export default function OrderTrackingPage() {
   const params = useParams();
@@ -63,6 +64,16 @@ export default function OrderTrackingPage() {
             ? docSnapshot.data().createdAt.toDate()
             : new Date(docSnapshot.data().createdAt || Date.now())
         } as Order;
+
+        // Ensure deliveryOtp is always present if order is active
+        if (!orderData.deliveryOtp && orderData.status !== 'delivered' && orderData.status !== 'cancelled') {
+          const fallbackOtp = (
+            Math.abs(orderId.split('').reduce((acc, char) => (acc * 31 + char.charCodeAt(0)) | 0, 0)) % 9000 + 1000
+          ).toString();
+          orderData.deliveryOtp = fallbackOtp;
+          updateDoc(doc(db, 'orders', orderId), { deliveryOtp: fallbackOtp }).catch(() => {});
+        }
+
         setOrder(orderData);
 
         // Fetch restaurant details
@@ -193,7 +204,7 @@ export default function OrderTrackingPage() {
   };
 
   const copyToClipboard = (text: string, label: string) => {
-    navigator.clipboard.writeText(text);
+    safeCopy(text);
     toast.success(`${label} copied to clipboard!`);
   };
 
@@ -290,7 +301,7 @@ export default function OrderTrackingPage() {
 
             {/* Live Tracking Button */}
             {order.status !== 'delivered' && order.status !== 'cancelled' && (
-              <Link href={`/customer/orders/${orderId}/tracking`}>
+              <Link href={`/customer/orders/tracking/${orderId}`}>
                 <Badge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/30 px-3.5 py-1.5 text-xs sm:text-sm font-bold uppercase tracking-wider rounded-xl cursor-pointer gap-1.5 transition-colors shadow-xs">
                   <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                   Track Live Map ➔
@@ -506,7 +517,7 @@ export default function OrderTrackingPage() {
 
                 <div className="flex items-center gap-2 w-full sm:w-auto flex-col sm:flex-row">
                   {order.status !== 'delivered' && order.status !== 'cancelled' && (
-                    <Link href={`/customer/orders/${orderId}/tracking`} className="w-full sm:w-auto">
+                    <Link href={`/customer/orders/tracking/${orderId}`} className="w-full sm:w-auto">
                       <Button className="w-full sm:w-auto rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-bold px-5 shadow-md gap-1.5">
                         <Navigation className="w-4 h-4" /> Track Live
                       </Button>
@@ -530,7 +541,7 @@ export default function OrderTrackingPage() {
                     The kitchen is preparing your meal. Live GPS route is active on our interactive map.
                   </p>
                   <div className="mt-4">
-                    <Link href={`/customer/orders/${orderId}/tracking`}>
+                    <Link href={`/customer/orders/tracking/${orderId}`}>
                       <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl px-5 text-xs gap-1.5 shadow-md shadow-emerald-600/20">
                         <Navigation className="w-3.5 h-3.5" /> Open Live Map Tracking ➔
                       </Button>
@@ -675,7 +686,7 @@ export default function OrderTrackingPage() {
             <div className="bg-card border border-border/70 rounded-3xl p-5 sm:p-6 shadow-sm">
               <div className="flex items-center justify-between mb-4 pb-3 border-b border-border/70">
                 <h3 className="text-muted-foreground font-bold uppercase text-xs tracking-wider flex items-center gap-2">
-                  <CreditCard className="w-4 h-4 text-primary" /> Payment Summary
+                  <CreditCard className="w-4 h-4 text-primary" /> Bill Summary & Payment
                 </h3>
                 <span className="text-xs font-bold text-primary capitalize">
                   {order.paymentMethod === 'cod'
@@ -686,32 +697,70 @@ export default function OrderTrackingPage() {
                 </span>
               </div>
 
-              <div className="space-y-3 text-xs sm:text-sm">
+              <div className="space-y-2.5 text-xs sm:text-sm">
                 <div className="flex justify-between text-muted-foreground">
-                  <span>Item Total</span>
-                  <span className="text-foreground font-semibold">₹{order.subtotal || 0}</span>
-                </div>
-                <div className="flex justify-between text-muted-foreground">
-                  <span>Delivery Partner Fee</span>
-                  <span className="text-foreground font-semibold">₹{order.deliveryCharge || 0}</span>
-                </div>
-                <div className="flex justify-between text-muted-foreground">
-                  <span>Govt. Taxes & Restaurant Packaging</span>
-                  <span className="text-foreground font-semibold">₹{order.taxes || 0}</span>
+                  <span>Item Subtotal</span>
+                  <span className="text-foreground font-semibold">₹{(order.subtotal || 0).toFixed(2)}</span>
                 </div>
 
                 {order.discountAmount ? (
                   <div className="flex justify-between text-emerald-600 dark:text-emerald-400 font-semibold">
-                    <span>Discount Applied</span>
-                    <span>-₹{order.discountAmount}</span>
+                    <span>Coupon Discount</span>
+                    <span>-₹{Number(order.discountAmount).toFixed(2)}</span>
                   </div>
                 ) : null}
 
-                <div className="h-px bg-border my-2" />
+                <div className="flex justify-between text-muted-foreground">
+                  <span>Packaging Charges</span>
+                  <span className="text-foreground font-semibold">₹{(order.packagingCharges || 0).toFixed(2)}</span>
+                </div>
 
-                <div className="flex justify-between items-center text-base">
-                  <span className="font-bold text-foreground">Total Amount</span>
-                  <span className="font-black text-2xl text-primary">₹{order.total || 0}</span>
+                <div className="flex justify-between text-muted-foreground">
+                  <span>Delivery Partner Fee</span>
+                  <span className="text-foreground font-semibold">₹{(order.deliveryCharge || 0).toFixed(2)}</span>
+                </div>
+
+                <div className="flex justify-between text-muted-foreground">
+                  <span>Platform Fee</span>
+                  <span className="text-foreground font-semibold">₹{(order.platformFee || 0).toFixed(2)}</span>
+                </div>
+
+                <div className="border-t border-border/40 pt-2 space-y-1.5">
+                  <div className="flex justify-between text-muted-foreground text-xs">
+                    <span>Taxable Supply Value</span>
+                    <span>₹{Number((order as any).taxableValue ?? order.subtotal ?? 0).toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-muted-foreground text-xs">
+                    <span>CGST (2.5%)</span>
+                    <span>₹{Number((order as any).cgst ?? ((order.taxes || 0) / 2)).toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-muted-foreground text-xs">
+                    <span>SGST (2.5%)</span>
+                    <span>₹{Number((order as any).sgst ?? ((order.taxes || 0) / 2)).toFixed(2)}</span>
+                  </div>
+                </div>
+
+                <div className="border-t border-border/70 pt-3">
+                  <div className="flex justify-between items-center">
+                    <span className="font-black text-foreground text-base sm:text-lg">GRAND TOTAL</span>
+                    <span className="font-black text-primary text-xl sm:text-2xl">₹{(order.total || 0).toFixed(2)}</span>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground text-right mt-0.5">(All taxes included)</p>
+                </div>
+
+                <div className="border-t border-border/40 pt-2.5 space-y-1.5">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Amount Paid</span>
+                    <span className={`font-bold ${(order.amountPaid !== undefined ? order.amountPaid : (order.paymentMethod === 'cod' ? 0 : (order.total || 0))) > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-muted-foreground'}`}>
+                      ₹{Number(order.amountPaid !== undefined ? order.amountPaid : (order.paymentMethod === 'cod' ? 0 : (order.total || 0))).toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Balance Due</span>
+                    <span className={`font-bold ${(order.balanceDue !== undefined ? order.balanceDue : (order.paymentMethod === 'cod' ? (order.total || 0) : 0)) > 0 ? 'text-orange-500 font-black' : 'text-muted-foreground'}`}>
+                      ₹{Number(order.balanceDue !== undefined ? order.balanceDue : (order.paymentMethod === 'cod' ? (order.total || 0) : 0)).toFixed(2)}
+                    </span>
+                  </div>
                 </div>
 
                 {/* Status & Online Reference */}
@@ -722,7 +771,7 @@ export default function OrderTrackingPage() {
                       : 'bg-amber-500/10 border-amber-500/20 text-amber-600 dark:text-amber-400'
                   }`}
                 >
-                  Payment Status: {order.paymentStatus || 'Pending'}
+                  Payment Status: {order.paymentStatus || (order.paymentMethod === 'cod' ? 'Pending (Cash on Delivery)' : 'Pending')}
                 </div>
 
                 {order.razorpayPaymentId && (

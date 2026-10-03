@@ -51,8 +51,11 @@ export function useTrackDriver(driverId: string | null | undefined): {
         setLoading(false);
       },
       (err) => {
-        console.error('[TrackDriver] Error:', err);
-        setError('Failed to track driver location');
+        if (err.code !== 'permission-denied' && err.code !== 'not-found') {
+          console.warn('[TrackDriver] Info:', err.message);
+        }
+        setLocation(null);
+        setError(null);
         setLoading(false);
       }
     );
@@ -96,8 +99,10 @@ export function useTrackAllDrivers(): {
         setLoading(false);
       },
       (err) => {
-        console.error('[TrackAllDrivers] Error:', err);
-        setError('Failed to load driver locations');
+        if (err.code !== 'permission-denied') {
+          console.warn('[TrackAllDrivers] Info:', err.message);
+        }
+        setError(null);
         setLoading(false);
       }
     );

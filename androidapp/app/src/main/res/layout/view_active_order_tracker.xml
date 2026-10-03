@@ -7,7 +7,7 @@
     android:focusable="true"
     android:foreground="?attr/selectableItemBackground"
     app:cardBackgroundColor="@color/primary"
-    app:cardCornerRadius="24dp"
+    app:cardCornerRadius="26dp"
     app:cardElevation="8dp"
     app:strokeColor="#33FFFFFF"
     app:strokeWidth="1dp">
@@ -30,7 +30,7 @@
                 android:layout_width="12dp"
                 android:layout_height="12dp"
                 android:layout_gravity="center"
-                android:background="@drawable/bg_dot_white" />
+                android:background="@drawable/bg_tracking_active_dot" />
         </FrameLayout>
 
         <!-- Order Information -->
@@ -84,6 +84,6 @@
             android:layout_marginStart="8dp"
             android:rotation="180"
             android:src="@drawable/ic_back"
-            android:tint="@color/on_primary" />
+            app:tint="@color/on_primary" />
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

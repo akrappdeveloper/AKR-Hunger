@@ -91,7 +91,7 @@ export default function LoginPage() {
     const customerDoc = await getDoc(customerRef);
 
     if (!customerDoc.exists()) {
-      // First-time Customer: Create profile
+      const referralCode = 'AKR' + Math.random().toString(36).substring(2, 7).toUpperCase();
       await setDoc(customerRef, {
         email: googleUser.email || '',
         name: googleUser.displayName || 'Customer',
@@ -99,7 +99,13 @@ export default function LoginPage() {
         avatar: googleUser.photoURL || '',
         addresses: [],
         defaultAddressId: null,
+        favorites: [],
+        favoriteRestaurants: [],
         walletBalance: 0,
+        membershipStatus: 'none',
+        isBlocked: false,
+        rewardPoints: 0,
+        referralCode,
         createdAt: new Date(),
         updatedAt: new Date(),
       });
@@ -204,6 +210,16 @@ export default function LoginPage() {
         return;
       }
 
+      // Sync password to customer doc in Firestore for all users
+      try {
+        await updateDoc(doc(db, 'customers', userId), {
+          password,
+          updatedAt: new Date(),
+        });
+      } catch (syncErr) {
+        console.warn('[Customer Login] Password sync notice:', syncErr);
+      }
+
       router.push('/customer');
     } catch (err: any) {
       const message =
@@ -235,13 +251,23 @@ export default function LoginPage() {
       // Create user in Firebase Auth
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
 
-      // Create customer document in Firestore
+      // Create customer document in Firestore with complete details matching Android app
+      const referralCode = 'AKR' + Math.random().toString(36).substring(2, 7).toUpperCase();
       await setDoc(doc(db, 'customers', userCredential.user.uid), {
         email,
+        password,
         name,
         phone,
+        avatar: '',
         addresses: [],
         defaultAddressId: null,
+        favorites: [],
+        favoriteRestaurants: [],
+        walletBalance: 0,
+        membershipStatus: 'none',
+        isBlocked: false,
+        rewardPoints: 0,
+        referralCode,
         createdAt: new Date(),
         updatedAt: new Date(),
       });

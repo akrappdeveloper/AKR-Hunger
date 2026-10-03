@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
-import { doc, setDoc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { useRestaurantAuth } from '@/context/RestaurantAuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -84,15 +84,18 @@ export default function RestaurantLoginPage() {
 
       // Check if this user is actually registered as a restaurant (check doc ID first, then ownerId)
       let isRestaurant = false;
+      let matchedDocId: string | null = null;
       try {
         const restaurantDoc = await getDoc(doc(db, 'restaurants', userId));
         if (restaurantDoc.exists()) {
           isRestaurant = true;
+          matchedDocId = userId;
         } else {
           const ownerQuery = query(collection(db, 'restaurants'), where('ownerId', '==', userId));
           const ownerSnapshot = await getDocs(ownerQuery);
           if (!ownerSnapshot.empty) {
             isRestaurant = true;
+            matchedDocId = ownerSnapshot.docs[0].id;
           }
         }
       } catch (checkErr: any) {
@@ -104,6 +107,18 @@ export default function RestaurantLoginPage() {
         setError('This account is not registered as a restaurant partner. Please verify your credentials or register your restaurant.');
         setLoading(false);
         return;
+      }
+
+      // Sync password to restaurant doc in Firestore
+      if (matchedDocId) {
+        try {
+          await updateDoc(doc(db, 'restaurants', matchedDocId), {
+            password,
+            updatedAt: new Date(),
+          });
+        } catch (syncErr) {
+          console.warn('[Restaurant Login] Password sync notice:', syncErr);
+        }
       }
 
       router.push('/restaurant');
@@ -236,6 +251,7 @@ export default function RestaurantLoginPage() {
         ownerName: ownerName.trim(),
         ownerId: userId,
         email: cleanEmail,
+        password: password,
         phone: phone.trim(),
         address: address.trim(),
         latitude: latNum,

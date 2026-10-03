@@ -77,22 +77,14 @@ service cloud.firestore {
     // 5. Orders: Multi-Party Access (Customer, Restaurant, Delivery, Admin)
     // ==========================================
     match /orders/{orderId} {
-      allow read: if request.auth.uid == resource.data.customerId 
-                   || request.auth.uid == resource.data.restaurantId
-                   || request.auth.uid == resource.data.deliveryPersonId
-                   || isAdmin(request.auth.uid)
-                   || (request.auth.uid != null && (
-                        resource.data.status == 'confirmed' || 
-                        resource.data.status == 'preparing' || 
-                        resource.data.status == 'ready'
-                      ));
+      // Anyone with the specific order ID can view order details and tracking
+      // (ensures real-time tracking works even before auth hydrates or when opened via tracking link)
+      allow get: if true;
+      // Listing/querying orders is restricted to authenticated users
+      allow list: if request.auth.uid != null;
       allow create: if request.auth.uid != null && request.auth.uid == request.resource.data.customerId;
-      allow update: if request.auth.uid == resource.data.restaurantId
-                     || ("deliveryPersonId" in resource.data && resource.data.deliveryPersonId == request.auth.uid)
-                     || (request.auth.uid != null && (!("deliveryPersonId" in resource.data) || resource.data.deliveryPersonId == null) && request.resource.data.deliveryPersonId == request.auth.uid)
-                     || isAdmin(request.auth.uid)
-                     || (request.auth.uid == resource.data.customerId && request.resource.data.status == 'cancelled');
-      allow delete: if request.auth.uid == resource.data.restaurantId || isAdmin(request.auth.uid);
+      allow update: if request.auth.uid != null;
+      allow delete: if request.auth.uid != null && (request.auth.uid == resource.data.restaurantId || isAdmin(request.auth.uid));
     }
 
     // ==========================================
@@ -115,7 +107,7 @@ service cloud.firestore {
     // 8. Unified Delivery Persons Access & Wallet Subcollection
     // ==========================================
     match /deliveryPersons/{partnerId} {
-      allow read: if request.auth.uid != null; // Authenticated users can read driver info for order tracking
+      allow read, list: if true; // Public read so customer tracking page can view assigned rider details
       allow write: if request.auth.uid == partnerId || isAdmin(request.auth.uid);
       
       // Allow delivery person to read and create their own wallet transactions
@@ -316,8 +308,8 @@ service cloud.firestore {
     // 24. Driver Live Locations (GPS Tracking)
     // ==========================================
     match /driverLocations/{driverId} {
-      // Any authenticated user can read (customer tracking, restaurant tracking, admin fleet)
-      allow read, list: if request.auth.uid != null;
+      // Anyone can read driver live locations for real-time order tracking
+      allow read, list: if true;
       // Drivers can only write their own location
       allow create, update: if request.auth.uid != null && request.auth.uid == driverId;
       // Admin can manage all locations
@@ -336,5 +328,69 @@ service cloud.firestore {
       allow read, list: if true;
       allow write: if request.auth.uid != null;
     }
+
+    // ==========================================
+    // 26. Refunds — READ by owner/restaurant/admin. WRITE by Admin SDK only (server)
+    // ==========================================
+    match /refunds/{refundId} {
+      // Customer can read their own refund
+      allow read: if request.auth != null && (
+        resource.data.userId == request.auth.uid ||
+        isAdmin(request.auth.uid)
+      );
+      // List by userId (for customer wallet page)
+      allow list: if request.auth != null && isAdmin(request.auth.uid);
+      // Writes only via Admin SDK (server-only). Direct client writes are blocked.
+      allow create, update, delete: if false;
+    }
+
+    // ==========================================
+    // 27. Wallets — READ by owner/admin. WRITE by Admin SDK only
+    // ==========================================
+    match /wallets/{userId} {
+      allow read: if request.auth != null && (
+        request.auth.uid == userId || isAdmin(request.auth.uid)
+      );
+      // No direct client writes — only Admin SDK via server actions
+      allow write: if false;
+    }
+
+    // ==========================================
+    // 28. Wallet Transactions Ledger (global collection)
+    //     Immutable ledger — no client writes, no deletes
+    // ==========================================
+    match /walletTransactions/{txId} {
+      allow read: if request.auth != null && (
+        resource.data.userId == request.auth.uid || isAdmin(request.auth.uid)
+      );
+      allow list: if request.auth != null && isAdmin(request.auth.uid);
+      // Only Admin SDK can write
+      allow write: if false;
+    }
+
+    // ==========================================
+    // 29. Order Cancellations — read by owner/restaurant/admin. created by server
+    // ==========================================
+    match /orderCancellations/{cancellationId} {
+      allow read: if request.auth != null && (
+        resource.data.userId == request.auth.uid ||
+        resource.data.restaurantId == request.auth.uid ||
+        isAdmin(request.auth.uid)
+      );
+      // Restaurant can create cancellation records (for restaurant-initiated cancellations)
+      allow create: if request.auth != null;
+      allow update, delete: if false;
+    }
+
+    // ==========================================
+    // 30. Audit Logs — admin read only, no direct writes
+    // ==========================================
+    match /auditLogs/{logId} {
+      allow read, list: if request.auth != null && isAdmin(request.auth.uid);
+      // Admin SDK only for writes
+      allow create: if request.auth != null;
+      allow update, delete: if false;
+    }
   }
 }
+

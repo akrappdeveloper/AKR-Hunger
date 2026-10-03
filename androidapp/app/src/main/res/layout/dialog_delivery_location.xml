@@ -21,21 +21,49 @@
         android:background="@drawable/bg_pill_soft" />
 
     <!-- Title & Subtitle -->
-    <TextView
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="📍 Delivery Location"
-        android:textColor="@color/text_primary"
-        android:textSize="20sp"
-        android:textStyle="bold" />
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="2dp"
-        android:text="Select or add your precise delivery address"
-        android:textColor="@color/text_secondary"
-        android:textSize="13sp" />
+        <FrameLayout
+            android:layout_width="38dp"
+            android:layout_height="38dp"
+            android:background="@drawable/bg_icon_circle_soft">
+
+            <ImageView
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_location"
+                app:tint="@color/primary" />
+        </FrameLayout>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Delivery Location"
+                android:textColor="@color/text_primary"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="1dp"
+                android:text="Select or add your precise delivery address"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp" />
+        </LinearLayout>
+    </LinearLayout>
 
     <!-- Location Detection Panel (GPS, IP Address, Open Maps) -->
     <LinearLayout
@@ -50,7 +78,7 @@
             style="@style/Widget.AKR.Button.Pill"
             android:layout_width="match_parent"
             android:layout_height="48dp"
-            android:text="📍 Use Current GPS Location"
+            android:text="Use Current GPS Location"
             android:textSize="14sp"
             app:backgroundTint="@color/primary"
             app:icon="@drawable/ic_location"
@@ -70,7 +98,7 @@
                 android:layout_height="46dp"
                 android:layout_marginEnd="4dp"
                 android:layout_weight="1"
-                android:text="🌐 IP Location"
+                android:text="IP Location"
                 android:textSize="12sp"
                 app:icon="@drawable/ic_globe"
                 app:iconTint="@color/primary" />
@@ -82,7 +110,7 @@
                 android:layout_height="46dp"
                 android:layout_marginStart="4dp"
                 android:layout_weight="1"
-                android:text="🗺️ Open Maps"
+                android:text="Open Maps"
                 android:textSize="12sp"
                 app:icon="@drawable/ic_map"
                 app:iconTint="@color/primary" />
@@ -125,8 +153,11 @@
         android:layout_width="match_parent"
         android:layout_height="46dp"
         android:layout_marginTop="12dp"
-        android:text="＋ Add New Address"
-        android:textSize="13sp" />
+        android:text="Add New Address"
+        android:textSize="13sp"
+        app:icon="@drawable/ic_add"
+        app:iconSize="16dp"
+        app:iconTint="@color/primary" />
 
     <!-- Add New Address Form -->
     <LinearLayout
@@ -150,7 +181,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:checked="true"
-                android:text="🏠 Home"
+                android:text="Home"
                 android:textColor="@color/text_primary"
                 android:textSize="13sp" />
 
@@ -159,7 +190,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="💼 Work"
+                android:text="Work"
                 android:textColor="@color/text_primary"
                 android:textSize="13sp" />
 
@@ -168,7 +199,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="📍 Other"
+                android:text="Other"
                 android:textColor="@color/text_primary"
                 android:textSize="13sp" />
         </RadioGroup>

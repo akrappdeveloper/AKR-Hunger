@@ -40,7 +40,7 @@ public class CartActivity extends BaseActivity implements CartManager.CartChange
 
     private RecyclerView rvCartItems;
     private View emptyCart, cartContent;
-    private TextView tvSubtotal, tvDeliveryFee, tvTaxes, tvTotal;
+    private TextView tvSubtotal, tvPackagingCharges, tvDeliveryFee, tvPlatformFee, tvTaxableValue, tvCgst, tvSgst, tvTotal, tvAmountPaid, tvBalanceDue;
     private EditText etSpecialInstructions, etCoupon;
     private CartItemAdapter adapter;
     private CartManager cartManager;
@@ -65,8 +65,8 @@ public class CartActivity extends BaseActivity implements CartManager.CartChange
         if (!cartManager.isEmpty()) {
             double subtotal = cartManager.getSubtotal();
             double threshold = remoteConfigHelper != null ? remoteConfigHelper.getFreeDeliveryThreshold() : 199.0;
-            double fee = subtotal >= threshold ? 0 : (remoteConfigHelper != null ? remoteConfigHelper.getDeliveryFee() : 30.0);
-            double taxRate = remoteConfigHelper != null ? remoteConfigHelper.getTaxRate() : Constants.TAX_RATE;
+            double fee = subtotal >= threshold ? 0 : (remoteConfigHelper != null ? remoteConfigHelper.getDeliveryFee() : 40.0);
+            double taxRate = 0.05; // 5% GST (2.5% CGST + 2.5% SGST)
             double total = subtotal + fee + (subtotal * taxRate);
             analyticsHelper.logBeginCheckout(cartManager.getTotalItemCount(), total, paymentMethod);
         }
@@ -77,9 +77,15 @@ public class CartActivity extends BaseActivity implements CartManager.CartChange
         emptyCart = findViewById(R.id.empty_cart);
         cartContent = findViewById(R.id.cart_content);
         tvSubtotal = findViewById(R.id.tv_subtotal);
+        tvPackagingCharges = findViewById(R.id.tv_packaging_charges);
         tvDeliveryFee = findViewById(R.id.tv_delivery_fee);
-        tvTaxes = findViewById(R.id.tv_taxes);
+        tvPlatformFee = findViewById(R.id.tv_platform_fee);
+        tvTaxableValue = findViewById(R.id.tv_taxable_value);
+        tvCgst = findViewById(R.id.tv_cgst);
+        tvSgst = findViewById(R.id.tv_sgst);
         tvTotal = findViewById(R.id.tv_total);
+        tvAmountPaid = findViewById(R.id.tv_amount_paid);
+        tvBalanceDue = findViewById(R.id.tv_balance_due);
         etSpecialInstructions = findViewById(R.id.et_special_instructions);
         etCoupon = findViewById(R.id.et_coupon);
     }
@@ -167,19 +173,29 @@ public class CartActivity extends BaseActivity implements CartManager.CartChange
             cartContent.setVisibility(View.VISIBLE);
 
             double subtotal = cartManager.getSubtotal();
-            // Use Firebase Remote Config threshold and fee
             double threshold = remoteConfigHelper != null ? remoteConfigHelper.getFreeDeliveryThreshold() : 199.0;
-            double feeConfig = remoteConfigHelper != null ? remoteConfigHelper.getDeliveryFee() : 30.0;
-            double taxRateConfig = remoteConfigHelper != null ? remoteConfigHelper.getTaxRate() : Constants.TAX_RATE;
-
+            double feeConfig = remoteConfigHelper != null ? remoteConfigHelper.getDeliveryFee() : 40.0;
             double deliveryFee = subtotal >= threshold ? 0 : feeConfig;
-            double taxes = subtotal * taxRateConfig;
-            double total = subtotal + deliveryFee + taxes;
+            double packagingCharges = 0.0;
+            double platformFee = 0.0;
+            double taxableValue = subtotal;
+            double cgst = Math.round(taxableValue * 0.025 * 100.0) / 100.0;
+            double sgst = Math.round(taxableValue * 0.025 * 100.0) / 100.0;
+            double taxes = cgst + sgst;
+            double total = subtotal + packagingCharges + deliveryFee + platformFee + taxes;
+            double amountPaid = "cod".equals(paymentMethod) ? 0.0 : total;
+            double balanceDue = "cod".equals(paymentMethod) ? total : 0.0;
 
-            tvSubtotal.setText(String.format(Locale.getDefault(), "₹%.0f", subtotal));
-            tvDeliveryFee.setText(deliveryFee == 0 ? "FREE" : String.format(Locale.getDefault(), "₹%.0f", deliveryFee));
-            tvTaxes.setText(String.format(Locale.getDefault(), "₹%.0f", taxes));
-            tvTotal.setText(String.format(Locale.getDefault(), "₹%.0f", total));
+            tvSubtotal.setText(String.format(Locale.getDefault(), "₹%.2f", subtotal));
+            if (tvPackagingCharges != null) tvPackagingCharges.setText(String.format(Locale.getDefault(), "₹%.2f", packagingCharges));
+            tvDeliveryFee.setText(deliveryFee == 0 ? "FREE" : String.format(Locale.getDefault(), "₹%.2f", deliveryFee));
+            if (tvPlatformFee != null) tvPlatformFee.setText(String.format(Locale.getDefault(), "₹%.2f", platformFee));
+            if (tvTaxableValue != null) tvTaxableValue.setText(String.format(Locale.getDefault(), "₹%.2f", taxableValue));
+            if (tvCgst != null) tvCgst.setText(String.format(Locale.getDefault(), "₹%.2f", cgst));
+            if (tvSgst != null) tvSgst.setText(String.format(Locale.getDefault(), "₹%.2f", sgst));
+            tvTotal.setText(String.format(Locale.getDefault(), "₹%.2f", total));
+            if (tvAmountPaid != null) tvAmountPaid.setText(String.format(Locale.getDefault(), "₹%.2f", amountPaid));
+            if (tvBalanceDue != null) tvBalanceDue.setText(String.format(Locale.getDefault(), "₹%.2f", balanceDue));
 
             crashlyticsHelper.updateCartContext(cartManager.getTotalItemCount(), subtotal, cartManager.getRestaurantId());
         }
@@ -200,12 +216,18 @@ public class CartActivity extends BaseActivity implements CartManager.CartChange
 
         double subtotal = cartManager.getSubtotal();
         double threshold = remoteConfigHelper != null ? remoteConfigHelper.getFreeDeliveryThreshold() : 199.0;
-        double feeConfig = remoteConfigHelper != null ? remoteConfigHelper.getDeliveryFee() : 30.0;
-        double taxRateConfig = remoteConfigHelper != null ? remoteConfigHelper.getTaxRate() : Constants.TAX_RATE;
+        double feeConfig = remoteConfigHelper != null ? remoteConfigHelper.getDeliveryFee() : 40.0;
 
         double deliveryFee = subtotal >= threshold ? 0 : feeConfig;
-        double taxes = subtotal * taxRateConfig;
-        double total = subtotal + deliveryFee + taxes;
+        double packagingCharges = 0.0;
+        double platformFee = 0.0;
+        double taxableValue = subtotal;
+        double cgst = Math.round(taxableValue * 0.025 * 100.0) / 100.0;
+        double sgst = Math.round(taxableValue * 0.025 * 100.0) / 100.0;
+        double taxes = cgst + sgst;
+        double total = subtotal + packagingCharges + deliveryFee + platformFee + taxes;
+        double amountPaid = "cod".equals(paymentMethod) ? 0.0 : total;
+        double balanceDue = "cod".equals(paymentMethod) ? total : 0.0;
         String restaurantName = items.get(0).getRestaurantName();
 
         if (checkoutTrace != null) {
@@ -228,8 +250,22 @@ public class CartActivity extends BaseActivity implements CartManager.CartChange
             orderItems.add(oi);
         }
 
+        // Generate real and professional Order ID (8 uppercase letters + 4 digits, e.g. KRIIEFDI4829)
+        String chars = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+        java.util.Random rnd = new java.util.Random();
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < 8; i++) {
+            sb.append(chars.charAt(rnd.nextInt(chars.length())));
+        }
+        sb.append(1000 + rnd.nextInt(9000));
+        final String orderId = sb.toString();
+        final String deliveryOtp = String.valueOf(1000 + rnd.nextInt(9000));
+
         // Build order document
         Map<String, Object> orderData = new HashMap<>();
+        orderData.put("id", orderId);
+        orderData.put("orderId", orderId);
+        orderData.put("orderNumber", orderId);
         orderData.put("customerId", user.getUid());
         orderData.put("restaurantId", cartManager.getRestaurantId());
         orderData.put("restaurantName", restaurantName != null ? restaurantName : "Restaurant");
@@ -238,9 +274,17 @@ public class CartActivity extends BaseActivity implements CartManager.CartChange
         orderData.put("paymentMethod", paymentMethod);
         orderData.put("paymentStatus", "cod".equals(paymentMethod) ? "pending" : "pending");
         orderData.put("subtotal", subtotal);
+        orderData.put("packagingCharges", packagingCharges);
         orderData.put("deliveryCharge", deliveryFee);
+        orderData.put("platformFee", platformFee);
+        orderData.put("taxableValue", taxableValue);
+        orderData.put("cgst", cgst);
+        orderData.put("sgst", sgst);
         orderData.put("taxes", taxes);
         orderData.put("total", total);
+        orderData.put("amountPaid", amountPaid);
+        orderData.put("balanceDue", balanceDue);
+        orderData.put("deliveryOtp", deliveryOtp);
         orderData.put("specialInstructions", etSpecialInstructions.getText().toString().trim());
         orderData.put("customerName", user.getDisplayName() != null ? user.getDisplayName() : "Customer");
         orderData.put("customerPhone", "");
@@ -250,13 +294,14 @@ public class CartActivity extends BaseActivity implements CartManager.CartChange
         findViewById(R.id.btn_place_order).setEnabled(false);
 
         db.collection(Constants.COLLECTION_ORDERS)
-                .add(orderData)
-                .addOnSuccessListener(docRef -> {
+                .document(orderId)
+                .set(orderData)
+                .addOnSuccessListener(aVoid -> {
                     stopTrace(checkoutTrace);
 
                     // Firebase Analytics - Log eCommerce Purchase event
                     analyticsHelper.logPurchase(
-                            docRef.getId(),
+                            orderId,
                             items,
                             subtotal,
                             deliveryFee,
@@ -266,24 +311,24 @@ public class CartActivity extends BaseActivity implements CartManager.CartChange
                             restaurantName
                     );
 
-                    logBreadcrumb("Order confirmed successfully in Firestore: " + docRef.getId());
+                    logBreadcrumb("Order confirmed successfully in Firestore: " + orderId);
 
                     // Trigger Order Confirmation Notification (FCM / Local + Firestore persistence)
                     NotificationHelper.sendOrderNotification(
                             CartActivity.this,
                             user.getUid(),
-                            docRef.getId(),
+                            orderId,
                             restaurantName != null ? restaurantName : "Restaurant",
                             total,
                             "confirmed"
                     );
 
                     cartManager.clearCart();
-                    Toast.makeText(this, "Order placed successfully! 🎉", Toast.LENGTH_LONG).show();
+                    Toast.makeText(this, "Order #" + orderId + " placed successfully! 🎉", Toast.LENGTH_LONG).show();
 
                     // Navigate directly to OrderDetailActivity so user sees real-time tracking
                     android.content.Intent intent = new android.content.Intent(CartActivity.this, OrderDetailActivity.class);
-                    intent.putExtra(Constants.EXTRA_ORDER_ID, docRef.getId());
+                    intent.putExtra(Constants.EXTRA_ORDER_ID, orderId);
                     startActivity(intent);
                     finish();
                 })

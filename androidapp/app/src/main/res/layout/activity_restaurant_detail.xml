@@ -50,7 +50,7 @@
                         android:layout_height="20dp"
                         android:layout_gravity="center"
                         android:src="@drawable/ic_back"
-                        android:tint="@color/text_primary" />
+                        app:tint="@color/text_primary" />
                 </FrameLayout>
             </FrameLayout>
 
@@ -62,7 +62,7 @@
                 android:layout_marginTop="-30dp"
                 app:cardBackgroundColor="@color/surface"
                 app:cardCornerRadius="24dp"
-                app:cardElevation="2dp"
+                app:cardElevation="3dp"
                 app:strokeColor="@color/card_border"
                 app:strokeWidth="1dp">
 
@@ -76,9 +76,9 @@
                         android:id="@+id/tv_restaurant_name"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:fontFamily="sans-serif-bold"
                         android:textColor="@color/text_primary"
-                        android:textSize="22sp"
-                        android:textStyle="bold" />
+                        android:textSize="22sp" />
 
                     <!-- Rating & Cuisine Row -->
                     <LinearLayout
@@ -100,17 +100,17 @@
                                 android:layout_width="12dp"
                                 android:layout_height="12dp"
                                 android:src="@drawable/ic_star"
-                                android:tint="@color/rating_star" />
+                                app:tint="@color/rating_star" />
 
                             <TextView
                                 android:id="@+id/tv_restaurant_rating"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginStart="4dp"
+                                android:fontFamily="sans-serif-bold"
                                 android:text="4.5"
                                 android:textColor="@color/primary"
-                                android:textSize="12sp"
-                                android:textStyle="bold" />
+                                android:textSize="12sp" />
                         </LinearLayout>
 
                         <TextView
@@ -118,6 +118,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginStart="10dp"
+                            android:fontFamily="sans-serif"
                             android:textColor="@color/text_secondary"
                             android:textSize="13sp" />
                     </LinearLayout>
@@ -127,6 +128,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="10dp"
+                        android:fontFamily="sans-serif"
                         android:lineSpacingExtra="2dp"
                         android:textColor="@color/text_hint"
                         android:textSize="13sp" />
@@ -136,10 +138,10 @@
             <!-- Search Within Restaurant Menu -->
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="46dp"
+                android:layout_height="48dp"
                 android:layout_marginHorizontal="16dp"
                 android:layout_marginTop="16dp"
-                android:background="@drawable/bg_search_ios"
+                android:background="@drawable/bg_pill_soft"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
                 android:paddingHorizontal="14dp">
@@ -157,6 +159,7 @@
                     android:layout_marginStart="10dp"
                     android:layout_weight="1"
                     android:background="@null"
+                    android:fontFamily="sans-serif"
                     android:hint="Search in menu..."
                     android:imeOptions="actionDone"
                     android:inputType="text"
@@ -168,6 +171,9 @@
                     android:id="@+id/btn_clear_search"
                     android:layout_width="20dp"
                     android:layout_height="20dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:clickable="true"
+                    android:focusable="true"
                     android:src="@drawable/ic_close"
                     android:visibility="gone"
                     app:tint="@color/text_hint" />
@@ -189,12 +195,12 @@
                     android:background="@drawable/bg_pill_primary"
                     android:clickable="true"
                     android:focusable="true"
-                    android:paddingHorizontal="14dp"
+                    android:fontFamily="sans-serif-bold"
+                    android:paddingHorizontal="16dp"
                     android:paddingVertical="7dp"
                     android:text="All"
                     android:textColor="@color/on_primary"
-                    android:textSize="12sp"
-                    android:textStyle="bold" />
+                    android:textSize="12sp" />
 
                 <TextView
                     android:id="@+id/btn_filter_veg"
@@ -204,12 +210,12 @@
                     android:background="@drawable/bg_pill_soft"
                     android:clickable="true"
                     android:focusable="true"
-                    android:paddingHorizontal="12dp"
+                    android:fontFamily="sans-serif-bold"
+                    android:paddingHorizontal="14dp"
                     android:paddingVertical="7dp"
                     android:text="🟢 Veg Only"
                     android:textColor="@color/veg_green"
-                    android:textSize="12sp"
-                    android:textStyle="bold" />
+                    android:textSize="12sp" />
 
                 <TextView
                     android:id="@+id/btn_filter_nonveg"
@@ -219,12 +225,12 @@
                     android:background="@drawable/bg_pill_soft"
                     android:clickable="true"
                     android:focusable="true"
-                    android:paddingHorizontal="12dp"
+                    android:fontFamily="sans-serif-bold"
+                    android:paddingHorizontal="14dp"
                     android:paddingVertical="7dp"
                     android:text="🔴 Non-Veg"
                     android:textColor="@color/non_veg_red"
-                    android:textSize="12sp"
-                    android:textStyle="bold" />
+                    android:textSize="12sp" />
             </LinearLayout>
 
             <!-- Categories Horizontal List -->
@@ -251,15 +257,16 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
+                    android:fontFamily="sans-serif-bold"
                     android:text="@string/menu"
                     android:textColor="@color/text_primary"
-                    android:textSize="18sp"
-                    android:textStyle="bold" />
+                    android:textSize="18sp" />
 
                 <TextView
                     android:id="@+id/tv_menu_count"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif"
                     android:textColor="@color/text_hint"
                     android:textSize="13sp" />
             </LinearLayout>
@@ -295,25 +302,33 @@
                 android:padding="48dp"
                 android:visibility="gone">
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="🍽️"
-                    android:textSize="48sp" />
+                <FrameLayout
+                    android:layout_width="80dp"
+                    android:layout_height="80dp"
+                    android:background="@drawable/bg_icon_circle_soft">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:text="🍽️"
+                        android:textSize="36sp" />
+                </FrameLayout>
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
+                    android:layout_marginTop="16dp"
+                    android:fontFamily="sans-serif-bold"
                     android:text="No menu items found"
                     android:textColor="@color/text_primary"
-                    android:textSize="17sp"
-                    android:textStyle="bold" />
+                    android:textSize="17sp" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
+                    android:fontFamily="sans-serif"
                     android:text="Try clearing the search or category filter"
                     android:textColor="@color/text_secondary"
                     android:textSize="13sp" />
@@ -321,7 +336,7 @@
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 
-    <!-- Floating View Cart Bottom Bar (Mirrors the Website Order Flow) -->
+    <!-- Floating View Cart Bottom Bar -->
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/bar_view_cart"
         android:layout_width="match_parent"
@@ -354,28 +369,28 @@
                     android:id="@+id/tv_cart_bar_count"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif-medium"
                     android:text="1 item"
                     android:textColor="@color/on_primary"
-                    android:textSize="12sp"
-                    android:textStyle="bold" />
+                    android:textSize="12sp" />
 
                 <TextView
                     android:id="@+id/tv_cart_bar_total"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif-black"
                     android:text="₹0"
                     android:textColor="@color/on_primary"
-                    android:textSize="15sp"
-                    android:textStyle="bold" />
+                    android:textSize="16sp" />
             </LinearLayout>
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-bold"
                 android:text="View Cart ➔"
                 android:textColor="@color/on_primary"
-                android:textSize="14sp"
-                android:textStyle="bold" />
+                android:textSize="14sp" />
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 

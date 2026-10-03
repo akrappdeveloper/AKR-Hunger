@@ -10,7 +10,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
   Search, Bell, ShoppingCart, User, Menu, X, LogOut,
-  Heart, Package, MapPin, LifeBuoy, Settings, ChevronDown, ChevronRight, Home, Briefcase, Wallet
+  Heart, Package, MapPin, LifeBuoy, Settings, ChevronDown, ChevronRight, Home, Briefcase, Wallet,
+  Tag, Gift, Crown, Star, HelpCircle
 } from 'lucide-react';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
@@ -201,9 +202,41 @@ export default function CustomerNavbar() {
                     <User className="w-4 h-4 mr-2 text-muted-foreground" />
                     Profile
                   </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => router.push('/customer/orders')} className="cursor-pointer rounded-xl my-0.5">
+                    <Package className="w-4 h-4 mr-2 text-muted-foreground" />
+                    My Orders
+                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => router.push('/customer/wallet')} className="cursor-pointer rounded-xl my-0.5">
                     <Wallet className="w-4 h-4 mr-2 text-muted-foreground" />
-                    Wallet
+                    Wallet & Points
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => router.push('/customer/addresses')} className="cursor-pointer rounded-xl my-0.5">
+                    <MapPin className="w-4 h-4 mr-2 text-muted-foreground" />
+                    Saved Addresses
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => router.push('/customer/favorites')} className="cursor-pointer rounded-xl my-0.5">
+                    <Heart className="w-4 h-4 mr-2 text-muted-foreground" />
+                    Favorites
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => router.push('/customer/deals')} className="cursor-pointer rounded-xl my-0.5">
+                    <Tag className="w-4 h-4 mr-2 text-amber-500" />
+                    Deals & Offers
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => router.push('/customer/rewards')} className="cursor-pointer rounded-xl my-0.5">
+                    <Gift className="w-4 h-4 mr-2 text-primary" />
+                    Rewards & Points
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => router.push('/customer/membership')} className="cursor-pointer rounded-xl my-0.5">
+                    <Crown className="w-4 h-4 mr-2 text-yellow-500" />
+                    VIP Membership
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => router.push('/customer/reviews')} className="cursor-pointer rounded-xl my-0.5">
+                    <Star className="w-4 h-4 mr-2 text-muted-foreground" />
+                    My Reviews
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => router.push('/customer/support')} className="cursor-pointer rounded-xl my-0.5">
+                    <HelpCircle className="w-4 h-4 mr-2 text-muted-foreground" />
+                    Help & Support
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => router.push('/customer/notifications')} className="cursor-pointer rounded-xl my-0.5 justify-between">
                     <div className="flex items-center">
@@ -215,14 +248,6 @@ export default function CustomerNavbar() {
                         {unreadCount > 9 ? '9+' : unreadCount}
                       </Badge>
                     )}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => router.push('/customer/favorites')} className="cursor-pointer rounded-xl my-0.5">
-                    <Heart className="w-4 h-4 mr-2 text-muted-foreground" />
-                    Favorites
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => router.push('/customer/orders')} className="cursor-pointer rounded-xl my-0.5">
-                    <Package className="w-4 h-4 mr-2 text-muted-foreground" />
-                    Orders
                   </DropdownMenuItem>
                   <DropdownMenuSeparator className="bg-border/60" />
                   <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer rounded-xl my-0.5" onClick={handleLogout}>
@@ -285,7 +310,7 @@ export default function CustomerNavbar() {
                     <ThemeToggle variant="compact" className="w-full justify-around" />
                   </div>
 
-                  <div className="flex-1 p-4 space-y-1">
+                  <div className="flex-1 p-4 space-y-1 overflow-y-auto">
                     <Link href="/customer" className="flex items-center gap-3 p-3 rounded-2xl hover:bg-muted/60 text-foreground transition-colors">
                       <div className="w-8 h-8 rounded-xl bg-orange-500/10 text-orange-500 flex items-center justify-center"><Home className="w-4 h-4" /></div>
                       <span className="font-semibold text-sm">Home</span>
@@ -296,15 +321,39 @@ export default function CustomerNavbar() {
                     </Link>
                     <Link href="/customer/wallet" className="flex items-center gap-3 p-3 rounded-2xl hover:bg-muted/60 text-foreground transition-colors">
                       <div className="w-8 h-8 rounded-xl bg-green-500/10 text-green-500 flex items-center justify-center"><Wallet className="w-4 h-4" /></div>
-                      <span className="font-semibold text-sm">Wallet</span>
+                      <span className="font-semibold text-sm">Wallet & Balance</span>
+                    </Link>
+                    <Link href="/customer/deals" className="flex items-center gap-3 p-3 rounded-2xl hover:bg-muted/60 text-foreground transition-colors">
+                      <div className="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center"><Tag className="w-4 h-4" /></div>
+                      <span className="font-semibold text-sm">Deals & Offers</span>
+                    </Link>
+                    <Link href="/customer/rewards" className="flex items-center gap-3 p-3 rounded-2xl hover:bg-muted/60 text-foreground transition-colors">
+                      <div className="w-8 h-8 rounded-xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center"><Gift className="w-4 h-4" /></div>
+                      <span className="font-semibold text-sm">Rewards & Points</span>
+                    </Link>
+                    <Link href="/customer/membership" className="flex items-center gap-3 p-3 rounded-2xl hover:bg-muted/60 text-foreground transition-colors">
+                      <div className="w-8 h-8 rounded-xl bg-yellow-500/10 text-yellow-600 flex items-center justify-center"><Crown className="w-4 h-4" /></div>
+                      <span className="font-semibold text-sm">VIP Membership</span>
                     </Link>
                     <Link href="/customer/favorites" className="flex items-center gap-3 p-3 rounded-2xl hover:bg-muted/60 text-foreground transition-colors">
                       <div className="w-8 h-8 rounded-xl bg-pink-500/10 text-pink-500 flex items-center justify-center"><Heart className="w-4 h-4" /></div>
                       <span className="font-semibold text-sm">Favorites</span>
                     </Link>
+                    <Link href="/customer/addresses" className="flex items-center gap-3 p-3 rounded-2xl hover:bg-muted/60 text-foreground transition-colors">
+                      <div className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center"><MapPin className="w-4 h-4" /></div>
+                      <span className="font-semibold text-sm">Saved Addresses</span>
+                    </Link>
                     <Link href="/customer/profile" className="flex items-center gap-3 p-3 rounded-2xl hover:bg-muted/60 text-foreground transition-colors">
                       <div className="w-8 h-8 rounded-xl bg-purple-500/10 text-purple-500 flex items-center justify-center"><User className="w-4 h-4" /></div>
                       <span className="font-semibold text-sm">Profile</span>
+                    </Link>
+                    <Link href="/customer/reviews" className="flex items-center gap-3 p-3 rounded-2xl hover:bg-muted/60 text-foreground transition-colors">
+                      <div className="w-8 h-8 rounded-xl bg-amber-400/10 text-amber-500 flex items-center justify-center"><Star className="w-4 h-4" /></div>
+                      <span className="font-semibold text-sm">My Reviews</span>
+                    </Link>
+                    <Link href="/customer/support" className="flex items-center gap-3 p-3 rounded-2xl hover:bg-muted/60 text-foreground transition-colors">
+                      <div className="w-8 h-8 rounded-xl bg-cyan-500/10 text-cyan-500 flex items-center justify-center"><HelpCircle className="w-4 h-4" /></div>
+                      <span className="font-semibold text-sm">24/7 Support</span>
                     </Link>
                     <Link href="/customer/notifications" className="flex items-center justify-between p-3 rounded-2xl hover:bg-muted/60 text-foreground transition-colors">
                       <div className="flex items-center gap-3">

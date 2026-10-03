@@ -102,6 +102,8 @@ export default function WalletPage() {
             setTotalSpent(spent);
 
             setLoadingHistory(false);
+        }, () => {
+            setLoadingHistory(false);
         });
 
         return () => unsubscribe();
@@ -123,6 +125,8 @@ export default function WalletPage() {
             } else {
                 setIssuedCard(null);
             }
+        }, () => {
+            setIssuedCard(null);
         });
         return () => unsubscribe();
     }, [user]);

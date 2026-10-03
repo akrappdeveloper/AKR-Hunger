@@ -17,7 +17,10 @@ import {
   Star,
   Wallet,
   HelpCircle,
-  MapPin
+  MapPin,
+  Calendar,
+  Users,
+  User
 } from 'lucide-react';
 import NotificationBell from '@/components/notifications/NotificationBell';
 import ThemeToggle from '@/components/ThemeToggle';
@@ -93,6 +96,11 @@ export default function RestaurantSidebar({ isMobile = false, onClose }: Restaur
       badge: activeOrdersCount > 0 ? activeOrdersCount : undefined
     },
     {
+      href: '/restaurant/orders/tracking',
+      label: 'Live Tracking',
+      icon: MapPin
+    },
+    {
       href: '/restaurant/menu',
       label: 'Menu Management',
       icon: Package,
@@ -100,18 +108,18 @@ export default function RestaurantSidebar({ isMobile = false, onClose }: Restaur
       badgeVariant: 'secondary' as const
     },
     {
-      href: '/restaurant/notifications',
-      label: 'Notifications',
-      icon: Bell
+      href: '/restaurant/schedule',
+      label: 'Kitchen Schedule',
+      icon: Calendar
     },
     {
-      href: '/restaurant/reviews',
-      label: 'Reviews & Ratings',
-      icon: Star
+      href: '/restaurant/staff',
+      label: 'Staff Management',
+      icon: Users
     },
     {
       href: '/restaurant/wallet',
-      label: 'Wallet',
+      label: 'Wallet & Payouts',
       icon: Wallet
     },
     {
@@ -130,9 +138,19 @@ export default function RestaurantSidebar({ isMobile = false, onClose }: Restaur
       icon: BarChart3
     },
     {
-      href: '/restaurant/orders/tracking',
-      label: 'Live Tracking',
-      icon: MapPin
+      href: '/restaurant/reviews',
+      label: 'Reviews & Ratings',
+      icon: Star
+    },
+    {
+      href: '/restaurant/notifications',
+      label: 'Notifications',
+      icon: Bell
+    },
+    {
+      href: '/restaurant/profile',
+      label: 'Restaurant Profile',
+      icon: User
     },
     {
       href: '/restaurant/settings',

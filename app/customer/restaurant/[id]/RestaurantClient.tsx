@@ -493,11 +493,11 @@ export default function RestaurantClient({
                                     </Badge>
                                 </div>
                                 <p className="text-xs font-bold text-foreground mt-0.5">
-                                    Order #{activeOrder.id.slice(-6).toUpperCase()} • {activeOrder.items?.length || 0} item{(activeOrder.items?.length || 0) > 1 ? 's' : ''}
+                                    Order #{activeOrder.id ? (activeOrder.id.length <= 14 ? activeOrder.id : activeOrder.id.slice(-8)).toUpperCase() : 'ORDER'} • {activeOrder.items?.length || 0} item{(activeOrder.items?.length || 0) > 1 ? 's' : ''}
                                 </p>
                             </div>
                         </div>
-                        <Link href={`/customer/orders/${activeOrder.id}/tracking`} className="w-full sm:w-auto shrink-0">
+                        <Link href={`/customer/orders/tracking/${activeOrder.id}`} className="w-full sm:w-auto shrink-0">
                             <Button size="sm" className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-md gap-1.5 text-xs px-5 py-2.5">
                                 <Navigation className="w-3.5 h-3.5" /> Track Live Map ➔
                             </Button>

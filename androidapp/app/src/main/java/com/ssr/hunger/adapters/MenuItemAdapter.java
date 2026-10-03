@@ -106,7 +106,8 @@ public class MenuItemAdapter extends RecyclerView.Adapter<MenuItemAdapter.ViewHo
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
-        ImageView ivImage, btnQuickAdd;
+        ImageView ivImage;
+        View btnQuickAdd;
         TextView tvName, tvRestaurant, tvDescription, tvPrice, tvPrepTime, tvRating, tvBestSeller;
         View vegDot;
         View vegIndicator;

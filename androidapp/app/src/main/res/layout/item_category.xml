@@ -1,17 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="76dp"
+    android:layout_width="80dp"
     android:layout_height="wrap_content"
+    android:clickable="true"
+    android:focusable="true"
     android:gravity="center_horizontal"
     android:orientation="vertical"
     android:paddingHorizontal="4dp"
-    android:paddingVertical="4dp">
+    android:paddingVertical="6dp">
 
     <FrameLayout
         android:id="@+id/category_icon_bg"
-        android:layout_width="56dp"
-        android:layout_height="56dp"
-        android:background="@drawable/bg_category_chip">
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:background="@drawable/bg_category_chip"
+        android:elevation="1dp">
 
         <TextView
             android:id="@+id/tv_category_icon"
@@ -25,11 +28,11 @@
         android:id="@+id/tv_category_name"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="6dp"
+        android:layout_marginTop="8dp"
         android:ellipsize="end"
+        android:fontFamily="sans-serif-medium"
         android:gravity="center"
         android:maxLines="1"
-        android:textColor="@color/text_secondary"
-        android:textSize="11sp"
-        android:textStyle="bold" />
+        android:textColor="@color/text_primary"
+        android:textSize="12sp" />
 </LinearLayout>

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -37,12 +38,13 @@
             <!-- Veg/Non-Veg Indicator (Top Start) -->
             <FrameLayout
                 android:id="@+id/veg_indicator"
-                android:layout_width="18dp"
-                android:layout_height="18dp"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
                 android:layout_gravity="start|top"
                 android:layout_margin="10dp"
-                android:background="@color/surface"
-                android:elevation="2dp">
+                android:background="@drawable/bg_pill_white"
+                android:elevation="2dp"
+                android:padding="4dp">
 
                 <View
                     android:id="@+id/veg_dot"
@@ -61,12 +63,13 @@
                 android:layout_margin="10dp"
                 android:background="@drawable/bg_pill_primary"
                 android:elevation="2dp"
-                android:paddingHorizontal="8dp"
-                android:paddingVertical="3dp"
-                android:text="BEST SELLER"
+                android:fontFamily="sans-serif-bold"
+                android:letterSpacing="0.04"
+                android:paddingHorizontal="9dp"
+                android:paddingVertical="4dp"
+                android:text="BESTSELLER"
                 android:textColor="@color/on_primary"
                 android:textSize="9sp"
-                android:textStyle="bold"
                 android:visibility="gone" />
 
             <!-- Quick Add Button (Bottom End Floating Pill) -->
@@ -78,10 +81,12 @@
                 android:layout_margin="10dp"
                 android:background="@drawable/bg_pill_primary"
                 android:clickable="true"
+                android:contentDescription="Quick Add"
                 android:elevation="3dp"
                 android:focusable="true"
                 android:foreground="?attr/selectableItemBackgroundBorderless"
-                android:padding="7dp"
+                android:padding="8dp"
+                android:scaleType="centerInside"
                 android:src="@drawable/ic_add_white" />
         </FrameLayout>
 
@@ -98,10 +103,10 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:ellipsize="end"
+                android:fontFamily="sans-serif-bold"
                 android:maxLines="1"
                 android:textColor="@color/text_primary"
-                android:textSize="15sp"
-                android:textStyle="bold" />
+                android:textSize="15sp" />
 
             <!-- Restaurant Subtitle -->
             <TextView
@@ -113,6 +118,7 @@
                 android:drawablePadding="4dp"
                 android:drawableTint="@color/text_hint"
                 android:ellipsize="end"
+                android:fontFamily="sans-serif"
                 android:maxLines="1"
                 android:textColor="@color/text_hint"
                 android:textSize="11sp" />
@@ -124,6 +130,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
                 android:ellipsize="end"
+                android:fontFamily="sans-serif"
                 android:lineSpacingExtra="1dp"
                 android:maxLines="2"
                 android:textColor="@color/text_secondary"
@@ -143,9 +150,9 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
+                    android:fontFamily="sans-serif-black"
                     android:textColor="@color/text_primary"
-                    android:textSize="17sp"
-                    android:textStyle="bold" />
+                    android:textSize="16sp" />
 
                 <!-- Prep Time Pill -->
                 <LinearLayout
@@ -160,17 +167,17 @@
                         android:layout_width="11dp"
                         android:layout_height="11dp"
                         android:src="@drawable/ic_clock"
-                        android:tint="@color/primary" />
+                        app:tint="@color/primary" />
 
                     <TextView
                         android:id="@+id/tv_prep_time"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="3dp"
+                        android:fontFamily="sans-serif-bold"
                         android:text="25m"
                         android:textColor="@color/primary"
-                        android:textSize="10sp"
-                        android:textStyle="bold" />
+                        android:textSize="10sp" />
                 </LinearLayout>
 
                 <!-- Rating -->
@@ -184,17 +191,17 @@
                         android:layout_width="12dp"
                         android:layout_height="12dp"
                         android:src="@drawable/ic_star"
-                        android:tint="@color/rating_star" />
+                        app:tint="@color/rating_star" />
 
                     <TextView
                         android:id="@+id/tv_rating"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="2dp"
+                        android:fontFamily="sans-serif-bold"
                         android:text="4.5"
                         android:textColor="@color/text_primary"
-                        android:textSize="11sp"
-                        android:textStyle="bold" />
+                        android:textSize="11sp" />
                 </LinearLayout>
             </LinearLayout>
         </LinearLayout>

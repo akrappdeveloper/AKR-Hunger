@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { db } from '@/lib/firebase';
 import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
-import { Order, DeliveryStage, getRouteDestination, getStageLabel, getStageColor } from '@/lib/types';
+import { Order, DeliveryStage, getRouteDestination, getStageLabel, getStageColor, formatOrderId } from '@/lib/types';
 import { useDriverLocation } from '@/hooks/useDriverLocation';
 import LiveTrackingMap, { MapMarker } from '@/components/tracking/LiveTrackingMap';
 import DriverInfoPanel from '@/components/tracking/DriverInfoPanel';
@@ -302,7 +302,7 @@ export default function DeliveryTrackingPage() {
                         </Badge>
                       );
                     })()}
-                    <span className="text-gray-500 text-xs font-mono">#{selectedOrder.id?.slice(0, 8)}</span>
+                    <span className="text-gray-400 text-xs font-mono font-bold">#{formatOrderId(selectedOrder.id)}</span>
                   </div>
                   <span className="text-white font-bold">₹{selectedOrder.total?.toFixed(0)}</span>
                 </div>

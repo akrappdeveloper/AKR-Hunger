@@ -4,9 +4,8 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import com.ssr.hunger.models.CartItem;
 import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -151,10 +150,17 @@ public class CartManager {
     }
 
     private void loadCart() {
-        String json = prefs.getString(KEY_CART_ITEMS, "[]");
-        Type type = new TypeToken<List<CartItem>>() {}.getType();
-        items = gson.fromJson(json, type);
-        if (items == null) items = new ArrayList<>();
+        try {
+            String json = prefs.getString(KEY_CART_ITEMS, "[]");
+            CartItem[] itemArray = gson.fromJson(json, CartItem[].class);
+            if (itemArray != null) {
+                items = new ArrayList<>(Arrays.asList(itemArray));
+            } else {
+                items = new ArrayList<>();
+            }
+        } catch (Exception e) {
+            items = new ArrayList<>();
+        }
         restaurantId = prefs.getString(KEY_RESTAURANT_ID, null);
     }
 
@@ -172,7 +178,11 @@ public class CartManager {
         if (deliveryAddress == null) {
             String json = prefs.getString("delivery_address", null);
             if (json != null) {
-                deliveryAddress = gson.fromJson(json, com.ssr.hunger.models.Address.class);
+                try {
+                    deliveryAddress = gson.fromJson(json, com.ssr.hunger.models.Address.class);
+                } catch (Exception e) {
+                    deliveryAddress = null;
+                }
             }
         }
         return deliveryAddress;

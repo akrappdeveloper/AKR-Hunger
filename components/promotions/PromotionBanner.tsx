@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { getActivePromotions } from '@/lib/promotions';
 import type { Promotion } from '@/lib/types';
 import { format } from 'date-fns';
+import { copyToClipboard } from '@/lib/utils';
 
 export function PromotionBanner() {
     const [promotions, setPromotions] = useState<Promotion[]>([]);
@@ -34,7 +35,7 @@ export function PromotionBanner() {
     }, [promotions.length]);
 
     const handleCopy = async (code: string) => {
-        await navigator.clipboard.writeText(code);
+        await copyToClipboard(code);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
     };

@@ -31,6 +31,13 @@ public class Order {
     private String deliveryPersonName;
     private String deliveryPersonPhone;
     private String deliveryOtp;
+    private double packagingCharges;
+    private double platformFee;
+    private double taxableValue;
+    private double cgst;
+    private double sgst;
+    private double amountPaid;
+    private double balanceDue;
 
     // Delivery address fields
     private String deliveryAddressStreet;
@@ -126,6 +133,27 @@ public class Order {
 
     public String getDeliveryAddressPincode() { return deliveryAddressPincode; }
     public void setDeliveryAddressPincode(String s) { this.deliveryAddressPincode = s; }
+
+    public double getPackagingCharges() { return packagingCharges; }
+    public void setPackagingCharges(double packagingCharges) { this.packagingCharges = packagingCharges; }
+
+    public double getPlatformFee() { return platformFee; }
+    public void setPlatformFee(double platformFee) { this.platformFee = platformFee; }
+
+    public double getTaxableValue() { return taxableValue > 0 ? taxableValue : subtotal; }
+    public void setTaxableValue(double taxableValue) { this.taxableValue = taxableValue; }
+
+    public double getCgst() { return cgst > 0 ? cgst : Math.round((taxes / 2.0) * 100.0) / 100.0; }
+    public void setCgst(double cgst) { this.cgst = cgst; }
+
+    public double getSgst() { return sgst > 0 ? sgst : Math.round((taxes / 2.0) * 100.0) / 100.0; }
+    public void setSgst(double sgst) { this.sgst = sgst; }
+
+    public double getAmountPaid() { return amountPaid; }
+    public void setAmountPaid(double amountPaid) { this.amountPaid = amountPaid; }
+
+    public double getBalanceDue() { return balanceDue; }
+    public void setBalanceDue(double balanceDue) { this.balanceDue = balanceDue; }
 
     public String getStatusDisplay() {
         if (status == null) return "Pending";

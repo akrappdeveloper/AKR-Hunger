@@ -1,478 +1,592 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { collection, query, where, orderBy, onSnapshot, addDoc, updateDoc, doc, increment, serverTimestamp, getDoc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, updateDoc, doc, serverTimestamp, addDoc, getDoc, increment } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { Order, MenuItem } from '@/lib/types';
-import { Card } from '@/components/ui/card';
+import { Order, formatOrderId } from '@/lib/types';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Package, RefreshCw, ChevronRight, Clock, ShoppingBag, MapPin, ChefHat, Star, X, Navigation, Bike } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Textarea } from '@/components/ui/textarea';
+import {
+  Package, RefreshCw, ChevronRight, Clock, ShoppingBag, MapPin,
+  ChefHat, Star, X, Navigation, Bike, Sparkles, Filter,
+  CheckCircle, AlertTriangle, Search, SortAsc, Zap, Timer,
+  ShieldCheck, Copy
+} from 'lucide-react';
 import Link from 'next/link';
 import { useCart } from '@/context/CartContext';
 import { useRouter } from 'next/navigation';
 import InvoiceButton from './InvoiceButton';
 import { toast } from 'sonner';
+import { copyToClipboard } from '@/lib/utils';
 import { notifyOrderStatusUpdate } from '@/lib/customer-notifications';
 
-export default function OrdersPage() {
-  const { user, customer } = useAuth();
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
-  const router = useRouter();
-  const { addItem } = useCart();
+// ─── Mini Live Tracking Strip ─────────────────────────────────────────────────
+function MiniTrackingStrip({ order }: { order: Order }) {
+  const stage = order?.delivery?.stage;
+  const isOut = order.status === 'out_for_delivery';
 
-  // Rating State
-  const [ratingOrder, setRatingOrder] = useState<Order | null>(null);
-  const [ratingItem, setRatingItem] = useState<{ id: string, name: string, image: string } | null>(null);
-  const [ratingValue, setRatingValue] = useState(5);
-  const [ratingComment, setRatingComment] = useState('');
-  const [submittingRating, setSubmittingRating] = useState(false);
-  const [cancelOrderData, setCancelOrderData] = useState<Order | null>(null);
+  const steps = [
+    { key: 'confirmed', label: 'Confirmed', emoji: '✅' },
+    { key: 'preparing', label: 'Preparing', emoji: '👨‍🍳' },
+    { key: 'ready', label: 'Ready', emoji: '🍱' },
+    { key: 'out_for_delivery', label: 'Delivery', emoji: '🛵' },
+    { key: 'delivered', label: 'Done', emoji: '🎉' },
+  ];
 
-  useEffect(() => {
-    if (!user) return;
-    const q = query(
-      collection(db, 'orders'),
-      where('customerId', '==', user.uid)
-    );
-
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const ordersList = snapshot.docs.map(doc => ({
-        ...doc.data(),
-        id: doc.id,
-        createdAt: doc.data().createdAt?.toDate ? doc.data().createdAt.toDate() : new Date(doc.data().createdAt),
-      })) as Order[];
-
-      // Client-side sorting to avoid Firestore Index requirement
-      ordersList.sort((a, b) => {
-        const dateA = new Date(a.createdAt).getTime();
-        const dateB = new Date(b.createdAt).getTime();
-        return dateB - dateA;
-      });
-
-      setOrders(ordersList);
-      setLoading(false);
-    }, (error) => {
-      console.error("Error fetching orders:", error);
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, [user]);
-
-  const handleReorder = (order: Order) => {
-    if (!order.items) return;
-    order.items.forEach(item => {
-      addItem({
-        menuItemId: item.menuItemId,
-        restaurantId: order.restaurantId || '',
-        name: item.name,
-        price: item.price,
-        image: item.image,
-        quantity: item.quantity,
-        restaurantName: order.restaurantName || 'Unknown Restaurant',
-        id: `reorder_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        addedAt: new Date()
-      });
-    });
-    router.push('/customer/cart');
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status?.toLowerCase()) {
-      case 'delivered': return 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20';
-      case 'out_for_delivery': return 'bg-sky-500/15 text-sky-600 dark:text-sky-400 border border-sky-500/20';
-      case 'preparing': return 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/20';
-      case 'confirmed': return 'bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/20';
-      case 'cancelled': return 'bg-destructive/15 text-destructive border border-destructive/20';
-      default: return 'bg-muted text-muted-foreground border border-border';
-    }
-  };
-
-  const formatDate = (date: any) => {
-    if (!date) return '';
-    return new Intl.DateTimeFormat('en-IN', {
-      day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
-    }).format(new Date(date));
-  };
-
-
-  const openRatingDialog = (order: Order, item: { id: string, name: string, image: string }) => {
-    setRatingOrder(order);
-    setRatingItem(item);
-    setRatingValue(5);
-    setRatingComment('');
-  };
-
-  const submitRating = async () => {
-    if (!user || !ratingOrder || !ratingItem) return;
-
-    setSubmittingRating(true);
-    try {
-      await addDoc(collection(db, 'reviews'), {
-        customerId: user.uid,
-        customerName: user.displayName || 'Customer',
-        customerAvatar: user.photoURL || '',
-        restaurantId: ratingOrder.restaurantId,
-        menuItemId: ratingItem.id,
-        menuItemName: ratingItem.name,
-        orderId: ratingOrder.id,
-        rating: ratingValue,
-        comment: ratingComment,
-        createdAt: serverTimestamp(),
-      });
-
-      const itemRef = doc(db, 'menuItems', ratingItem.id);
-      const itemDoc = await getDoc(itemRef);
-
-      if (itemDoc.exists()) {
-        const currentData = itemDoc.data();
-        const currentTotal = currentData.totalReviews || 0;
-        const currentAvg = currentData.averageRating || 0;
-
-        const newTotal = currentTotal + 1;
-        const newAvg = ((currentAvg * currentTotal) + ratingValue) / newTotal;
-
-        await updateDoc(itemRef, {
-          totalReviews: newTotal,
-          averageRating: newAvg
-        });
-      }
-
-      if (ratingOrder.id) {
-        await updateDoc(doc(db, 'orders', ratingOrder.id), {
-          [`ratings.${ratingItem.id}`]: {
-            rating: ratingValue,
-            comment: ratingComment,
-            ratedAt: new Date()
-          }
-        });
-      }
-
-      toast.success("Thanks for your feedback!");
-      setRatingOrder(null);
-      setRatingItem(null);
-
-    } catch (error) {
-      console.error("Error submitting rating:", error);
-      toast.error("Failed to submit rating");
-    } finally {
-      setSubmittingRating(false);
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
+  const currentIdx = steps.findIndex(s => s.key === order.status);
 
   return (
-    <div className="min-h-screen text-foreground pb-24 md:pb-16 font-sans selection:bg-primary/30">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-
-        {/* Header */}
-        <div className="flex items-center gap-3 mb-6 sm:mb-8">
-          <div className="w-11 h-11 rounded-2xl bg-primary/15 flex items-center justify-center text-primary shadow-xs">
-            <ShoppingBag className="w-5 h-5" />
-          </div>
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-foreground">Your Orders</h1>
-            <p className="text-xs sm:text-sm text-muted-foreground">Track ongoing deliveries and view past orders</p>
-          </div>
+    <div className="px-4 sm:px-6 py-3 bg-gradient-to-r from-orange-50/80 to-amber-50/80 dark:from-orange-950/20 dark:to-amber-950/20 border-t border-orange-100 dark:border-orange-900/30">
+      {/* Stage hint */}
+      {isOut && stage && (
+        <div className="flex items-center gap-2 mb-2">
+          <div className="w-2 h-2 rounded-full bg-orange-500 animate-pulse" />
+          <p className="text-xs font-semibold text-orange-600 dark:text-orange-400">
+            {stage === 'TO_PICKUP' ? '🏍️ Driver heading to restaurant' :
+             stage === 'ARRIVED_PICKUP' ? '🍱 Driver collecting your food' :
+             stage === 'TO_CUSTOMER' ? '🚀 Driver on the way to you' :
+             stage === 'ARRIVED_CUSTOMER' ? '📍 Driver at your door!' :
+             '🛵 Out for delivery'}
+          </p>
         </div>
-
-        {orders.length === 0 ? (
-          <div className="text-center py-20 bg-card/70 backdrop-blur-md rounded-3xl border border-border/60 shadow-sm">
-            <div className="w-20 h-20 bg-muted/60 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Package className="w-10 h-10 text-muted-foreground" />
+      )}
+      {/* Horizontal step dots */}
+      <div className="flex items-center gap-1">
+        {steps.map((step, i) => {
+          const done = i < currentIdx;
+          const active = i === currentIdx;
+          return (
+            <div key={step.key} className="flex items-center gap-1 flex-1 last:flex-none">
+              <div className={`relative flex items-center justify-center w-7 h-7 rounded-full text-[11px] transition-all duration-500 ${
+                done ? 'bg-emerald-500 text-white' :
+                active ? 'bg-orange-500 text-white ring-2 ring-orange-300 dark:ring-orange-700 scale-110' :
+                'bg-muted text-muted-foreground'
+              }`}>
+                {done ? '✓' : step.emoji}
+                {active && <span className="absolute inset-0 rounded-full bg-orange-400/30 animate-ping" />}
+              </div>
+              {i < steps.length - 1 && (
+                <div className={`flex-1 h-0.5 rounded-full transition-all duration-700 ${done ? 'bg-emerald-400' : 'bg-border'}`} />
+              )}
             </div>
-            <h3 className="text-xl font-bold mb-2 text-foreground">No orders yet</h3>
-            <p className="text-muted-foreground mb-8 max-w-sm mx-auto text-sm">Looks like you haven't placed any orders yet. Explore top dishes and get quick delivery!</p>
-            <Link href="/customer">
-              <Button className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl px-8 py-6 font-bold text-base shadow-lg shadow-primary/20 hover:scale-105 transition-all">
-                Browse Food
-              </Button>
-            </Link>
-          </div>
-        ) : (
-          <div className="space-y-5 sm:space-y-6">
-            {orders.map((order) => (
-              <div
-                key={order.id}
-                onClick={() => router.push(`/customer/orders/${order.id}`)}
-                className="bg-card border border-border/70 rounded-2xl sm:rounded-3xl overflow-hidden hover:border-primary/50 hover:shadow-lg transition-all duration-300 shadow-xs group cursor-pointer"
-              >
-
-                {/* Order Header */}
-                <div className="p-4 sm:p-6 flex flex-col sm:flex-row justify-between items-start gap-4 border-b border-border/60 bg-muted/30 group-hover:bg-muted/40 transition-colors">
-                  <div className="flex gap-3 sm:gap-4">
-                    <div className="w-11 h-11 sm:w-12 sm:h-12 bg-card rounded-xl flex items-center justify-center flex-shrink-0 border border-border text-primary shadow-xs group-hover:scale-105 transition-transform">
-                      <ChefHat className="w-5 h-5 sm:w-6 sm:h-6" />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-bold text-base sm:text-lg text-foreground group-hover:text-primary transition-colors mb-0.5">
-                          {order.restaurantName || 'Restaurant'}
-                        </h3>
-                        <ChevronRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
-                      </div>
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground font-medium">
-                        <span className="bg-muted px-2 py-0.5 rounded text-foreground font-semibold">#{order.id ? order.id.slice(-6).toUpperCase() : 'ORDER'}</span>
-                        <span>•</span>
-                        <span>{formatDate(order.createdAt)}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <Badge className={`${getStatusColor(order.status || 'pending')} px-3 py-1 text-xs font-bold uppercase tracking-wider rounded-lg`}>
-                    {order.status?.replace('_', ' ') || 'PENDING'}
-                  </Badge>
-                </div>
-
-                {/* Order Items */}
-                <div className="p-4 sm:p-6 space-y-4">
-                  <div className="space-y-3">
-                    {order.items?.map((item, idx) => (
-                      <div key={idx} className="flex justify-between items-center text-sm">
-                        <div className="flex items-center gap-3">
-                          <span className="w-6 h-6 bg-muted rounded flex items-center justify-center text-xs font-bold text-foreground border border-border">
-                            {item.quantity}x
-                          </span>
-                          <div className="flex flex-col">
-                            <span className="text-foreground font-medium text-xs sm:text-sm">{item.name}</span>
-                            {order.status === 'delivered' && (
-                              <div className="mt-1" onClick={(e) => e.stopPropagation()}>
-                                {(order as any).ratings?.[item.menuItemId] ? (
-                                  <div className="flex items-center gap-1 text-amber-500 text-xs font-bold bg-amber-500/10 px-2 py-0.5 rounded-md w-fit">
-                                    <Star className="w-3 h-3 fill-amber-500" />
-                                    <span>{(order as any).ratings[item.menuItemId].rating}/5</span>
-                                  </div>
-                                ) : (
-                                  <button
-                                    onClick={() => openRatingDialog(order, { id: item.menuItemId, name: item.name, image: item.image })}
-                                    className="text-[11px] text-primary hover:underline text-left flex items-center gap-1 font-semibold"
-                                  >
-                                    <Star className="w-3 h-3" /> Rate Item
-                                  </button>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                        <span className="text-foreground font-bold text-xs sm:text-sm">₹{item.price * item.quantity}</span>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="h-px w-full bg-border/60 my-4" />
-
-                  <div className="flex justify-between items-center">
-                    <div className="flex items-center gap-2 text-muted-foreground text-xs sm:text-sm">
-                      <MapPin className="w-4 h-4 text-primary" />
-                      <span className="capitalize">{typeof order.deliveryAddress === 'string' ? 'Saved Address' : order.deliveryAddress?.type || 'Home'}</span>
-                    </div>
-                    <div className="text-base sm:text-lg font-black text-foreground">
-                      Total: <span className="text-primary font-black">₹{order.total}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Actions */}
-                <div
-                  className="p-3.5 sm:p-4 bg-muted/20 border-t border-border/50 flex flex-wrap gap-2 justify-end items-center"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <InvoiceButton order={order} customer={customer} />
-
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="border-border hover:bg-accent text-foreground rounded-xl text-xs sm:text-sm font-semibold"
-                    onClick={() => handleReorder(order)}
-                  >
-                    <RefreshCw className="w-3.5 h-3.5 mr-1.5" /> Reorder
-                  </Button>
-
-                  {order.status === 'pending' && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="text-destructive border-destructive/30 hover:bg-destructive/10 rounded-xl text-xs sm:text-sm font-semibold"
-                      onClick={() => setCancelOrderData(order)}
-                    >
-                      <X className="w-3.5 h-3.5 mr-1.5" /> Cancel
-                    </Button>
-                  )}
-
-                  {['pending', 'confirmed', 'preparing', 'ready', 'out_for_delivery'].includes(order.status || '') ? (
-                    <div className="flex items-center gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="border-border hover:bg-muted text-foreground font-semibold rounded-xl px-3 text-xs sm:text-sm"
-                        onClick={() => router.push(`/customer/orders/${order.id}`)}
-                      >
-                        Details
-                      </Button>
-                      <Button
-                        size="sm"
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-600/20 font-black rounded-xl px-4 text-xs sm:text-sm gap-1.5"
-                        onClick={() => router.push(`/customer/orders/${order.id}/tracking`)}
-                      >
-                        <Navigation className="w-3.5 h-3.5" /> Track Live Map ➔
-                      </Button>
-                    </div>
-                  ) : (
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      className="bg-muted hover:bg-muted/80 text-foreground border border-border/80 font-bold rounded-xl px-4 text-xs sm:text-sm"
-                      onClick={() => router.push(`/customer/orders/${order.id}`)}
-                    >
-                      Order Details <ChevronRight className="w-3.5 h-3.5 ml-1 text-primary" />
-                    </Button>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Rating Dialog */}
-        <Dialog open={!!ratingOrder} onOpenChange={(open) => !open && setRatingOrder(null)}>
-          <DialogContent className="bg-card border-border text-card-foreground sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle className="text-lg sm:text-xl font-bold flex items-center gap-2">
-                Rate <span className="text-primary">{ratingItem?.name}</span>
-              </DialogTitle>
-            </DialogHeader>
-
-            <div className="flex flex-col items-center py-4 space-y-5">
-              {/* Star Rating */}
-              <div className="flex gap-2">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <button
-                    key={star}
-                    onClick={() => setRatingValue(star)}
-                    className={`transition-transform hover:scale-110 ${ratingValue >= star ? 'scale-110' : ''}`}
-                    aria-label={`Rate ${star} stars`}
-                  >
-                    <Star
-                      className={`w-9 h-9 sm:w-10 sm:h-10 ${ratingValue >= star ? 'fill-amber-500 text-amber-500' : 'text-muted-foreground/30'}`}
-                    />
-                  </button>
-                ))}
-              </div>
-              <p className="text-base font-bold text-amber-500">
-                {ratingValue === 5 ? 'Excellent! 🌟' : ratingValue === 4 ? 'Good 👍' : ratingValue === 3 ? 'Average 👌' : 'Could be better'}
-              </p>
-
-              {/* Comment Area */}
-              <div className="w-full">
-                <label className="text-xs text-muted-foreground font-bold uppercase tracking-wider mb-2 block">Leave a comment</label>
-                <Textarea
-                  className="bg-muted/40 border-border text-foreground placeholder:text-muted-foreground"
-                  placeholder="Tell us what you liked about this dish..."
-                  value={ratingComment}
-                  onChange={(e) => setRatingComment(e.target.value)}
-                />
-              </div>
-
-              <Button
-                onClick={submitRating}
-                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold h-11 rounded-xl shadow-md"
-                disabled={submittingRating}
-              >
-                {submittingRating ? 'Submitting...' : 'Submit Review'}
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-
-        {/* Cancel Dialog */}
-        <CancelOrderDialog
-          order={cancelOrderData}
-          isOpen={!!cancelOrderData}
-          onClose={() => setCancelOrderData(null)}
-        />
-
+          );
+        })}
       </div>
     </div>
   );
 }
 
-function CancelOrderDialog({ order, isOpen, onClose }: { order: Order | null, isOpen: boolean, onClose: () => void }) {
-  const [loading, setLoading] = useState(false);
+// ─── ETA Badge ────────────────────────────────────────────────────────────────
+function ETABadge({ orderCreatedAt, estimatedMins = 35 }: { orderCreatedAt: any; estimatedMins?: number }) {
+  const [remaining, setRemaining] = useState<number | null>(null);
 
-  if (!order) return null;
+  useEffect(() => {
+    const calc = () => {
+      const created = orderCreatedAt instanceof Date ? orderCreatedAt : new Date(orderCreatedAt);
+      const eta = new Date(created.getTime() + estimatedMins * 60 * 1000);
+      setRemaining(Math.max(0, Math.floor((eta.getTime() - Date.now()) / 1000)));
+    };
+    calc();
+    const t = setInterval(calc, 5000);
+    return () => clearInterval(t);
+  }, [orderCreatedAt, estimatedMins]);
 
-  const handleCancel = async () => {
-    if (!order.id) return;
-    setLoading(true);
-    try {
-      await updateDoc(doc(db, 'orders', order.id), {
-        status: 'cancelled',
-        cancelledAt: serverTimestamp(),
-      });
-      // Notify customer of cancellation
-      if (order.customerId) {
-        notifyOrderStatusUpdate({
-          orderId: order.id,
-          customerId: order.customerId,
-          status: 'cancelled',
-          restaurantName: order.restaurantName,
-        }).catch((e) => console.error('Failed to notify cancellation:', e));
-      }
+  if (remaining === null) return null;
+  const mins = Math.floor(remaining / 60);
+  if (mins <= 0) return <span className="text-emerald-600 font-bold text-xs">Arriving now!</span>;
+  return (
+    <span className="flex items-center gap-1 text-xs text-orange-600 dark:text-orange-400 font-bold">
+      <Timer className="w-3 h-3" /> ~{mins}m
+    </span>
+  );
+}
 
-      toast.success("Order cancelled successfully");
-      onClose();
-    } catch (error) {
-      console.error("Error cancelling order:", error);
-      toast.error("Failed to cancel order");
-    } finally {
+// ─── Status config ─────────────────────────────────────────────────────────────
+const STATUS_CONFIG: Record<string, { color: string; label: string; emoji: string }> = {
+  pending:          { color: 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/30 dark:text-blue-400 dark:border-blue-800', label: 'Order Placed', emoji: '📦' },
+  confirmed:        { color: 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/30 dark:text-purple-400 dark:border-purple-800', label: 'Confirmed', emoji: '✅' },
+  preparing:        { color: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-800', label: 'Preparing', emoji: '👨‍🍳' },
+  ready:            { color: 'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/30 dark:text-indigo-400 dark:border-indigo-800', label: 'Ready', emoji: '🍱' },
+  out_for_delivery: { color: 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950/30 dark:text-orange-400 dark:border-orange-800', label: 'Out for Delivery', emoji: '🛵' },
+  delivered:        { color: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-800', label: 'Delivered', emoji: '🎉' },
+  cancelled:        { color: 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/30 dark:text-red-400 dark:border-red-800', label: 'Cancelled', emoji: '❌' },
+};
+
+// ─── Main Component ───────────────────────────────────────────────────────────
+export default function OrdersPage() {
+  const { user, customer } = useAuth();
+  const router = useRouter();
+  const { addItem } = useCart();
+
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [cancelData, setCancelData] = useState<Order | null>(null);
+  const [ratingOrder, setRatingOrder] = useState<Order | null>(null);
+  const [ratingValue, setRatingValue] = useState(5);
+  const [ratingComment, setRatingComment] = useState('');
+  const [submittingRating, setSubmittingRating] = useState(false);
+  const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
+
+  // ─── Realtime orders listener ───────────────────────────────────────────────
+  useEffect(() => {
+    if (!user) return;
+    const q = query(collection(db, 'orders'), where('customerId', '==', user.uid));
+    const unsub = onSnapshot(q, snap => {
+      const list = snap.docs.map(d => {
+        const data = d.data();
+        let otp = data.deliveryOtp;
+        if (!otp && !['delivered', 'cancelled'].includes(data.status || '')) {
+          otp = (Math.abs(d.id.split('').reduce((acc: number, char: string) => (acc * 31 + char.charCodeAt(0)) | 0, 0)) % 9000 + 1000).toString();
+          updateDoc(doc(db, 'orders', d.id), { deliveryOtp: otp }).catch(() => {});
+        }
+        return {
+          ...data,
+          id: d.id,
+          deliveryOtp: otp,
+          createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(data.createdAt || Date.now()),
+        };
+      }) as Order[];
+      list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      setOrders(list);
       setLoading(false);
-    }
+    }, err => { console.error(err); setLoading(false); });
+    return () => unsub();
+  }, [user]);
+
+  // ─── Filtered orders ────────────────────────────────────────────────────────
+  const filtered = orders.filter(o => {
+    const matchStatus = filterStatus === 'all' || o.status === filterStatus;
+    const matchSearch = !searchQuery ||
+      o.restaurantName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      o.id?.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchStatus && matchSearch;
+  });
+
+  const activeOrders = orders.filter(o => !['delivered', 'cancelled'].includes(o.status || ''));
+
+  // ─── Helpers ────────────────────────────────────────────────────────────────
+  const handleReorder = (order: Order) => {
+    if (!order.items) return;
+    order.items.forEach(item => addItem({
+      menuItemId: item.menuItemId, restaurantId: order.restaurantId || '',
+      name: item.name, price: item.price, image: item.image, quantity: item.quantity,
+      restaurantName: order.restaurantName || '', id: `reorder_${Date.now()}`, addedAt: new Date()
+    }));
+    router.push('/customer/cart');
+    toast.success('Items added to cart!');
   };
 
+  const handleCancel = async (order: Order) => {
+    if (!order.id) return;
+    try {
+      await updateDoc(doc(db, 'orders', order.id), { status: 'cancelled', cancelledAt: serverTimestamp() });
+      if (order.customerId) {
+        notifyOrderStatusUpdate({ orderId: order.id, customerId: order.customerId, status: 'cancelled', restaurantName: order.restaurantName })
+          .catch(console.error);
+      }
+      toast.success('Order cancelled');
+      setCancelData(null);
+    } catch { toast.error('Failed to cancel order'); }
+  };
+
+  const submitRating = async () => {
+    if (!user || !ratingOrder) return;
+    setSubmittingRating(true);
+    try {
+      await addDoc(collection(db, 'reviews'), {
+        customerId: user.uid, orderId: ratingOrder.id, restaurantId: ratingOrder.restaurantId,
+        restaurantName: ratingOrder.restaurantName, rating: ratingValue, comment: ratingComment,
+        createdAt: serverTimestamp()
+      });
+      await updateDoc(doc(db, 'users', user.uid), { rewardPoints: increment(20) });
+      await updateDoc(doc(db, 'orders', ratingOrder.id!), { isRated: true });
+      toast.success('🎉 Review submitted! +20 reward points!');
+      setRatingOrder(null);
+    } catch { toast.error('Failed to submit review'); }
+    finally { setSubmittingRating(false); }
+  };
+
+  const formatDate = (d: any) => {
+    if (!d) return '';
+    return new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).format(new Date(d));
+  };
+
+  // ─── Loading ────────────────────────────────────────────────────────────────
+  if (loading) return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="flex flex-col items-center gap-3">
+        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+        <p className="text-muted-foreground text-sm">Loading your orders...</p>
+      </div>
+    </div>
+  );
+
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="bg-card border-border text-card-foreground w-[90vw] max-w-[400px] rounded-2xl p-6 gap-5">
-        <DialogHeader>
-          <DialogTitle className="text-xl font-bold text-destructive text-center">Cancel Order?</DialogTitle>
-        </DialogHeader>
+    <div className="min-h-screen text-foreground pb-28 font-sans">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 space-y-6">
 
-        <div className="text-center space-y-2">
-          <p className="text-foreground text-sm sm:text-base">
-            Are you sure you want to cancel Order <span className="font-bold text-primary">#{order.id ? order.id.slice(-6).toUpperCase() : 'ORDER'}</span>?
-          </p>
-          <p className="text-xs text-muted-foreground">
-            This action cannot be undone.
-          </p>
-        </div>
+        {/* ─── Header ───────────────────────────────────────────────────────── */}
+        <motion.div initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }}
+          className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-2xl bg-primary/10 flex items-center justify-center">
+              <ShoppingBag className="w-5 h-5 text-primary" />
+            </div>
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-black tracking-tight">Your Orders</h1>
+              <p className="text-xs text-muted-foreground">{orders.length} total · {activeOrders.length} active</p>
+            </div>
+          </div>
+          {activeOrders.length > 0 && (
+            <div className="flex items-center gap-1.5 bg-orange-50 dark:bg-orange-950/20 px-3 py-1.5 rounded-2xl border border-orange-200 dark:border-orange-800">
+              <div className="w-2 h-2 rounded-full bg-orange-500 animate-pulse" />
+              <span className="text-xs font-bold text-orange-700 dark:text-orange-400">{activeOrders.length} Live</span>
+            </div>
+          )}
+        </motion.div>
 
-        <div className="flex flex-col-reverse sm:flex-row gap-3 mt-2">
-          <Button
-            variant="outline"
-            onClick={onClose}
-            className="flex-1 h-11 rounded-xl border-border text-foreground hover:bg-muted text-sm font-medium transition-colors"
-          >
-            No, Keep Order
-          </Button>
-          <Button
-            onClick={handleCancel}
-            disabled={loading}
-            className="flex-1 h-11 bg-destructive hover:bg-destructive/90 text-destructive-foreground rounded-xl font-bold text-sm shadow-md transition-all active:scale-[0.98]"
-          >
-            {loading ? 'Cancelling...' : 'Yes, Cancel Order'}
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+        {/* ─── Active Order Highlight ────────────────────────────────────────── */}
+        <AnimatePresence>
+          {activeOrders.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.97 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0 }}
+              className="cursor-pointer"
+              onClick={() => router.push(`/customer/orders/tracking/${activeOrders[0].id}`)}
+            >
+              <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-orange-500 to-amber-500 p-5 text-white shadow-xl shadow-orange-500/25">
+                {/* Animated bg stripes */}
+                <div className="absolute inset-0 opacity-10">
+                  {[...Array(6)].map((_, i) => (
+                    <div key={i} className="absolute h-full w-8 bg-white/30"
+                      style={{ left: `${i * 20}%`, transform: 'skewX(-20deg)' }} />
+                  ))}
+                </div>
+                <div className="relative flex items-center justify-between">
+                  <div>
+                    <p className="text-orange-100 text-xs font-semibold uppercase tracking-widest mb-1">🔴 Live Order</p>
+                    <p className="font-black text-xl">{activeOrders[0].restaurantName}</p>
+                    <p className="text-orange-100 text-sm mt-0.5">
+                      {STATUS_CONFIG[activeOrders[0].status || 'pending']?.emoji} {' '}
+                      {STATUS_CONFIG[activeOrders[0].status || 'pending']?.label}
+                    </p>
+                    <ETABadge orderCreatedAt={activeOrders[0].createdAt} estimatedMins={(activeOrders[0] as any).estimatedDeliveryMinutes} />
+
+                    {/* Delivery OTP on Live Order Banner */}
+                    <div className="mt-3 inline-flex items-center gap-2 bg-black/25 backdrop-blur-md px-3.5 py-1.5 rounded-xl border border-white/20 shadow-xs">
+                      <ShieldCheck className="w-4 h-4 text-amber-300" />
+                      <span className="text-xs font-bold text-orange-100">Delivery OTP:</span>
+                      <span className="font-mono font-black text-sm tracking-widest text-white select-all">
+                        {activeOrders[0].deliveryOtp || '----'}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="w-14 h-14 rounded-2xl bg-white/20 flex items-center justify-center text-2xl animate-bounce">
+                      {STATUS_CONFIG[activeOrders[0].status || 'pending']?.emoji || '🛵'}
+                    </div>
+                    <span className="text-xs text-orange-100 font-semibold">Track Live →</span>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* ─── Search + Filter Bar ───────────────────────────────────────────── */}
+        {orders.length > 0 && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }}
+            className="space-y-3">
+            {/* Search */}
+            <div className="flex items-center gap-2 bg-card border border-border rounded-2xl px-4 py-2.5">
+              <Search className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+              <input
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                placeholder="Search by restaurant or order ID..."
+                className="flex-1 bg-transparent text-sm outline-none text-foreground placeholder:text-muted-foreground"
+              />
+              {searchQuery && (
+                <button onClick={() => setSearchQuery('')} className="text-muted-foreground hover:text-foreground">
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+            {/* Status filters */}
+            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+              {['all', 'out_for_delivery', 'preparing', 'delivered', 'cancelled'].map(s => (
+                <button
+                  key={s}
+                  onClick={() => setFilterStatus(s)}
+                  className={`flex-shrink-0 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${
+                    filterStatus === s
+                      ? 'bg-primary text-primary-foreground border-primary shadow-md'
+                      : 'bg-card text-muted-foreground border-border hover:border-primary/50'
+                  }`}
+                >
+                  {s === 'all' ? `All (${orders.length})` :
+                   s === 'out_for_delivery' ? '🛵 Active' :
+                   s === 'preparing' ? '👨‍🍳 Cooking' :
+                   s === 'delivered' ? '✅ Done' : '❌ Cancelled'}
+                </button>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
+        {/* ─── Empty State ───────────────────────────────────────────────────── */}
+        {filtered.length === 0 && !loading && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+            className="text-center py-20 bg-card/80 rounded-3xl border border-border">
+            <div className="w-20 h-20 bg-muted/60 rounded-full flex items-center justify-center mx-auto mb-5">
+              <Package className="w-10 h-10 text-muted-foreground" />
+            </div>
+            <h3 className="text-xl font-black mb-2">
+              {searchQuery ? 'No matches found' : filterStatus !== 'all' ? 'No orders in this category' : 'No orders yet'}
+            </h3>
+            <p className="text-muted-foreground text-sm mb-6 max-w-xs mx-auto">
+              {searchQuery ? `No orders matching "${searchQuery}"` : 'Explore top dishes and place your first order!'}
+            </p>
+            <Link href="/customer">
+              <Button className="rounded-2xl px-8 h-12 font-bold shadow-lg">Browse Food</Button>
+            </Link>
+          </motion.div>
+        )}
+
+        {/* ─── Orders List ───────────────────────────────────────────────────── */}
+        <AnimatePresence mode="popLayout">
+          {filtered.map((order, idx) => {
+            const cfg = STATUS_CONFIG[order.status || 'pending'] || STATUS_CONFIG.pending;
+            const isActive = !['delivered', 'cancelled'].includes(order.status || '');
+            const isExpanded = expandedOrderId === order.id;
+
+            return (
+              <motion.div
+                key={order.id}
+                layout
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ delay: idx * 0.04, type: 'spring', stiffness: 200 }}
+                className="bg-card rounded-3xl border border-border overflow-hidden shadow-sm hover:shadow-md transition-shadow group"
+              >
+                {/* Active indicator bar */}
+                {isActive && (
+                  <div className="h-1 bg-gradient-to-r from-orange-400 via-amber-400 to-orange-400 animate-pulse" />
+                )}
+
+                {/* Order header (clickable) */}
+                <div
+                  className="p-4 sm:p-5 cursor-pointer"
+                  onClick={() => router.push(`/customer/orders/${order.id}`)}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-start gap-3 flex-1 min-w-0">
+                      <div className="w-11 h-11 rounded-2xl bg-primary/8 flex items-center justify-center flex-shrink-0 text-xl group-hover:scale-105 transition-transform">
+                        {cfg.emoji}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-black text-base truncate group-hover:text-primary transition-colors">
+                          {order.restaurantName || 'Restaurant'}
+                        </p>
+                        <div className="flex items-center flex-wrap gap-x-2 gap-y-0.5 mt-0.5">
+                          <span className="text-xs text-muted-foreground font-mono font-bold">
+                            #{formatOrderId(order.id)}
+                          </span>
+                          <span className="text-muted-foreground text-xs">·</span>
+                          <span className="text-xs text-muted-foreground">{formatDate(order.createdAt)}</span>
+                        </div>
+                        {isActive && (
+                          <div className="mt-1">
+                            <ETABadge orderCreatedAt={order.createdAt} estimatedMins={(order as any).estimatedDeliveryMinutes} />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
+                      <Badge className={`text-[10px] font-bold px-2.5 py-1 rounded-xl border ${cfg.color}`}>
+                        {cfg.label.toUpperCase()}
+                      </Badge>
+                      <span className="font-black text-sm text-primary">₹{order.total?.toFixed(0)}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Mini tracking strip for active orders */}
+                {isActive && <MiniTrackingStrip order={order} />}
+
+                {/* Delivery Verification OTP Ribbon for Active Orders */}
+                {isActive && (
+                  <div className="mx-4 sm:mx-5 my-2.5 px-3.5 py-2 rounded-2xl bg-orange-500/10 dark:bg-orange-500/15 border border-orange-500/25 flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <ShieldCheck className="w-4 h-4 text-orange-600 dark:text-orange-400 shrink-0" />
+                      <span className="text-xs font-bold text-foreground">Delivery Verification OTP:</span>
+                      <span className="text-sm font-black font-mono tracking-widest text-orange-600 dark:text-orange-400 bg-orange-500/15 px-2.5 py-0.5 rounded-lg border border-orange-500/30 select-all">
+                        {order.deliveryOtp || '----'}
+                      </span>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        if (order.deliveryOtp) {
+                          await copyToClipboard(order.deliveryOtp);
+                          toast.success('Delivery OTP copied: ' + order.deliveryOtp);
+                        }
+                      }}
+                      className="h-7 text-xs font-bold text-orange-600 dark:text-orange-400 hover:bg-orange-500/20 px-2 gap-1 rounded-lg"
+                    >
+                      <Copy className="w-3 h-3" /> Copy
+                    </Button>
+                  </div>
+                )}
+
+                {/* Order items preview (expandable) */}
+                <div className="px-4 sm:px-5 pb-0">
+                  <div className={`overflow-hidden transition-all duration-300 ${isExpanded ? 'max-h-96' : 'max-h-0'}`}>
+                    <div className="py-3 border-t border-border/60 space-y-2">
+                      {order.items?.map((item, i) => (
+                        <div key={i} className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">
+                            <span className="text-foreground font-semibold">{item.quantity}×</span> {item.name}
+                          </span>
+                          <span className="font-semibold">₹{(item.price * item.quantity).toFixed(0)}</span>
+                        </div>
+                      ))}
+                      <div className="pt-2 border-t border-border/40 flex justify-between text-sm font-black">
+                        <span>Total</span>
+                        <span className="text-primary">₹{order.total?.toFixed(0)}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Actions footer */}
+                <div className="px-4 sm:px-5 py-3 flex flex-wrap gap-2 items-center justify-between border-t border-border/50 bg-muted/20"
+                  onClick={e => e.stopPropagation()}>
+                  {/* Toggle expand */}
+                  <button
+                    onClick={() => setExpandedOrderId(isExpanded ? null : (order.id || null))}
+                    className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1 transition-colors"
+                  >
+                    {order.items?.length} item{order.items?.length !== 1 ? 's' : ''}
+                    <ChevronRight className={`w-3.5 h-3.5 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
+                  </button>
+
+                  <div className="flex items-center gap-2 ml-auto">
+                    {/* Reorder */}
+                    <Button variant="outline" size="sm" className="h-8 rounded-xl text-xs font-bold gap-1"
+                      onClick={() => handleReorder(order)}>
+                      <RefreshCw className="w-3 h-3" /> Reorder
+                    </Button>
+
+                    {/* Rate — delivered & not rated */}
+                    {order.status === 'delivered' && !(order as any).isRated && (
+                      <Button size="sm" onClick={() => setRatingOrder(order)}
+                        className="h-8 rounded-xl text-xs font-bold gap-1 bg-amber-500 hover:bg-amber-400 text-white border-0">
+                        <Star className="w-3 h-3" /> Rate
+                      </Button>
+                    )}
+
+                    {/* Cancel — only pending */}
+                    {order.status === 'pending' && (
+                      <Button variant="outline" size="sm" onClick={() => setCancelData(order)}
+                        className="h-8 rounded-xl text-xs font-bold text-destructive border-destructive/30 hover:bg-destructive/10">
+                        <X className="w-3 h-3" /> Cancel
+                      </Button>
+                    )}
+
+                    {/* Track / Details */}
+                    {isActive ? (
+                      <Button size="sm" onClick={() => router.push(`/customer/orders/tracking/${order.id}`)}
+                        className="h-8 rounded-xl text-xs font-black gap-1 bg-orange-500 hover:bg-orange-400 text-white border-0 shadow-sm shadow-orange-500/30">
+                        <Navigation className="w-3 h-3" /> Track Live
+                      </Button>
+                    ) : (
+                      <Button size="sm" variant="secondary" onClick={() => router.push(`/customer/orders/${order.id}`)}
+                        className="h-8 rounded-xl text-xs font-bold gap-1">
+                        Details <ChevronRight className="w-3 h-3" />
+                      </Button>
+                    )}
+
+                    <InvoiceButton order={order} customer={customer} />
+                  </div>
+                </div>
+              </motion.div>
+            );
+          })}
+        </AnimatePresence>
+      </div>
+
+      {/* ─── Cancel Dialog ────────────────────────────────────────────────────── */}
+      <AnimatePresence>
+        {cancelData && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }}
+              className="bg-card rounded-3xl p-6 w-full max-w-sm border border-border shadow-2xl">
+              <AlertTriangle className="w-10 h-10 text-amber-500 mx-auto mb-3" />
+              <h3 className="font-black text-center text-lg mb-2">Cancel Order?</h3>
+              <p className="text-sm text-muted-foreground text-center mb-5">
+                Cancel <strong>{cancelData.restaurantName}</strong> order? This cannot be undone.
+              </p>
+              <div className="flex gap-3">
+                <Button variant="outline" onClick={() => setCancelData(null)} className="flex-1 rounded-2xl">Keep Order</Button>
+                <Button onClick={() => handleCancel(cancelData)} className="flex-1 rounded-2xl bg-destructive text-destructive-foreground">Cancel Order</Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ─── Rating Dialog ─────────────────────────────────────────────────────── */}
+      <AnimatePresence>
+        {ratingOrder && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-4">
+            <motion.div initial={{ y: 80, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 80 }}
+              className="bg-card rounded-3xl p-6 w-full max-w-md border border-border shadow-2xl">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-black text-lg">Rate Your Experience</h3>
+                <button onClick={() => setRatingOrder(null)} className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              <p className="text-sm text-muted-foreground mb-4">from <strong>{ratingOrder.restaurantName}</strong></p>
+              <div className="flex justify-center gap-2 mb-5">
+                {[1,2,3,4,5].map(s => (
+                  <button key={s} onClick={() => setRatingValue(s)} className="text-3xl transition-transform hover:scale-110 active:scale-95">
+                    {s <= ratingValue ? '⭐' : '☆'}
+                  </button>
+                ))}
+              </div>
+              <textarea
+                value={ratingComment}
+                onChange={e => setRatingComment(e.target.value)}
+                placeholder="Share your experience..."
+                rows={3}
+                className="w-full rounded-2xl border border-border bg-muted/40 p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary mb-4"
+              />
+              <div className="flex items-center gap-2 p-3 rounded-2xl bg-amber-50 dark:bg-amber-950/20 mb-4 border border-amber-200 dark:border-amber-800">
+                <Sparkles className="w-4 h-4 text-amber-500" />
+                <p className="text-xs text-amber-700 dark:text-amber-400 font-medium">+20 reward points for reviewing!</p>
+              </div>
+              <div className="flex gap-3">
+                <Button variant="outline" onClick={() => setRatingOrder(null)} className="flex-1 rounded-2xl">Cancel</Button>
+                <Button onClick={submitRating} disabled={submittingRating} className="flex-1 rounded-2xl bg-amber-500 hover:bg-amber-400 text-white border-0 font-bold">
+                  {submittingRating ? 'Submitting...' : 'Submit Review'}
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }

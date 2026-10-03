@@ -23,8 +23,8 @@
         <!-- Order Image -->
         <com.google.android.material.imageview.ShapeableImageView
             android:id="@+id/iv_order_image"
-            android:layout_width="72dp"
-            android:layout_height="72dp"
+            android:layout_width="74dp"
+            android:layout_height="74dp"
             android:scaleType="centerCrop"
             android:src="@drawable/bg_card_rounded"
             app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Medium" />
@@ -49,10 +49,10 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:ellipsize="end"
+                    android:fontFamily="sans-serif-bold"
                     android:maxLines="1"
                     android:textColor="@color/text_primary"
-                    android:textSize="15sp"
-                    android:textStyle="bold" />
+                    android:textSize="15sp" />
 
                 <!-- Status Pill Badge -->
                 <TextView
@@ -61,11 +61,11 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="6dp"
                     android:background="@drawable/bg_pill_soft"
+                    android:fontFamily="sans-serif-bold"
                     android:paddingHorizontal="10dp"
                     android:paddingVertical="4dp"
                     android:textColor="@color/primary"
-                    android:textSize="10sp"
-                    android:textStyle="bold" />
+                    android:textSize="10sp" />
             </LinearLayout>
 
             <TextView
@@ -74,6 +74,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
                 android:ellipsize="end"
+                android:fontFamily="sans-serif"
                 android:maxLines="2"
                 android:textColor="@color/text_secondary"
                 android:textSize="12sp" />
@@ -91,14 +92,15 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
+                    android:fontFamily="sans-serif-black"
                     android:textColor="@color/text_primary"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
+                    android:textSize="16sp" />
 
                 <TextView
                     android:id="@+id/tv_order_date"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif"
                     android:textColor="@color/text_hint"
                     android:textSize="11sp" />
             </LinearLayout>
@@ -110,6 +112,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="36dp"
                 android:layout_marginTop="10dp"
+                android:fontFamily="sans-serif-bold"
                 android:paddingHorizontal="16dp"
                 android:text="@string/reorder"
                 android:textSize="12sp"

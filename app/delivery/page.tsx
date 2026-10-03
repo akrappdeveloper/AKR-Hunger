@@ -25,9 +25,11 @@ import {
   Calendar,
   Satellite,
   Signal,
-  Map
+  Map,
+  RefreshCw
 } from 'lucide-react';
-import { Order, DeliveryStage, DeliveryFlow, getStageLabel, getStageColor, getRouteDestination } from '@/lib/types';
+
+import { Order, formatOrderId, DeliveryStage, DeliveryFlow, getStageLabel, getStageColor, getRouteDestination } from '@/lib/types';
 import { db } from '@/lib/firebase';
 import {
   collection,
@@ -64,6 +66,18 @@ export default function DeliveryDashboard() {
   const [showAcceptDialog, setShowAcceptDialog] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
+  // ─── Pincode Service Area System ────────────────────────────────────────────
+  const [servicePincodes, setServicePincodes] = useState<string[]>([]);
+  const [pincodeInput, setPincodeInput] = useState('');
+  const [showPincodePanel, setShowPincodePanel] = useState(false);
+  const [savingPincodes, setSavingPincodes] = useState(false);
+  const [pincodeFilterActive, setPincodeFilterActive] = useState(false);
+  // Refs so the Firestore snapshot closure can read latest values
+  const servicePincodesRef = useRef<string[]>([]);
+  const pincodeFilterActiveRef = useRef(false);
+  useEffect(() => { servicePincodesRef.current = servicePincodes; }, [servicePincodes]);
+  useEffect(() => { pincodeFilterActiveRef.current = pincodeFilterActive; }, [pincodeFilterActive]);
+
   // GPS Tracking - auto starts when online
   const activeOrdersList = myOrders.filter(o => !['delivered', 'cancelled'].includes(o.status || ''));
   const { position: gpsPosition, isTracking: gpsActive, accuracy: gpsAccuracy, speedKmh, permissionStatus: gpsPermission } = useDriverLocation({
@@ -82,8 +96,70 @@ export default function DeliveryDashboard() {
   useEffect(() => {
     if (deliveryPartner) {
       setIsOnline(deliveryPartner.isAvailable || false);
+      // Load saved service pincodes
+      const savedPincodes = (deliveryPartner as any).servicePincodes || [];
+      if (savedPincodes.length > 0) {
+        setServicePincodes(savedPincodes);
+        setPincodeFilterActive(true);
+      }
     }
   }, [deliveryPartner]);
+
+  // Save service pincodes to Firestore
+  const saveServicePincodes = async (pincodes: string[]) => {
+    if (!user) return;
+    setSavingPincodes(true);
+    try {
+      await updateDoc(doc(db, 'deliveryPersons', user.uid), {
+        servicePincodes: pincodes,
+        pincodeFilterActive: pincodes.length > 0,
+        updatedAt: serverTimestamp(),
+      });
+      toast.success(`✅ Service area updated: ${pincodes.length} pincode(s) active`);
+    } catch {
+      toast.error('Failed to save service pincodes');
+    } finally {
+      setSavingPincodes(false);
+    }
+  };
+
+  const addPincode = () => {
+    const code = pincodeInput.trim().replace(/\D/g, '');
+    if (code.length !== 6) { toast.error('Enter a valid 6-digit pincode'); return; }
+    if (servicePincodes.includes(code)) { toast.error('Pincode already added'); return; }
+    if (servicePincodes.length >= 10) { toast.error('Maximum 10 pincodes allowed'); return; }
+    const updated = [...servicePincodes, code];
+    setServicePincodes(updated);
+    setPincodeInput('');
+    setPincodeFilterActive(true);
+    saveServicePincodes(updated);
+  };
+
+  const removePincode = (code: string) => {
+    const updated = servicePincodes.filter(p => p !== code);
+    setServicePincodes(updated);
+    if (updated.length === 0) setPincodeFilterActive(false);
+    saveServicePincodes(updated);
+  };
+
+  const togglePincodeFilter = async (active: boolean) => {
+    setPincodeFilterActive(active);
+    if (!user) return;
+    await updateDoc(doc(db, 'deliveryPersons', user.uid), { pincodeFilterActive: active });
+    toast.success(active ? '📍 Pincode filter ON' : '🌐 Showing all orders');
+  };
+
+  // Helper: check if order matches service pincodes
+  const orderMatchesPincodes = (order: Order): boolean => {
+    if (!pincodeFilterActive || servicePincodes.length === 0) return true;
+    const restPincode = ((order as any).restaurantPincode || '').trim();
+    const custPincode = (
+      typeof order.deliveryAddress === 'object'
+        ? (order.deliveryAddress as any)?.pincode || ''
+        : ''
+    ).trim();
+    return servicePincodes.includes(restPincode) || servicePincodes.includes(custPincode);
+  };
 
   // Toggle Online Status
   const toggleOnlineStatus = async () => {
@@ -138,6 +214,18 @@ export default function DeliveryDashboard() {
           return order.targetDeliveryIds.includes(user.uid);
         });
       }
+
+      // ─── PINCODE FILTER ──────────────────────────────────────────────────
+      orders = orders.filter(o => {
+        if (!pincodeFilterActiveRef.current || servicePincodesRef.current.length === 0) return true;
+        const restPin = String((o as any).restaurantPincode || '').trim();
+        const custPin = String(
+          typeof o.deliveryAddress === 'object'
+            ? (o.deliveryAddress as any)?.pincode || ''
+            : ''
+        ).trim();
+        return servicePincodesRef.current.includes(restPin) || servicePincodesRef.current.includes(custPin);
+      });
 
       setAvailableOrders(orders);
     }, (error) => {
@@ -593,6 +681,109 @@ export default function DeliveryDashboard() {
         ))}
       </div>
 
+      {/* ─── Pincode Service Area Panel ─────────────────────────────────────── */}
+      <motion.div variants={itemVariants} className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/[0.03] backdrop-blur-xl">
+        {/* Header row */}
+        <button
+          onClick={() => setShowPincodePanel(v => !v)}
+          className="w-full flex items-center justify-between p-5 text-left"
+        >
+          <div className="flex items-center gap-3">
+            <div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${pincodeFilterActive ? 'bg-orange-500/20 border border-orange-500/30' : 'bg-white/5 border border-white/10'}`}>
+              <MapPin className={`w-5 h-5 ${pincodeFilterActive ? 'text-orange-400' : 'text-gray-500'}`} />
+            </div>
+            <div>
+              <p className="text-white font-bold text-sm">
+                Service Pincodes
+                {servicePincodes.length > 0 && (
+                  <span className="ml-2 bg-orange-500/20 text-orange-300 text-xs px-2 py-0.5 rounded-full border border-orange-500/20">
+                    {servicePincodes.length} area{servicePincodes.length !== 1 ? 's' : ''}
+                  </span>
+                )}
+              </p>
+              <p className="text-gray-500 text-xs">
+                {pincodeFilterActive
+                  ? `Showing orders in: ${servicePincodes.join(', ') || 'none set'}`
+                  : 'Filter OFF — showing all orders'}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            {/* Quick toggle */}
+            {servicePincodes.length > 0 && (
+              <button
+                onClick={e => { e.stopPropagation(); togglePincodeFilter(!pincodeFilterActive); }}
+                className={`relative w-12 h-6 rounded-full transition-colors ${pincodeFilterActive ? 'bg-orange-500' : 'bg-white/10'}`}
+              >
+                <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${pincodeFilterActive ? 'left-7' : 'left-1'}`} />
+              </button>
+            )}
+            <ArrowRight className={`w-4 h-4 text-gray-500 transition-transform ${showPincodePanel ? 'rotate-90' : ''}`} />
+          </div>
+        </button>
+
+        {/* Expanded panel */}
+        <AnimatePresence>
+          {showPincodePanel && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.25 }}
+              className="overflow-hidden"
+            >
+              <div className="px-5 pb-5 space-y-4 border-t border-white/5">
+                {/* How it works note */}
+                <div className="mt-4 p-3 rounded-2xl bg-blue-500/10 border border-blue-500/20">
+                  <p className="text-blue-300 text-xs leading-relaxed">
+                    <span className="font-bold">📍 How it works:</span> Add your service pincodes. You will only receive orders where the <span className="font-semibold">restaurant OR customer delivery pincode</span> matches your list. Toggle OFF to see all orders.
+                  </p>
+                </div>
+
+                {/* Current pincodes */}
+                {servicePincodes.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {servicePincodes.map(code => (
+                      <div key={code} className="flex items-center gap-1.5 bg-white/5 border border-white/10 rounded-xl px-3 py-1.5">
+                        <span className="text-white text-sm font-mono font-bold">{code}</span>
+                        <button
+                          onClick={() => removePincode(code)}
+                          className="text-gray-500 hover:text-red-400 transition-colors ml-1"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Add pincode input */}
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={6}
+                    value={pincodeInput}
+                    onChange={e => setPincodeInput(e.target.value.replace(/\D/g, ''))}
+                    onKeyDown={e => e.key === 'Enter' && addPincode()}
+                    placeholder="Enter 6-digit pincode"
+                    className="flex-1 bg-white/5 border border-white/10 rounded-2xl px-4 py-2.5 text-white text-sm font-mono placeholder:text-gray-600 focus:outline-none focus:border-orange-500/50 focus:bg-orange-500/5 transition-all"
+                  />
+                  <Button
+                    onClick={addPincode}
+                    disabled={pincodeInput.length !== 6 || savingPincodes}
+                    className="h-10 px-4 rounded-2xl bg-orange-500 hover:bg-orange-400 text-white font-bold border-0 disabled:opacity-40"
+                  >
+                    {savingPincodes ? <RefreshCw className="w-4 h-4 animate-spin" /> : '+ Add'}
+                  </Button>
+                </div>
+                <p className="text-gray-600 text-xs">Up to 10 pincodes • Changes saved automatically</p>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
+
       {/* Active Tasks Section */}
       <motion.div variants={itemVariants}>
         <div className="flex items-center justify-between mb-6">
@@ -601,7 +792,9 @@ export default function DeliveryDashboard() {
             {activeOrders.length > 0 && <span className="bg-blue-600 text-white text-xs px-2 py-0.5 rounded-full">{activeOrders.length}</span>}
           </h2>
           {activeOrders.length === 0 && isOnline && (
-            <p className="text-sm text-blue-400 animate-pulse">Scanning for new orders...</p>
+            <p className="text-sm text-blue-400 animate-pulse">
+              Scanning {pincodeFilterActive && servicePincodes.length > 0 ? `in ${servicePincodes.join(', ')}` : 'all areas'}...
+            </p>
           )}
         </div>
 
@@ -661,7 +854,7 @@ export default function DeliveryDashboard() {
                               <Badge className={`border ${stageColors.border} px-3 py-1 font-bold ${stageColors.bg} ${stageColors.text}`}>
                                 {getStageLabel(stage)}
                               </Badge>
-                              <span className="text-xs text-gray-500 font-mono">#{order.id?.slice(0, 8)}</span>
+                              <span className="text-xs text-gray-400 font-mono font-bold">#{formatOrderId(order.id)}</span>
                             </div>
                             <h3 className="text-2xl font-black text-white">{order.restaurantName}</h3>
                           </div>
@@ -812,7 +1005,7 @@ export default function DeliveryDashboard() {
               <div className="p-6 bg-gradient-to-br from-white/5 to-transparent border-b border-white/5">
                 <div className="flex justify-between items-center mb-6">
                   <Badge className="bg-green-500/20 text-green-300 border-none px-3 py-1">New Request</Badge>
-                  <span className="text-xs font-mono text-gray-400">#{selectedOrder.id?.slice(0, 6)}</span>
+                  <span className="text-xs font-mono font-bold text-gray-300">#{formatOrderId(selectedOrder.id)}</span>
                 </div>
                 <div className="text-center mb-2">
                   <p className="text-sm text-gray-400 uppercase tracking-widest font-bold mb-1">Estimated Earnings</p>

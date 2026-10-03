@@ -101,4 +101,13 @@
     <color name="ic_launcher_background">#FFFFFF</color>
     <color name="splash_bg">#FFFFFF</color>
     <color name="splash_glow">#14FF6B35</color>
+
+    <!-- Standard & Compatibility Colors -->
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+    <color name="primary_orange">#FF6B35</color>
+    <color name="deep_slate">#1E293B</color>
+    <color name="deep_purple">#6B21A8</color>
+    <color name="amber_star">#F59E0B</color>
+    <color name="amber_dark">#B45309</color>
 </resources>

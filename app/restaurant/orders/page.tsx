@@ -8,13 +8,14 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { collection, query, where, getDocs, updateDoc, doc, getDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, updateDoc, doc, getDoc, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { Order } from '@/lib/types';
+import { Order, formatOrderId } from '@/lib/types';
 import {
   Clock, CheckCircle, Truck, AlertCircle, ShoppingCart,
   Search, Package,
-  ChefHat, ArrowRight, Timer, Users, Radio, Filter, MapPin
+  ChefHat, ArrowRight, Timer, Users, Radio, Filter, MapPin,
+  Ban, IndianRupee, X, RotateCcw
 } from 'lucide-react';
 import {
   Dialog,
@@ -32,6 +33,15 @@ import { motion, AnimatePresence } from 'framer-motion';
 type OrderStatus = 'pending' | 'confirmed' | 'preparing' | 'ready' | 'out_for_delivery' | 'delivered' | 'cancelled';
 const statusSteps: OrderStatus[] = ['pending', 'confirmed', 'preparing', 'ready', 'out_for_delivery', 'delivered'];
 
+const RESTAURANT_CANCEL_REASONS = [
+  'Out of stock / ingredients not available',
+  'Restaurant too busy to fulfill',
+  'Order placed incorrectly',
+  'Technical issue',
+  'Cannot deliver to this location',
+  'Other',
+];
+
 export default function RestaurantOrdersPage() {
   const router = useRouter();
   const { user, restaurant, loading: authLoading } = useRestaurantAuth();
@@ -46,6 +56,12 @@ export default function RestaurantOrdersPage() {
   const [availablePartners, setAvailablePartners] = useState<any[]>([]);
   const [selectedPartnerIds, setSelectedPartnerIds] = useState<string[]>([]);
   const [loadingPartners, setLoadingPartners] = useState(false);
+  // Cancel Dialog
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [cancelTargetOrder, setCancelTargetOrder] = useState<Order | null>(null);
+  const [cancelReason, setCancelReason] = useState('');
+  const [cancelCustomReason, setCancelCustomReason] = useState('');
+  const [isCancelling, setIsCancelling] = useState(false);
 
   // Statistics
   const [todayOrders, setTodayOrders] = useState(0);
@@ -116,6 +132,78 @@ export default function RestaurantOrdersPage() {
 
       fetchOrders();
     } catch (error) { toast.error('Failed to update order status'); }
+  };
+
+  const openCancelDialog = (order: Order) => {
+    setCancelTargetOrder(order);
+    setCancelReason('');
+    setCancelCustomReason('');
+    setCancelDialogOpen(true);
+  };
+
+  const handleRestaurantCancel = async () => {
+    if (!cancelTargetOrder?.id || !user) return;
+    const reason = cancelReason === 'Other' ? (cancelCustomReason.trim() || 'Other') : cancelReason;
+    if (!reason) { toast.error('Please select a cancellation reason'); return; }
+
+    setIsCancelling(true);
+    try {
+      // Update order status
+      await updateDoc(doc(db, 'orders', cancelTargetOrder.id), {
+        status: 'cancelled',
+        cancelledAt: serverTimestamp(),
+        cancellationReason: reason,
+        cancelledBy: 'RESTAURANT',
+        updatedAt: serverTimestamp(),
+      });
+
+      // Log cancellation
+      await addDoc(collection(db, 'orderCancellations'), {
+        orderId: cancelTargetOrder.id,
+        userId: cancelTargetOrder.customerId,
+        restaurantId: user.uid,
+        cancelledBy: 'RESTAURANT',
+        reason,
+        cancelledAt: serverTimestamp(),
+        refundRequired: ['online', 'wallet'].includes(cancelTargetOrder.paymentMethod || '') && cancelTargetOrder.paymentStatus === 'completed',
+      });
+
+      // Audit log
+      await addDoc(collection(db, 'auditLogs'), {
+        action: 'RESTAURANT_CANCELLED',
+        orderId: cancelTargetOrder.id,
+        restaurantId: user.uid,
+        userId: cancelTargetOrder.customerId,
+        reason,
+        performedBy: 'RESTAURANT',
+        timestamp: serverTimestamp(),
+      });
+
+      // Customer notification
+      if (cancelTargetOrder.customerId) {
+        await addDoc(collection(db, 'notifications'), {
+          userId: cancelTargetOrder.customerId,
+          userType: 'customer',
+          type: 'order',
+          subType: 'restaurant-cancelled',
+          title: 'Order Cancelled by Restaurant',
+          message: `Your order #${cancelTargetOrder.id?.substring(0, 8).toUpperCase()} was cancelled by the restaurant. Reason: ${reason}. Our team will process any applicable refund.`,
+          isRead: false,
+          read: false,
+          deleted: false,
+          orderId: cancelTargetOrder.id,
+          createdAt: serverTimestamp(),
+        });
+      }
+
+      toast.success('Order cancelled. Refund will be processed automatically.');
+      setCancelDialogOpen(false);
+      fetchOrders();
+    } catch (err) {
+      toast.error('Failed to cancel order');
+    } finally {
+      setIsCancelling(false);
+    }
   };
 
   const getStatusIcon = (status?: string) => {
@@ -290,7 +378,7 @@ export default function RestaurantOrdersPage() {
                             {getStatusIcon(order.status)}
                           </div>
                           <div>
-                            <h4 className="font-bold text-foreground text-lg">#{order.id?.slice(0, 8).toUpperCase()}</h4>
+                            <h4 className="font-bold text-foreground text-lg">#{formatOrderId(order.id)}</h4>
                             <p className="text-sm text-muted-foreground">{order.customerName} • {order.items?.length} items</p>
                           </div>
                         </div>
@@ -354,7 +442,7 @@ export default function RestaurantOrdersPage() {
                   <div className="p-6 border-b border-border bg-muted/40">
                     <div className="flex justify-between items-start mb-4">
                       <div>
-                        <Badge variant="outline" className="mb-2 border-border text-muted-foreground font-mono">#{selectedOrder.id?.slice(0, 8)}</Badge>
+                        <Badge variant="outline" className="mb-2 border-border text-muted-foreground font-mono">#{formatOrderId(selectedOrder.id)}</Badge>
                         <h3 className="text-3xl font-bold text-foreground">₹{selectedOrder.total}</h3>
                       </div>
                       <div className={`p-2 rounded-lg ${getStatusColor(selectedOrder.status)}`}>
@@ -441,6 +529,73 @@ export default function RestaurantOrdersPage() {
         </DialogContent>
       </Dialog>
 
+      {/* Restaurant Cancel Dialog */}
+      <Dialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
+        <DialogContent className="bg-card border-border text-card-foreground max-w-md rounded-3xl">
+          <DialogHeader>
+            <DialogTitle className="text-foreground flex items-center gap-2">
+              <Ban className="w-5 h-5 text-red-500" /> Cancel Order
+            </DialogTitle>
+            <DialogDescription className="text-muted-foreground">
+              Order #{formatOrderId(cancelTargetOrder?.id)} · ₹{cancelTargetOrder?.total}
+            </DialogDescription>
+          </DialogHeader>
+
+          {cancelTargetOrder && ['online', 'wallet'].includes(cancelTargetOrder.paymentMethod || '') && cancelTargetOrder.paymentStatus === 'completed' && (
+            <div className="flex items-start gap-3 p-3 rounded-2xl bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800">
+              <IndianRupee className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
+              <p className="text-xs text-blue-700 dark:text-blue-300">
+                This order was paid online. A refund of ₹{cancelTargetOrder.total?.toFixed(2)} will be automatically processed after cancellation.
+              </p>
+            </div>
+          )}
+
+          <p className="text-sm font-bold mt-1">Reason for cancellation</p>
+          <div className="space-y-2">
+            {RESTAURANT_CANCEL_REASONS.map(r => (
+              <button key={r}
+                onClick={() => setCancelReason(r)}
+                className={`w-full text-left px-4 py-2.5 rounded-2xl text-sm font-medium border transition-all ${
+                  cancelReason === r
+                    ? 'bg-primary/10 border-primary text-primary'
+                    : 'border-border hover:bg-muted'
+                }`}>
+                {cancelReason === r ? '✔ ' : ''}{r}
+              </button>
+            ))}
+          </div>
+
+          {cancelReason === 'Other' && (
+            <textarea
+              value={cancelCustomReason}
+              onChange={e => setCancelCustomReason(e.target.value)}
+              placeholder="Please describe your reason..."
+              rows={2}
+              className="w-full rounded-2xl border border-border bg-muted/40 p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+          )}
+
+          <DialogFooter className="gap-3 flex-col sm:flex-row">
+            <Button variant="outline" onClick={() => setCancelDialogOpen(false)}
+              className="flex-1 rounded-xl" disabled={isCancelling}>
+              Keep Order
+            </Button>
+            <Button
+              id="restaurant-confirm-cancel-btn"
+              onClick={handleRestaurantCancel}
+              disabled={!cancelReason || isCancelling}
+              className="flex-1 rounded-xl bg-red-500 hover:bg-red-600 text-white border-0 font-bold gap-2">
+              {isCancelling ? (
+                <><RotateCcw className="w-4 h-4 animate-spin" /> Cancelling...</>
+              ) : (
+                <><Ban className="w-4 h-4" /> Cancel Order</>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 }
+

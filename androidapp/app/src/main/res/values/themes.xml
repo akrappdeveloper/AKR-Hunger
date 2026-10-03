@@ -190,4 +190,23 @@
         <item name="android:fontFamily">sans-serif</item>
         <item name="android:letterSpacing">0.01</item>
     </style>
+
+    <!-- Rounded Dialog for AddressesActivity -->
+    <style name="RoundedDialog" parent="ThemeOverlay.Material3.MaterialAlertDialog">
+        <item name="shapeAppearance">@style/ShapeAppearance.AKR.Dialog</item>
+        <item name="shapeAppearanceOverlay">@style/ShapeAppearance.AKR.Dialog</item>
+    </style>
+
+    <!-- Bottom Nav Active Indicator Style -->
+    <style name="Widget.AKR.BottomNav.ActiveIndicator" parent="Widget.Material3.BottomNavigationView.ActiveIndicator">
+        <item name="android:color">@color/primary_tint</item>
+        <item name="android:width">48dp</item>
+        <item name="android:height">32dp</item>
+        <item name="shapeAppearance">@style/ShapeAppearance.AKR.Pill</item>
+    </style>
+
+    <style name="ShapeAppearance.AKR.Pill" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">16dp</item>
+    </style>
 </resources>

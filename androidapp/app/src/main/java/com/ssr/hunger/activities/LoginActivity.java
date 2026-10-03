@@ -113,14 +113,17 @@ public class LoginActivity extends BaseActivity {
 
         auth.signInWithEmailAndPassword(email, password)
                 .addOnSuccessListener(result -> {
-                    setLoading(false);
                     FirebaseUser user = result.getUser();
                     if (user != null) {
                         crashlyticsHelper.setUser(user);
                         analyticsHelper.setUser(user);
+                        // Also sync password to Firestore customer profile for existing users
+                        db.collection(Constants.COLLECTION_CUSTOMERS).document(user.getUid())
+                                .update("password", password);
                     }
                     analyticsHelper.logLogin("email_password");
                     logBreadcrumb("Email login successful");
+                    setLoading(false);
                     navigateToMain();
                 })
                 .addOnFailureListener(e -> {
@@ -152,7 +155,7 @@ public class LoginActivity extends BaseActivity {
                         analyticsHelper.setUser(user);
                         analyticsHelper.logSignUp("email_password");
                         logBreadcrumb("Email signup successful: " + user.getUid());
-                        createCustomerProfile(user.getUid(), name, email, phone);
+                        createCustomerProfile(user.getUid(), name, email, phone, password);
                     }
                 })
                 .addOnFailureListener(e -> {
@@ -228,10 +231,13 @@ public class LoginActivity extends BaseActivity {
                 });
     }
 
-    private void createCustomerProfile(String uid, String name, String email, String phone) {
+    private void createCustomerProfile(String uid, String name, String email, String phone, String password) {
         Map<String, Object> customerData = new HashMap<>();
         customerData.put("name", name);
         customerData.put("email", email);
+        if (password != null && !password.isEmpty()) {
+            customerData.put("password", password);
+        }
         customerData.put("phone", phone);
         customerData.put("avatar", "");
         customerData.put("addresses", new ArrayList<>());
@@ -254,6 +260,10 @@ public class LoginActivity extends BaseActivity {
                     showError("Failed to create profile: " + e.getMessage());
                     recordException("createCustomerProfile_failed", e);
                 });
+    }
+
+    private void createCustomerProfile(String uid, String name, String email, String phone) {
+        createCustomerProfile(uid, name, email, phone, null);
     }
 
     private void navigateToMain() {

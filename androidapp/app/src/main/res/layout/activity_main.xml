@@ -22,7 +22,7 @@
         android:layout_height="66dp"
         android:background="@drawable/bg_bottom_nav_ios"
         android:elevation="8dp"
-        app:itemActiveIndicatorStyle="@null"
+        app:itemActiveIndicatorStyle="@style/Widget.AKR.BottomNav.ActiveIndicator"
         app:itemIconSize="23dp"
         app:itemIconTint="@color/bottom_nav_color"
         app:itemTextColor="@color/bottom_nav_color"

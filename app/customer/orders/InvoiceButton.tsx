@@ -22,6 +22,7 @@ import { Dialog, DialogContent, DialogTitle, DialogHeader } from '@/components/u
 import { calculateInvoice, InvoiceCalculatedBreakdown } from '@/lib/invoice-calculator';
 import { generateInvoiceQRDataURL } from '@/lib/qr-generator';
 import { toast } from 'sonner';
+import { copyToClipboard } from '@/lib/utils';
 
 interface InvoiceButtonProps {
   order: Order;
@@ -242,9 +243,9 @@ export default function InvoiceButton({ order, customer }: InvoiceButtonProps) {
   };
 
   // Copy Verification Link
-  const handleCopyLink = () => {
+  const handleCopyLink = async () => {
     if (!preparedData?.breakdown.verificationUrl) return;
-    navigator.clipboard.writeText(preparedData.breakdown.verificationUrl);
+    await copyToClipboard(preparedData.breakdown.verificationUrl);
     setCopied(true);
     toast.success('Verification URL copied to clipboard');
     setTimeout(() => setCopied(false), 2000);
