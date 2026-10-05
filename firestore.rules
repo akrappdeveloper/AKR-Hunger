@@ -62,15 +62,46 @@ service cloud.firestore {
     // ==========================================
     match /customers/{customerId} {
       allow read: if request.auth.uid == customerId || isAdmin(request.auth.uid);
-      allow list: if isAdmin(request.auth.uid);
+      allow list: if request.auth.uid != null; // Allows referral code lookup and verification
       allow create: if request.auth.uid != null && request.auth.uid == customerId;
-      allow update, delete: if request.auth.uid == customerId || isAdmin(request.auth.uid);
+      allow update: if request.auth.uid == customerId || isAdmin(request.auth.uid) || (
+        request.auth.uid != null &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['walletBalance', 'referralCount', 'referralEarnings', 'referralPointsEarned'])
+      );
+      allow delete: if request.auth.uid == customerId || isAdmin(request.auth.uid);
 
       // Customer Wallet Transactions (Subcollection)
       match /walletTransactions/{transactionId} {
         allow read: if request.auth.uid == customerId || isAdmin(request.auth.uid);
-        allow create: if request.auth.uid == customerId || isAdmin(request.auth.uid);
+        allow create: if request.auth.uid != null;
       }
+    }
+
+    // ==========================================
+    // 4a. Referral Codes Registry
+    // ==========================================
+    match /referralCodes/{code} {
+      allow read, list: if true; // Public / authenticated read to validate referral codes during signup
+      allow create, update: if request.auth.uid != null;
+      allow delete: if request.auth.uid != null && (
+        resource.data.uid == request.auth.uid || 
+        resource.data.userId == request.auth.uid || 
+        resource.data.ownerId == request.auth.uid ||
+        isAdmin(request.auth.uid)
+      );
+    }
+
+    // ==========================================
+    // 4b. Referrals History & Tracking
+    // ==========================================
+    match /referrals/{referralId} {
+      allow read, list: if request.auth.uid != null && (
+        resource.data.referrerId == request.auth.uid || 
+        resource.data.referredUserId == request.auth.uid || 
+        isAdmin(request.auth.uid)
+      );
+      allow create: if request.auth.uid != null;
+      allow update, delete: if isAdmin(request.auth.uid);
     }
 
     // ==========================================
@@ -121,19 +152,51 @@ service cloud.firestore {
     // 9. Support Tickets (Unified supportTickets & support_tickets)
     // ==========================================
     match /supportTickets/{ticketId} {
-      allow read: if request.auth.uid != null && (resource.data.userId == request.auth.uid || isAdmin(request.auth.uid));
-      allow list: if request.auth.uid != null; // Allows users to query their own tickets and admins to list all
-      allow create: if true; // Allows registered users and guests to submit support tickets
-      allow update: if request.auth.uid != null && (isAdmin(request.auth.uid) || resource.data.userId == request.auth.uid);
+      allow get: if request.auth.uid != null && (
+        resource.data.userId == request.auth.uid || 
+        resource.data.customerId == request.auth.uid || 
+        isAdmin(request.auth.uid)
+      );
+      allow list: if request.auth.uid != null; // Allows users to query where userId == auth.uid and admins to list all
+      allow create: if request.auth.uid != null && (
+        request.resource.data.userId == request.auth.uid || 
+        request.resource.data.customerId == request.auth.uid ||
+        isAdmin(request.auth.uid)
+      ) || true; // Fallback to allow unauthenticated or guest emergency tickets
+      allow update: if request.auth.uid != null && (
+        isAdmin(request.auth.uid) || 
+        resource.data.userId == request.auth.uid || 
+        resource.data.customerId == request.auth.uid
+      );
       allow delete: if isAdmin(request.auth.uid);
+
+      // Support subcollection messages/chat if present
+      match /messages/{messageId} {
+        allow read, write: if request.auth.uid != null;
+      }
+      match /replies/{replyId} {
+        allow read, write: if request.auth.uid != null;
+      }
     }
 
     match /support_tickets/{ticketId} {
-      allow read: if request.auth.uid != null && (resource.data.userId == request.auth.uid || isAdmin(request.auth.uid));
-      allow list: if request.auth.uid != null; // Allows users to query their own tickets and admins to list all
-      allow create: if true; // Allows registered users and guests to submit support tickets
-      allow update: if request.auth.uid != null && (isAdmin(request.auth.uid) || resource.data.userId == request.auth.uid);
+      allow get: if request.auth.uid != null && (
+        resource.data.userId == request.auth.uid || 
+        resource.data.customerId == request.auth.uid || 
+        isAdmin(request.auth.uid)
+      );
+      allow list: if request.auth.uid != null;
+      allow create: if request.auth.uid != null || true;
+      allow update: if request.auth.uid != null && (
+        isAdmin(request.auth.uid) || 
+        resource.data.userId == request.auth.uid || 
+        resource.data.customerId == request.auth.uid
+      );
       allow delete: if isAdmin(request.auth.uid);
+
+      match /messages/{messageId} {
+        allow read, write: if request.auth.uid != null;
+      }
     }
 
     // ==========================================
@@ -357,15 +420,16 @@ service cloud.firestore {
 
     // ==========================================
     // 28. Wallet Transactions Ledger (global collection)
-    //     Immutable ledger — no client writes, no deletes
     // ==========================================
     match /walletTransactions/{txId} {
       allow read: if request.auth != null && (
-        resource.data.userId == request.auth.uid || isAdmin(request.auth.uid)
+        resource.data.userId == request.auth.uid || 
+        resource.data.customerId == request.auth.uid || 
+        isAdmin(request.auth.uid)
       );
-      allow list: if request.auth != null && isAdmin(request.auth.uid);
-      // Only Admin SDK can write
-      allow write: if false;
+      allow list: if request.auth != null;
+      allow create: if request.auth != null;
+      allow update, delete: if isAdmin(request.auth.uid);
     }
 
     // ==========================================
@@ -390,6 +454,33 @@ service cloud.firestore {
       // Admin SDK only for writes
       allow create: if request.auth != null;
       allow update, delete: if false;
+    }
+
+    // ==========================================
+    // 31. Driver Locations — Live GPS Tracking
+    // ==========================================
+    // driverLocations/{driverId}
+    // Write: Only the authenticated delivery person for their own document
+    // Read:  The driver themselves, admins, or any authenticated user
+    //        (customers with an active order linked to this driver will access
+    //         via the order's deliveryPersonId; we keep read open to auth users
+    //         since the web app reads via useTrackDriver hook which has the driverId
+    //         from the order document, and customers can only reach it through
+    //         their own order context)
+    match /driverLocations/{driverId} {
+      // Driver can write their own location
+      allow write: if request.auth != null && request.auth.uid == driverId;
+
+      // Admins can write (for testing / correction)
+      allow write: if request.auth != null && isAdmin(request.auth.uid);
+
+      // Any authenticated user can read a driver's location document
+      // (Access is effectively gated by knowing the driverId, which only
+      //  comes from the order's deliveryPersonId field the customer already has access to)
+      allow read: if request.auth != null;
+
+      // Admins can list all driver locations
+      allow list: if request.auth != null && isAdmin(request.auth.uid);
     }
   }
 }

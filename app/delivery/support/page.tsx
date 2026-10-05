@@ -85,12 +85,12 @@ export default function DeliverySupportPage() {
                 </div>
 
                 <div className="flex items-center gap-2">
-                    <a href="tel:+18001234567">
+                    <a href="tel:+916393752013">
                         <Button
                             variant="outline"
                             className="border-red-500/30 text-red-400 hover:text-white hover:bg-red-600 hover:border-red-600 gap-2 rounded-xl backdrop-blur-md bg-red-500/5 group transition-all duration-300 font-bold"
                         >
-                            <Phone className="w-4 h-4 group-hover:animate-bounce" /> Emergency Hotline
+                            <Phone className="w-4 h-4 group-hover:animate-bounce" /> Emergency Hotline (+91 6393752013)
                         </Button>
                     </a>
                 </div>
@@ -212,7 +212,7 @@ export default function DeliverySupportPage() {
                                         </div>
                                         <div>
                                             <p className="font-bold text-white text-lg">Partner Operations Email</p>
-                                            <p className="text-xs text-gray-400 font-mono">support@akrhunger.com</p>
+                                            <p className="text-xs text-gray-400 font-mono">hunger@gmail.com</p>
                                         </div>
                                     </CardContent>
                                 </Card>

@@ -24,7 +24,10 @@ import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { toast } from 'sonner';
 import ThemeToggle from '@/components/customer/ThemeToggle';
+import FullscreenToggle from '@/components/customer/FullscreenToggle';
 import DeliveryLocationDialog from './DeliveryLocationDialog';
+import CustomerSearchBar from '@/components/customer/CustomerSearchBar';
+import { Clock } from 'lucide-react';
 
 export default function CustomerNavbar() {
   const router = useRouter();
@@ -84,18 +87,21 @@ export default function CustomerNavbar() {
   return (
     <>
       <header
-        className={`sticky top-0 z-50 w-full transition-all duration-300 border-b border-border/60 ${isScrolled
-          ? 'bg-background/85 backdrop-blur-xl shadow-md shadow-black/5'
-          : 'bg-background/95 backdrop-blur-md'
+        className={`sticky top-0 z-50 w-full transition-all duration-500 ${isScrolled
+          ? 'bg-background/90 backdrop-blur-2xl shadow-xl shadow-black/10 border-b border-border/80'
+          : 'bg-background/95 backdrop-blur-md border-b border-border/40'
           }`}
       >
-        <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 h-16 md:h-20 flex items-center justify-between gap-2 sm:gap-4">
+        <div className="w-full max-w-[1440px] mx-auto px-3 sm:px-5 md:px-8 h-16 md:h-[70px] flex items-center justify-between gap-2 sm:gap-4">
 
           {/* Logo & Location */}
           <div className="flex items-center gap-3 sm:gap-6 flex-shrink-0">
-            <Link href="/customer" className="flex items-center gap-2 flex-shrink-0">
-              <img src="/hunger.png" alt="Hunger" className="w-9 h-9 sm:w-10 sm:h-10 object-contain rounded-xl shadow-sm" />
-              <span className="text-lg sm:text-xl font-black text-primary hidden sm:block tracking-tight">
+            <Link href="/customer" className="flex items-center gap-2 flex-shrink-0 group">
+              <div className="relative">
+                <img src="/hunger.png" alt="Hunger" className="w-9 h-9 sm:w-10 sm:h-10 object-contain rounded-xl shadow-sm group-hover:scale-105 transition-transform duration-300" />
+                <div className="absolute inset-0 rounded-xl bg-primary/0 group-hover:bg-primary/10 transition-colors duration-300" />
+              </div>
+              <span className="text-lg sm:text-xl font-black bg-gradient-to-r from-primary to-orange-400 bg-clip-text text-transparent hidden sm:block tracking-tight">
                 Hunger
               </span>
             </Link>
@@ -123,16 +129,8 @@ export default function CustomerNavbar() {
           </div>
 
           {/* Search Bar - Desktop & Tablet */}
-          <div className="hidden md:flex flex-1 max-w-md lg:max-w-xl mx-2 lg:mx-8">
-            <form onSubmit={handleSearch} className="relative w-full group">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4 group-focus-within:text-primary transition-colors" />
-              <Input
-                placeholder="Search for 'Biryani', 'Pizza', 'Burger'..."
-                className="pl-11 h-11 md:h-12 rounded-2xl bg-muted/50 border-border/80 text-foreground placeholder:text-muted-foreground focus:bg-background focus:border-primary/40 focus:ring-2 focus:ring-primary/20 transition-all font-medium text-sm"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </form>
+          <div className="hidden md:flex flex-1 max-w-xs lg:max-w-lg xl:max-w-2xl mx-3 lg:mx-6">
+            <CustomerSearchBar size="md" />
           </div>
 
           {/* Right Actions */}
@@ -144,6 +142,9 @@ export default function CustomerNavbar() {
 
             {/* Theme Toggle Button */}
             <ThemeToggle />
+
+            {/* Fullscreen Toggle */}
+            <FullscreenToggle className="hidden sm:flex" />
 
             {/* Notification Bell - Logged in customer */}
             {user && (
@@ -234,6 +235,10 @@ export default function CustomerNavbar() {
                     <Star className="w-4 h-4 mr-2 text-muted-foreground" />
                     My Reviews
                   </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => router.push('/customer/search/history')} className="cursor-pointer rounded-xl my-0.5">
+                    <Clock className="w-4 h-4 mr-2 text-muted-foreground" />
+                    Search History
+                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => router.push('/customer/support')} className="cursor-pointer rounded-xl my-0.5">
                     <HelpCircle className="w-4 h-4 mr-2 text-muted-foreground" />
                     Help & Support
@@ -304,10 +309,16 @@ export default function CustomerNavbar() {
                     )}
                   </div>
 
-                  {/* Theme Switcher in Mobile Sheet */}
-                  <div className="p-4 border-b border-border">
-                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Theme Mode</p>
-                    <ThemeToggle variant="compact" className="w-full justify-around" />
+                  {/* Theme Switcher & Fullscreen in Mobile Sheet */}
+                  <div className="p-4 border-b border-border space-y-3">
+                    <div>
+                      <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Theme Mode</p>
+                      <ThemeToggle variant="compact" className="w-full justify-around" />
+                    </div>
+                    <div className="flex items-center justify-between pt-1">
+                      <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Display Mode</span>
+                      <FullscreenToggle showText className="rounded-xl px-3 h-8 text-xs font-semibold" />
+                    </div>
                   </div>
 
                   <div className="flex-1 p-4 space-y-1 overflow-y-auto">
@@ -350,6 +361,10 @@ export default function CustomerNavbar() {
                     <Link href="/customer/reviews" className="flex items-center gap-3 p-3 rounded-2xl hover:bg-muted/60 text-foreground transition-colors">
                       <div className="w-8 h-8 rounded-xl bg-amber-400/10 text-amber-500 flex items-center justify-center"><Star className="w-4 h-4" /></div>
                       <span className="font-semibold text-sm">My Reviews</span>
+                    </Link>
+                    <Link href="/customer/search/history" className="flex items-center gap-3 p-3 rounded-2xl hover:bg-muted/60 text-foreground transition-colors">
+                      <div className="w-8 h-8 rounded-xl bg-slate-500/10 text-slate-500 flex items-center justify-center"><Clock className="w-4 h-4" /></div>
+                      <span className="font-semibold text-sm">Search History</span>
                     </Link>
                     <Link href="/customer/support" className="flex items-center gap-3 p-3 rounded-2xl hover:bg-muted/60 text-foreground transition-colors">
                       <div className="w-8 h-8 rounded-xl bg-cyan-500/10 text-cyan-500 flex items-center justify-center"><HelpCircle className="w-4 h-4" /></div>

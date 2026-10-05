@@ -38,7 +38,9 @@ import {
   IdCard,
   BookOpen,
   Image as ImageIcon,
-  RotateCcw
+  RotateCcw,
+  Gift,
+  Percent
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -110,7 +112,9 @@ const AdminSidebar = ({ isMobile = false, onClose }: AdminSidebarProps) => {
         { href: '/admin/menus', label: 'Menu Management', icon: BookOpen },
         { href: '/admin/menu-approvals', label: 'Menu Approvals', icon: UtensilsCrossed },
         { href: '/admin/campaigns', label: 'Campaigns', icon: Megaphone },
-        { href: '/admin/promotions', label: 'Promotions', icon: Tag },
+        { href: '/admin/deals', label: 'Deals & Offers', icon: Tag },
+        { href: '/admin/redeem-codes', label: 'Redeem Codes', icon: Gift },
+        { href: '/admin/promotions', label: 'Promotions', icon: Percent },
       ],
     },
     {

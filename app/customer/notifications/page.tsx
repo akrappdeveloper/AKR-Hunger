@@ -336,7 +336,7 @@ export default function NotificationsPage() {
         <div className="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-primary/5 rounded-full blur-[140px]" />
       </div>
 
-      <div className="max-w-4xl mx-auto px-3 sm:px-6 py-6 sm:py-8 relative z-10">
+      <div className="w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 relative z-10">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6 sm:mb-8">
           <div>

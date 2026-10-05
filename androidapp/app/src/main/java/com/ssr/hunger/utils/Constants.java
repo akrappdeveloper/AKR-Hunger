@@ -16,6 +16,13 @@ public class Constants {
     public static final String COLLECTION_SUPPORT_TICKETS = "supportTickets";
     public static final String COLLECTION_NOTIFICATIONS = "notifications";
     public static final String COLLECTION_WALLET_TRANSACTIONS = "walletTransactions";
+    public static final String COLLECTION_REFERRALS = "referrals";
+    public static final String COLLECTION_REFERRAL_CODES = "referralCodes";
+    public static final String COLLECTION_DRIVER_LOCATIONS = "driverLocations";      // GPS tracking data
+    public static final String COLLECTION_DELIVERY_PERSONS = "deliveryPersons";      // Delivery partner profiles
+
+    // Backend API Base URL
+    public static final String API_BASE_URL = "https://akrhunger.vercel.app";
 
     // Razorpay
     public static final String RAZORPAY_KEY_ID = "rzp_live_RbvSxxE0Qca3fp";

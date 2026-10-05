@@ -22,6 +22,11 @@ export interface Customer {
   isBlocked?: boolean;
   image?: string; // Alias for avatar or separate field
   rewardPoints?: number; // Loyalty reward points balance
+  referralCode?: string;
+  referralCount?: number;
+  referralEarnings?: number;
+  referredBy?: string;
+  usedReferralCode?: string;
   bankDetails?: {
     bankName: string;
     accountNumber: string;
@@ -421,32 +426,40 @@ export interface SearchFilters {
 // Support Ticket Types
 export interface TicketReply {
   id: string;
-  ticketId: string;
-  userId: string;
-  userName: string;
-  userType: 'admin' | 'restaurant' | 'customer' | 'delivery';
-  message: string;
-  createdAt: Date | any;
+  ticketId?: string;
+  userId?: string;
+  userName?: string;
+  userType?: 'admin' | 'restaurant' | 'customer' | 'delivery' | string;
+  sender?: 'customer' | 'support' | 'admin' | 'ai' | string;
+  senderName?: string;
+  text?: string;
+  message?: string;
+  createdAt?: any;
+  timestamp?: any;
 }
 
 export interface SupportTicket {
   id?: string;
-  userId: string;
-  userType: 'customer' | 'restaurant' | 'delivery';
-  userName: string;
-  userEmail: string;
+  userId?: string;
+  customerId?: string;
+  userType?: 'customer' | 'restaurant' | 'delivery' | string;
+  userName?: string;
+  userEmail?: string;
+  userPhone?: string;
+  orderId?: string;
   subject: string;
-  category: 'technical' | 'billing' | 'order' | 'account' | 'feature' | 'other';
-  priority: 'low' | 'medium' | 'high' | 'urgent';
+  category?: 'order' | 'refund' | 'payment' | 'delivery' | 'food_quality' | 'account' | 'technical' | 'billing' | 'feature' | 'other' | string;
+  priority?: 'low' | 'medium' | 'high' | 'urgent' | string;
   description: string;
-  status: 'open' | 'in_progress' | 'resolved' | 'closed' | 'rejected';
+  message?: string;
+  status: 'open' | 'in_progress' | 'in-progress' | 'resolved' | 'closed' | 'rejected' | string;
   attachments?: string[];
   adminResponse?: string;
   replies?: TicketReply[];
-  createdAt: Date;
-  updatedAt?: Date;
-  resolvedAt?: Date;
-  closedAt?: Date;
+  createdAt: any;
+  updatedAt?: any;
+  resolvedAt?: any;
+  closedAt?: any;
 }
 
 // Notification Types
@@ -665,6 +678,36 @@ export interface IssuedCard {
   cardType?: string;
   balance?: number;
   updatedAt?: Date;
+}
+
+export interface DealItem {
+  id: string;
+  code: string;
+  title: string;
+  description: string;
+  emoji?: string;
+  discountType: 'percentage' | 'flat' | 'fixed' | 'free_delivery';
+  discountValue: number;
+  minOrder?: number;
+  maxDiscount?: number;
+  category?: string;
+  isActive: boolean;
+  validUntil?: string;
+  createdAt?: any;
+  usageCount?: number;
+}
+
+export interface RedeemCodeItem {
+  id: string;
+  code: string;
+  type: 'points' | 'wallet' | 'discount';
+  value: number;
+  description?: string;
+  maxRedemptions?: number;
+  redemptionCount?: number;
+  isActive: boolean;
+  expiresAt?: string;
+  createdAt?: any;
 }
 
 export { generateProfessionalOrderId, formatOrderId } from './order-utils';

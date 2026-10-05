@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useTheme } from 'next-themes';
-import { Sun, Moon, Flame, Sparkles, Laptop, Check } from 'lucide-react';
+import { Sun, Moon, Flame, Sparkles, Laptop, Check, Waves } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -51,6 +51,15 @@ export const THEMES = [
     accentColor: 'bg-blue-500',
   },
   {
+    id: 'ocean',
+    name: 'Ocean Teal',
+    shortName: 'Ocean',
+    icon: Waves,
+    description: 'Aqua-dark premium teal & cyan',
+    previewBg: 'bg-[#0d1a1c] text-teal-100 border-[#1a3035]',
+    accentColor: 'bg-teal-500',
+  },
+  {
     id: 'system',
     name: 'System Default',
     shortName: 'System',
@@ -86,7 +95,7 @@ export default function ThemeToggle({ className = '', variant = 'button' }: Them
   // Variant: Interactive Tiles (Used in Profile page)
   if (variant === 'tiles') {
     return (
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3">
         {THEMES.map((t) => {
           const Icon = t.icon;
           const isSelected = theme === t.id;

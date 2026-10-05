@@ -227,7 +227,7 @@ export default function OrdersPage() {
 
   return (
     <div className="min-h-screen text-foreground pb-28 font-sans">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+      <div className="w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">
 
         {/* ─── Header ───────────────────────────────────────────────────────── */}
         <motion.div initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }}

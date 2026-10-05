@@ -49,15 +49,60 @@ service cloud.firestore {
     // ==========================================
     match /customers/{customerId} {
       allow read: if request.auth.uid == customerId || isAdmin(request.auth.uid);
-      allow list: if isAdmin(request.auth.uid);
+      allow list: if request.auth.uid != null; // Allows referral code lookup and verification
       allow create: if request.auth.uid != null && request.auth.uid == customerId;
-      allow update, delete: if request.auth.uid == customerId || isAdmin(request.auth.uid);
+      allow update: if request.auth.uid == customerId || isAdmin(request.auth.uid) || (
+        request.auth.uid != null &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['walletBalance', 'referralCount', 'referralEarnings', 'referralPointsEarned'])
+      );
+      allow delete: if request.auth.uid == customerId || isAdmin(request.auth.uid);
 
       // Customer Wallet Transactions (Subcollection)
       match /walletTransactions/{transactionId} {
         allow read: if request.auth.uid == customerId || isAdmin(request.auth.uid);
-        allow create: if request.auth.uid == customerId || isAdmin(request.auth.uid);
+        allow create: if request.auth.uid != null;
       }
+    }
+
+    // ==========================================
+    // 4a. Referral Codes Registry
+    // ==========================================
+    match /referralCodes/{code} {
+      allow read, list: if true; // Public / authenticated read to validate referral codes during signup
+      allow create, update: if request.auth.uid != null;
+      allow delete: if request.auth.uid != null && (
+        resource.data.uid == request.auth.uid || 
+        resource.data.userId == request.auth.uid || 
+        resource.data.ownerId == request.auth.uid ||
+        isAdmin(request.auth.uid)
+      );
+    }
+
+    // ==========================================
+    // 4b. Referrals History & Tracking
+    // ==========================================
+    match /referrals/{referralId} {
+      allow read, list: if request.auth.uid != null && (
+        resource.data.referrerId == request.auth.uid || 
+        resource.data.referredUserId == request.auth.uid || 
+        isAdmin(request.auth.uid)
+      );
+      allow create: if request.auth.uid != null;
+      allow update, delete: if isAdmin(request.auth.uid);
+    }
+
+    // ==========================================
+    // 4c. Global Wallet Transactions Ledger
+    // ==========================================
+    match /walletTransactions/{txId} {
+      allow read: if request.auth != null && (
+        resource.data.userId == request.auth.uid || 
+        resource.data.customerId == request.auth.uid || 
+        isAdmin(request.auth.uid)
+      );
+      allow list: if request.auth != null;
+      allow create: if request.auth != null;
+      allow update, delete: if isAdmin(request.auth.uid);
     }
 
     // ==========================================

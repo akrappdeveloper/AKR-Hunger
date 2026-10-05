@@ -23,17 +23,14 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
 import androidx.core.app.ActivityCompat;
-import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.location.LocationCallback;
-import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.location.LocationResult;
-import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.location.Priority;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.ssr.hunger.R;
+import com.ssr.hunger.services.DriverLocationService;
 import com.ssr.hunger.utils.Constants;
+import com.ssr.hunger.utils.PermissionManager;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -42,21 +39,21 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
- * OrderTrackingActivity – Professional real-time order tracking screen.
+ * OrderTrackingActivity — Real-time order tracking for CUSTOMERS.
  *
- * Features:
- *  • Real-time Firestore order listener (status, delivery stage)
- *  • Animated vertical step tracker (fill animation on progress)
- *  • Live ETA countdown timer (updates every second)
- *  • GPS location updates published to Firestore/driverLocations
- *  • Driver card with pulse animation and call-to-action
- *  • Animated map placeholder with orbiting driver dot
- *  • Shake animation on status change
- *  • Confetti-style celebration on delivery completion
+ * Listens to live driver GPS from Firebase driverLocations/{driverId}.
+ * If opened in driver mode (EXTRA_IS_DRIVER=true), starts DriverLocationService
+ * to publish this device's GPS position to Firebase.
+ *
+ * Two-phase tracking:
+ *   Phase 1: Driver → Restaurant (TO_PICKUP stage)
+ *   Phase 2: Driver → Customer (TO_CUSTOMER / out_for_delivery stage)
  */
 public class OrderTrackingActivity extends BaseActivity {
 
     public static final String EXTRA_ORDER_ID = "order_id";
+    /** Set to true if this device IS the delivery partner */
+    public static final String EXTRA_IS_DRIVER = "is_driver";
     private static final int LOCATION_PERMISSION_CODE = 4001;
 
     // Firebase
@@ -66,6 +63,7 @@ public class OrderTrackingActivity extends BaseActivity {
     private String orderId;
     private String lastStatus = "";
     private String driverUid = null;
+    private boolean isDriverMode = false;
 
     // UI refs
     private TextView tvEta, tvOrderStatus, tvRestaurantName, tvOrderId;
@@ -75,13 +73,11 @@ public class OrderTrackingActivity extends BaseActivity {
     private ProgressBar progressTrack;
     private CardView cardDriverPartner;
     private View btnCallDriver, btnBack, btnHelp;
-    private View mapContainer, driverDot, pulseRing;
-    private TextView tvMapEmoji;
     private View gpsLiveBadge;
 
     // Step keys matching Firestore status values
-    private static final String[] STEPS =     {"pending","confirmed","preparing","ready","out_for_delivery","delivered"};
-    private static final String[] STEP_EMOJIS = {"📦",    "✅",       "👨‍🍳",      "🍱",  "🛵",              "🎉"};
+    private static final String[] STEPS      = {"pending","confirmed","preparing","ready","out_for_delivery","delivered"};
+    private static final String[] STEP_EMOJIS = {"\uD83D\uDCE6","\u2705","\uD83D\uDC68\u200D\uD83C\uDF73","\uD83C\uDF71","\uD83D\uDEF5","\uD83C\uDF89"};
     private static final String[] STEP_LABELS = {
         "Order Placed", "Confirmed", "Kitchen Preparing", "Food Ready", "Out for Delivery", "Delivered!"
     };
@@ -95,14 +91,6 @@ public class OrderTrackingActivity extends BaseActivity {
     private long orderPlacedMs = 0;
     private int estimatedMins = 35;
 
-    // GPS
-    private FusedLocationProviderClient fusedLocation;
-    private LocationCallback locationCallback;
-
-    // Animations
-    private ValueAnimator driverOrbitAnimator;
-    private ObjectAnimator pulseAnimator;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -110,6 +98,7 @@ public class OrderTrackingActivity extends BaseActivity {
 
         db = FirebaseFirestore.getInstance();
         orderId = getIntent().getStringExtra(EXTRA_ORDER_ID);
+        isDriverMode = getIntent().getBooleanExtra(EXTRA_IS_DRIVER, false);
 
         if (orderId == null) {
             recordException("OrderTracking_null_id", new IllegalArgumentException("null orderId"));
@@ -120,9 +109,25 @@ public class OrderTrackingActivity extends BaseActivity {
         bindViews();
         startMapAnimation();
         listenToOrder();
-        requestLocationAndTrack();
 
-        logBreadcrumb("OrderTrackingActivity: " + orderId);
+        // If this is a delivery partner's device, start GPS service (with location permission)
+        if (isDriverMode) {
+            requireLocation(
+                () -> {
+                    String uid = com.google.firebase.auth.FirebaseAuth.getInstance().getCurrentUser() != null
+                        ? com.google.firebase.auth.FirebaseAuth.getInstance().getCurrentUser().getUid()
+                        : null;
+                    if (uid != null) {
+                        DriverLocationService.startTracking(this, uid, orderId, true);
+                    }
+                },
+                (isPermanent) -> {
+                    if (isPermanent) showSettingsSnackbar();
+                }
+            );
+        }
+
+        logBreadcrumb("OrderTrackingActivity: " + orderId + " driverMode=" + isDriverMode);
 
         if (btnBack != null) btnBack.setOnClickListener(v -> onBackPressed());
         if (btnHelp != null) btnHelp.setOnClickListener(v ->
@@ -142,12 +147,11 @@ public class OrderTrackingActivity extends BaseActivity {
         tvDeliveryAddress  = findViewById(R.id.tv_delivery_address);
         tvGpsCoords        = (TextView) findViewById(R.id.tv_gps_coords);
         stepContainer      = findViewById(R.id.step_container);
-        progressTrack      = findViewById(R.id.progress_tier);   // reuse progress bar
+        progressTrack      = findViewById(R.id.progress_tier);
         cardDriverPartner  = findViewById(R.id.card_delivery_partner);
         btnCallDriver      = findViewById(R.id.btn_call_driver);
         btnBack            = findViewById(R.id.btn_back);
         btnHelp            = findViewById(R.id.btn_help);
-        mapContainer       = null; // optional: not always present
         gpsLiveBadge       = (View) findViewById(R.id.gps_live_badge);
     }
 
@@ -165,6 +169,57 @@ public class OrderTrackingActivity extends BaseActivity {
             scaleX.start();
             scaleY.start();
         }
+
+        // Floating bobbing animation on rider avatar
+        View riderAvatar = findViewById(R.id.frame_rider_avatar);
+        if (riderAvatar != null) {
+            ObjectAnimator bobY = ObjectAnimator.ofFloat(riderAvatar, "translationY", 0f, -8f, 0f);
+            bobY.setDuration(1500);
+            bobY.setRepeatCount(ValueAnimator.INFINITE);
+            bobY.setInterpolator(new AccelerateDecelerateInterpolator());
+            bobY.start();
+        }
+
+        // Radar wave pulse on concentric rings
+        animateRadarRing(findViewById(R.id.view_radar_ring_inner), 0);
+        animateRadarRing(findViewById(R.id.view_radar_ring_mid), 400);
+        animateRadarRing(findViewById(R.id.view_radar_ring_outer), 800);
+
+        // Slide up entry for the main cards
+        View cardEta = findViewById(R.id.card_eta);
+        if (cardEta != null) {
+            cardEta.setAlpha(0f);
+            cardEta.setTranslationY(60f);
+            cardEta.animate()
+                    .alpha(1f)
+                    .translationY(0f)
+                    .setDuration(450)
+                    .setInterpolator(new AccelerateDecelerateInterpolator())
+                    .start();
+        }
+    }
+
+    private void animateRadarRing(View ring, long startDelay) {
+        if (ring == null) return;
+        ObjectAnimator scaleX = ObjectAnimator.ofFloat(ring, "scaleX", 1.0f, 1.25f, 1.0f);
+        ObjectAnimator scaleY = ObjectAnimator.ofFloat(ring, "scaleY", 1.0f, 1.25f, 1.0f);
+        ObjectAnimator alpha = ObjectAnimator.ofFloat(ring, "alpha", ring.getAlpha(), ring.getAlpha() * 1.8f, ring.getAlpha());
+
+        scaleX.setDuration(2400);
+        scaleY.setDuration(2400);
+        alpha.setDuration(2400);
+
+        scaleX.setStartDelay(startDelay);
+        scaleY.setStartDelay(startDelay);
+        alpha.setStartDelay(startDelay);
+
+        scaleX.setRepeatCount(ValueAnimator.INFINITE);
+        scaleY.setRepeatCount(ValueAnimator.INFINITE);
+        alpha.setRepeatCount(ValueAnimator.INFINITE);
+
+        scaleX.start();
+        scaleY.start();
+        alpha.start();
     }
 
     // ─── Firestore: Listen to Order ────────────────────────────────────────────
@@ -264,20 +319,32 @@ public class OrderTrackingActivity extends BaseActivity {
             });
     }
 
-    // ─── Driver Location (GPS → Firestore → Customer sees it) ─────────────────
+    // ─── Driver Location: Real-time GPS from Firebase ─────────────────────────
+    // The delivery partner's device runs DriverLocationService which publishes to
+    // driverLocations/{driverId}. We listen here and update the UI.
 
     private void listenToDriverLocation(String driverId) {
         if (driverLocationListener != null) driverLocationListener.remove();
-        driverLocationListener = db.collection("driverLocations").document(driverId)
+        driverLocationListener = db.collection(Constants.COLLECTION_DRIVER_LOCATIONS)
+            .document(driverId)
             .addSnapshotListener((snap, error) -> {
                 if (snap == null || !snap.exists()) return;
                 Double lat = snap.getDouble("latitude");
                 Double lng = snap.getDouble("longitude");
+                Double speed = snap.getDouble("speed");
+                Double accuracy = snap.getDouble("accuracy");
+                Double heading = snap.getDouble("heading");
+
                 if (lat != null && lng != null && tvGpsCoords != null) {
-                    tvGpsCoords.setText(String.format(Locale.getDefault(),
-                        "📍 %.5f, %.5f", lat, lng));
-                    tvGpsCoords.setVisibility(View.VISIBLE);
-                    if (gpsLiveBadge != null) gpsLiveBadge.setVisibility(View.VISIBLE);
+                    runOnUiThread(() -> {
+                        // Format: phase-aware label + coordinates
+                        String speedStr = speed != null ? String.format(Locale.getDefault(), " | %.0f km/h", speed) : "";
+                        String accStr  = accuracy != null ? String.format(Locale.getDefault(), " ±%.0fm", accuracy) : "";
+                        tvGpsCoords.setText(String.format(Locale.getDefault(),
+                            "📍 %.5f, %.5f%s%s", lat, lng, speedStr, accStr));
+                        tvGpsCoords.setVisibility(View.VISIBLE);
+                        if (gpsLiveBadge != null) gpsLiveBadge.setVisibility(View.VISIBLE);
+                    });
                 }
             });
     }
@@ -304,7 +371,14 @@ public class OrderTrackingActivity extends BaseActivity {
                 if (btnCallDriver != null) {
                     btnCallDriver.setVisibility(phone != null && !phone.isEmpty() ? View.VISIBLE : View.GONE);
                     btnCallDriver.setOnClickListener(v ->
-                        startActivity(new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + phone))));
+                        requirePhone(
+                            () -> startActivity(new Intent(Intent.ACTION_CALL, Uri.parse("tel:" + phone))),
+                            (isPermanent) -> {
+                                // Fallback: open dialer without CALL_PHONE permission
+                                startActivity(new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + phone)));
+                            }
+                        )
+                    );
                 }
             }
 
@@ -517,57 +591,6 @@ public class OrderTrackingActivity extends BaseActivity {
         scaleY.start();
     }
 
-    // ─── GPS Location Permission & Publishing ──────────────────────────────────
-
-    private void requestLocationAndTrack() {
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this,
-                new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
-                LOCATION_PERMISSION_CODE);
-            return;
-        }
-        startLocationUpdates();
-    }
-
-    private void startLocationUpdates() {
-        fusedLocation = LocationServices.getFusedLocationProviderClient(this);
-        LocationRequest req = new LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 5000)
-            .setMinUpdateIntervalMillis(3000)
-            .build();
-
-        locationCallback = new LocationCallback() {
-            @Override
-            public void onLocationResult(@NonNull LocationResult result) {
-                android.location.Location loc = result.getLastLocation();
-                if (loc == null) return;
-                // Show GPS coords in UI (customer sees driver location)
-                if (tvGpsCoords != null) {
-                    runOnUiThread(() -> {
-                        tvGpsCoords.setText(String.format(Locale.getDefault(),
-                            "📡 %.5f, %.5f", loc.getLatitude(), loc.getLongitude()));
-                        tvGpsCoords.setVisibility(View.VISIBLE);
-                    });
-                }
-                logBreadcrumb("CustomerGPS: " + loc.getLatitude() + "," + loc.getLongitude());
-            }
-        };
-
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-                == PackageManager.PERMISSION_GRANTED) {
-            fusedLocation.requestLocationUpdates(req, locationCallback, Looper.getMainLooper());
-        }
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] results) {
-        super.onRequestPermissionsResult(requestCode, permissions, results);
-        if (requestCode == LOCATION_PERMISSION_CODE && results.length > 0
-                && results[0] == PackageManager.PERMISSION_GRANTED) {
-            startLocationUpdates();
-        }
-    }
-
     // ─── Lifecycle ─────────────────────────────────────────────────────────────
 
     @Override
@@ -575,10 +598,12 @@ public class OrderTrackingActivity extends BaseActivity {
         super.onDestroy();
         if (orderListener != null) orderListener.remove();
         if (driverLocationListener != null) driverLocationListener.remove();
-        if (fusedLocation != null && locationCallback != null)
-            fusedLocation.removeLocationUpdates(locationCallback);
         if (etaHandler != null && etaRunnable != null)
             etaHandler.removeCallbacks(etaRunnable);
-        if (driverOrbitAnimator != null) driverOrbitAnimator.cancel();
+
+        // Stop GPS service if we started it (driver mode)
+        if (isDriverMode) {
+            DriverLocationService.stopTracking(this);
+        }
     }
 }

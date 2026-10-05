@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -29,7 +29,8 @@ import {
   Mail,
   ShieldCheck,
   RefreshCw,
-  Navigation
+  Navigation,
+  Satellite
 } from 'lucide-react';
 import Link from 'next/link';
 import SafeImage from '@/components/ui/safe-image';
@@ -38,6 +39,168 @@ import { useCart } from '@/context/CartContext';
 import InvoiceButton from '../InvoiceButton';
 import { toast } from 'sonner';
 import { copyToClipboard as safeCopy } from '@/lib/utils';
+import dynamic from 'next/dynamic';
+import { useTrackDriver } from '@/hooks/useTrackDriver';
+import type { MapMarker } from '@/components/tracking/LiveTrackingMap';
+
+// Dynamic import for LiveTrackingMap (no SSR)
+const LiveTrackingMap = dynamic(
+  () => import('@/components/tracking/LiveTrackingMap'),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="w-full h-full flex items-center justify-center bg-slate-900/50 rounded-2xl">
+        <div className="flex flex-col items-center gap-2">
+          <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+          <p className="text-slate-400 text-xs">Loading map...</p>
+        </div>
+      </div>
+    ),
+  }
+);
+
+// ─── Helper: get tracking phase from order stage/status ──────────────────────
+function getOrderTrackingPhase(order: Order | null): 'to_restaurant' | 'to_customer' | 'done' {
+  if (!order) return 'done';
+  const stage = order.delivery?.stage as DeliveryStage | undefined;
+  const status = order.status;
+  if (status === 'delivered' || status === 'cancelled') return 'done';
+  if (stage === 'TO_PICKUP' || stage === 'ARRIVED_PICKUP') return 'to_restaurant';
+  if (stage === 'PICKED_UP' || stage === 'TO_CUSTOMER' || stage === 'ARRIVED_CUSTOMER') return 'to_customer';
+  if (status === 'out_for_delivery') return 'to_customer';
+  return 'to_restaurant';
+}
+
+// ─── LiveMapSection: embedded live map for Order Details page ─────────────────
+function LiveMapSection({ order, restaurant }: { order: Order; restaurant: Restaurant | null }) {
+  const { location: driverLocation } = useTrackDriver(order.deliveryPersonId || null);
+  const [routeInfo, setRouteInfo] = useState<{ distance: string; eta: string } | null>(null);
+
+  const phase = getOrderTrackingPhase(order);
+
+  // Restaurant position
+  const restaurantPosition = useMemo(() => {
+    const lat = restaurant?.latitude ?? (order as any)?.restaurantLocation?.lat ?? (order as any)?.delivery?.pickup?.latitude;
+    const lng = restaurant?.longitude ?? (order as any)?.restaurantLocation?.lng ?? (order as any)?.delivery?.pickup?.longitude;
+    return (lat && lng) ? { latitude: lat, longitude: lng } : null;
+  }, [restaurant, order]);
+
+  // Customer position
+  const customerPosition = useMemo(() => {
+    const lat = typeof order?.deliveryAddress === 'object' ? (order.deliveryAddress as any)?.latitude : (order as any)?.delivery?.drop?.latitude;
+    const lng = typeof order?.deliveryAddress === 'object' ? (order.deliveryAddress as any)?.longitude : (order as any)?.delivery?.drop?.longitude;
+    return (lat && lng) ? { latitude: lat, longitude: lng } : null;
+  }, [order]);
+
+  // Driver position
+  const driverPosition = driverLocation
+    ? { latitude: driverLocation.latitude, longitude: driverLocation.longitude }
+    : null;
+
+  // Map markers
+  const mapMarkers = useMemo((): MapMarker[] => {
+    const markers: MapMarker[] = [];
+    if (restaurantPosition) {
+      markers.push({ id: 'restaurant', latitude: restaurantPosition.latitude, longitude: restaurantPosition.longitude, type: 'restaurant', label: restaurant?.name || 'Restaurant' });
+    }
+    if (customerPosition) {
+      markers.push({ id: 'customer', latitude: customerPosition.latitude, longitude: customerPosition.longitude, type: 'customer', label: 'Your Location' });
+    }
+    if (driverLocation) {
+      markers.push({ id: 'driver', latitude: driverLocation.latitude, longitude: driverLocation.longitude, type: 'driver', heading: driverLocation.heading, label: order.deliveryPersonName || 'Driver' });
+    }
+    return markers;
+  }, [restaurantPosition, customerPosition, driverLocation, restaurant, order]);
+
+  const routeDestination: 'restaurant' | 'customer' | 'auto' =
+    phase === 'to_restaurant' ? 'restaurant' :
+    phase === 'to_customer' ? 'customer' : 'auto';
+
+  // Phase labels
+  const phaseLabel = phase === 'to_restaurant' ? '🏍️ Driver heading to Restaurant' :
+    phase === 'to_customer' ? '🚀 Driver heading to You' : 'Tracking Active';
+  const phaseBadgeColor = phase === 'to_restaurant'
+    ? 'bg-orange-500/15 text-orange-500 border-orange-500/30'
+    : 'bg-blue-500/15 text-blue-500 border-blue-500/30';
+
+  const showRoute = !!driverPosition;
+
+  return (
+    <div className="bg-card border border-border/70 rounded-3xl overflow-hidden shadow-sm">
+      {/* Header */}
+      <div className="flex items-center justify-between p-4 sm:p-5 border-b border-border/60">
+        <h2 className="text-base sm:text-lg font-bold flex items-center gap-2 text-foreground">
+          <Satellite className="w-5 h-5 text-primary" /> Live Delivery Map
+          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+        </h2>
+        <div className="flex items-center gap-2">
+          <Badge className={`border text-[11px] font-bold ${phaseBadgeColor}`}>
+            {phaseLabel}
+          </Badge>
+          <Link href={`/customer/orders/tracking/${order.id}`}>
+            <Button size="sm" className="rounded-xl text-xs font-bold bg-primary/10 text-primary hover:bg-primary/20 border border-primary/20 gap-1">
+              <Navigation className="w-3.5 h-3.5" /> Full Map
+            </Button>
+          </Link>
+        </div>
+      </div>
+
+      {/* Map */}
+      <div style={{ height: '280px', position: 'relative', background: '#0f172a' }}>
+        {mapMarkers.length > 0 ? (
+          <LiveTrackingMap
+            key={`od-map-${order.id}-${phase}`}
+            markers={mapMarkers}
+            showRoute={showRoute}
+            driverPosition={driverPosition}
+            restaurantPosition={restaurantPosition}
+            customerPosition={customerPosition}
+            routeDestination={routeDestination}
+            followDriver={false}
+            height="100%"
+            className="w-full h-full"
+            onRouteInfo={info => info ? setRouteInfo({ distance: info.distance, eta: info.eta }) : setRouteInfo(null)}
+          />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="text-center">
+              <div className="text-3xl mb-2">📡</div>
+              <p className="text-slate-400 text-sm font-semibold">Connecting to GPS...</p>
+              <p className="text-slate-500 text-xs mt-1">Map will appear when driver is assigned</p>
+            </div>
+          </div>
+        )}
+
+        {/* No driver location overlay */}
+        {mapMarkers.length > 0 && !driverLocation && order.deliveryPersonId && (
+          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-black/70 backdrop-blur-sm border border-white/10 rounded-xl px-3 py-1.5 text-[11px] text-white/70 font-mono">
+            📡 Waiting for driver GPS signal...
+          </div>
+        )}
+      </div>
+
+      {/* Info Bar */}
+      {(routeInfo || driverLocation) && (
+        <div className="grid grid-cols-3 divide-x divide-border/60 border-t border-border/60">
+          <div className="p-3 text-center">
+            <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Phase</p>
+            <p className="text-xs font-bold text-foreground mt-0.5">
+              {phase === 'to_restaurant' ? '→ Restaurant' : phase === 'to_customer' ? '→ You' : 'Active'}
+            </p>
+          </div>
+          <div className="p-3 text-center">
+            <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Distance</p>
+            <p className="text-xs font-bold text-foreground mt-0.5">{routeInfo?.distance ?? '—'}</p>
+          </div>
+          <div className="p-3 text-center">
+            <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">ETA</p>
+            <p className="text-xs font-bold text-primary mt-0.5">{routeInfo?.eta ?? '—'}</p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function OrderTrackingPage() {
   const params = useParams();
@@ -260,7 +423,7 @@ export default function OrderTrackingPage() {
         <div className="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-primary/5 rounded-full blur-[140px]" />
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 relative z-10">
+      <div className="w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 relative z-10">
 
         {/* 1. Header Navigation & Order Summary Strip */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8 pb-5 border-b border-border/70">
@@ -386,6 +549,11 @@ export default function OrderTrackingPage() {
 
           {/* Left Column: Tracking Timeline & Order Items (7 cols) */}
           <div className="lg:col-span-7 space-y-6">
+
+            {/* ── LIVE MAP SECTION (active orders only) ──────────────── */}
+            {order.status !== 'delivered' && order.status !== 'cancelled' && (
+              <LiveMapSection order={order} restaurant={restaurant} />
+            )}
 
             {/* Live Tracking & Timing Timeline */}
             <div className="bg-card border border-border/70 rounded-3xl p-5 sm:p-7 relative overflow-hidden shadow-sm">

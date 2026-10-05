@@ -2,14 +2,19 @@ package com.ssr.hunger.activities;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
+import androidx.viewpager2.widget.ViewPager2;
 import com.google.android.material.textfield.TextInputEditText;
 import com.ssr.hunger.R;
+import com.ssr.hunger.adapters.ProductImageAdapter;
 import com.ssr.hunger.models.CartItem;
 import com.ssr.hunger.models.MenuItem;
 import com.ssr.hunger.utils.CartManager;
@@ -18,6 +23,8 @@ import com.bumptech.glide.Glide;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
 /**
@@ -34,6 +41,15 @@ public class ProductDetailActivity extends BaseActivity {
     private String passedRestaurantId;
     private int quantity = 1;
     private boolean isFavorite = false;
+
+    // Image carousel
+    private ViewPager2 vpProductImages;
+    private LinearLayout llImageDots;
+    private TextView tvImageCounter;
+    private ProductImageAdapter imageAdapter;
+    private final Handler autoSlideHandler = new Handler(Looper.getMainLooper());
+    private Runnable autoSlideRunnable;
+    private int currentImagePage = 0;
 
     // Customization state matching web app
     private String selectedPortion = "Regular";
@@ -179,10 +195,14 @@ public class ProductDetailActivity extends BaseActivity {
             vegDot.setBackgroundColor(getColor(menuItem.isVegetarian() ? R.color.veg_green : R.color.non_veg_red));
         }
 
-        // Load image
-        if (menuItem.getImage() != null && !menuItem.getImage().isEmpty()) {
-            Glide.with(this).load(menuItem.getImage()).placeholder(R.drawable.bg_card_rounded).into(ivImage);
+        // Load images carousel
+        List<String> images = new ArrayList<>();
+        if (menuItem.getImages() != null && !menuItem.getImages().isEmpty()) {
+            images.addAll(menuItem.getImages());
+        } else if (menuItem.getImage() != null && !menuItem.getImage().isEmpty()) {
+            images.add(menuItem.getImage());
         }
+        setupImageCarousel(images);
 
         // Quantity controls
         tvQuantity.setText(String.valueOf(quantity));
@@ -256,6 +276,110 @@ public class ProductDetailActivity extends BaseActivity {
 
         updatePriceDisplays();
         updateSpiceSummaryDisplay();
+    }
+
+    /** Sets up the ViewPager2 image carousel with dots and auto-slide. */
+    private void setupImageCarousel(List<String> images) {
+        vpProductImages = findViewById(R.id.vp_product_images);
+        llImageDots = findViewById(R.id.ll_image_dots);
+        tvImageCounter = findViewById(R.id.tv_image_counter);
+        ImageView ivFallback = findViewById(R.id.iv_product_image);
+
+        if (images.isEmpty()) {
+            // Nothing to show
+            return;
+        }
+
+        if (images.size() == 1) {
+            // Single image — use the simple ImageView for efficiency
+            if (ivFallback != null) {
+                ivFallback.setVisibility(View.VISIBLE);
+                if (vpProductImages != null) vpProductImages.setVisibility(View.GONE);
+                Glide.with(this).load(images.get(0)).placeholder(R.drawable.bg_card_rounded).centerCrop().into(ivFallback);
+            }
+            return;
+        }
+
+        // Multiple images — use ViewPager2
+        if (vpProductImages == null) return;
+        if (ivFallback != null) ivFallback.setVisibility(View.GONE);
+        vpProductImages.setVisibility(View.VISIBLE);
+
+        imageAdapter = new ProductImageAdapter(this, images);
+        vpProductImages.setAdapter(imageAdapter);
+
+        // Dots indicator
+        if (llImageDots != null) {
+            llImageDots.removeAllViews();
+            for (int i = 0; i < images.size(); i++) {
+                View dot = new View(this);
+                LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                        i == 0 ? dpToPx(20) : dpToPx(8), dpToPx(8));
+                lp.setMargins(dpToPx(3), 0, dpToPx(3), 0);
+                dot.setLayoutParams(lp);
+                dot.setBackgroundResource(i == 0 ? R.drawable.dot_active : R.drawable.dot_inactive);
+                llImageDots.addView(dot);
+            }
+        }
+
+        // Counter badge
+        if (tvImageCounter != null) {
+            tvImageCounter.setVisibility(images.size() > 1 ? View.VISIBLE : View.GONE);
+            tvImageCounter.setText("1/" + images.size());
+        }
+
+        // Page change listener — sync dots + counter
+        vpProductImages.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
+            @Override
+            public void onPageSelected(int position) {
+                currentImagePage = position;
+                updateDots(position, images.size());
+                if (tvImageCounter != null) {
+                    tvImageCounter.setText((position + 1) + "/" + images.size());
+                }
+            }
+        });
+
+        // Full-screen preview on tap
+        imageAdapter.setOnImageClickListener((position, url) -> {
+            // Basic full-screen intent using the built-in image viewer
+            // (can be replaced with a custom ZoomableImageActivity)
+            Intent previewIntent = new Intent(this, FullScreenImageActivity.class);
+            previewIntent.putStringArrayListExtra("images", new ArrayList<>(images));
+            previewIntent.putExtra("position", position);
+            startActivity(previewIntent);
+        });
+
+        // Auto-slide every 4 seconds
+        autoSlideRunnable = () -> {
+            if (!isFinishing() && !isDestroyed() && vpProductImages != null) {
+                int next = (currentImagePage + 1) % images.size();
+                vpProductImages.setCurrentItem(next, true);
+                autoSlideHandler.postDelayed(autoSlideRunnable, 4000);
+            }
+        };
+        autoSlideHandler.postDelayed(autoSlideRunnable, 4000);
+    }
+
+    private void updateDots(int selectedPos, int total) {
+        if (llImageDots == null) return;
+        for (int i = 0; i < llImageDots.getChildCount(); i++) {
+            View dot = llImageDots.getChildAt(i);
+            LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) dot.getLayoutParams();
+            if (i == selectedPos) {
+                lp.width = dpToPx(20);
+                dot.setBackgroundResource(R.drawable.dot_active);
+            } else {
+                lp.width = dpToPx(8);
+                dot.setBackgroundResource(R.drawable.dot_inactive);
+            }
+            dot.setLayoutParams(lp);
+        }
+    }
+
+    private int dpToPx(int dp) {
+        float density = getResources().getDisplayMetrics().density;
+        return Math.round(dp * density);
     }
 
     private void updatePriceDisplays() {
@@ -417,6 +541,13 @@ public class ProductDetailActivity extends BaseActivity {
             ivFav.setImageResource(isFavorite ? R.drawable.ic_nav_favorites_filled : R.drawable.ic_nav_favorites_outline);
             ivFav.setColorFilter(getColor(isFavorite ? R.color.error : R.color.text_hint));
         }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        // Stop auto-slide to prevent memory leaks
+        autoSlideHandler.removeCallbacksAndMessages(null);
     }
 
     @Override

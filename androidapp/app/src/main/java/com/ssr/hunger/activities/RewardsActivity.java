@@ -8,38 +8,59 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.OvershootInterpolator;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
-import com.ssr.hunger.R;
-import com.ssr.hunger.utils.Constants;
+
+import androidx.annotation.NonNull;
+
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.Query;
+import com.ssr.hunger.R;
+import com.ssr.hunger.utils.Constants;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
 /**
- * RewardsActivity - mirrors the web app's /customer/rewards page.
- * Shows points balance, tier status, rewards catalog, and earn history.
- * Extends BaseActivity for Analytics, Crashlytics, and Performance monitoring.
+ * RewardsActivity - VIP Loyalty Club & Points Management.
+ * Supports redeeming voucher codes via Firebase Realtime Database.
  */
 public class RewardsActivity extends BaseActivity {
 
+    private static final String RTDB_URL = "https://akr-hunger-default-rtdb.firebaseio.com";
+
     private FirebaseFirestore db;
     private FirebaseAuth auth;
+    private DatabaseReference rtdbRef;
     private ListenerRegistration profileListener;
     private ListenerRegistration activityListener;
 
-    private TextView tvPoints, tvTierName, tvTierEmoji, tvNextTierInfo;
+    private TextView tvPoints, tvTierName, tvTierEmoji, tvNextTierInfo, tvRedeemStatus;
     private ProgressBar progressTier;
     private LinearLayout activityContainer;
     private LinearLayout rewardsContainer;
+    private EditText etRedeemCode;
+    private MaterialButton btnSubmitRedeem;
+
+    private int currentPointsBalance = 0;
 
     private static final int[][] TIERS = {
-            // {minPoints, maxPoints} — keep as int[][] for simplicity
             {0, 499},
             {500, 1499},
             {1500, 3999},
@@ -55,7 +76,21 @@ public class RewardsActivity extends BaseActivity {
 
         db = FirebaseFirestore.getInstance();
         auth = FirebaseAuth.getInstance();
+        try {
+            rtdbRef = FirebaseDatabase.getInstance(RTDB_URL).getReference();
+        } catch (Exception e) {
+            recordException("Rewards_RTDB_Init", e);
+        }
 
+        initViews();
+        populateRewardsCatalog();
+        listenToProfile();
+        listenToActivity();
+
+        logBreadcrumb("RewardsActivity: Opened");
+    }
+
+    private void initViews() {
         tvPoints = findViewById(R.id.tv_points_balance);
         tvTierName = findViewById(R.id.tv_tier_name);
         tvTierEmoji = findViewById(R.id.tv_tier_emoji);
@@ -63,16 +98,263 @@ public class RewardsActivity extends BaseActivity {
         progressTier = findViewById(R.id.progress_tier);
         activityContainer = findViewById(R.id.activity_container);
         rewardsContainer = findViewById(R.id.rewards_container);
+        etRedeemCode = findViewById(R.id.et_redeem_code);
+        btnSubmitRedeem = findViewById(R.id.btn_submit_redeem);
+        tvRedeemStatus = findViewById(R.id.tv_redeem_status);
 
-        findViewById(R.id.btn_back).setOnClickListener(v -> finish());
-        findViewById(R.id.btn_refer).setOnClickListener(v -> openReferral());
-        findViewById(R.id.btn_redeem).setOnClickListener(v -> Toast.makeText(this, "Redeem coming soon!", Toast.LENGTH_SHORT).show());
+        View btnBack = findViewById(R.id.btn_back);
+        if (btnBack != null) btnBack.setOnClickListener(v -> finish());
 
-        populateRewardsCatalog();
-        listenToProfile();
-        listenToActivity();
+        View btnRefer = findViewById(R.id.btn_refer);
+        if (btnRefer != null) btnRefer.setOnClickListener(v -> openReferral());
 
-        logBreadcrumb("RewardsActivity: Opened");
+        View btnRedeem = findViewById(R.id.btn_redeem);
+        if (btnRedeem != null) {
+            btnRedeem.setOnClickListener(v -> {
+                startActivity(new Intent(RewardsActivity.this, DealsActivity.class));
+            });
+        }
+
+        if (btnSubmitRedeem != null) {
+            btnSubmitRedeem.setOnClickListener(v -> handleRedeemCode());
+        }
+    }
+
+    /**
+     * Handle user redeeming voucher code from Firebase Realtime Database
+     */
+    private void handleRedeemCode() {
+        if (etRedeemCode == null) return;
+        String rawCode = etRedeemCode.getText().toString().trim();
+        if (rawCode.isEmpty()) {
+            Toast.makeText(this, "Please enter a valid redeem code", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        final String code = rawCode.toUpperCase(Locale.getDefault());
+        String uid = auth.getCurrentUser() != null ? auth.getCurrentUser().getUid() : null;
+        if (uid == null) {
+            Toast.makeText(this, "Please sign in to redeem codes", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        btnSubmitRedeem.setEnabled(false);
+        btnSubmitRedeem.setText("Verifying...");
+
+        // 1. Check in Firebase Realtime Database /redeem_codes
+        if (rtdbRef != null) {
+            rtdbRef.child("redeem_codes").addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                    boolean found = false;
+                    for (DataSnapshot child : snapshot.getChildren()) {
+                        String rCode = child.child("code").getValue(String.class);
+                        if (code.equalsIgnoreCase(rCode)) {
+                            found = true;
+                            processRedemption(child, uid, code);
+                            break;
+                        }
+                    }
+
+                    if (!found) {
+                        // Fallback check Firestore /redeemCodes
+                        checkFirestoreRedeemCode(uid, code);
+                    }
+                }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError error) {
+                    btnSubmitRedeem.setEnabled(true);
+                    btnSubmitRedeem.setText("Redeem");
+                    Toast.makeText(RewardsActivity.this, "Network error. Please try again.", Toast.LENGTH_SHORT).show();
+                }
+            });
+        } else {
+            checkFirestoreRedeemCode(uid, code);
+        }
+    }
+
+    private void processRedemption(DataSnapshot childSnapshot, String uid, String code) {
+        Boolean isActive = childSnapshot.child("isActive").getValue(Boolean.class);
+        if (isActive != null && !isActive) {
+            resetRedeemButton();
+            showRedeemFailure("This redeem code has expired or is inactive.");
+            return;
+        }
+
+        // Check expiration
+        String expiresAt = childSnapshot.child("expiresAt").getValue(String.class);
+        if (expiresAt != null && !expiresAt.isEmpty()) {
+            try {
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+                Date expDate = sdf.parse(expiresAt);
+                if (expDate != null && new Date().after(expDate)) {
+                    resetRedeemButton();
+                    showRedeemFailure("This redeem code has expired.");
+                    return;
+                }
+            } catch (Exception ignored) {}
+        }
+
+        // Check maxRedemptions
+        Integer maxRedemptions = childSnapshot.child("maxRedemptions").getValue(Integer.class);
+        Integer currentCount = childSnapshot.child("redemptionCount").getValue(Integer.class);
+        int count = currentCount != null ? currentCount : 0;
+        if (maxRedemptions != null && maxRedemptions > 0 && count >= maxRedemptions) {
+            resetRedeemButton();
+            showRedeemFailure("This code has reached its maximum redemption limit.");
+            return;
+        }
+
+        Double val = childSnapshot.child("value").getValue(Double.class);
+        final double rewardVal = val != null ? val : 100.0;
+        String type = childSnapshot.child("type").getValue(String.class);
+        final String benefitType = type != null ? type : "points";
+        String desc = childSnapshot.child("description").getValue(String.class);
+
+        // Check if user already used this code
+        db.collection(Constants.COLLECTION_USERS).document(uid)
+                .collection("pointActivities")
+                .whereEqualTo("redeemedCode", code)
+                .limit(1)
+                .get()
+                .addOnSuccessListener(checkSnap -> {
+                    if (checkSnap != null && !checkSnap.isEmpty()) {
+                        resetRedeemButton();
+                        showRedeemFailure("You have already redeemed this code!");
+                        return;
+                    }
+
+                    // Increment redemption count
+                    childSnapshot.getRef().child("redemptionCount").setValue(count + 1);
+
+                    // Credit reward
+                    if ("wallet".equalsIgnoreCase(benefitType)) {
+                        creditUserWallet(uid, rewardVal, code, desc != null ? desc : "Redeemed Code " + code);
+                    } else {
+                        creditUserPoints(uid, (int) rewardVal, code, desc != null ? desc : "Redeemed Code " + code);
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    childSnapshot.getRef().child("redemptionCount").setValue(count + 1);
+                    if ("wallet".equalsIgnoreCase(benefitType)) {
+                        creditUserWallet(uid, rewardVal, code, desc != null ? desc : "Redeemed Code " + code);
+                    } else {
+                        creditUserPoints(uid, (int) rewardVal, code, desc != null ? desc : "Redeemed Code " + code);
+                    }
+                });
+    }
+
+    private void checkFirestoreRedeemCode(String uid, String code) {
+        db.collection("redeemCodes")
+                .whereEqualTo("code", code)
+                .limit(1)
+                .get()
+                .addOnSuccessListener(snap -> {
+                    if (snap != null && !snap.isEmpty()) {
+                        com.google.firebase.firestore.DocumentSnapshot doc = snap.getDocuments().get(0);
+                        Boolean isActive = doc.getBoolean("isActive");
+                        if (isActive != null && !isActive) {
+                            resetRedeemButton();
+                            showRedeemFailure("This redeem code is inactive.");
+                            return;
+                        }
+                        Long val = doc.getLong("value");
+                        int points = val != null ? val.intValue() : 100;
+                        String desc = doc.getString("description");
+                        String type = doc.getString("type");
+
+                        // Update Firestore count
+                        doc.getReference().update("redemptionCount", FieldValue.increment(1));
+
+                        if ("wallet".equalsIgnoreCase(type)) {
+                            creditUserWallet(uid, points, code, desc != null ? desc : "Redeemed Code " + code);
+                        } else {
+                            creditUserPoints(uid, points, code, desc != null ? desc : "Redeemed Code " + code);
+                        }
+                    } else {
+                        resetRedeemButton();
+                        showRedeemFailure("Invalid redeem code. Please check and try again.");
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    resetRedeemButton();
+                    showRedeemFailure("Failed to verify code. Please try again.");
+                });
+    }
+
+    private void creditUserPoints(String uid, int pointsToAdd, String code, String description) {
+        db.collection(Constants.COLLECTION_USERS).document(uid)
+                .update("rewardPoints", FieldValue.increment(pointsToAdd))
+                .addOnSuccessListener(aVoid -> {
+                    Map<String, Object> act = new HashMap<>();
+                    act.put("description", "Redeemed Code: " + code);
+                    act.put("points", pointsToAdd);
+                    act.put("type", "earned");
+                    act.put("redeemedCode", code);
+                    act.put("createdAt", FieldValue.serverTimestamp());
+
+                    db.collection(Constants.COLLECTION_USERS).document(uid)
+                            .collection("pointActivities")
+                            .add(act);
+
+                    resetRedeemButton();
+                    if (etRedeemCode != null) etRedeemCode.setText("");
+
+                    showRedeemSuccess(pointsToAdd, code, "+" + pointsToAdd + " Reward Points");
+                })
+                .addOnFailureListener(e -> {
+                    resetRedeemButton();
+                    showRedeemFailure("Failed to credit points. Please try again.");
+                });
+    }
+
+    private void creditUserWallet(String uid, double amountToAdd, String code, String description) {
+        db.collection(Constants.COLLECTION_USERS).document(uid)
+                .update("walletBalance", FieldValue.increment(amountToAdd))
+                .addOnSuccessListener(aVoid -> {
+                    Map<String, Object> act = new HashMap<>();
+                    act.put("description", "Wallet Gift: " + code);
+                    act.put("amount", amountToAdd);
+                    act.put("points", (int) amountToAdd);
+                    act.put("type", "earned");
+                    act.put("redeemedCode", code);
+                    act.put("createdAt", FieldValue.serverTimestamp());
+
+                    db.collection(Constants.COLLECTION_USERS).document(uid)
+                            .collection("pointActivities")
+                            .add(act);
+
+                    resetRedeemButton();
+                    if (etRedeemCode != null) etRedeemCode.setText("");
+
+                    showRedeemSuccess((int) amountToAdd, code, "₹" + (int) amountToAdd + " Wallet Cash");
+                })
+                .addOnFailureListener(e -> {
+                    resetRedeemButton();
+                    showRedeemFailure("Failed to credit wallet. Please try again.");
+                });
+    }
+
+    private void resetRedeemButton() {
+        if (btnSubmitRedeem != null) {
+            btnSubmitRedeem.setEnabled(true);
+            btnSubmitRedeem.setText("Redeem");
+        }
+    }
+
+    private void showRedeemSuccess(int points, String code, String benefitText) {
+        new MaterialAlertDialogBuilder(this)
+                .setTitle("🎉 Code Redeemed Successfully!")
+                .setMessage(String.format(Locale.getDefault(),
+                        "Awesome! Voucher code \"%s\" was applied successfully.\n\n%s has been credited directly to your account!",
+                        code, benefitText))
+                .setPositiveButton("Awesome!", (d, w) -> d.dismiss())
+                .show();
+    }
+
+    private void showRedeemFailure(String message) {
+        Toast.makeText(this, "⚠️ " + message, Toast.LENGTH_LONG).show();
     }
 
     private void listenToProfile() {
@@ -85,32 +367,31 @@ public class RewardsActivity extends BaseActivity {
                     if (doc == null || !doc.exists()) return;
 
                     Long points = doc.getLong("rewardPoints");
-                    int totalPoints = points != null ? points.intValue() : 0;
+                    currentPointsBalance = points != null ? points.intValue() : 0;
 
-                    // Animated count-up for points number
-                    animatePointsCount(totalPoints);
-                    updateTierUI(totalPoints);
+                    animatePointsCount(currentPointsBalance);
+                    updateTierUI(currentPointsBalance);
                 });
     }
 
-    /** Count-up animation for the points balance display */
+    /** Count-up animation for points display */
     private void animatePointsCount(int target) {
         ValueAnimator animator = ValueAnimator.ofInt(0, target);
-        animator.setDuration(1200);
+        animator.setDuration(1000);
         animator.setInterpolator(new AccelerateDecelerateInterpolator());
         animator.addUpdateListener(anim -> {
             if (tvPoints != null)
                 tvPoints.setText(String.valueOf(anim.getAnimatedValue()));
         });
         animator.start();
-        // Bounce the points display
+
         if (tvPoints != null) {
-            ObjectAnimator bounce = ObjectAnimator.ofFloat(tvPoints, "scaleX", 0.8f, 1.15f, 1f);
-            bounce.setDuration(800);
+            ObjectAnimator bounce = ObjectAnimator.ofFloat(tvPoints, "scaleX", 0.85f, 1.1f, 1f);
+            bounce.setDuration(700);
             bounce.setInterpolator(new OvershootInterpolator());
             bounce.start();
-            ObjectAnimator bounceY = ObjectAnimator.ofFloat(tvPoints, "scaleY", 0.8f, 1.15f, 1f);
-            bounceY.setDuration(800);
+            ObjectAnimator bounceY = ObjectAnimator.ofFloat(tvPoints, "scaleY", 0.85f, 1.1f, 1f);
+            bounceY.setDuration(700);
             bounceY.setInterpolator(new OvershootInterpolator());
             bounceY.start();
         }
@@ -122,10 +403,9 @@ public class RewardsActivity extends BaseActivity {
             if (totalPoints >= TIERS[i][0]) { tierIndex = i; break; }
         }
 
-        tvTierName.setText(TIER_NAMES[tierIndex] + " Member");
-        tvTierEmoji.setText(TIER_EMOJIS[tierIndex]);
+        if (tvTierName != null) tvTierName.setText(TIER_NAMES[tierIndex] + " Member");
+        if (tvTierEmoji != null) tvTierEmoji.setText(TIER_EMOJIS[tierIndex]);
 
-        // Animate tier emoji with a spin
         if (tvTierEmoji != null) {
             ObjectAnimator spin = ObjectAnimator.ofFloat(tvTierEmoji, "rotationY", 0f, 360f);
             spin.setDuration(600);
@@ -137,19 +417,23 @@ public class RewardsActivity extends BaseActivity {
             int currMin = TIERS[tierIndex][0];
             int progress = (int) (((float) (totalPoints - currMin) / (nextMin - currMin)) * 100);
             int clampedProgress = Math.min(100, Math.max(0, progress));
-            // Animate progress bar
+
             if (progressTier != null) {
                 ObjectAnimator anim = ObjectAnimator.ofInt(progressTier, "progress", 0, clampedProgress);
-                anim.setDuration(900);
+                anim.setDuration(800);
                 anim.setInterpolator(new AccelerateDecelerateInterpolator());
                 anim.start();
             }
-            tvNextTierInfo.setText((nextMin - totalPoints) + " pts to " + TIER_NAMES[tierIndex + 1]);
+            if (tvNextTierInfo != null) {
+                tvNextTierInfo.setText((nextMin - totalPoints) + " pts to " + TIER_NAMES[tierIndex + 1]);
+            }
         } else {
             if (progressTier != null) {
-                ObjectAnimator.ofInt(progressTier, "progress", 0, 100).setDuration(600).start();
+                ObjectAnimator.ofInt(progressTier, "progress", 0, 100).setDuration(500).start();
             }
-            tvNextTierInfo.setText("🏆 Maximum Tier Reached!");
+            if (tvNextTierInfo != null) {
+                tvNextTierInfo.setText("🏆 Platinum Top Tier!");
+            }
         }
     }
 
@@ -163,6 +447,7 @@ public class RewardsActivity extends BaseActivity {
                 .limit(15)
                 .addSnapshotListener((snap, error) -> {
                     if (error != null) return;
+                    if (activityContainer == null) return;
                     activityContainer.removeAllViews();
                     if (snap == null || snap.isEmpty()) {
                         addEmptyActivityState();
@@ -187,9 +472,9 @@ public class RewardsActivity extends BaseActivity {
         TextView tvPoints = row.findViewById(R.id.tv_activity_points);
         TextView tvDate = row.findViewById(R.id.tv_activity_date);
 
-        if (tvDesc != null) tvDesc.setText(description != null ? description : "Activity");
+        if (tvDesc != null) tvDesc.setText(description != null ? description : "Points Activity");
         if (tvDate != null && ts != null) {
-            java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd MMM yyyy", java.util.Locale.getDefault());
+            SimpleDateFormat sdf = new SimpleDateFormat("dd MMM yyyy", Locale.getDefault());
             tvDate.setText(sdf.format(ts.toDate()));
         }
 
@@ -199,34 +484,38 @@ public class RewardsActivity extends BaseActivity {
             tvPoints.setTextColor(getResources().getColor(isNegative ? R.color.error : R.color.success, getTheme()));
         }
 
-        // Slide-in animation for each row
         row.setAlpha(0f);
-        row.setTranslationX(-60f);
-        int delay = activityContainer.getChildCount() * 60;
-        row.animate().alpha(1f).translationX(0f).setDuration(300).setStartDelay(delay)
-            .setInterpolator(new AccelerateDecelerateInterpolator()).start();
+        row.setTranslationX(-40f);
+        int delay = activityContainer.getChildCount() * 50;
+        row.animate().alpha(1f).translationX(0f).setDuration(250).setStartDelay(delay)
+                .setInterpolator(new AccelerateDecelerateInterpolator()).start();
 
         activityContainer.addView(row);
     }
 
     private void addEmptyActivityState() {
         TextView tv = new TextView(this);
-        tv.setText("📋 No point activity yet. Start ordering to earn points!");
+        tv.setText("✨ No points activity yet. Place orders or enter a redeem code to earn reward points!");
         tv.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
-        tv.setPadding(0, 48, 0, 48);
+        tv.setTextColor(getResources().getColor(R.color.text_secondary, getTheme()));
+        tv.setTextSize(12);
+        tv.setPadding(0, 36, 0, 36);
         activityContainer.addView(tv);
     }
 
     private void populateRewardsCatalog() {
         if (rewardsContainer == null) return;
+        rewardsContainer.removeAllViews();
+
         String[][] rewards = {
-                {"₹50 Off", "200 pts", "🎫"},
-                {"Free Delivery", "150 pts", "🛵"},
-                {"₹100 Off on ₹500+", "350 pts", "💰"},
-                {"Free Dessert", "500 pts", "🍰"},
-                {"20% Off Weekend", "600 pts", "🎉"},
-                {"Premium 1 Month", "1000 pts", "👑"},
+                {"₹50 Off Next Order", "150 pts", "🎫"},
+                {"100% Free Delivery", "200 pts", "🛵"},
+                {"₹100 Off on ₹499+", "300 pts", "💰"},
+                {"Free Chef Dessert", "450 pts", "🍰"},
+                {"20% Off Weekend Feast", "600 pts", "🎉"},
+                {"1 Mo Hunger Plus VIP", "900 pts", "👑"},
         };
+
         for (String[] r : rewards) {
             View card = LayoutInflater.from(this).inflate(R.layout.item_reward_catalog, rewardsContainer, false);
             if (card == null) continue;
@@ -236,7 +525,35 @@ public class RewardsActivity extends BaseActivity {
             if (tvName != null) tvName.setText(r[0]);
             if (tvPts != null) tvPts.setText(r[1]);
             if (tvEmoji != null) tvEmoji.setText(r[2]);
-            card.setOnClickListener(v -> Toast.makeText(this, "Redeeming rewards coming soon!", Toast.LENGTH_SHORT).show());
+
+            card.setOnClickListener(v -> {
+                int requiredPts = Integer.parseInt(r[1].replaceAll("[^0-9]", ""));
+                if (currentPointsBalance >= requiredPts) {
+                    new MaterialAlertDialogBuilder(this)
+                            .setTitle("Claim " + r[0])
+                            .setMessage("Would you like to redeem " + requiredPts + " points for this voucher?")
+                            .setPositiveButton("Redeem", (d, w) -> {
+                                String uid = auth.getCurrentUser() != null ? auth.getCurrentUser().getUid() : null;
+                                if (uid != null) {
+                                    db.collection(Constants.COLLECTION_USERS).document(uid)
+                                            .update("rewardPoints", FieldValue.increment(-requiredPts));
+                                    Map<String, Object> act = new HashMap<>();
+                                    act.put("description", "Claimed: " + r[0]);
+                                    act.put("points", requiredPts);
+                                    act.put("type", "redeemed");
+                                    act.put("createdAt", FieldValue.serverTimestamp());
+                                    db.collection(Constants.COLLECTION_USERS).document(uid)
+                                            .collection("pointActivities").add(act);
+                                    Toast.makeText(this, "🎉 Voucher claimed! Applied to your next order.", Toast.LENGTH_SHORT).show();
+                                }
+                            })
+                            .setNegativeButton("Cancel", null)
+                            .show();
+                } else {
+                    Toast.makeText(this, "Need " + (requiredPts - currentPointsBalance) + " more points to claim this perk!", Toast.LENGTH_SHORT).show();
+                }
+            });
+
             rewardsContainer.addView(card);
         }
     }

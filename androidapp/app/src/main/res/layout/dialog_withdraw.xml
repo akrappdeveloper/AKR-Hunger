@@ -19,7 +19,7 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:fontFamily="sans-serif-bold"
+        android:fontFamily="sans-serif-black"
         android:text="💸 Withdraw Funds"
         android:textColor="@color/text_primary"
         android:textSize="20sp" />
@@ -29,11 +29,11 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="2dp"
         android:fontFamily="sans-serif"
-        android:text="Transfer wallet balance directly to your bank account / UPI"
+        android:text="Transfer wallet balance directly to your bank account or UPI"
         android:textColor="@color/text_secondary"
         android:textSize="12sp" />
 
-    <!-- Current Available Balance Pill Card -->
+    <!-- Available Balance Card -->
     <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -88,11 +88,11 @@
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 
-    <!-- Amount Input Card -->
+    <!-- Withdrawal Amount Input Card -->
     <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="14dp"
+        android:layout_marginTop="12dp"
         app:cardBackgroundColor="@color/surface"
         app:cardCornerRadius="22dp"
         app:cardElevation="1dp"
@@ -101,7 +101,7 @@
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="64dp"
+            android:layout_height="60dp"
             android:gravity="center_vertical"
             android:orientation="horizontal"
             android:paddingHorizontal="16dp">
@@ -112,7 +112,7 @@
                 android:fontFamily="sans-serif-black"
                 android:text="₹"
                 android:textColor="@color/primary"
-                android:textSize="28sp" />
+                android:textSize="26sp" />
 
             <EditText
                 android:id="@+id/et_withdraw_amount"
@@ -126,15 +126,209 @@
                 android:inputType="numberDecimal"
                 android:textColor="@color/text_primary"
                 android:textColorHint="@color/text_hint"
-                android:textSize="26sp" />
+                android:textSize="24sp" />
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
+
+    <!-- Payout Destination Selector Tabs -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="4dp"
+        android:layout_marginTop="16dp"
+        android:fontFamily="sans-serif-bold"
+        android:letterSpacing="0.04"
+        android:text="TRANSFER METHOD"
+        android:textColor="@color/text_hint"
+        android:textSize="11sp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:layout_marginTop="8dp"
+        android:background="@drawable/bg_pill_soft"
+        android:orientation="horizontal"
+        android:padding="3dp">
+
+        <TextView
+            android:id="@+id/tab_payout_bank"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="@drawable/bg_pill_white"
+            android:clickable="true"
+            android:elevation="1dp"
+            android:focusable="true"
+            android:fontFamily="sans-serif-bold"
+            android:gravity="center"
+            android:text="🏦 Bank Account"
+            android:textColor="@color/text_primary"
+            android:textSize="12sp" />
+
+        <TextView
+            android:id="@+id/tab_payout_upi"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:clickable="true"
+            android:focusable="true"
+            android:fontFamily="sans-serif-bold"
+            android:gravity="center"
+            android:text="⚡ UPI ID"
+            android:textColor="@color/text_secondary"
+            android:textSize="12sp" />
+    </LinearLayout>
+
+    <!-- 1. Bank Details Destination Section -->
+    <LinearLayout
+        android:id="@+id/ll_withdraw_bank_form"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:orientation="vertical">
+
+        <!-- Bank Name -->
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.AKR.TextInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Bank Name"
+            app:boxCornerRadiusBottomEnd="14dp"
+            app:boxCornerRadiusBottomStart="14dp"
+            app:boxCornerRadiusTopEnd="14dp"
+            app:boxCornerRadiusTopStart="14dp"
+            app:startIconDrawable="@drawable/ic_bank"
+            app:startIconMinSize="48dp"
+            app:startIconScaleType="centerInside"
+            app:startIconTint="@color/primary">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/et_w_bank_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif"
+                android:inputType="textCapWords"
+                android:textSize="13sp" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Account Holder -->
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.AKR.TextInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:hint="Account Holder Name"
+            app:boxCornerRadiusBottomEnd="14dp"
+            app:boxCornerRadiusBottomStart="14dp"
+            app:boxCornerRadiusTopEnd="14dp"
+            app:boxCornerRadiusTopStart="14dp"
+            app:startIconDrawable="@drawable/ic_profile"
+            app:startIconMinSize="48dp"
+            app:startIconScaleType="centerInside"
+            app:startIconTint="@color/primary">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/et_w_account_holder"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif"
+                android:inputType="textPersonName"
+                android:textSize="13sp" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Account No & IFSC Grid -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:orientation="horizontal">
+
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.AKR.TextInput"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="4dp"
+                android:layout_weight="1"
+                android:hint="Account Number"
+                app:boxCornerRadiusBottomEnd="14dp"
+                app:boxCornerRadiusBottomStart="14dp"
+                app:boxCornerRadiusTopEnd="14dp"
+                app:boxCornerRadiusTopStart="14dp">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/et_w_account_number"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="monospace"
+                    android:inputType="number"
+                    android:textSize="13sp" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.AKR.TextInput"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:layout_weight="1"
+                android:hint="IFSC Code"
+                app:boxCornerRadiusBottomEnd="14dp"
+                app:boxCornerRadiusBottomStart="14dp"
+                app:boxCornerRadiusTopEnd="14dp"
+                app:boxCornerRadiusTopStart="14dp">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/et_w_ifsc_code"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="monospace"
+                    android:inputType="textCapCharacters"
+                    android:letterSpacing="0.06"
+                    android:textAllCaps="true"
+                    android:textSize="13sp" />
+            </com.google.android.material.textfield.TextInputLayout>
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- 2. UPI Destination Section -->
+    <LinearLayout
+        android:id="@+id/ll_withdraw_upi_form"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.AKR.TextInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Enter UPI ID (e.g. 9876543210@paytm, name@okhdfc)"
+            app:boxCornerRadiusBottomEnd="14dp"
+            app:boxCornerRadiusBottomStart="14dp"
+            app:boxCornerRadiusTopEnd="14dp"
+            app:boxCornerRadiusTopStart="14dp"
+            app:helperText="⚡ Instant payout credited within minutes"
+            app:helperTextTextColor="@color/success"
+            app:startIconDrawable="@drawable/ic_upi"
+            app:startIconMinSize="48dp"
+            app:startIconScaleType="centerInside"
+            app:startIconTint="@color/primary">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/et_w_upi_id"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif"
+                android:inputType="textEmailAddress"
+                android:textSize="13sp" />
+        </com.google.android.material.textfield.TextInputLayout>
+    </LinearLayout>
 
     <!-- Dialog Actions -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
+        android:layout_marginTop="22dp"
         android:orientation="horizontal">
 
         <com.google.android.material.button.MaterialButton
@@ -142,7 +336,7 @@
             style="@style/Widget.AKR.Button.PillSoft"
             android:layout_width="0dp"
             android:layout_height="52dp"
-            android:layout_marginEnd="8dp"
+            android:layout_marginEnd="6dp"
             android:layout_weight="1"
             android:text="Cancel"
             android:textSize="14sp" />
@@ -152,7 +346,7 @@
             style="@style/Widget.AKR.Button.Pill"
             android:layout_width="0dp"
             android:layout_height="52dp"
-            android:layout_marginStart="8dp"
+            android:layout_marginStart="6dp"
             android:layout_weight="1"
             android:text="Withdraw Now"
             android:textSize="14sp"

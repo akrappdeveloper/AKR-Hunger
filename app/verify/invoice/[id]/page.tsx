@@ -479,7 +479,7 @@ export default function InvoiceVerificationPage() {
       {/* Footer */}
       <div className="w-full max-w-3xl mt-12 pt-6 border-t border-border flex flex-col sm:flex-row items-center justify-between text-xs text-muted-foreground gap-3">
         <p>© 2026 AKR Hunger Technologies Pvt. Ltd. All rights reserved.</p>
-        <p>Support: <a href="mailto:support@akrhunger.com" className="text-primary hover:underline font-semibold">support@akrhunger.com</a></p>
+        <p>Support: <a href="mailto:hunger@gmail.com" className="text-primary hover:underline font-semibold">hunger@gmail.com</a> | <a href="tel:+916393752013" className="text-primary hover:underline font-semibold">+91 6393752013</a></p>
       </div>
     </div>
   );

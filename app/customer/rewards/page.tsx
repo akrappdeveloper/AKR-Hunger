@@ -1,18 +1,45 @@
 'use client';
 
+import * as React from 'react';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { db } from '@/lib/firebase';
-import { collection, query, onSnapshot, orderBy, limit, doc, getDoc } from 'firebase/firestore';
-import { motion } from 'framer-motion';
+import {
+  collection,
+  query,
+  onSnapshot,
+  orderBy,
+  limit,
+  doc,
+  updateDoc,
+  addDoc,
+  serverTimestamp,
+  arrayUnion,
+} from 'firebase/firestore';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import {
-  Star, Gift, Zap, Crown, Flame, ArrowLeft, Trophy,
-  ChevronRight, Copy, Share2, Sparkles, TrendingUp, Clock, CheckCircle2
+  Star,
+  Gift,
+  Zap,
+  Crown,
+  Flame,
+  ArrowLeft,
+  Trophy,
+  ChevronRight,
+  Copy,
+  Share2,
+  Sparkles,
+  TrendingUp,
+  Clock,
+  CheckCircle2,
+  Ticket,
+  Loader2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { copyToClipboard } from '@/lib/utils';
@@ -26,309 +53,397 @@ interface PointActivity {
 }
 
 const TIERS = [
-  { name: 'Bronze', minPoints: 0, maxPoints: 499, color: 'from-amber-600 to-orange-700', emoji: '🥉', perks: ['2% Cashback', 'Birthday Bonus 50pts'] },
-  { name: 'Silver', minPoints: 500, maxPoints: 1499, color: 'from-slate-400 to-gray-500', emoji: '🥈', perks: ['4% Cashback', 'Priority Support', 'Free Delivery x2/month'] },
-  { name: 'Gold', minPoints: 1500, maxPoints: 3999, color: 'from-yellow-400 to-amber-500', emoji: '🥇', perks: ['6% Cashback', '24/7 Priority Support', 'Free Delivery x5/month', 'Exclusive Deals'] },
-  { name: 'Platinum', minPoints: 4000, maxPoints: Infinity, color: 'from-cyan-400 to-blue-500', emoji: '💎', perks: ['10% Cashback', 'Dedicated Manager', 'Free Delivery Unlimited', 'Early Access', 'Surprise Gifts'] },
+  {
+    name: 'Bronze',
+    minPoints: 0,
+    maxPoints: 499,
+    emoji: '🥉',
+    color: 'text-amber-600 bg-amber-500/10 border-amber-500/20',
+    perks: ['2% Loyalty Cashback', 'Birthday Bonus 50 Pts'],
+  },
+  {
+    name: 'Silver',
+    minPoints: 500,
+    maxPoints: 1499,
+    emoji: '🥈',
+    color: 'text-slate-400 bg-slate-500/10 border-slate-500/20',
+    perks: ['4% Loyalty Cashback', 'Free Delivery Voucher x2/month', 'Priority Support'],
+  },
+  {
+    name: 'Gold',
+    minPoints: 1500,
+    maxPoints: 3999,
+    emoji: '🥇',
+    color: 'text-yellow-500 bg-yellow-500/10 border-yellow-500/20',
+    perks: ['6% Loyalty Cashback', 'Free Delivery x5/month', '24/7 Priority Support', 'Exclusive Deals'],
+  },
+  {
+    name: 'Platinum',
+    minPoints: 4000,
+    maxPoints: Infinity,
+    emoji: '💎',
+    color: 'text-cyan-400 bg-cyan-500/10 border-cyan-500/20',
+    perks: ['10% Loyalty Cashback', 'Unlimited Free Deliveries', 'Dedicated Account Manager', 'Secret Menu Access'],
+  },
 ];
 
 const REWARDS_CATALOG = [
-  { id: '1', name: '₹50 off on next order', points: 200, icon: '🎫', color: 'from-green-500 to-emerald-600' },
-  { id: '2', name: 'Free Delivery (1 use)', points: 150, icon: '🛵', color: 'from-blue-500 to-indigo-600' },
-  { id: '3', name: '₹100 off on ₹500+', points: 350, icon: '💰', color: 'from-purple-500 to-violet-600' },
-  { id: '4', name: 'Free Dessert Dish', points: 500, icon: '🍰', color: 'from-pink-500 to-rose-600' },
-  { id: '5', name: '20% off Weekend Special', points: 600, icon: '🎉', color: 'from-orange-500 to-amber-600' },
-  { id: '6', name: 'Premium Membership (1 month)', points: 1000, icon: '👑', color: 'from-yellow-500 to-orange-600' },
+  { id: 'r1', code: 'REWARD50', name: '₹50 Off on Next Order', points: 150, emoji: '🎫', minOrder: 199 },
+  { id: 'r2', code: 'FREESHIP', name: '100% Free Delivery Voucher', points: 200, emoji: '🛵', minOrder: 0 },
+  { id: 'r3', code: 'REWARD100', name: '₹100 Off on ₹499+', points: 300, emoji: '💰', minOrder: 499 },
+  { id: 'r4', code: 'SWEETTREAT', name: 'Free Chef Dessert Item', points: 450, emoji: '🍰', minOrder: 250 },
+  { id: 'r5', code: 'FEAST20', name: '20% Off Weekend Feast', points: 600, emoji: '🎉', minOrder: 350 },
+  { id: 'r6', code: 'VIP1MONTH', name: '1 Month Hunger Plus VIP', points: 900, emoji: '👑', minOrder: 0 },
 ];
 
 export default function RewardsPage() {
   const { user, customer } = useAuth();
   const router = useRouter();
+
+  const [points, setPoints] = useState(0);
   const [activities, setActivities] = useState<PointActivity[]>([]);
   const [loading, setLoading] = useState(true);
-  const [referralCode] = useState(() => `HUNGER${Math.random().toString(36).substring(2, 7).toUpperCase()}`);
+  const [redeemingId, setRedeemingId] = useState<string | null>(null);
+  const [referralCode] = useState(() => `HUNGER${(user?.uid || 'VIP').substring(0, 5).toUpperCase()}`);
 
-  const totalPoints = customer?.rewardPoints || 0;
-
-  const currentTier = TIERS.reduce((acc, tier) =>
-    totalPoints >= tier.minPoints ? tier : acc, TIERS[0]
-  );
-  const nextTier = TIERS.find(t => t.minPoints > totalPoints);
-  const progressToNext = nextTier
-    ? ((totalPoints - currentTier.minPoints) / (nextTier.minPoints - currentTier.minPoints)) * 100
-    : 100;
-
+  // Sync real-time points from customer profile
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+
+    const unsubCustomer = onSnapshot(doc(db, 'customers', user.uid), (snap) => {
+      if (snap.exists()) {
+        setPoints(snap.data().rewardPoints || 0);
+      }
+    });
+
     const q = query(
-      collection(db, 'users', user.uid, 'pointActivities'),
+      collection(db, 'customers', user.uid, 'pointActivities'),
       orderBy('createdAt', 'desc'),
       limit(20)
     );
-    const unsub = onSnapshot(
+
+    const unsubActivities = onSnapshot(
       q,
-      snap => {
-        setActivities(snap.docs.map(d => ({ id: d.id, ...d.data() } as PointActivity)));
+      (snap) => {
+        setActivities(snap.docs.map((d) => ({ id: d.id, ...d.data() } as PointActivity)));
         setLoading(false);
       },
       () => {
         setLoading(false);
       }
     );
-    return () => unsub();
+
+    return () => {
+      unsubCustomer();
+      unsubActivities();
+    };
   }, [user]);
+
+  const currentTier = TIERS.reduce(
+    (acc, tier) => (points >= tier.minPoints ? tier : acc),
+    TIERS[0]
+  );
+  const nextTier = TIERS.find((t) => t.minPoints > points);
+  const progressToNext = nextTier
+    ? Math.min(100, Math.max(0, ((points - currentTier.minPoints) / (nextTier.minPoints - currentTier.minPoints)) * 100))
+    : 100;
 
   const copyReferralCode = async () => {
     await copyToClipboard(referralCode);
-    toast.success('Referral code copied!');
+    toast.success('Referral code copied to clipboard!');
   };
 
-  const getActivityColor = (type: string) => ({
-    earned: 'text-emerald-500',
-    redeemed: 'text-rose-500',
-    bonus: 'text-amber-500',
-    expired: 'text-muted-foreground',
-  }[type] || 'text-foreground');
+  const handleRedeem = async (reward: (typeof REWARDS_CATALOG)[0]) => {
+    if (!user) {
+      toast.error('Please log in to redeem points');
+      return;
+    }
 
-  const getActivityPrefix = (type: string) => ({
-    earned: '+', redeemed: '-', bonus: '+', expired: '-',
-  }[type] || '+');
+    if (points < reward.points) {
+      toast.error(`You need ${reward.points - points} more points to unlock this reward`);
+      return;
+    }
+
+    setRedeemingId(reward.id);
+    try {
+      const newPoints = points - reward.points;
+
+      // 1. Deduct points & add to saved coupons
+      await updateDoc(doc(db, 'customers', user.uid), {
+        rewardPoints: newPoints,
+        savedCoupons: arrayUnion(reward.code),
+        updatedAt: serverTimestamp(),
+      });
+
+      // 2. Add activity transaction record
+      await addDoc(collection(db, 'customers', user.uid, 'pointActivities'), {
+        type: 'redeemed',
+        points: reward.points,
+        description: `Redeemed ${reward.name} (Code: ${reward.code})`,
+        createdAt: serverTimestamp(),
+      });
+
+      toast.success(`🎉 Redeemed "${reward.name}"! Coupon code ${reward.code} added to your account.`);
+    } catch (err) {
+      console.error('Redeem error:', err);
+      toast.error('Failed to redeem reward. Please try again.');
+    } finally {
+      setRedeemingId(null);
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Hero */}
-      <div className={`relative overflow-hidden bg-gradient-to-br ${currentTier.color} pt-8 pb-20`}>
-        <div className="absolute inset-0 opacity-10 text-7xl select-none">
-          <span className="absolute top-4 left-8">⭐</span>
-          <span className="absolute bottom-4 right-12 text-5xl">🎁</span>
-          <span className="absolute top-12 right-24 text-4xl">✨</span>
-        </div>
-        <div className="container max-w-2xl mx-auto px-4">
-          <button onClick={() => router.back()} className="flex items-center gap-2 text-white/80 hover:text-white mb-6">
-            <ArrowLeft className="w-4 h-4" /> Back
-          </button>
-          <div className="text-center">
-            <div className="text-5xl mb-3">{currentTier.emoji}</div>
-            <Badge className="bg-white/20 text-white border-white/30 mb-3 text-sm px-3 py-1">
-              {currentTier.name} Member
-            </Badge>
-            <div className="text-5xl font-black text-white mb-1">
-              {totalPoints.toLocaleString()}
+    <div className="min-h-screen bg-background text-foreground pb-24 selection:bg-primary/20">
+      {/* Top Header Banner matching Customer Panel */}
+      <div className="relative overflow-hidden bg-gradient-to-b from-primary/10 via-primary/5 to-transparent border-b border-border/50 py-8 sm:py-12">
+        <div className="w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
+            <Link
+              href="/customer"
+              className="inline-flex items-center gap-1.5 hover:text-foreground font-medium transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4" /> Back to Home
+            </Link>
+          </div>
+
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+            <div className="space-y-1">
+              <div className="inline-flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center shadow-inner">
+                  <Trophy className="w-5 h-5" />
+                </div>
+                <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-foreground">
+                  Rewards & Loyalty Points
+                </h1>
+                <Badge className={`${currentTier.color} font-black text-xs px-2.5 py-0.5 rounded-full border`}>
+                  {currentTier.emoji} {currentTier.name} Tier
+                </Badge>
+              </div>
+              <p className="text-sm text-muted-foreground max-w-xl">
+                Earn points with every meal, unlock exclusive discount vouchers, and level up your foodie tier.
+              </p>
             </div>
-            <p className="text-white/80 text-sm">Total Points</p>
+
+            {/* Total Points Balance Widget */}
+            <div className="flex items-center gap-4 p-4 rounded-3xl bg-card border border-border/80 shadow-lg shadow-black/5 self-start md:self-auto">
+              <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center text-xl font-black">
+                ⭐
+              </div>
+              <div>
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Available Balance</p>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-2xl sm:text-3xl font-black text-foreground">{points}</span>
+                  <span className="text-xs font-semibold text-primary">Points</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="container max-w-2xl mx-auto px-4 -mt-12 pb-20 space-y-6">
+      <div className="w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         {/* Tier Progress Card */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-          <Card className="rounded-3xl shadow-xl border-0 overflow-hidden">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <Trophy className="w-5 h-5 text-amber-500" />
-                  <span className="font-bold">Tier Progress</span>
-                </div>
-                {nextTier && (
-                  <span className="text-xs text-muted-foreground">
-                    {nextTier.minPoints - totalPoints} pts to {nextTier.name}
-                  </span>
-                )}
+        <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }}>
+          <Card className="rounded-3xl border border-border/70 bg-card p-6 shadow-md">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+              <div>
+                <h3 className="text-lg font-black text-foreground flex items-center gap-2">
+                  <span>{currentTier.emoji}</span> You are in {currentTier.name} Tier
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  {nextTier
+                    ? `${nextTier.minPoints - points} points needed to reach ${nextTier.name}`
+                    : 'Congratulations! You have unlocked maximum Platinum status'}
+                </p>
               </div>
-              <div className="flex items-center gap-3 mb-3">
-                {TIERS.map((tier, i) => (
-                  <div key={tier.name} className="flex items-center gap-1">
-                    <div className={`flex flex-col items-center ${tier.name === currentTier.name ? 'scale-110' : 'opacity-60'}`}>
-                      <span className="text-xl">{tier.emoji}</span>
-                      <span className="text-xs font-medium mt-0.5">{tier.name}</span>
-                    </div>
-                    {i < TIERS.length - 1 && <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />}
-                  </div>
+              <div className="flex items-center gap-2">
+                {currentTier.perks.map((p, i) => (
+                  <Badge key={i} variant="secondary" className="text-[11px] font-semibold py-1">
+                    {p}
+                  </Badge>
                 ))}
               </div>
-              <Progress value={progressToNext} className="h-3 rounded-full" />
-              <div className="flex justify-between mt-2 text-xs text-muted-foreground">
-                <span>{currentTier.minPoints} pts</span>
-                <span>{nextTier ? `${nextTier.minPoints} pts` : 'MAX'}</span>
+            </div>
+
+            {/* Progress Bar */}
+            <div className="space-y-1.5">
+              <div className="h-3 rounded-full bg-muted overflow-hidden">
+                <motion.div
+                  className="h-full bg-gradient-to-r from-amber-500 to-primary rounded-full"
+                  initial={{ width: 0 }}
+                  animate={{ width: `${progressToNext}%` }}
+                  transition={{ duration: 0.8, ease: 'easeOut' }}
+                />
               </div>
-            </CardContent>
+              <div className="flex justify-between text-[11px] font-semibold text-muted-foreground">
+                <span>{currentTier.name} (0 pts)</span>
+                <span>{nextTier ? `${nextTier.name} (${nextTier.minPoints} pts)` : 'Top Tier'}</span>
+              </div>
+            </div>
           </Card>
         </motion.div>
 
-        {/* Current Tier Perks */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-          <Card className="rounded-3xl border-0 shadow-lg">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-base">
-                <Crown className="w-5 h-5 text-amber-500" />
-                Your {currentTier.name} Perks
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <div className="grid grid-cols-1 gap-2">
-                {currentTier.perks.map((perk, i) => (
-                  <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-muted/40">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />
-                    <span className="text-sm font-medium">{perk}</span>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        {/* Rewards Catalog */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
-          <h2 className="text-xl font-bold mb-3 flex items-center gap-2">
-            <Gift className="w-5 h-5 text-purple-500" /> Redeem Rewards
-          </h2>
-          <div className="grid grid-cols-2 gap-3">
-            {REWARDS_CATALOG.map((reward, i) => (
-              <motion.div
-                key={reward.id}
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.1 + i * 0.05 }}
-              >
-                <Card className="rounded-2xl border-0 shadow-md hover:shadow-lg transition-shadow cursor-pointer group">
-                  <CardContent className="p-4">
-                    <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${reward.color} flex items-center justify-center text-xl mb-3 group-hover:scale-110 transition-transform`}>
-                      {reward.icon}
-                    </div>
-                    <p className="text-sm font-semibold leading-tight mb-2">{reward.name}</p>
-                    <div className="flex items-center justify-between">
-                      <Badge className="bg-amber-100 text-amber-700 border-0 text-xs">
-                        <Star className="w-3 h-3 mr-1" />{reward.points} pts
-                      </Badge>
-                      <Button
-                        size="sm"
-                        disabled={totalPoints < reward.points}
-                        className="h-7 text-xs px-3 rounded-xl bg-gradient-to-r from-purple-500 to-violet-600 text-white border-0 disabled:opacity-40"
-                        onClick={() => {
-                          if (totalPoints < reward.points) {
-                            toast.error(`Need ${reward.points - totalPoints} more points`);
-                          } else {
-                            toast.success('Reward redeemed! Check your coupons.');
-                          }
-                        }}
-                      >
-                        Redeem
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
+        {/* Redeem Rewards Catalog */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-black text-foreground flex items-center gap-2">
+                <Gift className="w-5 h-5 text-primary" /> Redeem Points for Vouchers
+              </h2>
+              <p className="text-xs text-muted-foreground">
+                Exchange points instantly for promo codes credited to your cart.
+              </p>
+            </div>
           </div>
-        </motion.div>
 
-        {/* Referral Section */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-          <Card className="rounded-3xl border-0 shadow-lg bg-gradient-to-br from-indigo-500 to-purple-600 text-white overflow-hidden">
-            <CardContent className="p-6">
-              <div className="flex items-center gap-2 mb-2">
-                <Share2 className="w-5 h-5" />
-                <span className="font-bold text-lg">Refer & Earn</span>
-              </div>
-              <p className="text-white/80 text-sm mb-4">Share your code and earn 100 points for every friend who orders!</p>
-              <div className="bg-white/20 rounded-2xl p-4 flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-white/70 mb-1">Your Referral Code</p>
-                  <p className="text-2xl font-black tracking-widest">{referralCode}</p>
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    onClick={copyReferralCode}
-                    className="bg-white text-indigo-600 hover:bg-white/90 rounded-xl gap-1 font-semibold"
-                  >
-                    <Copy className="w-3.5 h-3.5" /> Copy
-                  </Button>
-                </div>
-              </div>
-              <div className="grid grid-cols-3 gap-3 mt-4">
-                {[
-                  { label: 'You Earn', value: '100 pts', emoji: '⭐' },
-                  { label: 'Friend Gets', value: '₹50 off', emoji: '🎁' },
-                  { label: 'No Limit', value: 'Unlimited', emoji: '♾️' },
-                ].map((stat, i) => (
-                  <div key={i} className="bg-white/15 rounded-xl p-3 text-center">
-                    <div className="text-lg mb-1">{stat.emoji}</div>
-                    <div className="font-bold text-sm">{stat.value}</div>
-                    <div className="text-xs text-white/70">{stat.label}</div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            {REWARDS_CATALOG.map((reward, index) => {
+              const canRedeem = points >= reward.points;
+              const isRedeeming = redeemingId === reward.id;
 
-        {/* How to Earn */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
-          <Card className="rounded-3xl border-0 shadow-lg">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-base">
-                <Zap className="w-5 h-5 text-amber-500" />
-                How to Earn Points
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-0 space-y-3">
-              {[
-                { action: 'Place any order', points: '1 pt per ₹10 spent', icon: '🛒' },
-                { action: 'Write a review', points: '20 pts', icon: '✍️' },
-                { action: 'Refer a friend', points: '100 pts', icon: '👥' },
-                { action: 'Birthday bonus', points: '500 pts', icon: '🎂' },
-                { action: 'First order of the week', points: '50 pts bonus', icon: '🚀' },
-                { action: 'Complete your profile', points: '30 pts', icon: '👤' },
-              ].map((item, i) => (
-                <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-muted/40">
-                  <div className="flex items-center gap-3">
-                    <span className="text-xl">{item.icon}</span>
-                    <span className="text-sm font-medium">{item.action}</span>
-                  </div>
-                  <Badge className="bg-amber-100 text-amber-700 border-0 text-xs">+{item.points}</Badge>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        {/* Point Activity */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-          <h2 className="text-xl font-bold mb-3 flex items-center gap-2">
-            <TrendingUp className="w-5 h-5 text-blue-500" /> Points History
-          </h2>
-          {loading ? (
-            <div className="text-center py-8 text-muted-foreground">Loading...</div>
-          ) : activities.length === 0 ? (
-            <Card className="rounded-2xl border-dashed">
-              <CardContent className="py-10 text-center">
-                <div className="text-5xl mb-3">⭐</div>
-                <p className="text-muted-foreground">Start ordering to earn your first points!</p>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="space-y-2">
-              {activities.map(act => (
-                <div key={act.id} className="flex items-center justify-between p-4 rounded-2xl bg-muted/30">
-                  <div className="flex items-center gap-3">
-                    <Clock className="w-4 h-4 text-muted-foreground" />
+              return (
+                <motion.div
+                  key={reward.id}
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.25, delay: index * 0.04 }}
+                >
+                  <Card className="rounded-3xl border border-border/70 bg-card hover:border-primary/40 hover:shadow-lg transition-all duration-300 p-5 flex flex-col justify-between h-full group">
                     <div>
-                      <p className="text-sm font-medium">{act.description}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {act.createdAt?.toDate?.()?.toLocaleDateString() || 'Recently'}
+                      <div className="flex items-center justify-between gap-2 mb-3">
+                        <span className="text-3xl p-2.5 rounded-2xl bg-muted/80">{reward.emoji}</span>
+                        <Badge className="bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20 font-black text-xs px-2.5 py-0.5 rounded-full">
+                          ⭐ {reward.points} Pts
+                        </Badge>
+                      </div>
+
+                      <h3 className="font-black text-base text-foreground mb-1 group-hover:text-primary transition-colors">
+                        {reward.name}
+                      </h3>
+                      <p className="text-xs text-muted-foreground mb-4">
+                        {reward.minOrder > 0
+                          ? `Applicable on orders above ₹${reward.minOrder}`
+                          : 'Valid on all orders with zero minimum order limit'}
                       </p>
                     </div>
-                  </div>
-                  <span className={`font-bold text-sm ${getActivityColor(act.type)}`}>
-                    {getActivityPrefix(act.type)}{act.points} pts
-                  </span>
-                </div>
-              ))}
+
+                    <Button
+                      onClick={() => handleRedeem(reward)}
+                      disabled={!canRedeem || isRedeeming}
+                      size="sm"
+                      className={`w-full rounded-xl font-bold transition-all ${
+                        canRedeem
+                          ? 'bg-primary text-primary-foreground hover:bg-primary/90 shadow-md shadow-primary/20'
+                          : 'bg-muted text-muted-foreground cursor-not-allowed opacity-60'
+                      }`}
+                    >
+                      {isRedeeming ? (
+                        <>
+                          <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" /> Redeeming...
+                        </>
+                      ) : canRedeem ? (
+                        'Redeem Now'
+                      ) : (
+                        `Need ${reward.points - points} more pts`
+                      )}
+                    </Button>
+                  </Card>
+                </motion.div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Refer & Earn Banner */}
+        <Card className="rounded-3xl border border-primary/30 bg-gradient-to-r from-primary/10 via-card to-card p-6 sm:p-8 shadow-xl">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+            <div className="space-y-1">
+              <div className="inline-flex items-center gap-2 text-primary font-bold text-xs uppercase tracking-wider">
+                <Share2 className="w-4 h-4" /> Refer & Earn Rewards
+              </div>
+              <h3 className="text-xl sm:text-2xl font-black text-foreground">
+                Invite Friends & Earn 100 Points Each
+              </h3>
+              <p className="text-xs sm:text-sm text-muted-foreground max-w-lg">
+                Your friends get ₹50 off on their first feast, and you get 100 loyalty points the moment they complete their first order.
+              </p>
             </div>
+
+            <div className="flex flex-col sm:flex-row items-center gap-2">
+              <div className="flex items-center gap-2 p-2 bg-card rounded-2xl border border-border shadow-sm">
+                <div className="px-4 py-2 font-mono font-black text-base tracking-widest text-primary">
+                  {customer?.referralCode || referralCode}
+                </div>
+                <Button
+                  onClick={copyReferralCode}
+                  size="sm"
+                  className="rounded-xl font-bold gap-1 bg-primary text-primary-foreground hover:bg-primary/90"
+                >
+                  <Copy className="w-3.5 h-3.5" /> Copy
+                </Button>
+              </div>
+
+              <Link href="/customer/referral">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="rounded-xl font-bold gap-1 border-primary/40 text-primary hover:bg-primary/10"
+                >
+                  <span>Live Tracking</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </Card>
+
+        {/* Point Activities Transaction Ledger */}
+        <div className="space-y-3">
+          <h3 className="text-lg font-black text-foreground flex items-center gap-2">
+            <Clock className="w-4 h-4 text-muted-foreground" /> Point Activities
+          </h3>
+
+          {activities.length > 0 ? (
+            <div className="space-y-2">
+              {activities.map((act) => {
+                const isEarned = act.type === 'earned' || act.type === 'bonus';
+                return (
+                  <div
+                    key={act.id}
+                    className="p-3.5 rounded-2xl bg-card border border-border/60 flex items-center justify-between gap-3 text-xs"
+                  >
+                    <div>
+                      <p className="font-bold text-foreground">{act.description}</p>
+                      <span className="text-[11px] text-muted-foreground">
+                        {act.createdAt?.toDate
+                          ? act.createdAt.toDate().toLocaleDateString('en-US', {
+                              month: 'short',
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })
+                          : 'Recent'}
+                      </span>
+                    </div>
+
+                    <span
+                      className={`font-black text-sm ${
+                        isEarned ? 'text-emerald-500' : 'text-rose-500'
+                      }`}
+                    >
+                      {isEarned ? `+${act.points}` : `-${act.points}`} pts
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground py-4">No recent point activity recorded yet.</p>
           )}
-        </motion.div>
+        </div>
       </div>
     </div>
   );

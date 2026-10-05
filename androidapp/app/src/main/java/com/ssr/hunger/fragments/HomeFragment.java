@@ -117,14 +117,44 @@ public class HomeFragment extends Fragment {
         TextView tvLocation = rootView.findViewById(R.id.tv_location);
         if (tvLocation != null) {
             com.ssr.hunger.models.Address addr = CartManager.getInstance(getContext()).getDeliveryAddress();
-            if (addr != null && addr.getCity() != null && !addr.getCity().isEmpty()) {
-                String label = addr.getCity();
-                if (addr.getState() != null && !addr.getState().isEmpty() && !label.contains(addr.getState())) {
-                    label += ", " + addr.getState();
+            if (addr != null && ((addr.getCity() != null && !addr.getCity().isEmpty()) || (addr.getStreet() != null && !addr.getStreet().isEmpty()))) {
+                StringBuilder label = new StringBuilder();
+                if (addr.getLandmark() != null && !addr.getLandmark().isEmpty()) {
+                    label.append(addr.getLandmark()).append(", ");
+                } else if (addr.getStreet() != null && !addr.getStreet().isEmpty()) {
+                    label.append(addr.getStreet()).append(", ");
                 }
-                tvLocation.setText(label);
+                if (addr.getCity() != null && !addr.getCity().isEmpty()) {
+                    label.append(addr.getCity());
+                }
+                if (addr.getPincode() != null && !addr.getPincode().isEmpty()) {
+                    label.append(" - ").append(addr.getPincode());
+                }
+                tvLocation.setText(label.toString());
             } else {
-                tvLocation.setText("Select Location");
+                // Try to load saved address from Firestore
+                com.google.firebase.auth.FirebaseUser user = com.google.firebase.auth.FirebaseAuth.getInstance().getCurrentUser();
+                if (user != null) {
+                    db.collection(Constants.COLLECTION_CUSTOMERS).document(user.getUid()).get()
+                            .addOnSuccessListener(snap -> {
+                                if (snap != null && snap.exists() && isAdded()) {
+                                    Map<String, Object> currentAddr = (Map<String, Object>) snap.get("currentAddress");
+                                    if (currentAddr != null) {
+                                        com.ssr.hunger.models.Address a = new com.ssr.hunger.models.Address();
+                                        a.setCity((String) currentAddr.get("city"));
+                                        a.setStreet((String) currentAddr.get("street"));
+                                        a.setLandmark((String) currentAddr.get("landmark"));
+                                        a.setState((String) currentAddr.get("state"));
+                                        a.setPincode((String) currentAddr.get("pincode"));
+                                        if (getContext() != null) {
+                                            CartManager.getInstance(getContext()).setDeliveryAddress(a);
+                                            updateLocationDisplay();
+                                        }
+                                    }
+                                }
+                            });
+                }
+                tvLocation.setText("Select Delivery Location");
             }
         }
     }

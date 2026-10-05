@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Link from 'next/link';
-import { Camera, MapPin, Phone, Mail, User, Save, Edit2, Plus, Home, Briefcase, Trash2, LogOut, ChevronRight, CheckCircle2, Loader2, Sparkles, LifeBuoy, ShieldCheck, AlertCircle } from 'lucide-react';
+import { Camera, MapPin, Phone, Mail, User, Save, Edit2, Plus, Home, Briefcase, Trash2, LogOut, ChevronRight, CheckCircle2, Loader2, Sparkles, LifeBuoy, ShieldCheck, AlertCircle, Gift } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { uploadImage } from '@/lib/imageUpload';
 import ImageUploadDialog from '@/components/ImageUploadDialog';
@@ -356,7 +356,7 @@ export default function ProfilePage() {
         <div className="absolute bottom-0 left-0 w-full h-24 bg-gradient-to-t from-background to-transparent" />
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 relative -mt-20 sm:-mt-24 z-10">
+      <div className="w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 relative -mt-20 sm:-mt-24 z-10">
 
         {/* Profile Card */}
         <div className="flex flex-col md:flex-row gap-5 items-start md:items-end justify-between mb-8 bg-card/85 backdrop-blur-xl border border-border/80 p-5 sm:p-6 rounded-3xl shadow-lg">
@@ -729,6 +729,29 @@ export default function ProfilePage() {
                 userName={formData.name || 'Valued Customer'}
                 membershipId={profile?.membershipId}
               />
+            </div>
+
+            {/* Refer & Earn Navigation Card */}
+            <div className='mb-3'>
+              <Link href="/customer/referral" className="block w-full">
+                <div className="p-4 rounded-2xl bg-gradient-to-r from-orange-500/10 via-amber-500/5 to-card border border-orange-500/30 hover:border-orange-500 hover:bg-orange-500/10 transition-all flex items-center justify-between group shadow-xs cursor-pointer">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-orange-500/20 text-orange-500 flex items-center justify-center group-hover:scale-105 transition-transform">
+                      <Gift className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h4 className="text-sm font-bold text-foreground">Refer & Earn ₹50 Cash</h4>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
+                          Live Tracking
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground">Invite friends, get ₹50 free wallet balance each</p>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-orange-500 group-hover:translate-x-0.5 transition-all" />
+                </div>
+              </Link>
             </div>
 
             {/* Help & Support Navigation Card */}

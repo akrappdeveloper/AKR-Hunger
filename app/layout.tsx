@@ -142,12 +142,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`font-sans antialiased bg-background text-foreground min-h-screen transition-colors duration-300 pb-20 md:pb-0`}>
+      <body className={`font-sans antialiased bg-background text-foreground min-h-screen transition-colors duration-300`}>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
           enableSystem
-          themes={['light', 'dark', 'sunset', 'midnight']}
+          themes={['light', 'dark', 'sunset', 'midnight', 'ocean']}
         >
           <AuthProvider>
             <RestaurantAuthProvider>

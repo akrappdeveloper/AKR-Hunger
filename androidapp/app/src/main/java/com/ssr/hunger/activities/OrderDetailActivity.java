@@ -108,14 +108,28 @@ public class OrderDetailActivity extends BaseActivity {
             ((TextView) findViewById(R.id.tv_date)).setText(sdf.format(order.getCreatedAt()));
         }
 
+        // Animate hero card entry once
+        View cardHero = findViewById(R.id.card_order_hero);
+        if (cardHero != null && cardHero.getTag() == null) {
+            cardHero.setTag("animated");
+            cardHero.setAlpha(0f);
+            cardHero.setTranslationY(40f);
+            cardHero.animate().alpha(1f).translationY(0f).setDuration(400).start();
+        }
+
         // Track Live Order CTA
         View btnTrack = findViewById(R.id.btn_track_order);
         if (btnTrack != null) {
             String st = order.getStatus() != null ? order.getStatus().toLowerCase() : "";
             if ("delivered".equals(st) || "cancelled".equals(st)) {
                 btnTrack.setVisibility(View.GONE);
+                btnTrack.clearAnimation();
             } else {
                 btnTrack.setVisibility(View.VISIBLE);
+                try {
+                    android.view.animation.Animation pulse = android.view.animation.AnimationUtils.loadAnimation(this, R.anim.pulse_subtle);
+                    btnTrack.startAnimation(pulse);
+                } catch (Exception ignored) {}
                 btnTrack.setOnClickListener(v -> {
                     android.content.Intent intent = new android.content.Intent(this, OrderTrackingActivity.class);
                     intent.putExtra(OrderTrackingActivity.EXTRA_ORDER_ID, order.getId());

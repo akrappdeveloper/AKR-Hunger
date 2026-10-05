@@ -17,11 +17,22 @@ import com.ssr.hunger.utils.CartManager;
 import com.ssr.hunger.utils.Constants;
 import com.ssr.hunger.utils.NotificationHelper;
 import com.ssr.hunger.utils.PerformanceHelper;
+import com.ssr.hunger.models.Address;
+import com.ssr.hunger.dialogs.DeliveryLocationDialog;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.Query;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.perf.metrics.Trace;
+import com.google.firebase.firestore.FieldValue;
+import com.google.firebase.firestore.WriteBatch;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.razorpay.Checkout;
+import com.razorpay.PaymentResultListener;
+import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -36,7 +47,7 @@ import java.util.Map;
  * - Firebase Crashlytics (order breadcrumbs, non-fatal exception tracking)
  * - Firebase Remote Config (dynamic delivery fee threshold and tax rate)
  */
-public class CartActivity extends BaseActivity implements CartManager.CartChangeListener {
+public class CartActivity extends BaseActivity implements CartManager.CartChangeListener, PaymentResultListener {
 
     private RecyclerView rvCartItems;
     private View emptyCart, cartContent;
@@ -46,6 +57,11 @@ public class CartActivity extends BaseActivity implements CartManager.CartChange
     private CartManager cartManager;
     private FirebaseFirestore db;
     private String paymentMethod = "cod";
+
+    // Delivery Address Views
+    private View cardDeliveryAddress, layoutSelectedAddress, layoutNoAddress;
+    private TextView tvCartAddressEmoji, tvCartAddressType, tvCartAddressTitle, tvCartAddressFull;
+    private View btnChangeAddress;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,6 +75,7 @@ public class CartActivity extends BaseActivity implements CartManager.CartChange
         initViews();
         setupRecyclerView();
         setupClickListeners();
+        checkAndLoadDeliveryAddress();
         updateUI();
 
         // Log begin checkout if cart has items
@@ -70,6 +87,12 @@ public class CartActivity extends BaseActivity implements CartManager.CartChange
             double total = subtotal + fee + (subtotal * taxRate);
             analyticsHelper.logBeginCheckout(cartManager.getTotalItemCount(), total, paymentMethod);
         }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        checkAndLoadDeliveryAddress();
     }
 
     private void initViews() {
@@ -88,6 +111,16 @@ public class CartActivity extends BaseActivity implements CartManager.CartChange
         tvBalanceDue = findViewById(R.id.tv_balance_due);
         etSpecialInstructions = findViewById(R.id.et_special_instructions);
         etCoupon = findViewById(R.id.et_coupon);
+
+        // Address views
+        cardDeliveryAddress = findViewById(R.id.card_delivery_address);
+        layoutSelectedAddress = findViewById(R.id.layout_selected_address);
+        layoutNoAddress = findViewById(R.id.layout_no_address);
+        tvCartAddressEmoji = findViewById(R.id.tv_cart_address_emoji);
+        tvCartAddressType = findViewById(R.id.tv_cart_address_type);
+        tvCartAddressTitle = findViewById(R.id.tv_cart_address_title);
+        tvCartAddressFull = findViewById(R.id.tv_cart_address_full);
+        btnChangeAddress = findViewById(R.id.btn_change_address);
     }
 
     private void setupRecyclerView() {
@@ -122,6 +155,11 @@ public class CartActivity extends BaseActivity implements CartManager.CartChange
     private void setupClickListeners() {
         // Back button
         findViewById(R.id.btn_back).setOnClickListener(v -> finish());
+
+        // Delivery address click listeners
+        if (cardDeliveryAddress != null) cardDeliveryAddress.setOnClickListener(v -> openAddressSelector());
+        if (btnChangeAddress != null) btnChangeAddress.setOnClickListener(v -> openAddressSelector());
+        if (layoutNoAddress != null) layoutNoAddress.setOnClickListener(v -> openAddressSelector());
 
         // Place order
         findViewById(R.id.btn_place_order).setOnClickListener(v -> placeOrder());
@@ -201,6 +239,112 @@ public class CartActivity extends BaseActivity implements CartManager.CartChange
         }
     }
 
+    private void openAddressSelector() {
+        DeliveryLocationDialog dialog = new DeliveryLocationDialog();
+        dialog.setOnAddressSelectedListener(address -> {
+            if (address != null) {
+                cartManager.setDeliveryAddress(address);
+                updateAddressUI();
+                Toast.makeText(this, "📍 Delivery address selected", Toast.LENGTH_SHORT).show();
+            }
+        });
+        dialog.show(getSupportFragmentManager(), "delivery_address_dialog");
+    }
+
+    private void checkAndLoadDeliveryAddress() {
+        Address current = cartManager.getDeliveryAddress();
+        if (current != null && !TextUtils.isEmpty(current.getStreet())) {
+            updateAddressUI();
+            return;
+        }
+
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user != null) {
+            db.collection(Constants.COLLECTION_USERS)
+                    .document(user.getUid())
+                    .collection("addresses")
+                    .orderBy("isDefault", Query.Direction.DESCENDING)
+                    .limit(1)
+                    .get()
+                    .addOnSuccessListener(snap -> {
+                        if (snap != null && !snap.isEmpty()) {
+                            DocumentSnapshot doc = snap.getDocuments().get(0);
+                            Address addr = new Address();
+                            addr.setId(doc.getId());
+                            String line1 = doc.getString("addressLine1");
+                            if (line1 == null) line1 = doc.getString("street");
+                            addr.setStreet(line1);
+                            addr.setCity(doc.getString("city"));
+                            addr.setState(doc.getString("state"));
+                            addr.setPincode(doc.getString("pincode"));
+                            addr.setLandmark(doc.getString("landmark"));
+                            addr.setType(doc.getString("type"));
+                            Boolean def = doc.getBoolean("isDefault");
+                            if (def != null) addr.setDefault(def);
+                            cartManager.setDeliveryAddress(addr);
+                        }
+                        updateAddressUI();
+                    })
+                    .addOnFailureListener(e -> updateAddressUI());
+        } else {
+            updateAddressUI();
+        }
+    }
+
+    private void updateAddressUI() {
+        Address addr = cartManager.getDeliveryAddress();
+        boolean hasAddr = addr != null && (!TextUtils.isEmpty(addr.getStreet()) || !TextUtils.isEmpty(addr.getCity()));
+
+        if (layoutSelectedAddress != null) {
+            layoutSelectedAddress.setVisibility(hasAddr ? View.VISIBLE : View.GONE);
+        }
+        if (layoutNoAddress != null) {
+            layoutNoAddress.setVisibility(hasAddr ? View.GONE : View.VISIBLE);
+        }
+        if (btnChangeAddress instanceof com.google.android.material.button.MaterialButton) {
+            ((com.google.android.material.button.MaterialButton) btnChangeAddress).setText(hasAddr ? "Change" : "Select");
+        } else if (btnChangeAddress instanceof TextView) {
+            ((TextView) btnChangeAddress).setText(hasAddr ? "Change" : "Select");
+        }
+
+        if (hasAddr) {
+            String type = addr.getType() != null ? addr.getType() : "home";
+            if (tvCartAddressEmoji != null) {
+                if ("home".equalsIgnoreCase(type)) tvCartAddressEmoji.setText("🏠");
+                else if ("work".equalsIgnoreCase(type)) tvCartAddressEmoji.setText("💼");
+                else tvCartAddressEmoji.setText("📍");
+            }
+            if (tvCartAddressType != null) {
+                tvCartAddressType.setText(type.toUpperCase());
+            }
+            if (tvCartAddressTitle != null) {
+                tvCartAddressTitle.setText(addr.getCity() != null ? addr.getCity() : type.toUpperCase());
+            }
+            if (tvCartAddressFull != null) {
+                StringBuilder sb = new StringBuilder();
+                if (!TextUtils.isEmpty(addr.getStreet())) sb.append(addr.getStreet());
+                if (!TextUtils.isEmpty(addr.getLandmark())) sb.append(", near ").append(addr.getLandmark());
+                if (!TextUtils.isEmpty(addr.getCity())) sb.append(", ").append(addr.getCity());
+                if (!TextUtils.isEmpty(addr.getState())) sb.append(", ").append(addr.getState());
+                if (!TextUtils.isEmpty(addr.getPincode())) sb.append(" - ").append(addr.getPincode());
+                tvCartAddressFull.setText(sb.toString());
+            }
+        } else {
+            if (tvCartAddressEmoji != null) tvCartAddressEmoji.setText("📍");
+        }
+    }
+
+    // Online Payment (Razorpay) Pending State
+    private Map<String, Object> pendingOrderData;
+    private String pendingOrderId;
+    private double pendingOrderTotal;
+    private List<CartItem> pendingOrderItems;
+    private double pendingSubtotal;
+    private double pendingDeliveryFee;
+    private double pendingTaxes;
+    private String pendingRestaurantName;
+    private Trace pendingCheckoutTrace;
+
     private void placeOrder() {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user == null) {
@@ -210,6 +354,14 @@ public class CartActivity extends BaseActivity implements CartManager.CartChange
 
         List<CartItem> items = cartManager.getItems();
         if (items.isEmpty()) return;
+
+        // Strict Delivery Address Validation: Order CANNOT be placed without delivery address!
+        Address deliveryAddress = cartManager.getDeliveryAddress();
+        if (deliveryAddress == null || (TextUtils.isEmpty(deliveryAddress.getStreet()) && TextUtils.isEmpty(deliveryAddress.getCity()))) {
+            Toast.makeText(this, "⚠️ Delivery address is required! Please select or add an address.", Toast.LENGTH_LONG).show();
+            openAddressSelector();
+            return;
+        }
 
         // Firebase Performance - Profile the checkout order submission
         Trace checkoutTrace = startTrace(PerformanceHelper.TRACE_CHECKOUT_PROCESS);
@@ -226,8 +378,6 @@ public class CartActivity extends BaseActivity implements CartManager.CartChange
         double sgst = Math.round(taxableValue * 0.025 * 100.0) / 100.0;
         double taxes = cgst + sgst;
         double total = subtotal + packagingCharges + deliveryFee + platformFee + taxes;
-        double amountPaid = "cod".equals(paymentMethod) ? 0.0 : total;
-        double balanceDue = "cod".equals(paymentMethod) ? total : 0.0;
         String restaurantName = items.get(0).getRestaurantName();
 
         if (checkoutTrace != null) {
@@ -261,7 +411,21 @@ public class CartActivity extends BaseActivity implements CartManager.CartChange
         final String orderId = sb.toString();
         final String deliveryOtp = String.valueOf(1000 + rnd.nextInt(9000));
 
-        // Build order document
+        // Format delivery address map for cross-platform compatibility
+        Map<String, Object> addrMap = new HashMap<>();
+        addrMap.put("id", deliveryAddress.getId() != null ? deliveryAddress.getId() : "");
+        addrMap.put("street", deliveryAddress.getStreet() != null ? deliveryAddress.getStreet() : "");
+        addrMap.put("city", deliveryAddress.getCity() != null ? deliveryAddress.getCity() : "");
+        addrMap.put("state", deliveryAddress.getState() != null ? deliveryAddress.getState() : "");
+        addrMap.put("pincode", deliveryAddress.getPincode() != null ? deliveryAddress.getPincode() : "");
+        addrMap.put("landmark", deliveryAddress.getLandmark() != null ? deliveryAddress.getLandmark() : "");
+        addrMap.put("type", deliveryAddress.getType() != null ? deliveryAddress.getType() : "home");
+        addrMap.put("latitude", deliveryAddress.getLatitude());
+        addrMap.put("longitude", deliveryAddress.getLongitude());
+
+        String customerPhone = user.getPhoneNumber() != null ? user.getPhoneNumber() : "";
+
+        // Build base order document
         Map<String, Object> orderData = new HashMap<>();
         orderData.put("id", orderId);
         orderData.put("orderId", orderId);
@@ -270,9 +434,12 @@ public class CartActivity extends BaseActivity implements CartManager.CartChange
         orderData.put("restaurantId", cartManager.getRestaurantId());
         orderData.put("restaurantName", restaurantName != null ? restaurantName : "Restaurant");
         orderData.put("items", orderItems);
+        orderData.put("deliveryAddress", addrMap);
+        orderData.put("deliveryAddressStreet", deliveryAddress.getStreet() != null ? deliveryAddress.getStreet() : "");
+        orderData.put("deliveryAddressCity", deliveryAddress.getCity() != null ? deliveryAddress.getCity() : "");
+        orderData.put("deliveryAddressPincode", deliveryAddress.getPincode() != null ? deliveryAddress.getPincode() : "");
         orderData.put("status", "pending");
         orderData.put("paymentMethod", paymentMethod);
-        orderData.put("paymentStatus", "cod".equals(paymentMethod) ? "pending" : "pending");
         orderData.put("subtotal", subtotal);
         orderData.put("packagingCharges", packagingCharges);
         orderData.put("deliveryCharge", deliveryFee);
@@ -282,62 +449,232 @@ public class CartActivity extends BaseActivity implements CartManager.CartChange
         orderData.put("sgst", sgst);
         orderData.put("taxes", taxes);
         orderData.put("total", total);
-        orderData.put("amountPaid", amountPaid);
-        orderData.put("balanceDue", balanceDue);
         orderData.put("deliveryOtp", deliveryOtp);
-        orderData.put("specialInstructions", etSpecialInstructions.getText().toString().trim());
+        orderData.put("specialInstructions", etSpecialInstructions != null ? etSpecialInstructions.getText().toString().trim() : "");
         orderData.put("customerName", user.getDisplayName() != null ? user.getDisplayName() : "Customer");
-        orderData.put("customerPhone", "");
+        orderData.put("customerPhone", customerPhone);
         orderData.put("createdAt", Timestamp.now());
 
-        // Disable button to prevent double-tap
-        findViewById(R.id.btn_place_order).setEnabled(false);
+        // 1. STRICT WALLET PAYMENT VERIFICATION
+        if ("wallet".equals(paymentMethod)) {
+            findViewById(R.id.btn_place_order).setEnabled(false);
+            db.collection(Constants.COLLECTION_CUSTOMERS).document(user.getUid()).get()
+                    .addOnSuccessListener(custDoc -> {
+                        double currentBalance = 0.0;
+                        if (custDoc != null && custDoc.exists()) {
+                            Double b = custDoc.getDouble("walletBalance");
+                            if (b != null) currentBalance = b;
+                        }
 
+                        // STRICT CHECK: Wallet balance MUST be >= total
+                        if (currentBalance < total) {
+                            if (checkoutTrace != null) stopTrace(checkoutTrace);
+                            findViewById(R.id.btn_place_order).setEnabled(true);
+
+                            final double available = currentBalance;
+                            new MaterialAlertDialogBuilder(this)
+                                    .setTitle("⚠️ Insufficient Wallet Balance")
+                                    .setMessage(String.format(Locale.getDefault(),
+                                            "Your Hunger Wallet balance is ₹%.2f, but the order amount is ₹%.2f.\n\nWithout sufficient balance, order cannot be placed via Wallet. Only Cash on Delivery (COD) supports placing order without advance payment.",
+                                            available, total))
+                                    .setPositiveButton("Pay via COD", (dialog, which) -> {
+                                        paymentMethod = "cod";
+                                        RadioGroup rg = findViewById(R.id.rg_payment);
+                                        if (rg != null) rg.check(R.id.rb_cod);
+                                        placeOrder();
+                                    })
+                                    .setNeutralButton("Pay Online (UPI/Cards)", (dialog, which) -> {
+                                        paymentMethod = "online";
+                                        RadioGroup rg = findViewById(R.id.rg_payment);
+                                        if (rg != null) rg.check(R.id.rb_online);
+                                        placeOrder();
+                                    })
+                                    .setNegativeButton("Cancel", null)
+                                    .show();
+                            return;
+                        }
+
+                        // Sufficient balance! Atomically deduct money and confirm order
+                        orderData.put("paymentStatus", "completed");
+                        orderData.put("amountPaid", total);
+                        orderData.put("balanceDue", 0.0);
+
+                        WriteBatch batch = db.batch();
+                        DocumentReference orderRef = db.collection(Constants.COLLECTION_ORDERS).document(orderId);
+                        batch.set(orderRef, orderData);
+
+                        DocumentReference custRef = db.collection(Constants.COLLECTION_CUSTOMERS).document(user.getUid());
+                        batch.update(custRef, "walletBalance", FieldValue.increment(-total));
+
+                        // Record debit wallet transaction
+                        Map<String, Object> tx = new HashMap<>();
+                        tx.put("customerId", user.getUid());
+                        tx.put("type", "debit");
+                        tx.put("amount", total);
+                        tx.put("status", "completed");
+                        tx.put("description", "Food Order #" + orderId + " at " + (restaurantName != null ? restaurantName : "Restaurant"));
+                        tx.put("orderId", orderId);
+                        tx.put("createdAt", Timestamp.now());
+
+                        DocumentReference subTxRef = custRef.collection(Constants.COLLECTION_WALLET_TRANSACTIONS).document();
+                        batch.set(subTxRef, tx);
+
+                        DocumentReference rootTxRef = db.collection(Constants.COLLECTION_WALLET_TRANSACTIONS).document();
+                        batch.set(rootTxRef, tx);
+
+                        batch.commit()
+                                .addOnSuccessListener(aVoid -> onOrderPlacedSuccessfully(orderId, items, subtotal, deliveryFee, taxes, total, "wallet", restaurantName, checkoutTrace, user))
+                                .addOnFailureListener(e -> {
+                                    if (checkoutTrace != null) stopTrace(checkoutTrace);
+                                    recordException("wallet_order_batch_failed", e);
+                                    findViewById(R.id.btn_place_order).setEnabled(true);
+                                    Toast.makeText(this, "Failed to deduct wallet: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                                });
+                    })
+                    .addOnFailureListener(e -> {
+                        if (checkoutTrace != null) stopTrace(checkoutTrace);
+                        findViewById(R.id.btn_place_order).setEnabled(true);
+                        Toast.makeText(this, "Could not check wallet balance: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                    });
+            return;
+        }
+
+        // 2. ONLINE PAYMENT GATEWAY (RAZORPAY)
+        if ("online".equals(paymentMethod)) {
+            pendingOrderData = orderData;
+            pendingOrderId = orderId;
+            pendingOrderTotal = total;
+            pendingOrderItems = items;
+            pendingSubtotal = subtotal;
+            pendingDeliveryFee = deliveryFee;
+            pendingTaxes = taxes;
+            pendingRestaurantName = restaurantName;
+            pendingCheckoutTrace = checkoutTrace;
+
+            findViewById(R.id.btn_place_order).setEnabled(false);
+
+            try {
+                Checkout checkout = new Checkout();
+                checkout.setKeyID(Constants.RAZORPAY_KEY_ID);
+
+                JSONObject options = new JSONObject();
+                options.put("name", "Hunger Delivery");
+                options.put("description", "Order #" + orderId + " at " + (restaurantName != null ? restaurantName : "Restaurant"));
+                options.put("currency", "INR");
+                options.put("amount", Math.round(total * 100)); // amount in paise
+
+                JSONObject prefill = new JSONObject();
+                if (user.getEmail() != null) prefill.put("email", user.getEmail());
+                if (customerPhone != null && !customerPhone.isEmpty()) prefill.put("contact", customerPhone);
+                options.put("prefill", prefill);
+
+                checkout.open(this, options);
+            } catch (Exception e) {
+                if (checkoutTrace != null) stopTrace(checkoutTrace);
+                recordException("Razorpay_Checkout_Launch_Error", e);
+                findViewById(R.id.btn_place_order).setEnabled(true);
+                Toast.makeText(this, "Could not launch payment gateway: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+            return;
+        }
+
+        // 3. CASH ON DELIVERY (COD) - ONLY METHOD ALLOWED WITHOUT ADVANCE PAYMENT
+        orderData.put("paymentStatus", "pending");
+        orderData.put("amountPaid", 0.0);
+        orderData.put("balanceDue", total);
+
+        findViewById(R.id.btn_place_order).setEnabled(false);
         db.collection(Constants.COLLECTION_ORDERS)
                 .document(orderId)
                 .set(orderData)
-                .addOnSuccessListener(aVoid -> {
-                    stopTrace(checkoutTrace);
-
-                    // Firebase Analytics - Log eCommerce Purchase event
-                    analyticsHelper.logPurchase(
-                            orderId,
-                            items,
-                            subtotal,
-                            deliveryFee,
-                            taxes,
-                            total,
-                            paymentMethod,
-                            restaurantName
-                    );
-
-                    logBreadcrumb("Order confirmed successfully in Firestore: " + orderId);
-
-                    // Trigger Order Confirmation Notification (FCM / Local + Firestore persistence)
-                    NotificationHelper.sendOrderNotification(
-                            CartActivity.this,
-                            user.getUid(),
-                            orderId,
-                            restaurantName != null ? restaurantName : "Restaurant",
-                            total,
-                            "confirmed"
-                    );
-
-                    cartManager.clearCart();
-                    Toast.makeText(this, "Order #" + orderId + " placed successfully! 🎉", Toast.LENGTH_LONG).show();
-
-                    // Navigate directly to OrderDetailActivity so user sees real-time tracking
-                    android.content.Intent intent = new android.content.Intent(CartActivity.this, OrderDetailActivity.class);
-                    intent.putExtra(Constants.EXTRA_ORDER_ID, orderId);
-                    startActivity(intent);
-                    finish();
-                })
+                .addOnSuccessListener(aVoid -> onOrderPlacedSuccessfully(orderId, items, subtotal, deliveryFee, taxes, total, "cod", restaurantName, checkoutTrace, user))
                 .addOnFailureListener(e -> {
-                    stopTrace(checkoutTrace);
+                    if (checkoutTrace != null) stopTrace(checkoutTrace);
                     recordException("placeOrder_Firestore_Error", e);
                     Toast.makeText(this, "Failed to place order: " + e.getMessage(), Toast.LENGTH_LONG).show();
                     findViewById(R.id.btn_place_order).setEnabled(true);
                 });
+    }
+
+    @Override
+    public void onPaymentSuccess(String razorpayPaymentId) {
+        logBreadcrumb("Razorpay payment successful: " + razorpayPaymentId + " for order #" + pendingOrderId);
+        if (pendingOrderData != null && pendingOrderId != null) {
+            pendingOrderData.put("paymentStatus", "completed");
+            pendingOrderData.put("razorpayPaymentId", razorpayPaymentId);
+            pendingOrderData.put("amountPaid", pendingOrderTotal);
+            pendingOrderData.put("balanceDue", 0.0);
+
+            FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+            db.collection(Constants.COLLECTION_ORDERS)
+                    .document(pendingOrderId)
+                    .set(pendingOrderData)
+                    .addOnSuccessListener(aVoid -> onOrderPlacedSuccessfully(
+                            pendingOrderId,
+                            pendingOrderItems,
+                            pendingSubtotal,
+                            pendingDeliveryFee,
+                            pendingTaxes,
+                            pendingOrderTotal,
+                            "online",
+                            pendingRestaurantName,
+                            pendingCheckoutTrace,
+                            user
+                    ))
+                    .addOnFailureListener(e -> {
+                        if (pendingCheckoutTrace != null) stopTrace(pendingCheckoutTrace);
+                        recordException("online_order_confirm_failed", e);
+                        findViewById(R.id.btn_place_order).setEnabled(true);
+                        Toast.makeText(this, "Payment successful but order creation failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                    });
+        }
+    }
+
+    @Override
+    public void onPaymentError(int code, String response) {
+        if (pendingCheckoutTrace != null) stopTrace(pendingCheckoutTrace);
+        logBreadcrumb("Razorpay payment failed: " + response);
+        findViewById(R.id.btn_place_order).setEnabled(true);
+        Toast.makeText(this, "Payment cancelled or failed. Order was not placed.", Toast.LENGTH_LONG).show();
+    }
+
+    private void onOrderPlacedSuccessfully(String orderId, List<CartItem> items, double subtotal,
+                                           double deliveryFee, double taxes, double total,
+                                           String method, String restaurantName, Trace trace,
+                                           FirebaseUser user) {
+        if (trace != null) stopTrace(trace);
+
+        analyticsHelper.logPurchase(
+                orderId,
+                items,
+                subtotal,
+                deliveryFee,
+                taxes,
+                total,
+                method,
+                restaurantName
+        );
+
+        logBreadcrumb("Order confirmed successfully in Firestore: " + orderId);
+
+        if (user != null) {
+            NotificationHelper.sendOrderNotification(
+                    CartActivity.this,
+                    user.getUid(),
+                    orderId,
+                    restaurantName != null ? restaurantName : "Restaurant",
+                    total,
+                    "confirmed"
+            );
+        }
+
+        cartManager.clearCart();
+        Toast.makeText(this, "Order #" + orderId + " placed successfully! 🎉", Toast.LENGTH_LONG).show();
+
+        android.content.Intent intent = new android.content.Intent(CartActivity.this, OrderDetailActivity.class);
+        intent.putExtra(Constants.EXTRA_ORDER_ID, orderId);
+        startActivity(intent);
+        finish();
     }
 
     @Override

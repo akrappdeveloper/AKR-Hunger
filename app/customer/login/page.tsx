@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, User as FirebaseUser } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
-import { doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs, addDoc, serverTimestamp, increment } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
@@ -38,7 +38,8 @@ import {
   Flame,
   CheckCircle2,
   HeartHandshake,
-  Smartphone
+  Smartphone,
+  Gift,
 } from 'lucide-react';
 import ThemeToggle from '@/components/customer/ThemeToggle';
 
@@ -50,9 +51,24 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
+  const [referralInput, setReferralInput] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Read referral code from URL query (?ref=...) or localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const refParam = params.get('ref') || localStorage.getItem('hunger_referral_code');
+      if (refParam && refParam.trim()) {
+        const cleanRef = refParam.trim().toUpperCase();
+        setReferralInput(cleanRef);
+        setIsLogin(false); // Switch to sign up mode automatically
+        toast.success(`🎁 Referral code ${cleanRef} applied! You'll get ₹50 free wallet balance on signup.`);
+      }
+    }
+  }, []);
 
   // Google Auth & Phone Dialog State
   const [isGoogleAuthModalOpen, setIsGoogleAuthModalOpen] = useState(false);
@@ -91,8 +107,43 @@ export default function LoginPage() {
     const customerDoc = await getDoc(customerRef);
 
     if (!customerDoc.exists()) {
-      const referralCode = 'AKR' + Math.random().toString(36).substring(2, 7).toUpperCase();
-      await setDoc(customerRef, {
+      const newReferralCode = 'HUNGER' + Math.random().toString(36).substring(2, 7).toUpperCase();
+      const codeToApply = (referralInput || (typeof window !== 'undefined' ? localStorage.getItem('hunger_referral_code') : '') || '').trim().toUpperCase();
+
+      let referrerId: string | null = null;
+      let referrerName: string = 'Hunger Friend';
+
+      if (codeToApply) {
+        try {
+          const codeSnap = await getDoc(doc(db, 'referralCodes', codeToApply));
+          if (codeSnap.exists()) {
+            const data = codeSnap.data();
+            referrerId = data?.uid || data?.userId || null;
+            if (data?.userName) referrerName = data.userName;
+          }
+        } catch (e) {
+          console.warn('Google referral check error', e);
+        }
+
+        if (!referrerId) {
+          try {
+            const custQuery = query(collection(db, 'customers'), where('referralCode', '==', codeToApply));
+            const custSnap = await getDocs(custQuery);
+            if (!custSnap.empty) {
+              const d = custSnap.docs[0];
+              referrerId = d.id;
+              if (d.data()?.name) referrerName = d.data().name;
+            }
+          } catch (e) {
+            console.warn('Customer referral lookup error', e);
+          }
+        }
+      }
+
+      const isReferralValid = !!(referrerId && referrerId !== googleUser.uid);
+      const initialWallet = isReferralValid ? 50 : 0;
+
+      const newCustomerData: any = {
         email: googleUser.email || '',
         name: googleUser.displayName || 'Customer',
         phone: googleUser.phoneNumber || '',
@@ -101,14 +152,110 @@ export default function LoginPage() {
         defaultAddressId: null,
         favorites: [],
         favoriteRestaurants: [],
-        walletBalance: 0,
+        walletBalance: initialWallet,
         membershipStatus: 'none',
         isBlocked: false,
         rewardPoints: 0,
-        referralCode,
+        referralCode: newReferralCode,
+        referralCount: 0,
+        referralEarnings: 0,
         createdAt: new Date(),
         updatedAt: new Date(),
+      };
+
+      if (isReferralValid) {
+        newCustomerData.referredBy = referrerId;
+        newCustomerData.usedReferralCode = codeToApply;
+      }
+
+      await setDoc(customerRef, newCustomerData);
+
+      // Register new referral code
+      await setDoc(doc(db, 'referralCodes', newReferralCode), {
+        code: newReferralCode,
+        uid: googleUser.uid,
+        userId: googleUser.uid,
+        userName: googleUser.displayName || 'Customer',
+        userEmail: googleUser.email || '',
+        createdAt: serverTimestamp(),
       });
+
+      if (isReferralValid && referrerId) {
+        try {
+          await updateDoc(doc(db, 'customers', referrerId), {
+            walletBalance: increment(50),
+            referralCount: increment(1),
+            referralEarnings: increment(50),
+            referralPointsEarned: increment(50),
+          });
+
+          await addDoc(collection(db, 'referrals'), {
+            referrerId,
+            referrerName,
+            referredUserId: googleUser.uid,
+            referredUserName: googleUser.displayName || 'Customer',
+            referredUserEmail: googleUser.email || '',
+            referredUserPhone: googleUser.phoneNumber || '',
+            referralCode: codeToApply,
+            rewardAmount: 50,
+            status: 'completed',
+            channel: 'web',
+            createdAt: serverTimestamp(),
+          });
+
+          await addDoc(collection(db, 'customers', googleUser.uid, 'walletTransactions'), {
+            customerId: googleUser.uid,
+            amount: 50,
+            type: 'credit',
+            status: 'completed',
+            description: `🎁 Welcome Referral Bonus (${codeToApply})`,
+            createdAt: serverTimestamp(),
+          });
+
+          await addDoc(collection(db, 'walletTransactions'), {
+            customerId: googleUser.uid,
+            amount: 50,
+            type: 'credit',
+            status: 'completed',
+            description: `🎁 Welcome Referral Bonus (${codeToApply})`,
+            createdAt: serverTimestamp(),
+          });
+
+          await addDoc(collection(db, 'customers', referrerId, 'walletTransactions'), {
+            customerId: referrerId,
+            amount: 50,
+            type: 'credit',
+            status: 'completed',
+            description: `🎉 Referral Reward - ${googleUser.displayName || 'Customer'} joined`,
+            createdAt: serverTimestamp(),
+          });
+
+          await addDoc(collection(db, 'walletTransactions'), {
+            customerId: referrerId,
+            amount: 50,
+            type: 'credit',
+            status: 'completed',
+            description: `🎉 Referral Reward - ${googleUser.displayName || 'Customer'} joined`,
+            createdAt: serverTimestamp(),
+          });
+
+          await addDoc(collection(db, 'notifications'), {
+            userId: referrerId,
+            title: '🎉 Referral Reward Earned!',
+            message: `${googleUser.displayName || 'Friend'} joined using your referral link. ₹50 has been credited to your Hunger Wallet!`,
+            type: 'referral',
+            read: false,
+            createdAt: serverTimestamp(),
+          });
+
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem('hunger_referral_code');
+          }
+          toast.success('🎉 Welcome! ₹50 referral bonus has been added to your wallet!');
+        } catch (rewardErr) {
+          console.error('Google referral reward error:', rewardErr);
+        }
+      }
 
       // Prompt for phone number since Google account doesn't provide phone
       if (!googleUser.phoneNumber) {
@@ -251,9 +398,45 @@ export default function LoginPage() {
       // Create user in Firebase Auth
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
 
+      const newUid = userCredential.user.uid;
+      const myNewReferralCode = 'HUNGER' + Math.random().toString(36).substring(2, 7).toUpperCase();
+      const codeToApply = (referralInput || (typeof window !== 'undefined' ? localStorage.getItem('hunger_referral_code') : '') || '').trim().toUpperCase();
+
+      let referrerId: string | null = null;
+      let referrerName: string = 'Hunger Friend';
+
+      if (codeToApply) {
+        try {
+          const codeSnap = await getDoc(doc(db, 'referralCodes', codeToApply));
+          if (codeSnap.exists()) {
+            const data = codeSnap.data();
+            referrerId = data?.uid || data?.userId || null;
+            if (data?.userName) referrerName = data.userName;
+          }
+        } catch (e) {
+          console.warn('Referral check error', e);
+        }
+
+        if (!referrerId) {
+          try {
+            const custQuery = query(collection(db, 'customers'), where('referralCode', '==', codeToApply));
+            const custSnap = await getDocs(custQuery);
+            if (!custSnap.empty) {
+              const d = custSnap.docs[0];
+              referrerId = d.id;
+              if (d.data()?.name) referrerName = d.data().name;
+            }
+          } catch (e) {
+            console.warn('Customer referral lookup error', e);
+          }
+        }
+      }
+
+      const isReferralValid = !!(referrerId && referrerId !== newUid);
+      const initialWallet = isReferralValid ? 50 : 0;
+
       // Create customer document in Firestore with complete details matching Android app
-      const referralCode = 'AKR' + Math.random().toString(36).substring(2, 7).toUpperCase();
-      await setDoc(doc(db, 'customers', userCredential.user.uid), {
+      const customerData: any = {
         email,
         password,
         name,
@@ -263,14 +446,116 @@ export default function LoginPage() {
         defaultAddressId: null,
         favorites: [],
         favoriteRestaurants: [],
-        walletBalance: 0,
+        walletBalance: initialWallet,
         membershipStatus: 'none',
         isBlocked: false,
         rewardPoints: 0,
-        referralCode,
+        referralCode: myNewReferralCode,
+        referralCount: 0,
+        referralEarnings: 0,
         createdAt: new Date(),
         updatedAt: new Date(),
+      };
+
+      if (isReferralValid) {
+        customerData.referredBy = referrerId;
+        customerData.usedReferralCode = codeToApply;
+      }
+
+      await setDoc(doc(db, 'customers', newUid), customerData);
+
+      // Register new referral code in referralCodes registry
+      await setDoc(doc(db, 'referralCodes', myNewReferralCode), {
+        code: myNewReferralCode,
+        uid: newUid,
+        userId: newUid,
+        userName: name,
+        userEmail: email,
+        createdAt: serverTimestamp(),
       });
+
+      // If valid referral, reward referrer, create referrals tracking entry & wallet transactions
+      if (isReferralValid && referrerId) {
+        try {
+          // 1. Update Referrer balance & stats (+₹50)
+          await updateDoc(doc(db, 'customers', referrerId), {
+            walletBalance: increment(50),
+            referralCount: increment(1),
+            referralEarnings: increment(50),
+            referralPointsEarned: increment(50),
+          });
+
+          // 2. Add to referrals tracking collection
+          await addDoc(collection(db, 'referrals'), {
+            referrerId,
+            referrerName,
+            referredUserId: newUid,
+            referredUserName: name,
+            referredUserEmail: email,
+            referredUserPhone: phone,
+            referralCode: codeToApply,
+            rewardAmount: 50,
+            status: 'completed',
+            channel: 'web',
+            createdAt: serverTimestamp(),
+          });
+
+          // 3. Wallet transaction for referee
+          await addDoc(collection(db, 'customers', newUid, 'walletTransactions'), {
+            customerId: newUid,
+            amount: 50,
+            type: 'credit',
+            status: 'completed',
+            description: `🎁 Welcome Referral Bonus (${codeToApply})`,
+            createdAt: serverTimestamp(),
+          });
+
+          await addDoc(collection(db, 'walletTransactions'), {
+            customerId: newUid,
+            amount: 50,
+            type: 'credit',
+            status: 'completed',
+            description: `🎁 Welcome Referral Bonus (${codeToApply})`,
+            createdAt: serverTimestamp(),
+          });
+
+          // 4. Wallet transaction for referrer
+          await addDoc(collection(db, 'customers', referrerId, 'walletTransactions'), {
+            customerId: referrerId,
+            amount: 50,
+            type: 'credit',
+            status: 'completed',
+            description: `🎉 Referral Reward - ${name} joined`,
+            createdAt: serverTimestamp(),
+          });
+
+          await addDoc(collection(db, 'walletTransactions'), {
+            customerId: referrerId,
+            amount: 50,
+            type: 'credit',
+            status: 'completed',
+            description: `🎉 Referral Reward - ${name} joined`,
+            createdAt: serverTimestamp(),
+          });
+
+          // 5. Notification for referrer
+          await addDoc(collection(db, 'notifications'), {
+            userId: referrerId,
+            title: '🎉 Referral Reward Earned!',
+            message: `${name} joined using your referral link. ₹50 has been credited to your Hunger Wallet!`,
+            type: 'referral',
+            read: false,
+            createdAt: serverTimestamp(),
+          });
+
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem('hunger_referral_code');
+          }
+          toast.success('🎉 Welcome! ₹50 referral bonus has been added to your wallet!');
+        } catch (rewardErr) {
+          console.error('Error applying referral reward:', rewardErr);
+        }
+      }
 
       router.push('/customer');
     } catch (err: any) {
@@ -692,6 +977,36 @@ export default function LoginPage() {
                         </button>
                       </div>
                     </div>
+
+                    {!isLogin && (
+                      <div className="pt-1 animate-in fade-in slide-in-from-top-1 duration-200">
+                        <div className="flex items-center justify-between mb-1.5">
+                          <label className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                            <Gift className="w-3.5 h-3.5 text-orange-500" />
+                            <span>Referral Code (Optional)</span>
+                          </label>
+                          <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-bold">
+                            +₹50 Welcome Cash
+                          </span>
+                        </div>
+                        <div className="relative">
+                          <Gift className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-orange-500 pointer-events-none" />
+                          <Input
+                            type="text"
+                            placeholder="e.g. HUNGERUSBAR"
+                            value={referralInput}
+                            onChange={(e) => setReferralInput(e.target.value.toUpperCase())}
+                            className="pl-10 h-11 rounded-xl bg-muted/40 border-border/70 text-foreground placeholder:text-muted-foreground focus:bg-background focus:border-primary text-sm font-mono font-bold tracking-wider transition-all uppercase"
+                          />
+                        </div>
+                        {referralInput && (
+                          <div className="flex items-center gap-1.5 mt-1.5 px-2 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[11px] font-medium">
+                            <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                            <span>Referral code active! ₹50 bonus will be added to your wallet on signup.</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
 
                     <Button
                       type="submit"

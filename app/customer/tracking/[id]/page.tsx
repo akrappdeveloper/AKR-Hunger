@@ -192,7 +192,7 @@ export default function OrderTrackingPage() {
         </button>
       </div>
 
-      <div className="container max-w-lg mx-auto px-4 py-6 space-y-5 -mt-4">
+      <div className="w-full max-w-[1440px] mx-auto px-4 py-6 space-y-5 -mt-4">
         {/* ETA Card */}
         {!isDelivered ? (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>

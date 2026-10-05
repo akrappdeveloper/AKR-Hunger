@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Single slide in the product image carousel ViewPager2 -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <ImageView
+        android:id="@+id/iv_slide_image"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop"
+        android:contentDescription="@string/product_image_content_desc" />
+
+    <!-- Shimmer placeholder - shown while loading -->
+    <View
+        android:id="@+id/shimmer_placeholder"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/shimmer_base"
+        android:visibility="gone" />
+
+</FrameLayout>

@@ -29,6 +29,14 @@ public class MenuItem {
     private List<String> tags;
     private List<String> allergens;
     private String restaurantName; // Joined field
+    // Nutrition & Customization (new fields)
+    private int servings;
+    private List<String> ingredients;
+    private String portionSize;
+    private String spiceLevel;
+    private boolean isGlutenFree;
+    private boolean isJain;
+    private boolean isHalal;
 
     public MenuItem() {}
 
@@ -101,6 +109,27 @@ public class MenuItem {
 
     public String getRestaurantName() { return restaurantName; }
     public void setRestaurantName(String restaurantName) { this.restaurantName = restaurantName; }
+
+    public int getServings() { return servings > 0 ? servings : 1; }
+    public void setServings(int servings) { this.servings = servings; }
+
+    public List<String> getIngredients() { return ingredients; }
+    public void setIngredients(List<String> ingredients) { this.ingredients = ingredients; }
+
+    public String getPortionSize() { return portionSize; }
+    public void setPortionSize(String portionSize) { this.portionSize = portionSize; }
+
+    public String getSpiceLevel() { return spiceLevel; }
+    public void setSpiceLevel(String spiceLevel) { this.spiceLevel = spiceLevel; }
+
+    public boolean isGlutenFree() { return isGlutenFree; }
+    public void setGlutenFree(boolean glutenFree) { isGlutenFree = glutenFree; }
+
+    public boolean isJain() { return isJain; }
+    public void setJain(boolean jain) { isJain = jain; }
+
+    public boolean isHalal() { return isHalal; }
+    public void setHalal(boolean halal) { isHalal = halal; }
 
     /**
      * Check if this item should be shown to customers.
@@ -234,6 +263,31 @@ public class MenuItem {
         if (prepObj instanceof Number) {
             item.setPreparationTime(((Number) prepObj).intValue());
         }
+
+        // Servings
+        Object servingsObj = doc.get("servings");
+        if (servingsObj instanceof Number) {
+            item.setServings(((Number) servingsObj).intValue());
+        }
+
+        // Portion size
+        String portionSize = doc.getString("portionSize");
+        if (portionSize == null) portionSize = doc.getString("servingSize");
+        if (portionSize != null) item.setPortionSize(portionSize);
+
+        // Spice level
+        String spiceLevel = doc.getString("spiceLevel");
+        if (spiceLevel != null) item.setSpiceLevel(spiceLevel);
+
+        // Dietary flags
+        Boolean glutenFree = doc.getBoolean("isGlutenFree");
+        if (glutenFree != null) item.setGlutenFree(glutenFree);
+
+        Boolean jain = doc.getBoolean("isJain");
+        if (jain != null) item.setJain(jain);
+
+        Boolean halal = doc.getBoolean("isHalal");
+        if (halal != null) item.setHalal(halal);
 
         return item;
     }

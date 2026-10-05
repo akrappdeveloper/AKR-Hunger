@@ -498,20 +498,16 @@ public class DeliveryLocationDialog extends BottomSheetDialogFragment {
     // 3. OPEN MAPS (OpenStreetMap Picker & External Maps)
     // =========================================================================
     private void openMapPicker() {
+        OnAddressSelectedListener parentListener = this.listener;
+        dismiss(); // Dismiss this dialog so they NEVER overlap, peek through, or fight for touch events!
+
         MapPickerDialog mapPicker = MapPickerDialog.newInstance(lastKnownLat, lastKnownLon);
         mapPicker.setOnLocationPickedListener(pickedAddr -> {
             lastKnownLat = pickedAddr.getLatitude();
             lastKnownLon = pickedAddr.getLongitude();
 
-            if (isAddingNew) {
-                etStreet.setText(pickedAddr.getStreet());
-                etCity.setText(pickedAddr.getCity());
-                etState.setText(pickedAddr.getState());
-                etPincode.setText(pickedAddr.getPincode());
-                Toast.makeText(getContext(), "🗺️ Address picked from OpenStreetMap: " + pickedAddr.getCity(), Toast.LENGTH_SHORT).show();
-            } else {
-                if (listener != null) listener.onAddressSelected(pickedAddr);
-                dismiss();
+            if (parentListener != null) {
+                parentListener.onAddressSelected(pickedAddr);
             }
         });
         mapPicker.show(getParentFragmentManager(), "open_maps_picker");

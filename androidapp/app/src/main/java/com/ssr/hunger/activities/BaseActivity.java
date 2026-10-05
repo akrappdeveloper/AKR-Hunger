@@ -1,25 +1,31 @@
 package com.ssr.hunger.activities;
 
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import com.ssr.hunger.R;
 import com.ssr.hunger.utils.AnalyticsHelper;
 import com.ssr.hunger.utils.CrashlyticsHelper;
 import com.ssr.hunger.utils.PerformanceHelper;
+import com.ssr.hunger.utils.PermissionManager;
 import com.ssr.hunger.utils.RemoteConfigHelper;
+import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.perf.metrics.Trace;
 
 /**
- * Base Activity that ALL activities in the app extend.
- * Provides automatic, seamless integration with:
+ * Base Activity that ALL activities in AKR Hunger extend.
+ * Provides automatic integration with:
  * - Firebase Crashlytics (breadcrumbs, screen metadata, user context)
- * - Firebase Realtime Analytics (automatic screen_view events, eCommerce logging)
- * - Firebase Performance Monitoring (screen rendering traces, custom metrics)
+ * - Firebase Analytics (automatic screen_view events, eCommerce logging)
+ * - Firebase Performance Monitoring (screen rendering traces)
  * - Firebase Remote Config (feature flags, fee configuration)
+ * - Centralized PermissionManager (all permission types with custom dialogs)
  */
 public abstract class BaseActivity extends AppCompatActivity {
 
@@ -31,6 +37,10 @@ public abstract class BaseActivity extends AppCompatActivity {
     protected RemoteConfigHelper remoteConfigHelper;
 
     private Trace screenTrace;
+
+    // ──────────────────────────────────────────────────────────────────
+    // Lifecycle
+    // ──────────────────────────────────────────────────────────────────
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -67,14 +77,8 @@ public abstract class BaseActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         String screenName = getScreenName();
-
-        // 1. Firebase Realtime Analytics - screen_view event
         analyticsHelper.logScreenView(this, screenName);
-
-        // 2. Firebase Crashlytics - breadcrumb & custom key
         crashlyticsHelper.logScreenView(screenName);
-
-        // 3. Firebase Performance Monitoring - screen rendering trace
         screenTrace = performanceHelper.startTrace("screen_" + screenName);
         if (screenTrace != null) {
             performanceHelper.putAttribute(screenTrace, "screen_name", screenName);
@@ -84,54 +88,142 @@ public abstract class BaseActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        // Stop performance screen trace
         if (screenTrace != null) {
             performanceHelper.stopTrace(screenTrace);
             screenTrace = null;
         }
     }
 
+    // ──────────────────────────────────────────────────────────────────
+    // Permission Result Delegation
+    // ──────────────────────────────────────────────────────────────────
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                            @NonNull String[] permissions,
+                                            @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        boolean handled = PermissionManager.handleResult(
+            this, requestCode, permissions, grantResults,
+            this::onPermissionGranted,
+            (isPermanent) -> onPermissionDenied(requestCode, isPermanent)
+        );
+
+        if (handled) {
+            logBreadcrumb("Permission result handled: reqCode=" + requestCode);
+        }
+    }
+
     /**
-     * Log custom analytics event.
+     * Called when any permission is granted.
+     * Override in subclasses to handle specific permission results.
      */
+    protected void onPermissionGranted() {
+        Log.d(TAG, "Permission granted");
+    }
+
+    /**
+     * Called when any permission is denied.
+     * @param requestCode The request code identifying which permission.
+     * @param isPermanent True if the user selected "Don't ask again".
+     */
+    protected void onPermissionDenied(int requestCode, boolean isPermanent) {
+        Log.d(TAG, "Permission denied: rc=" + requestCode + " permanent=" + isPermanent);
+        if (isPermanent) {
+            showSettingsSnackbar();
+        }
+    }
+
+    // ──────────────────────────────────────────────────────────────────
+    // Permission Convenience Methods (delegates to PermissionManager)
+    // ──────────────────────────────────────────────────────────────────
+
+    /**
+     * Request location permission with a beautiful dialog.
+     */
+    protected void requireLocation(@NonNull PermissionManager.Callback onGranted,
+                                    @Nullable PermissionManager.DeniedCallback onDenied) {
+        PermissionManager.requireLocation(this, onGranted, onDenied);
+    }
+
+    /**
+     * Request camera permission with a beautiful dialog.
+     */
+    protected void requireCamera(@NonNull PermissionManager.Callback onGranted,
+                                  @Nullable PermissionManager.DeniedCallback onDenied) {
+        PermissionManager.requireCamera(this, onGranted, onDenied);
+    }
+
+    /**
+     * Request storage/photos permission with a beautiful dialog.
+     */
+    protected void requireStorage(@NonNull PermissionManager.Callback onGranted,
+                                   @Nullable PermissionManager.DeniedCallback onDenied) {
+        PermissionManager.requireStorage(this, onGranted, onDenied);
+    }
+
+    /**
+     * Request notification permission (Android 13+ only) with a beautiful dialog.
+     */
+    protected void requireNotifications(@NonNull PermissionManager.Callback onGranted,
+                                         @Nullable PermissionManager.DeniedCallback onDenied) {
+        PermissionManager.requireNotifications(this, onGranted, onDenied);
+    }
+
+    /**
+     * Request microphone permission with a beautiful dialog.
+     */
+    protected void requireMicrophone(@NonNull PermissionManager.Callback onGranted,
+                                      @Nullable PermissionManager.DeniedCallback onDenied) {
+        PermissionManager.requireMicrophone(this, onGranted, onDenied);
+    }
+
+    /**
+     * Request phone call permission with a beautiful dialog.
+     */
+    protected void requirePhone(@NonNull PermissionManager.Callback onGranted,
+                                 @Nullable PermissionManager.DeniedCallback onDenied) {
+        PermissionManager.requirePhone(this, onGranted, onDenied);
+    }
+
+    /**
+     * Show a Snackbar directing the user to app settings (used on permanent denial).
+     */
+    protected void showSettingsSnackbar() {
+        android.view.View root = getWindow().getDecorView().getRootView();
+        Snackbar.make(root, "Permission required. Enable it in Settings.", Snackbar.LENGTH_LONG)
+                .setAction("Settings", v -> PermissionManager.openAppSettings(this))
+                .setActionTextColor(getColor(R.color.primary))
+                .show();
+    }
+
+    // ──────────────────────────────────────────────────────────────────
+    // Analytics & Crashlytics helpers
+    // ──────────────────────────────────────────────────────────────────
+
     protected void logAnalyticsEvent(@NonNull String eventName, @Nullable Bundle params) {
         analyticsHelper.logEvent(eventName, params);
         crashlyticsHelper.log("Event logged: " + eventName);
     }
 
-    /**
-     * Log a Crashlytics breadcrumb.
-     */
     protected void logBreadcrumb(@NonNull String message) {
         crashlyticsHelper.log(message);
     }
 
-    /**
-     * Record non-fatal exception with context message.
-     */
     protected void recordException(@NonNull String context, @NonNull Throwable throwable) {
         crashlyticsHelper.recordException(context, throwable);
     }
 
-    /**
-     * Helper to start a performance trace.
-     */
     @Nullable
     protected Trace startTrace(@NonNull String traceName) {
         return performanceHelper.startTrace(traceName);
     }
 
-    /**
-     * Helper to stop a performance trace.
-     */
     protected void stopTrace(@Nullable Trace trace) {
         performanceHelper.stopTrace(trace);
     }
 
-    /**
-     * Provides the screen name for analytics and performance tracking.
-     * Can be overridden by subclasses for custom names.
-     */
     protected String getScreenName() {
         return getClass().getSimpleName().replace("Activity", "");
     }

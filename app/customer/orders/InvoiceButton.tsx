@@ -769,7 +769,7 @@ function generateEnterpriseInvoiceHTML(
             This is a computer-generated tax invoice issued in compliance with the Information Technology Act 2000 and GST Rules.
           </p>
           <p style="margin: 2px 0 0 0; font-size: 9.5px; color: #a1a1aa;">
-            Disputes & support: <a href="mailto:support@akrhunger.com" style="color: #ea580c; text-decoration: none; font-weight: 600;">support@akrhunger.com</a> &bull; 24x7 Customer Desk &bull; akrhunger.com
+            Disputes & support: <a href="mailto:hunger@gmail.com" style="color: #ea580c; text-decoration: none; font-weight: 600;">hunger@gmail.com</a> &bull; 24x7 Customer Desk (+91 6393752013) &bull; akrhunger.com
           </p>
         </div>
         <div style="text-align: right; flex-shrink: 0;">

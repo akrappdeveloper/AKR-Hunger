@@ -132,6 +132,15 @@ export default function MenuManagementPage() {
     packagingFee: '0',
     addOns: [] as { name: string; price: number }[],
     sizes: [] as { name: string; price: number }[],
+    // ── NEW NUTRITION & DETAILS FIELDS ──────────────────────────
+    protein: '',         // grams
+    carbs: '',           // grams
+    fat: '',             // grams
+    ingredients: '',     // comma-separated list
+    portionSize: '',     // e.g. '250g', '1 plate'
+    isGlutenFree: false,
+    isJain: false,
+    isHalal: false,
   });
 
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -311,6 +320,15 @@ export default function MenuManagementPage() {
       packagingFee: (rawAny.packagingFee || 0).toString(),
       addOns: rawAny.addOns || rawAny.addons || [],
       sizes: rawAny.sizes || [],
+      // Nutrition & Details
+      protein: rawAny.nutrition?.protein ? rawAny.nutrition.protein.toString() : '',
+      carbs: rawAny.nutrition?.carbs ? rawAny.nutrition.carbs.toString() : '',
+      fat: rawAny.nutrition?.fat ? rawAny.nutrition.fat.toString() : '',
+      ingredients: Array.isArray(rawAny.ingredients) ? rawAny.ingredients.join(', ') : (rawAny.ingredients || ''),
+      portionSize: rawAny.portionSize || rawAny.servingSize || '',
+      isGlutenFree: Boolean(rawAny.isGlutenFree),
+      isJain: Boolean(rawAny.isJain),
+      isHalal: Boolean(rawAny.isHalal),
     });
     setImagePreviews(item.images && item.images.length > 0 ? item.images : item.image ? [item.image] : []);
     setImageFiles([]);
@@ -413,6 +431,17 @@ export default function MenuManagementPage() {
         approvalStatus: 'approved', // Auto-approved so restaurant and customer immediately see it!
         isLive: true,               // Live on customer app immediately
         updatedAt: new Date(),
+        // ── Nutrition & Details ──────────────────────────────────
+        nutrition: {
+          protein: parseFloat(newItem.protein) || null,
+          carbs: parseFloat(newItem.carbs) || null,
+          fat: parseFloat(newItem.fat) || null,
+        },
+        ingredients: newItem.ingredients ? newItem.ingredients.split(',').map((i: string) => i.trim()).filter(Boolean) : [],
+        portionSize: newItem.portionSize?.trim() || null,
+        isGlutenFree: Boolean(newItem.isGlutenFree),
+        isJain: Boolean(newItem.isJain),
+        isHalal: Boolean(newItem.isHalal),
       };
 
       if (parsedOriginalPrice !== null && parsedOriginalPrice > parsedPrice) {
@@ -493,6 +522,14 @@ export default function MenuManagementPage() {
         packagingFee: '0',
         addOns: [],
         sizes: [],
+        protein: '',
+        carbs: '',
+        fat: '',
+        ingredients: '',
+        portionSize: '',
+        isGlutenFree: false,
+        isJain: false,
+        isHalal: false,
       });
       setImageFiles([]);
       setImagePreviews([]);
@@ -730,6 +767,14 @@ export default function MenuManagementPage() {
                 packagingFee: '0',
                 addOns: [],
                 sizes: [],
+                protein: '',
+                carbs: '',
+                fat: '',
+                ingredients: '',
+                portionSize: '',
+                isGlutenFree: false,
+                isJain: false,
+                isHalal: false,
               });
               setImageFiles([]);
               setImagePreviews([]);
@@ -760,11 +805,12 @@ export default function MenuManagementPage() {
 
               <div className="p-6 md:p-8">
                 <Tabs defaultValue="basic" className="w-full">
-                  <TabsList className="bg-muted/50 border border-border p-1 rounded-2xl w-full grid grid-cols-4 gap-1 mb-8">
-                    <TabsTrigger value="basic" className="rounded-xl py-2.5 font-bold text-xs md:text-sm">Basic Info</TabsTrigger>
-                    <TabsTrigger value="options" className="rounded-xl py-2.5 font-bold text-xs md:text-sm">Options & Add-ons</TabsTrigger>
-                    <TabsTrigger value="pickup" className="rounded-xl py-2.5 font-bold text-xs md:text-sm">Pickup / Takeaway</TabsTrigger>
-                    <TabsTrigger value="attributes" className="rounded-xl py-2.5 font-bold text-xs md:text-sm">Badges</TabsTrigger>
+                  <TabsList className="bg-muted/50 border border-border p-1 rounded-2xl w-full grid grid-cols-5 gap-1 mb-8">
+                    <TabsTrigger value="basic" className="rounded-xl py-2.5 font-bold text-[11px] md:text-sm">Basic Info</TabsTrigger>
+                    <TabsTrigger value="options" className="rounded-xl py-2.5 font-bold text-[11px] md:text-sm">Options</TabsTrigger>
+                    <TabsTrigger value="nutrition" className="rounded-xl py-2.5 font-bold text-[11px] md:text-sm">🔥 Nutrition</TabsTrigger>
+                    <TabsTrigger value="pickup" className="rounded-xl py-2.5 font-bold text-[11px] md:text-sm">Pickup</TabsTrigger>
+                    <TabsTrigger value="attributes" className="rounded-xl py-2.5 font-bold text-[11px] md:text-sm">Badges</TabsTrigger>
                   </TabsList>
 
                   {/* TAB 1: BASIC INFO */}
@@ -1225,7 +1271,108 @@ export default function MenuManagementPage() {
                     </div>
                   </TabsContent>
 
-                  {/* TAB 3: PICKUP / TAKEAWAY SETTINGS */}
+                  {/* TAB 3: NUTRITION & DETAILS */}
+                  <TabsContent value="nutrition" className="space-y-6 focus-visible:outline-none">
+                    {/* Caloric & Macros */}
+                    <div className="p-5 rounded-2xl border border-border bg-card space-y-4">
+                      <div>
+                        <h4 className="font-bold text-foreground text-sm flex items-center gap-2">
+                          <Flame className="w-4 h-4 text-orange-500" /> Nutritional Information
+                        </h4>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          Displayed on the customer product page. Leave blank if unknown.
+                        </p>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="calories_input" className="text-foreground text-xs font-bold">Calories (kcal)</Label>
+                          <div className="relative">
+                            <Flame className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-orange-500" />
+                            <Input id="calories_input" type="number" placeholder="e.g. 320" value={newItem.calories}
+                              onChange={(e) => setNewItem({ ...newItem, calories: e.target.value })}
+                              className="bg-card border-border h-11 rounded-xl pl-9 text-xs" />
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="portionSize" className="text-foreground text-xs font-bold">Portion / Serving Size</Label>
+                          <Input id="portionSize" placeholder="e.g. 250g, 1 plate, 2 pieces"
+                            value={newItem.portionSize}
+                            onChange={(e) => setNewItem({ ...newItem, portionSize: e.target.value })}
+                            className="bg-card border-border h-11 rounded-xl text-xs" />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        {[
+                          { key: 'protein', label: 'Protein (g)', placeholder: '15', color: 'text-emerald-500' },
+                          { key: 'carbs', label: 'Carbs (g)', placeholder: '40', color: 'text-blue-500' },
+                          { key: 'fat', label: 'Fat (g)', placeholder: '12', color: 'text-rose-500' },
+                        ].map(macro => (
+                          <div key={macro.key} className="space-y-2">
+                            <Label htmlFor={macro.key} className={`text-foreground text-xs font-bold ${macro.color}`}>{macro.label}</Label>
+                            <Input id={macro.key} type="number" placeholder={macro.placeholder}
+                              value={(newItem as any)[macro.key]}
+                              onChange={(e) => setNewItem({ ...newItem, [macro.key]: e.target.value } as any)}
+                              className="bg-card border-border h-11 rounded-xl text-xs" />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Ingredients */}
+                    <div className="space-y-2">
+                      <Label htmlFor="ingredients" className="text-foreground font-bold flex items-center gap-2 text-sm">
+                        🌱 Key Ingredients
+                      </Label>
+                      <Textarea id="ingredients" placeholder="e.g. Chicken, Basmati Rice, Saffron, Onions, Tomatoes, Garam Masala..."
+                        value={newItem.ingredients}
+                        onChange={(e) => setNewItem({ ...newItem, ingredients: e.target.value })}
+                        className="bg-card border-border min-h-[80px] rounded-xl p-3 text-xs resize-none" />
+                      <p className="text-[11px] text-muted-foreground">Comma-separated ingredient list shown to customers on the product page.</p>
+                    </div>
+
+                    {/* Allergens (moved here from options tab) */}
+                    <div className="space-y-2">
+                      <Label htmlFor="allergens_nutrition" className="text-foreground text-xs font-bold flex items-center gap-1.5">
+                        <AlertCircle className="w-3.5 h-3.5 text-amber-500" /> Allergen Warnings
+                      </Label>
+                      <Input id="allergens_nutrition" placeholder="e.g. Peanuts, Dairy, Gluten, Tree Nuts, Shellfish"
+                        value={newItem.allergens}
+                        onChange={(e) => setNewItem({ ...newItem, allergens: e.target.value })}
+                        className="bg-card border-border h-11 rounded-xl text-xs" />
+                    </div>
+
+                    {/* Dietary Certifications */}
+                    <div className="p-5 rounded-2xl border border-border bg-card space-y-4">
+                      <h4 className="font-bold text-foreground text-sm">🥗 Dietary Certifications</h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        {[
+                          { key: 'isGlutenFree', label: 'Gluten Free', desc: 'No gluten-containing ingredients', icon: '🌾' },
+                          { key: 'isJain', label: 'Jain Friendly', desc: 'No root vegetables (Jain cuisine)', icon: '🙏' },
+                          { key: 'isHalal', label: 'Halal Certified', desc: 'Prepared according to halal standards', icon: '✅' },
+                        ].map((cert) => (
+                          <label key={cert.key}
+                            className={`flex items-start gap-3 p-3 rounded-2xl border cursor-pointer transition-all ${
+                              (newItem as any)[cert.key] ? 'bg-primary/5 border-primary/40 shadow-sm' : 'bg-muted/20 border-border hover:bg-muted/40'
+                            }`}
+                          >
+                            <Checkbox
+                              checked={(newItem as any)[cert.key]}
+                              onCheckedChange={(c) => setNewItem({ ...newItem, [cert.key]: !!c } as any)}
+                              className="mt-0.5 h-5 w-5 data-[state=checked]:bg-primary"
+                            />
+                            <div>
+                              <p className="font-bold text-sm text-foreground flex items-center gap-1">
+                                <span>{cert.icon}</span> {cert.label}
+                              </p>
+                              <p className="text-xs text-muted-foreground mt-0.5">{cert.desc}</p>
+                            </div>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  </TabsContent>
+
+                  {/* TAB 4: PICKUP / TAKEAWAY SETTINGS */}
                   <TabsContent value="pickup" className="space-y-6 focus-visible:outline-none">
                     <div className="p-5 rounded-2xl border border-primary/20 bg-primary/5 space-y-5">
                       <div className="flex items-start justify-between gap-4">

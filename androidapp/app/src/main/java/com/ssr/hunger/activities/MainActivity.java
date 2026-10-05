@@ -185,6 +185,7 @@ public class MainActivity extends BaseActivity implements CartManager.CartChange
         }
     }
 
+
     @Override
     protected void onDestroy() {
         super.onDestroy();

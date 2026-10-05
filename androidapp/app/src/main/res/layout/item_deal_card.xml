@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginBottom="12dp"
-    app:cardCornerRadius="20dp"
-    app:cardElevation="1.5dp"
+    android:layout_marginBottom="14dp"
+    app:cardCornerRadius="22dp"
+    app:cardElevation="2dp"
     app:strokeColor="@color/card_border"
     app:strokeWidth="1dp"
     app:cardBackgroundColor="@color/surface">
@@ -14,18 +15,19 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="16dp">
+        android:padding="18dp">
 
+        <!-- Top Header: Emoji + Title + Discount Tag -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:gravity="center_vertical">
+            android:gravity="top">
 
-            <!-- Deal Emoji Badge -->
+            <!-- Deal Emoji Badge Container -->
             <FrameLayout
-                android:layout_width="48dp"
-                android:layout_height="48dp"
+                android:layout_width="52dp"
+                android:layout_height="52dp"
                 android:background="@drawable/bg_icon_circle_soft">
 
                 <TextView
@@ -33,8 +35,8 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
-                    android:textSize="24sp"
-                    android:text="🎫" />
+                    android:textSize="26sp"
+                    android:text="🎟️" />
             </FrameLayout>
 
             <LinearLayout
@@ -44,48 +46,105 @@
                 android:orientation="vertical"
                 android:layout_marginStart="14dp">
 
-                <TextView
-                    android:id="@+id/tv_deal_title"
-                    android:layout_width="wrap_content"
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:textSize="15sp"
-                    android:textStyle="bold"
-                    android:textColor="@color/text_primary" />
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/tv_deal_title"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/text_primary"
+                        android:letterSpacing="-0.01" />
+
+                    <!-- Vibrant Discount Tag -->
+                    <TextView
+                        android:id="@+id/tv_deal_badge"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/bg_badge_emerald_glow"
+                        android:paddingHorizontal="10dp"
+                        android:paddingVertical="4dp"
+                        android:text="50% OFF"
+                        android:textColor="#059669"
+                        android:textSize="11sp"
+                        android:textStyle="bold"
+                        android:layout_marginStart="8dp" />
+                </LinearLayout>
 
                 <TextView
                     android:id="@+id/tv_deal_desc"
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:textSize="12sp"
+                    android:textSize="13sp"
                     android:textColor="@color/text_secondary"
-                    android:layout_marginTop="3dp"
-                    android:lineSpacingExtra="1dp" />
+                    android:layout_marginTop="4dp"
+                    android:lineSpacingExtra="2dp" />
+
+                <!-- Meta Pills (Min order & Max discount info) -->
+                <LinearLayout
+                    android:id="@+id/layout_deal_meta"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="8dp"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:id="@+id/tv_deal_min_order"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Min order ₹199"
+                        android:textSize="11sp"
+                        android:textColor="@color/text_tertiary"
+                        android:background="@drawable/bg_pill_soft"
+                        android:paddingHorizontal="8dp"
+                        android:paddingVertical="2dp"
+                        android:layout_marginEnd="6dp" />
+
+                    <TextView
+                        android:id="@+id/tv_deal_category"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Exclusive"
+                        android:textSize="11sp"
+                        android:textColor="@color/primary"
+                        android:background="@drawable/bg_pill_soft"
+                        android:paddingHorizontal="8dp"
+                        android:paddingVertical="2dp" />
+                </LinearLayout>
 
             </LinearLayout>
 
         </LinearLayout>
 
-        <!-- Dashed Divider -->
+        <!-- Ticket Perforated / Dashed Separator -->
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"
-            android:layout_marginTop="14dp"
-            android:layout_marginBottom="12dp"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="14dp"
             android:background="@color/divider" />
 
-        <!-- Coupon Code & Copy Action Row -->
+        <!-- Bottom Action Bar: Code Pill + Copy Button -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical">
 
+            <!-- Dashed Coupon Code Box -->
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:background="@drawable/bg_coupon_dashed"
-                android:paddingHorizontal="12dp"
-                android:paddingVertical="6dp"
+                android:paddingHorizontal="14dp"
+                android:paddingVertical="8dp"
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
 
@@ -95,16 +154,17 @@
                     android:text="CODE: "
                     android:textSize="10sp"
                     android:textColor="@color/text_tertiary"
-                    android:textStyle="bold" />
+                    android:textStyle="bold"
+                    android:letterSpacing="0.05" />
 
                 <TextView
                     android:id="@+id/tv_deal_code"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textSize="13sp"
+                    android:textSize="14sp"
                     android:textStyle="bold"
                     android:textColor="@color/primary"
-                    android:letterSpacing="0.05" />
+                    android:letterSpacing="0.08" />
             </LinearLayout>
 
             <View
@@ -112,18 +172,22 @@
                 android:layout_height="1dp"
                 android:layout_weight="1" />
 
+            <!-- Copy Code Material Button -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_copy_code"
                 android:layout_width="wrap_content"
-                android:layout_height="38dp"
+                android:layout_height="40dp"
                 android:text="Copy Code"
                 android:textSize="12sp"
                 android:textStyle="bold"
                 app:icon="@drawable/ic_copy"
                 app:iconSize="14dp"
                 app:iconGravity="textStart"
-                style="@style/Widget.AKR.Button.PillSoft"
-                android:paddingHorizontal="14dp" />
+                app:cornerRadius="20dp"
+                android:backgroundTint="@color/primary"
+                android:textColor="@color/white"
+                android:elevation="0dp"
+                android:paddingHorizontal="16dp" />
 
         </LinearLayout>
 

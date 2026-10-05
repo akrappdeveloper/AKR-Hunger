@@ -1,0 +1,30 @@
+{
+  "rules": {
+    "deals": {
+      ".read": true,
+      ".write": true
+    },
+    "redeem_codes": {
+      ".read": true,
+      ".write": true
+    },
+    "promotions": {
+      ".read": true,
+      ".write": true
+    },
+    "supportChats": {
+      "$ticketId": {
+        ".read": "auth != null",
+        ".write": "auth != null",
+        "messages": {
+          "$messageId": {
+            ".read": "auth != null",
+            ".write": "auth != null"
+          }
+        }
+      }
+    },
+    ".read": "auth != null",
+    ".write": "auth != null"
+  }
+}

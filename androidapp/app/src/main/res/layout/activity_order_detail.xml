@@ -6,33 +6,37 @@
     android:background="@color/background"
     android:orientation="vertical">
 
-    <!-- Top App Bar Header -->
+    <!-- Top App Bar Navigation Header -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="64dp"
         android:background="@color/surface"
-        android:elevation="2dp"
+        android:elevation="3dp"
         android:gravity="center_vertical"
         android:orientation="horizontal"
         android:paddingHorizontal="16dp">
 
-        <FrameLayout
+        <com.google.android.material.card.MaterialCardView
             android:id="@+id/btn_back"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:background="@drawable/bg_icon_circle_gray"
+            android:layout_width="42dp"
+            android:layout_height="42dp"
             android:clickable="true"
             android:focusable="true"
-            android:foreground="?attr/selectableItemBackgroundBorderless">
+            android:foreground="?attr/selectableItemBackground"
+            app:cardBackgroundColor="@color/surface_variant"
+            app:cardCornerRadius="21dp"
+            app:cardElevation="0dp"
+            app:strokeColor="@color/card_border"
+            app:strokeWidth="1dp">
 
             <ImageView
                 android:layout_width="20dp"
                 android:layout_height="20dp"
                 android:layout_gravity="center"
+                android:contentDescription="Back"
                 android:src="@drawable/ic_back"
-                android:tint="@color/text_primary"
-                android:contentDescription="Back" />
-        </FrameLayout>
+                app:tint="@color/text_primary" />
+        </com.google.android.material.card.MaterialCardView>
 
         <LinearLayout
             android:layout_width="0dp"
@@ -44,29 +48,36 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-black"
+                android:letterSpacing="-0.01"
                 android:text="Order Details"
                 android:textColor="@color/text_primary"
-                android:textSize="17sp"
-                android:textStyle="bold" />
+                android:textSize="18sp" />
 
             <TextView
                 android:id="@+id/tv_order_id"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textColor="@color/text_hint"
-                android:textSize="12sp" />
+                android:layout_marginTop="1dp"
+                android:fontFamily="sans-serif-bold"
+                android:text="Order #--------"
+                android:textColor="@color/text_secondary"
+                android:textSize="11.5sp" />
         </LinearLayout>
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_help"
-            android:layout_width="wrap_content"
-            android:layout_height="36dp"
-            android:text="Support"
-            android:textSize="11sp"
-            android:textStyle="bold"
-            android:textColor="@color/primary"
             style="@style/Widget.AKR.Button.PillSoft"
-            android:paddingHorizontal="12dp" />
+            android:layout_width="wrap_content"
+            android:layout_height="38dp"
+            android:fontFamily="sans-serif-bold"
+            android:paddingHorizontal="14dp"
+            android:text="24x7 Help"
+            android:textSize="11.5sp"
+            app:cornerRadius="19dp"
+            app:icon="@drawable/ic_support"
+            app:iconSize="14dp"
+            app:iconTint="@color/primary" />
 
     </LinearLayout>
 
@@ -74,9 +85,12 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:clipToPadding="false"
-        android:paddingBottom="40dp">
+        android:fillViewport="true"
+        android:overScrollMode="never"
+        android:paddingBottom="42dp">
 
         <LinearLayout
+            android:id="@+id/layout_detail_container"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
@@ -85,11 +99,12 @@
 
             <!-- Order Status & Restaurant Hero Card -->
             <com.google.android.material.card.MaterialCardView
+                android:id="@+id/card_order_hero"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 app:cardBackgroundColor="@color/surface"
-                app:cardCornerRadius="22dp"
-                app:cardElevation="2dp"
+                app:cardCornerRadius="24dp"
+                app:cardElevation="3dp"
                 app:strokeColor="@color/card_border"
                 app:strokeWidth="1dp">
 
@@ -105,9 +120,23 @@
                         android:gravity="center_vertical"
                         android:orientation="horizontal">
 
+                        <FrameLayout
+                            android:layout_width="50dp"
+                            android:layout_height="50dp"
+                            android:background="@drawable/bg_icon_circle_soft">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="center"
+                                android:text="🍽️"
+                                android:textSize="22sp" />
+                        </FrameLayout>
+
                         <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
+                            android:layout_marginStart="14dp"
                             android:layout_weight="1"
                             android:orientation="vertical">
 
@@ -116,18 +145,34 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:ellipsize="end"
+                                android:fontFamily="sans-serif-black"
                                 android:maxLines="1"
+                                android:text="Restaurant Name"
                                 android:textColor="@color/text_primary"
-                                android:textSize="18sp"
-                                android:textStyle="bold" />
+                                android:textSize="18sp" />
 
-                            <TextView
-                                android:id="@+id/tv_date"
+                            <LinearLayout
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="3dp"
-                                android:textColor="@color/text_hint"
-                                android:textSize="12sp" />
+                                android:gravity="center_vertical"
+                                android:orientation="horizontal">
+
+                                <ImageView
+                                    android:layout_width="12dp"
+                                    android:layout_height="12dp"
+                                    android:src="@drawable/ic_calendar"
+                                    app:tint="@color/text_hint" />
+
+                                <TextView
+                                    android:id="@+id/tv_date"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginStart="5dp"
+                                    android:fontFamily="sans-serif-medium"
+                                    android:textColor="@color/text_secondary"
+                                    android:textSize="12sp" />
+                            </LinearLayout>
                         </LinearLayout>
 
                         <!-- Status Pill Badge -->
@@ -136,23 +181,80 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:background="@drawable/bg_pill_soft"
+                            android:fontFamily="sans-serif-bold"
                             android:paddingHorizontal="12dp"
                             android:paddingVertical="5dp"
                             android:textColor="@color/primary"
-                            android:textSize="12sp"
-                            android:textStyle="bold" />
+                            android:textSize="12sp" />
                     </LinearLayout>
+
+                    <!-- Divider -->
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_marginTop="16dp"
+                        android:layout_marginBottom="14dp"
+                        android:background="@color/divider" />
 
                     <!-- Track Order CTA Button -->
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btn_track_order"
+                        style="@style/Widget.AKR.Button.Primary"
+                        android:layout_width="match_parent"
+                        android:layout_height="52dp"
+                        android:fontFamily="sans-serif-black"
+                        android:letterSpacing="0.02"
+                        android:text="📍 Track Live Order &amp; Driver"
+                        android:textSize="14.5sp"
+                        app:cornerRadius="26dp"
+                        app:elevation="4dp" />
+
+                    <!-- Cancel Order Button (visible within 5-min cancellation window) -->
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_cancel_order"
                         android:layout_width="match_parent"
                         android:layout_height="48dp"
-                        android:layout_marginTop="16dp"
-                        android:text="📍 Track Live Order &amp; Driver"
-                        android:textSize="13sp"
-                        android:textStyle="bold"
-                        style="@style/Widget.AKR.Button.Primary" />
+                        android:layout_marginTop="10dp"
+                        android:fontFamily="sans-serif-bold"
+                        android:text="Cancel Order"
+                        android:textColor="@color/error"
+                        android:textSize="13.5sp"
+                        android:visibility="gone"
+                        app:backgroundTint="@color/error_light"
+                        app:cornerRadius="24dp"
+                        app:elevation="0dp"
+                        app:strokeColor="@color/error"
+                        app:strokeWidth="1.2dp" />
+
+                    <!-- Non-cancellable Preparing Status Hint -->
+                    <LinearLayout
+                        android:id="@+id/tv_preparing_message"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:background="@drawable/bg_pill_amber_soft"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingHorizontal="14dp"
+                        android:paddingVertical="10dp"
+                        android:visibility="gone">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="🍳"
+                            android:textSize="16sp" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="10dp"
+                            android:layout_weight="1"
+                            android:fontFamily="sans-serif-medium"
+                            android:text="Your meal is being prepared by the kitchen and can no longer be cancelled."
+                            android:textColor="@color/warning"
+                            android:textSize="12sp" />
+                    </LinearLayout>
 
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -162,10 +264,10 @@
                 android:id="@+id/card_delivery_otp"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
+                android:layout_marginTop="14dp"
                 app:cardBackgroundColor="@color/surface"
-                app:cardCornerRadius="22dp"
-                app:cardElevation="2dp"
+                app:cardCornerRadius="24dp"
+                app:cardElevation="3dp"
                 app:strokeColor="@color/primary"
                 app:strokeWidth="1.5dp">
 
@@ -174,7 +276,8 @@
                     android:layout_height="wrap_content"
                     android:gravity="center"
                     android:orientation="vertical"
-                    android:padding="18dp">
+                    android:paddingHorizontal="20dp"
+                    android:paddingVertical="18dp">
 
                     <LinearLayout
                         android:layout_width="wrap_content"
@@ -183,8 +286,8 @@
                         android:orientation="horizontal">
 
                         <ImageView
-                            android:layout_width="18dp"
-                            android:layout_height="18dp"
+                            android:layout_width="16dp"
+                            android:layout_height="16dp"
                             android:src="@drawable/ic_shield_check"
                             app:tint="@color/primary" />
 
@@ -196,25 +299,30 @@
                             android:letterSpacing="0.08"
                             android:text="DELIVERY VERIFICATION OTP"
                             android:textColor="@color/primary"
-                            android:textSize="12sp" />
+                            android:textSize="11.5sp" />
                     </LinearLayout>
 
+                    <!-- Monospace Bold OTP Display -->
                     <TextView
                         android:id="@+id/tv_delivery_otp"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginVertical="8dp"
+                        android:background="@drawable/bg_coupon_dashed"
                         android:fontFamily="monospace"
-                        android:letterSpacing="0.3"
+                        android:letterSpacing="0.35"
+                        android:paddingHorizontal="24dp"
+                        android:paddingVertical="6dp"
                         android:text="----"
                         android:textColor="@color/text_primary"
-                        android:textSize="32sp"
+                        android:textSize="34sp"
                         android:textStyle="bold" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:gravity="center"
+                        android:lineSpacingExtra="2dp"
                         android:text="Share this 4-digit security code with the delivery partner upon arrival to confirm delivery."
                         android:textColor="@color/text_secondary"
                         android:textSize="12sp" />
@@ -223,12 +331,16 @@
                         android:id="@+id/btn_copy_otp"
                         style="@style/Widget.AKR.Button.PillSoft"
                         android:layout_width="wrap_content"
-                        android:layout_height="36dp"
+                        android:layout_height="38dp"
                         android:layout_marginTop="10dp"
-                        android:text="📋 Copy Code"
+                        android:fontFamily="sans-serif-bold"
+                        android:text="Copy Code"
                         android:textColor="@color/primary"
-                        android:textSize="11sp"
-                        android:textStyle="bold" />
+                        android:textSize="12sp"
+                        app:cornerRadius="19dp"
+                        app:icon="@drawable/ic_copy"
+                        app:iconSize="14dp"
+                        app:iconTint="@color/primary" />
 
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -238,10 +350,10 @@
                 android:id="@+id/card_delivery_partner"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
+                android:layout_marginTop="14dp"
                 app:cardBackgroundColor="@color/surface"
-                app:cardCornerRadius="20dp"
-                app:cardElevation="1dp"
+                app:cardCornerRadius="22dp"
+                app:cardElevation="2dp"
                 app:strokeColor="@color/card_border"
                 app:strokeWidth="1dp">
 
@@ -253,8 +365,8 @@
                     android:padding="16dp">
 
                     <FrameLayout
-                        android:layout_width="44dp"
-                        android:layout_height="44dp"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
                         android:background="@drawable/bg_icon_circle_soft">
 
                         <TextView
@@ -262,7 +374,7 @@
                             android:layout_height="wrap_content"
                             android:layout_gravity="center"
                             android:text="🛵"
-                            android:textSize="22sp" />
+                            android:textSize="24sp" />
                     </FrameLayout>
 
                     <LinearLayout
@@ -275,56 +387,61 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Delivery Valet"
-                            android:textColor="@color/text_tertiary"
-                            android:textSize="11sp"
-                            android:textStyle="bold" />
+                            android:fontFamily="sans-serif-bold"
+                            android:letterSpacing="0.04"
+                            android:text="DELIVERY VALET"
+                            android:textColor="@color/text_hint"
+                            android:textSize="10.5sp" />
 
                         <TextView
                             android:id="@+id/tv_delivery_person"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="2dp"
+                            android:fontFamily="sans-serif-black"
                             android:text="Driver assigned"
                             android:textColor="@color/text_primary"
-                            android:textSize="14sp"
-                            android:textStyle="bold" />
+                            android:textSize="15sp" />
                     </LinearLayout>
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btn_rate_order"
                         android:layout_width="wrap_content"
-                        android:layout_height="36dp"
+                        android:layout_height="38dp"
+                        android:fontFamily="sans-serif-bold"
+                        android:paddingHorizontal="14dp"
                         android:text="⭐ Rate"
-                        android:textSize="11sp"
-                        android:textStyle="bold"
                         android:textColor="@color/amber_dark"
-                        android:backgroundTint="@color/warning_light"
-                        app:cornerRadius="18dp"
-                        android:paddingHorizontal="12dp"
-                        android:visibility="gone" />
+                        android:textSize="12sp"
+                        android:visibility="gone"
+                        app:backgroundTint="@color/warning_light"
+                        app:cornerRadius="19dp"
+                        app:elevation="0dp" />
 
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Items Ordered Card -->
+            <!-- Items Ordered Section Header -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="18dp"
-                android:letterSpacing="0.04"
+                android:layout_marginStart="4dp"
+                android:layout_marginTop="20dp"
+                android:fontFamily="sans-serif-bold"
+                android:letterSpacing="0.06"
                 android:text="ITEMS ORDERED"
                 android:textColor="@color/text_hint"
-                android:textSize="11sp"
-                android:textStyle="bold" />
+                android:textSize="11sp" />
 
+            <!-- Items Ordered Card -->
             <com.google.android.material.card.MaterialCardView
+                android:id="@+id/card_items_ordered"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 app:cardBackgroundColor="@color/surface"
-                app:cardCornerRadius="20dp"
-                app:cardElevation="1dp"
+                app:cardCornerRadius="22dp"
+                app:cardElevation="2dp"
                 app:strokeColor="@color/card_border"
                 app:strokeWidth="1dp">
 
@@ -338,30 +455,34 @@
                         android:id="@+id/tv_items"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:fontFamily="sans-serif-medium"
                         android:lineSpacingExtra="6dp"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="14sp" />
+                        android:textColor="@color/text_primary"
+                        android:textSize="14.5sp" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Bill Details Card -->
+            <!-- Bill Details Section Header -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="18dp"
-                android:letterSpacing="0.04"
-                android:text="BILL SUMMARY"
+                android:layout_marginStart="4dp"
+                android:layout_marginTop="20dp"
+                android:fontFamily="sans-serif-bold"
+                android:letterSpacing="0.06"
+                android:text="BILL SUMMARY &amp; TAX INVOICE"
                 android:textColor="@color/text_hint"
-                android:textSize="11sp"
-                android:textStyle="bold" />
+                android:textSize="11sp" />
 
+            <!-- Bill Details Card -->
             <com.google.android.material.card.MaterialCardView
+                android:id="@+id/card_bill_details"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 app:cardBackgroundColor="@color/surface"
-                app:cardCornerRadius="20dp"
-                app:cardElevation="1dp"
+                app:cardCornerRadius="22dp"
+                app:cardElevation="2dp"
                 app:strokeColor="@color/card_border"
                 app:strokeWidth="1dp">
 
@@ -369,19 +490,20 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="18dp">
+                    android:padding="20dp">
 
                     <!-- Item Subtotal -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:gravity="center_vertical"
-                        android:paddingVertical="4dp">
+                        android:paddingVertical="5dp">
 
                         <TextView
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
+                            android:fontFamily="sans-serif"
                             android:text="Item Subtotal"
                             android:textColor="@color/text_secondary"
                             android:textSize="13.5sp" />
@@ -390,9 +512,9 @@
                             android:id="@+id/tv_subtotal"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:fontFamily="sans-serif-bold"
                             android:textColor="@color/text_primary"
-                            android:textSize="14sp"
-                            android:textStyle="bold" />
+                            android:textSize="14sp" />
                     </LinearLayout>
 
                     <!-- Packaging Charges -->
@@ -400,12 +522,13 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:gravity="center_vertical"
-                        android:paddingVertical="4dp">
+                        android:paddingVertical="5dp">
 
                         <TextView
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
+                            android:fontFamily="sans-serif"
                             android:text="Packaging Charges"
                             android:textColor="@color/text_secondary"
                             android:textSize="13.5sp" />
@@ -414,10 +537,10 @@
                             android:id="@+id/tv_packaging_charges"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:fontFamily="sans-serif-bold"
                             android:text="₹0.00"
                             android:textColor="@color/text_primary"
-                            android:textSize="14sp"
-                            android:textStyle="bold" />
+                            android:textSize="14sp" />
                     </LinearLayout>
 
                     <!-- Delivery Partner Fee -->
@@ -425,12 +548,13 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:gravity="center_vertical"
-                        android:paddingVertical="4dp">
+                        android:paddingVertical="5dp">
 
                         <TextView
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
+                            android:fontFamily="sans-serif"
                             android:text="Delivery Partner Fee"
                             android:textColor="@color/text_secondary"
                             android:textSize="13.5sp" />
@@ -439,6 +563,7 @@
                             android:id="@+id/tv_delivery"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:fontFamily="sans-serif-bold"
                             android:textColor="@color/text_primary"
                             android:textSize="14sp" />
                     </LinearLayout>
@@ -448,12 +573,13 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:gravity="center_vertical"
-                        android:paddingVertical="4dp">
+                        android:paddingVertical="5dp">
 
                         <TextView
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
+                            android:fontFamily="sans-serif"
                             android:text="Platform Fee"
                             android:textColor="@color/text_secondary"
                             android:textSize="13.5sp" />
@@ -462,99 +588,114 @@
                             android:id="@+id/tv_platform_fee"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:fontFamily="sans-serif-bold"
                             android:text="₹0.00"
                             android:textColor="@color/text_primary"
-                            android:textSize="14sp"
-                            android:textStyle="bold" />
+                            android:textSize="14sp" />
                     </LinearLayout>
 
                     <View
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
-                        android:layout_marginVertical="8dp"
+                        android:layout_marginVertical="10dp"
                         android:background="@color/divider" />
 
-                    <!-- Taxable Supply Value -->
+                    <!-- Taxes Breakdown Container -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:gravity="center_vertical"
-                        android:paddingVertical="3dp">
+                        android:background="@drawable/bg_pill_soft"
+                        android:orientation="vertical"
+                        android:padding="12dp">
 
-                        <TextView
-                            android:layout_width="0dp"
+                        <!-- Taxable Supply Value -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="Taxable Supply Value"
-                            android:textColor="@color/text_secondary"
-                            android:textSize="12.5sp" />
+                            android:gravity="center_vertical"
+                            android:paddingVertical="2dp">
 
-                        <TextView
-                            android:id="@+id/tv_taxable_value"
-                            android:layout_width="wrap_content"
+                            <TextView
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:fontFamily="sans-serif"
+                                android:text="Taxable Supply Value"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="12.5sp" />
+
+                            <TextView
+                                android:id="@+id/tv_taxable_value"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="sans-serif-medium"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="12.5sp" />
+                        </LinearLayout>
+
+                        <!-- CGST (2.5%) -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:textColor="@color/text_secondary"
-                            android:textSize="12.5sp" />
-                    </LinearLayout>
+                            android:gravity="center_vertical"
+                            android:paddingVertical="2dp">
 
-                    <!-- CGST (2.5%) -->
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="center_vertical"
-                        android:paddingVertical="3dp">
+                            <TextView
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:fontFamily="sans-serif"
+                                android:text="CGST (2.5%)"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="12.5sp" />
 
-                        <TextView
-                            android:layout_width="0dp"
+                            <TextView
+                                android:id="@+id/tv_cgst"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="sans-serif-medium"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="12.5sp" />
+                        </LinearLayout>
+
+                        <!-- SGST (2.5%) -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="CGST (2.5%)"
-                            android:textColor="@color/text_secondary"
-                            android:textSize="12.5sp" />
+                            android:gravity="center_vertical"
+                            android:paddingVertical="2dp">
 
-                        <TextView
-                            android:id="@+id/tv_cgst"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:textColor="@color/text_secondary"
-                            android:textSize="12.5sp" />
-                    </LinearLayout>
+                            <TextView
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:fontFamily="sans-serif"
+                                android:text="SGST (2.5%)"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="12.5sp" />
 
-                    <!-- SGST (2.5%) -->
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="center_vertical"
-                        android:paddingVertical="3dp">
-
-                        <TextView
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="SGST (2.5%)"
-                            android:textColor="@color/text_secondary"
-                            android:textSize="12.5sp" />
-
-                        <TextView
-                            android:id="@+id/tv_sgst"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:textColor="@color/text_secondary"
-                            android:textSize="12.5sp" />
+                            <TextView
+                                android:id="@+id/tv_sgst"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="sans-serif-medium"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="12.5sp" />
+                        </LinearLayout>
                     </LinearLayout>
 
                     <View
                         android:layout_width="match_parent"
                         android:layout_height="1.5dp"
-                        android:layout_marginVertical="10dp"
+                        android:layout_marginVertical="12dp"
                         android:background="@color/divider" />
 
-                    <!-- GRAND TOTAL -->
+                    <!-- GRAND TOTAL Highlight Banner -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:gravity="center_vertical"
-                        android:paddingVertical="4dp">
+                        android:orientation="horizontal">
 
                         <LinearLayout
                             android:layout_width="0dp"
@@ -565,15 +706,17 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
+                                android:fontFamily="sans-serif-black"
                                 android:text="GRAND TOTAL"
                                 android:textColor="@color/text_primary"
-                                android:textSize="15sp"
-                                android:textStyle="bold" />
+                                android:textSize="16sp" />
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="(All taxes included)"
+                                android:layout_marginTop="1dp"
+                                android:fontFamily="sans-serif"
+                                android:text="(Inclusive of all applicable taxes)"
                                 android:textColor="@color/text_hint"
                                 android:textSize="11sp" />
                         </LinearLayout>
@@ -582,15 +725,15 @@
                             android:id="@+id/tv_total"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:fontFamily="sans-serif-black"
                             android:textColor="@color/primary"
-                            android:textSize="22sp"
-                            android:textStyle="bold" />
+                            android:textSize="22sp" />
                     </LinearLayout>
 
                     <View
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
-                        android:layout_marginVertical="8dp"
+                        android:layout_marginVertical="10dp"
                         android:background="@color/divider" />
 
                     <!-- Amount Paid -->
@@ -604,6 +747,7 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
+                            android:fontFamily="sans-serif"
                             android:text="Amount Paid"
                             android:textColor="@color/text_secondary"
                             android:textSize="13sp" />
@@ -612,9 +756,9 @@
                             android:id="@+id/tv_amount_paid"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:fontFamily="sans-serif-bold"
                             android:textColor="@color/text_secondary"
-                            android:textSize="13.5sp"
-                            android:textStyle="bold" />
+                            android:textSize="13.5sp" />
                     </LinearLayout>
 
                     <!-- Balance Due -->
@@ -628,37 +772,38 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
+                            android:fontFamily="sans-serif-bold"
                             android:text="Balance Due"
                             android:textColor="@color/text_primary"
-                            android:textSize="13sp"
-                            android:textStyle="bold" />
+                            android:textSize="13.5sp" />
 
                         <TextView
                             android:id="@+id/tv_balance_due"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:fontFamily="sans-serif-black"
                             android:textColor="@color/primary"
-                            android:textSize="14sp"
-                            android:textStyle="bold" />
+                            android:textSize="14.5sp" />
                     </LinearLayout>
 
                     <View
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
-                        android:layout_marginVertical="8dp"
+                        android:layout_marginVertical="10dp"
                         android:background="@color/divider" />
 
-                    <!-- Payment Method -->
+                    <!-- Payment Method Row -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:gravity="center_vertical"
-                        android:paddingVertical="4dp">
+                        android:paddingVertical="2dp">
 
                         <TextView
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
+                            android:fontFamily="sans-serif"
                             android:text="Payment Method"
                             android:textColor="@color/text_secondary"
                             android:textSize="13.5sp" />
@@ -668,11 +813,11 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:background="@drawable/bg_pill_soft"
-                            android:paddingHorizontal="10dp"
-                            android:paddingVertical="3dp"
+                            android:fontFamily="sans-serif-bold"
+                            android:paddingHorizontal="12dp"
+                            android:paddingVertical="4dp"
                             android:textColor="@color/primary"
-                            android:textSize="12sp"
-                            android:textStyle="bold" />
+                            android:textSize="12sp" />
                     </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>

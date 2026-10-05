@@ -67,9 +67,9 @@ export default function CustomerLayout({
 
   return (
     <NotificationProvider>
-      <div className="min-h-screen bg-background text-foreground transition-colors duration-300 selection:bg-primary/20">
+      <div className="min-h-screen bg-background text-foreground transition-colors duration-300 selection:bg-primary/20 flex flex-col">
         <CustomerNavbar />
-        <main className="pt-0 pb-16 md:pb-0">{children}</main>
+        <main className="flex-1 w-full pb-16 md:pb-0">{children}</main>
         <CustomerMobileNav />
         <ActiveOrderFloatingTracker />
         <FloatingAIChatWidget role="customer" buttonText="Help AI" />

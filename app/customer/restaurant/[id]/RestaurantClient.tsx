@@ -406,7 +406,7 @@ export default function RestaurantClient({
 
             {/* 1. TOP HEADER NAVIGATION BAR */}
             <div className="sticky top-0 z-40 bg-background/85 backdrop-blur-xl border-b border-border/60">
-                <div className="max-w-7xl mx-auto px-3 sm:px-6 h-14 sm:h-16 flex items-center justify-between gap-3">
+                <div className="w-full max-w-[1440px] mx-auto px-3 sm:px-6 h-14 sm:h-16 flex items-center justify-between gap-3">
                     <div className="flex items-center gap-2 sm:gap-3 min-w-0">
                         <Button
                             variant="ghost"
@@ -474,7 +474,7 @@ export default function RestaurantClient({
             </div>
 
             {/* 2. LUXURY RESTAURANT HERO CARD & DETAILS SECTION */}
-            <div className="max-w-7xl mx-auto px-3 sm:px-6 pt-4 sm:pt-6">
+            <div className="w-full max-w-[1440px] mx-auto px-3 sm:px-6 pt-4 sm:pt-6">
                 {/* Active Order In-Progress Alert Banner */}
                 {activeOrder && (
                     <div className="mb-4 p-4 rounded-3xl bg-gradient-to-r from-emerald-500/15 via-teal-500/10 to-primary/15 border-2 border-emerald-500/30 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-lg shadow-emerald-500/5 animate-pulse-subtle">
@@ -666,7 +666,7 @@ export default function RestaurantClient({
 
             {/* 3. PROFESSIONAL STICKY "BROWSE MENU" & FILTERS BAR (ZERO BLINK / ZERO LAG) */}
             <div className="sticky top-14 sm:top-16 z-30 bg-background/95 backdrop-blur-xl border-y border-border/80 shadow-xs mt-6">
-                <div className="max-w-7xl mx-auto px-3 sm:px-6 py-2.5 sm:py-3 space-y-2.5">
+                <div className="w-full max-w-[1440px] mx-auto px-3 sm:px-6 py-2.5 sm:py-3 space-y-2.5">
                     
                     {/* Top Row: Category Pills Scroll Bar */}
                     <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-0.5 snap-x">
@@ -763,7 +763,7 @@ export default function RestaurantClient({
             </div>
 
             {/* 4. MENU ITEMS SECTION */}
-            <div className="max-w-7xl mx-auto px-3 sm:px-6 pt-6 sm:pt-8 space-y-12">
+            <div className="w-full max-w-[1440px] mx-auto px-3 sm:px-6 pt-6 sm:pt-8 space-y-12">
                 
                 {filteredItems.length === 0 ? (
                     <div className="text-center py-16 bg-card rounded-3xl border border-dashed border-border p-6 space-y-3">

@@ -32,6 +32,7 @@ import com.ssr.hunger.models.MenuItem;
 import com.ssr.hunger.utils.CartManager;
 import com.ssr.hunger.utils.Constants;
 import com.ssr.hunger.utils.PerformanceHelper;
+import com.ssr.hunger.utils.PermissionManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -54,6 +55,15 @@ public class SearchActivity extends BaseActivity {
     private MenuItemAdapter adapter;
     private FirebaseFirestore db;
 
+    // Filter and Sort Chips
+    private View scrollFilterBar;
+    private Chip chipFilterVeg;
+    private Chip chipFilterNonveg;
+    private Chip chipFilterRating;
+    private Chip chipSortPriceAsc;
+    private Chip chipSortPriceDesc;
+    private final List<MenuItem> rawSearchResults = new ArrayList<>();
+
     private VoiceSearchDialog voiceSearchDialog;
 
     private final String[] POPULAR_TRENDING_ITEMS = {
@@ -62,14 +72,6 @@ public class SearchActivity extends BaseActivity {
             "🥗 Healthy Bowl", "🥤 Cold Brew Coffee"
     };
 
-    private final ActivityResultLauncher<String> audioPermissionLauncher =
-            registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
-                if (isGranted) {
-                    openVoiceSearchDialog();
-                } else {
-                    Toast.makeText(this, "Microphone permission is required for Voice Search", Toast.LENGTH_SHORT).show();
-                }
-            });
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -86,12 +88,21 @@ public class SearchActivity extends BaseActivity {
         chipGroupTrending = findViewById(R.id.chip_group_search_trending);
         rvResults = findViewById(R.id.rv_results);
 
+        // Filter and Sort Chips
+        scrollFilterBar = findViewById(R.id.scroll_filter_bar);
+        chipFilterVeg = findViewById(R.id.chip_filter_veg);
+        chipFilterNonveg = findViewById(R.id.chip_filter_nonveg);
+        chipFilterRating = findViewById(R.id.chip_filter_rating);
+        chipSortPriceAsc = findViewById(R.id.chip_sort_price_asc);
+        chipSortPriceDesc = findViewById(R.id.chip_sort_price_desc);
+
         findViewById(R.id.btn_back).setOnClickListener(v -> finish());
 
         setupRecyclerView();
         setupSearchInput();
         setupTrendingChips();
         setupVoiceSearchListeners();
+        setupFilterChipListeners();
 
         // Check if opened with explicit voice search intent
         if (getIntent() != null && getIntent().getBooleanExtra(Constants.EXTRA_START_VOICE_SEARCH, false)) {
@@ -196,11 +207,12 @@ public class SearchActivity extends BaseActivity {
     }
 
     private void checkPermissionAndLaunchVoice() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
-            openVoiceSearchDialog();
-        } else {
-            audioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO);
-        }
+        requireMicrophone(
+            this::openVoiceSearchDialog,
+            (isPermanent) -> {
+                if (isPermanent) showSettingsSnackbar();
+            }
+        );
     }
 
     private void openVoiceSearchDialog() {
@@ -233,6 +245,96 @@ public class SearchActivity extends BaseActivity {
         if (layoutSuggestionsContainer != null) layoutSuggestionsContainer.setVisibility(View.VISIBLE);
         if (rvResults != null) rvResults.setVisibility(View.GONE);
         if (layoutEmptyResults != null) layoutEmptyResults.setVisibility(View.GONE);
+        if (scrollFilterBar != null) scrollFilterBar.setVisibility(View.GONE);
+    }
+
+    private void setupFilterChipListeners() {
+        if (chipFilterVeg != null) {
+            chipFilterVeg.setOnCheckedChangeListener((btn, isChecked) -> {
+                if (isChecked && chipFilterNonveg != null && chipFilterNonveg.isChecked()) {
+                    chipFilterNonveg.setChecked(false);
+                }
+                applyFiltersAndSort();
+            });
+        }
+        if (chipFilterNonveg != null) {
+            chipFilterNonveg.setOnCheckedChangeListener((btn, isChecked) -> {
+                if (isChecked && chipFilterVeg != null && chipFilterVeg.isChecked()) {
+                    chipFilterVeg.setChecked(false);
+                }
+                applyFiltersAndSort();
+            });
+        }
+        if (chipFilterRating != null) {
+            chipFilterRating.setOnCheckedChangeListener((btn, isChecked) -> applyFiltersAndSort());
+        }
+        if (chipSortPriceAsc != null) {
+            chipSortPriceAsc.setOnCheckedChangeListener((btn, isChecked) -> {
+                if (isChecked && chipSortPriceDesc != null && chipSortPriceDesc.isChecked()) {
+                    chipSortPriceDesc.setChecked(false);
+                }
+                applyFiltersAndSort();
+            });
+        }
+        if (chipSortPriceDesc != null) {
+            chipSortPriceDesc.setOnCheckedChangeListener((btn, isChecked) -> {
+                if (isChecked && chipSortPriceAsc != null && chipSortPriceAsc.isChecked()) {
+                    chipSortPriceAsc.setChecked(false);
+                }
+                applyFiltersAndSort();
+            });
+        }
+    }
+
+    private void applyFiltersAndSort() {
+        if (rawSearchResults.isEmpty()) {
+            if (rvResults != null) rvResults.setVisibility(View.GONE);
+            if (layoutEmptyResults != null) layoutEmptyResults.setVisibility(View.VISIBLE);
+            return;
+        }
+
+        List<MenuItem> filtered = new ArrayList<>(rawSearchResults);
+
+        // Filter: Pure Veg
+        if (chipFilterVeg != null && chipFilterVeg.isChecked()) {
+            List<MenuItem> vegList = new ArrayList<>();
+            for (MenuItem m : filtered) {
+                if (m.isVegetarian()) vegList.add(m);
+            }
+            filtered = vegList;
+        } else if (chipFilterNonveg != null && chipFilterNonveg.isChecked()) {
+            // Filter: Non-Veg
+            List<MenuItem> nonVegList = new ArrayList<>();
+            for (MenuItem m : filtered) {
+                if (!m.isVegetarian()) nonVegList.add(m);
+            }
+            filtered = nonVegList;
+        }
+
+        // Filter: 4.0+ Stars
+        if (chipFilterRating != null && chipFilterRating.isChecked()) {
+            List<MenuItem> topRated = new ArrayList<>();
+            for (MenuItem m : filtered) {
+                if (m.getAverageRating() >= 4.0) topRated.add(m);
+            }
+            filtered = topRated;
+        }
+
+        // Sort: Price
+        if (chipSortPriceAsc != null && chipSortPriceAsc.isChecked()) {
+            filtered.sort((a, b) -> Double.compare(a.getPrice(), b.getPrice()));
+        } else if (chipSortPriceDesc != null && chipSortPriceDesc.isChecked()) {
+            filtered.sort((a, b) -> Double.compare(b.getPrice(), a.getPrice()));
+        }
+
+        if (filtered.isEmpty()) {
+            if (rvResults != null) rvResults.setVisibility(View.GONE);
+            if (layoutEmptyResults != null) layoutEmptyResults.setVisibility(View.VISIBLE);
+        } else {
+            if (rvResults != null) rvResults.setVisibility(View.VISIBLE);
+            if (layoutEmptyResults != null) layoutEmptyResults.setVisibility(View.GONE);
+            adapter.updateData(filtered);
+        }
     }
 
     private void performSearch(String query) {
@@ -278,14 +380,14 @@ public class SearchActivity extends BaseActivity {
                     analyticsHelper.logSearch(query, results.size());
                     logBreadcrumb("Search query '" + query + "' returned " + results.size() + " items");
 
-                    if (results.isEmpty()) {
-                        if (rvResults != null) rvResults.setVisibility(View.GONE);
-                        if (layoutEmptyResults != null) layoutEmptyResults.setVisibility(View.VISIBLE);
-                    } else {
-                        if (rvResults != null) rvResults.setVisibility(View.VISIBLE);
-                        if (layoutEmptyResults != null) layoutEmptyResults.setVisibility(View.GONE);
-                        adapter.updateData(results);
+                    rawSearchResults.clear();
+                    rawSearchResults.addAll(results);
+
+                    if (scrollFilterBar != null) {
+                        scrollFilterBar.setVisibility(results.isEmpty() ? View.GONE : View.VISIBLE);
                     }
+
+                    applyFiltersAndSort();
                 })
                 .addOnFailureListener(e -> {
                     stopTrace(searchTrace);

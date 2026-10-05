@@ -258,7 +258,7 @@ export default function CustomerHomePage() {
   return (
     <div className="min-h-screen bg-background text-foreground pb-40 sm:pb-24 font-sans selection:bg-primary/20">
 
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 space-y-6 sm:space-y-8 mt-3 sm:mt-6">
+      <div className="w-full max-w-[1440px] mx-auto px-3 sm:px-5 lg:px-8 space-y-6 sm:space-y-8 mt-3 sm:mt-6">
 
         {/* Category Scroller */}
         <div>

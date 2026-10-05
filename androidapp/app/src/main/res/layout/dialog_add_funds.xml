@@ -19,7 +19,7 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:fontFamily="sans-serif-bold"
+        android:fontFamily="sans-serif-black"
         android:text="💰 Add Money to Wallet"
         android:textColor="@color/text_primary"
         android:textSize="20sp" />
@@ -29,7 +29,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="2dp"
         android:fontFamily="sans-serif"
-        android:text="Instant wallet credit • Zero transaction fees • No limit"
+        android:text="Instant wallet credit • Zero transaction fees • UPI, Card &amp; Netbanking"
         android:textColor="@color/text_secondary"
         android:textSize="12sp" />
 
@@ -98,7 +98,7 @@
             android:id="@+id/chip_100"
             android:layout_width="0dp"
             android:layout_height="38dp"
-            android:layout_marginEnd="6dp"
+            android:layout_marginEnd="4dp"
             android:layout_weight="1"
             android:background="@drawable/bg_pill_soft"
             android:clickable="true"
@@ -108,13 +108,13 @@
             android:gravity="center"
             android:text="+₹100"
             android:textColor="@color/text_primary"
-            android:textSize="12sp" />
+            android:textSize="11sp" />
 
         <TextView
             android:id="@+id/chip_200"
             android:layout_width="0dp"
             android:layout_height="38dp"
-            android:layout_marginHorizontal="3dp"
+            android:layout_marginHorizontal="2dp"
             android:layout_weight="1"
             android:background="@drawable/bg_pill_soft"
             android:clickable="true"
@@ -124,13 +124,13 @@
             android:gravity="center"
             android:text="+₹200"
             android:textColor="@color/text_primary"
-            android:textSize="12sp" />
+            android:textSize="11sp" />
 
         <TextView
             android:id="@+id/chip_500"
             android:layout_width="0dp"
             android:layout_height="38dp"
-            android:layout_marginHorizontal="3dp"
+            android:layout_marginHorizontal="2dp"
             android:layout_weight="1"
             android:background="@drawable/bg_pill_soft"
             android:clickable="true"
@@ -140,13 +140,13 @@
             android:gravity="center"
             android:text="+₹500"
             android:textColor="@color/text_primary"
-            android:textSize="12sp" />
+            android:textSize="11sp" />
 
         <TextView
             android:id="@+id/chip_1000"
             android:layout_width="0dp"
             android:layout_height="38dp"
-            android:layout_marginStart="6dp"
+            android:layout_marginHorizontal="2dp"
             android:layout_weight="1"
             android:background="@drawable/bg_pill_soft"
             android:clickable="true"
@@ -156,7 +156,23 @@
             android:gravity="center"
             android:text="+₹1000"
             android:textColor="@color/text_primary"
-            android:textSize="12sp" />
+            android:textSize="11sp" />
+
+        <TextView
+            android:id="@+id/chip_2000"
+            android:layout_width="0dp"
+            android:layout_height="38dp"
+            android:layout_marginStart="4dp"
+            android:layout_weight="1"
+            android:background="@drawable/bg_pill_soft"
+            android:clickable="true"
+            android:focusable="true"
+            android:fontFamily="sans-serif-bold"
+            android:foreground="?attr/selectableItemBackground"
+            android:gravity="center"
+            android:text="+₹2000"
+            android:textColor="@color/text_primary"
+            android:textSize="11sp" />
     </LinearLayout>
 
     <!-- Dialog Actions -->
@@ -171,7 +187,7 @@
             style="@style/Widget.AKR.Button.PillSoft"
             android:layout_width="0dp"
             android:layout_height="52dp"
-            android:layout_marginEnd="8dp"
+            android:layout_marginEnd="6dp"
             android:layout_weight="1"
             android:text="Cancel"
             android:textSize="14sp" />
@@ -181,7 +197,7 @@
             style="@style/Widget.AKR.Button.Pill"
             android:layout_width="0dp"
             android:layout_height="52dp"
-            android:layout_marginStart="8dp"
+            android:layout_marginStart="6dp"
             android:layout_weight="1"
             android:text="Proceed to Pay"
             android:textSize="14sp"

@@ -244,11 +244,55 @@
                         android:textColor="@color/primary" />
                 </LinearLayout>
 
+                <!-- Platform Share Link Box -->
+                <LinearLayout
+                    android:id="@+id/layout_link_box"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:background="@drawable/bg_pill_soft"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="14dp"
+                    android:paddingVertical="10dp">
+
+                    <ImageView
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:src="@drawable/ic_share_2"
+                        app:tint="@color/primary" />
+
+                    <TextView
+                        android:id="@+id/tv_referral_link"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:layout_weight="1"
+                        android:ellipsize="middle"
+                        android:fontFamily="sans-serif-medium"
+                        android:maxLines="1"
+                        android:text="https://shunger.vercel.app/customer/referral/..."
+                        android:textColor="@color/text_primary"
+                        android:textSize="12sp" />
+
+                    <TextView
+                        android:id="@+id/btn_copy_link"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="6dp"
+                        android:fontFamily="sans-serif-bold"
+                        android:text="Copy"
+                        android:textColor="@color/primary"
+                        android:textSize="12sp" />
+                </LinearLayout>
+
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    android:text="Tap buttons below to copy or share with friends"
+                    android:text="Anyone clicking your link gets ₹50 instantly upon joining"
                     android:textColor="@color/text_hint"
                     android:textSize="12sp" />
 
@@ -257,7 +301,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
-                    android:layout_marginTop="20dp"
+                    android:layout_marginTop="16dp"
                     android:weightSum="2">
 
                     <com.google.android.material.button.MaterialButton
@@ -266,7 +310,7 @@
                         android:layout_height="48dp"
                         android:layout_weight="1"
                         android:layout_marginEnd="6dp"
-                        android:text="Copy Code"
+                        android:text="Copy Link"
                         android:textSize="13sp"
                         android:textStyle="bold"
                         app:icon="@drawable/ic_copy"
@@ -280,7 +324,7 @@
                         android:layout_height="48dp"
                         android:layout_weight="1"
                         android:layout_marginStart="6dp"
-                        android:text="Share Invite"
+                        android:text="Share Link"
                         android:textSize="13sp"
                         android:textStyle="bold"
                         app:icon="@drawable/ic_share_2"
@@ -292,6 +336,132 @@
 
             </LinearLayout>
 
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Live Referral Tracking Card (Users who joined) -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/card_referral_tracking"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginBottom="16dp"
+            app:cardCornerRadius="24dp"
+            app:cardElevation="2dp"
+            app:strokeColor="@color/card_border"
+            app:strokeWidth="1dp"
+            app:cardBackgroundColor="@color/surface">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="20dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <FrameLayout
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        android:background="@drawable/bg_icon_circle_soft">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:text="⚡"
+                            android:textSize="18sp" />
+                    </FrameLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="10dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="sans-serif-bold"
+                            android:text="Live Referral Tracking"
+                            android:textColor="@color/text_primary"
+                            android:textSize="16sp" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="sans-serif"
+                            android:text="Friends who created account with your link"
+                            android:textColor="@color/text_hint"
+                            android:textSize="11.5sp" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/tv_tracking_count_badge"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/bg_pill_soft"
+                        android:fontFamily="sans-serif-bold"
+                        android:paddingHorizontal="10dp"
+                        android:paddingVertical="4dp"
+                        android:text="0 Joined"
+                        android:textColor="@color/primary"
+                        android:textSize="11sp" />
+                </LinearLayout>
+
+                <!-- List of Referred Friends -->
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rv_referred_friends"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:nestedScrollingEnabled="false"
+                    android:visibility="gone" />
+
+                <!-- Empty state when no friends joined yet -->
+                <LinearLayout
+                    android:id="@+id/layout_empty_referrals"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:background="@drawable/bg_pill_soft"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:paddingVertical="20dp"
+                    android:paddingHorizontal="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="👥"
+                        android:textSize="28sp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:fontFamily="sans-serif-bold"
+                        android:text="No friends have joined yet"
+                        android:textColor="@color/text_primary"
+                        android:textSize="14sp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:fontFamily="sans-serif"
+                        android:gravity="center"
+                        android:lineSpacingExtra="2dp"
+                        android:text="Share your link above. When a friend signs up, you get ₹50 and they get ₹50 welcome bonus!"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="12sp" />
+                </LinearLayout>
+
+            </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
         <!-- How It Works Card -->

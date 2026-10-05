@@ -660,7 +660,7 @@ export default function CartPage() {
   }
 
   return (
-    <div className="min-h-screen text-foreground pb-24 md:pb-16 font-sans max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 relative selection:bg-primary/30">
+    <div className="min-h-screen text-foreground pb-24 md:pb-16 font-sans w-full max-w-[1440px] mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 relative selection:bg-primary/30">
 
       {/* Ambient Background Accent */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10">

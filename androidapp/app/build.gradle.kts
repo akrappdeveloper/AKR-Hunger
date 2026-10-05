@@ -7,12 +7,12 @@ plugins {
 
 android {
     namespace = "com.ssr.hunger"
-    compileSdk = 34
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.ssr.hunger"
         minSdk = 24
-        targetSdk = 34
+        targetSdk = 37
         versionCode = 1
         versionName = "1.0"
 

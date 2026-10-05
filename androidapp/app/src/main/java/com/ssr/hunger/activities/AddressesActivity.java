@@ -1,6 +1,5 @@
 package com.ssr.hunger.activities;
 
-import android.app.AlertDialog;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
@@ -12,7 +11,10 @@ import android.widget.TextView;
 import android.widget.Toast;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.materialswitch.MaterialSwitch;
 import com.ssr.hunger.R;
 import com.ssr.hunger.models.Address;
 import com.ssr.hunger.utils.Constants;
@@ -152,10 +154,14 @@ public class AddressesActivity extends BaseActivity {
     }
 
     private void showAddEditDialog(Map<String, Object> existing, String addrId) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.RoundedDialog);
+        BottomSheetDialog dialog = new BottomSheetDialog(this, R.style.ThemeOverlay_AKR_BottomSheetDialog_Rounded);
         View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_add_address, null);
-        builder.setView(dialogView);
+        dialog.setContentView(dialogView);
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
+        }
 
+        TextView tvTitle = dialogView.findViewById(R.id.tv_dialog_addr_title);
         EditText etLabel = dialogView.findViewById(R.id.et_addr_label);
         EditText etLine1 = dialogView.findViewById(R.id.et_addr_line1);
         EditText etLine2 = dialogView.findViewById(R.id.et_addr_line2);
@@ -164,9 +170,11 @@ public class AddressesActivity extends BaseActivity {
         EditText etState = dialogView.findViewById(R.id.et_addr_state);
         EditText etPincode = dialogView.findViewById(R.id.et_addr_pincode);
         RadioGroup rgType = dialogView.findViewById(R.id.rg_addr_type);
+        MaterialSwitch switchDefault = dialogView.findViewById(R.id.switch_addr_default);
 
         // Pre-fill if editing
         if (existing != null) {
+            if (tvTitle != null) tvTitle.setText("Edit Address");
             if (etLabel != null && existing.get("label") != null) etLabel.setText(existing.get("label").toString());
             if (etLine1 != null && existing.get("addressLine1") != null) etLine1.setText(existing.get("addressLine1").toString());
             if (etLine2 != null && existing.get("addressLine2") != null) etLine2.setText(existing.get("addressLine2").toString());
@@ -174,23 +182,37 @@ public class AddressesActivity extends BaseActivity {
             if (etCity != null && existing.get("city") != null) etCity.setText(existing.get("city").toString());
             if (etState != null && existing.get("state") != null) etState.setText(existing.get("state").toString());
             if (etPincode != null && existing.get("pincode") != null) etPincode.setText(existing.get("pincode").toString());
+            if (switchDefault != null) switchDefault.setChecked(Boolean.TRUE.equals(existing.get("isDefault")));
+
+            String type = (String) existing.get("type");
+            if (rgType != null && type != null) {
+                if ("home".equalsIgnoreCase(type)) rgType.check(R.id.rb_home);
+                else if ("work".equalsIgnoreCase(type)) rgType.check(R.id.rb_work);
+                else rgType.check(R.id.rb_other);
+            }
+        } else {
+            if (tvTitle != null) tvTitle.setText("Add New Address");
         }
 
-        String title = existing != null ? "Edit Address" : "Add New Address";
-        AlertDialog dialog = builder.setTitle(title)
-                .setPositiveButton(existing != null ? "Update" : "Save", null)
-                .setNegativeButton("Cancel", null)
-                .create();
-
-        dialog.show();
-        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+        View btnClose = dialogView.findViewById(R.id.btn_dialog_close);
+        if (btnClose != null) btnClose.setOnClickListener(v -> dialog.dismiss());
+        dialogView.findViewById(R.id.btn_dialog_cancel).setOnClickListener(v -> dialog.dismiss());
+        dialogView.findViewById(R.id.btn_dialog_save).setOnClickListener(v -> {
             String line1Val = etLine1 != null ? etLine1.getText().toString().trim() : "";
             String cityVal = etCity != null ? etCity.getText().toString().trim() : "";
             String stateVal = etState != null ? etState.getText().toString().trim() : "";
             String pincodeVal = etPincode != null ? etPincode.getText().toString().trim() : "";
 
-            if (TextUtils.isEmpty(line1Val) || TextUtils.isEmpty(cityVal) || TextUtils.isEmpty(stateVal) || TextUtils.isEmpty(pincodeVal)) {
-                Toast.makeText(this, "Please fill all required fields", Toast.LENGTH_SHORT).show();
+            if (TextUtils.isEmpty(line1Val)) {
+                if (etLine1 != null) { etLine1.setError("House / Flat No is required"); etLine1.requestFocus(); }
+                return;
+            }
+            if (TextUtils.isEmpty(cityVal)) {
+                if (etCity != null) { etCity.setError("City is required"); etCity.requestFocus(); }
+                return;
+            }
+            if (TextUtils.isEmpty(pincodeVal)) {
+                if (etPincode != null) { etPincode.setError("Pincode is required"); etPincode.requestFocus(); }
                 return;
             }
 
@@ -201,6 +223,9 @@ public class AddressesActivity extends BaseActivity {
                 else if (checkedId == R.id.rb_work) type = "work";
             }
 
+            boolean isDefault = switchDefault != null ? switchDefault.isChecked() :
+                    (existing != null && Boolean.TRUE.equals(existing.get("isDefault")));
+
             Map<String, Object> data = new HashMap<>();
             data.put("label", etLabel != null && !TextUtils.isEmpty(etLabel.getText()) ? etLabel.getText().toString().trim() : type);
             data.put("type", type);
@@ -210,7 +235,7 @@ public class AddressesActivity extends BaseActivity {
             data.put("city", cityVal);
             data.put("state", stateVal);
             data.put("pincode", pincodeVal);
-            data.put("isDefault", existing != null && Boolean.TRUE.equals(existing.get("isDefault")));
+            data.put("isDefault", isDefault);
             data.put("updatedAt", Timestamp.now());
 
             String uid = auth.getCurrentUser().getUid();
@@ -237,10 +262,12 @@ public class AddressesActivity extends BaseActivity {
                         .addOnFailureListener(e -> { recordException("Address_add_fail", e); Toast.makeText(this, "Failed to add address", Toast.LENGTH_SHORT).show(); });
             }
         });
+
+        dialog.show();
     }
 
     private void confirmDelete(String addrId, String label) {
-        new AlertDialog.Builder(this)
+        new MaterialAlertDialogBuilder(this)
                 .setTitle("Remove Address")
                 .setMessage("Remove \"" + label + "\" from your saved addresses?")
                 .setPositiveButton("Remove", (d, w) -> {

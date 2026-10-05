@@ -1,58 +1,68 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/background"
     android:orientation="vertical">
 
-    <!-- Search Bar Header -->
+    <!-- Top App Bar & Search Input Container -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@color/surface"
-        android:elevation="1dp"
+        android:elevation="3dp"
         android:gravity="center_vertical"
         android:orientation="horizontal"
         android:paddingHorizontal="16dp"
         android:paddingTop="12dp"
         android:paddingBottom="12dp">
 
-        <FrameLayout
+        <!-- Optional Back Button -->
+        <com.google.android.material.card.MaterialCardView
             android:id="@+id/btn_back"
             android:layout_width="40dp"
             android:layout_height="40dp"
-            android:background="@drawable/bg_icon_circle_gray"
+            android:layout_marginEnd="10dp"
             android:clickable="true"
             android:focusable="true"
-            android:foreground="?attr/selectableItemBackgroundBorderless"
-            android:visibility="gone">
+            android:visibility="gone"
+            app:cardBackgroundColor="@color/surface"
+            app:cardCornerRadius="20dp"
+            app:cardElevation="2dp"
+            app:strokeColor="@color/card_border"
+            app:strokeWidth="1dp">
 
             <ImageView
                 android:layout_width="20dp"
                 android:layout_height="20dp"
                 android:layout_gravity="center"
+                android:contentDescription="Back"
                 android:src="@drawable/ic_back"
                 app:tint="@color/text_primary" />
-        </FrameLayout>
+        </com.google.android.material.card.MaterialCardView>
 
-        <!-- Search Input Pill Container -->
+        <!-- Modern Search Pill Box -->
         <LinearLayout
             android:layout_width="0dp"
-            android:layout_height="48dp"
+            android:layout_height="50dp"
             android:layout_weight="1"
-            android:background="@drawable/bg_pill_soft"
+            android:background="@drawable/bg_search_input_modern"
             android:gravity="center_vertical"
             android:orientation="horizontal"
             android:paddingStart="14dp"
-            android:paddingEnd="8dp">
+            android:paddingEnd="6dp">
 
+            <!-- Search Icon with subtle primary color -->
             <ImageView
                 android:layout_width="20dp"
                 android:layout_height="20dp"
+                android:contentDescription="Search Icon"
                 android:src="@drawable/ic_search"
                 app:tint="@color/primary" />
 
+            <!-- Input Box -->
             <EditText
                 android:id="@+id/et_search"
                 android:layout_width="0dp"
@@ -63,58 +73,66 @@
                 android:fontFamily="sans-serif"
                 android:hint="@string/search_hint"
                 android:imeOptions="actionSearch"
+                android:importantForAutofill="no"
                 android:inputType="text"
                 android:maxLines="1"
                 android:textColor="@color/text_primary"
                 android:textColorHint="@color/text_hint"
                 android:textSize="14sp" />
 
+            <!-- Clear Query Button -->
             <ImageView
                 android:id="@+id/btn_clear"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:layout_marginEnd="6dp"
+                android:layout_width="26dp"
+                android:layout_height="26dp"
+                android:layout_marginEnd="4dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:clickable="true"
+                android:contentDescription="Clear search"
                 android:focusable="true"
-                android:padding="3dp"
+                android:padding="4dp"
                 android:src="@drawable/ic_close"
                 android:visibility="gone"
                 app:tint="@color/text_hint" />
 
+            <!-- Voice Search Gradient Button -->
             <FrameLayout
                 android:id="@+id/btn_voice_search"
-                android:layout_width="34dp"
-                android:layout_height="34dp"
+                android:layout_width="38dp"
+                android:layout_height="38dp"
                 android:background="@drawable/bg_voice_mic_button"
                 android:clickable="true"
+                android:contentDescription="Voice Search"
+                android:elevation="2dp"
                 android:focusable="true"
                 android:foreground="?attr/selectableItemBackgroundBorderless">
 
                 <ImageView
-                    android:layout_width="18dp"
-                    android:layout_height="18dp"
+                    android:layout_width="19dp"
+                    android:layout_height="19dp"
                     android:layout_gravity="center"
+                    android:contentDescription="Mic Icon"
                     android:src="@drawable/ic_mic"
                     app:tint="@color/on_primary" />
             </FrameLayout>
         </LinearLayout>
     </LinearLayout>
 
-    <!-- Scrollable Content -->
+    <!-- Scrollable Discovery & Results Area -->
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
+        android:fillViewport="true"
         android:overScrollMode="never">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:paddingBottom="32dp">
+            android:paddingBottom="36dp">
 
-            <!-- Trending Section -->
+            <!-- 1. Trending Searches Section -->
             <LinearLayout
                 android:id="@+id/trending_section"
                 android:layout_width="match_parent"
@@ -123,20 +141,35 @@
                 android:orientation="vertical"
                 android:paddingHorizontal="16dp">
 
+                <!-- Hot Pill Tag -->
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:background="@drawable/bg_pill_amber_soft"
                     android:fontFamily="sans-serif-bold"
-                    android:text="🔥 Trending Searches"
+                    android:letterSpacing="0.04"
+                    android:paddingHorizontal="10dp"
+                    android:paddingVertical="3dp"
+                    android:text="🔥 POPULAR NOW"
+                    android:textColor="#D97706"
+                    android:textSize="10sp" />
+
+                <!-- Section Title -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:fontFamily="sans-serif-black"
+                    android:text="Trending Searches"
                     android:textColor="@color/text_primary"
-                    android:textSize="16sp" />
+                    android:textSize="18sp" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
                     android:fontFamily="sans-serif"
-                    android:text="Popular dishes people are ordering right now"
+                    android:text="Dishes food lovers around you are ordering right now"
                     android:textColor="@color/text_hint"
                     android:textSize="12sp" />
 
@@ -149,9 +182,66 @@
                     app:chipSpacingVertical="8dp" />
             </LinearLayout>
 
-            <!-- Popular Cuisines Section -->
+            <!-- 2. Explore Cuisines Section -->
             <LinearLayout
                 android:id="@+id/cuisines_section"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="26dp"
+                android:orientation="vertical">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingHorizontal="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/bg_pill_soft"
+                        android:fontFamily="sans-serif-bold"
+                        android:letterSpacing="0.04"
+                        android:paddingHorizontal="10dp"
+                        android:paddingVertical="3dp"
+                        android:text="🍽️ TASTE PROFILES"
+                        android:textColor="@color/primary"
+                        android:textSize="10sp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:fontFamily="sans-serif-black"
+                        android:text="Explore Cuisines"
+                        android:textColor="@color/text_primary"
+                        android:textSize="18sp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:fontFamily="sans-serif"
+                        android:text="Handpicked categories curated for every mood and craving"
+                        android:textColor="@color/text_hint"
+                        android:textSize="12sp" />
+                </LinearLayout>
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rv_cuisines"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:clipToPadding="false"
+                    android:nestedScrollingEnabled="false"
+                    android:orientation="horizontal"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp" />
+            </LinearLayout>
+
+            <!-- 3. Explore All Menu Section -->
+            <LinearLayout
+                android:id="@+id/all_menu_section"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="28dp"
@@ -161,29 +251,64 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:background="@drawable/bg_pill_soft"
                     android:fontFamily="sans-serif-bold"
-                    android:text="🍽️ Explore Cuisines"
-                    android:textColor="@color/text_primary"
-                    android:textSize="16sp" />
+                    android:letterSpacing="0.04"
+                    android:paddingHorizontal="10dp"
+                    android:paddingVertical="3dp"
+                    android:text="✨ DISCOVER OUR KITCHEN"
+                    android:textColor="@color/primary"
+                    android:textSize="10sp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/tv_all_menu_header"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:fontFamily="sans-serif-black"
+                        android:text="Explore All Menu"
+                        android:textColor="@color/text_primary"
+                        android:textSize="18sp" />
+
+                    <TextView
+                        android:id="@+id/tv_all_menu_count"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/bg_pill_soft"
+                        android:fontFamily="sans-serif-bold"
+                        android:paddingHorizontal="10dp"
+                        android:paddingVertical="4dp"
+                        android:text="Loading dishes..."
+                        android:textColor="@color/primary"
+                        android:textSize="11sp" />
+                </LinearLayout>
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
                     android:fontFamily="sans-serif"
-                    android:text="Curated categories for every craving"
+                    android:text="Browse all mouthwatering dishes available to order"
                     android:textColor="@color/text_hint"
                     android:textSize="12sp" />
 
                 <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/rv_cuisines"
+                    android:id="@+id/rv_explore_menu"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="14dp"
+                    android:clipToPadding="false"
                     android:nestedScrollingEnabled="false" />
             </LinearLayout>
 
-            <!-- Search Results Section -->
+            <!-- 4. Search Results Section -->
             <LinearLayout
                 android:id="@+id/results_section"
                 android:layout_width="match_parent"
@@ -197,8 +322,8 @@
                     android:gravity="center_vertical"
                     android:orientation="horizontal"
                     android:paddingHorizontal="16dp"
-                    android:paddingTop="16dp"
-                    android:paddingBottom="8dp">
+                    android:paddingTop="18dp"
+                    android:paddingBottom="10dp">
 
                     <TextView
                         android:id="@+id/tv_results_count"
@@ -206,8 +331,8 @@
                         android:layout_height="wrap_content"
                         android:background="@drawable/bg_pill_soft"
                         android:fontFamily="sans-serif-bold"
-                        android:paddingHorizontal="12dp"
-                        android:paddingVertical="5dp"
+                        android:paddingHorizontal="14dp"
+                        android:paddingVertical="6dp"
                         android:textColor="@color/primary"
                         android:textSize="12sp" />
                 </LinearLayout>
@@ -219,6 +344,65 @@
                     android:clipToPadding="false"
                     android:nestedScrollingEnabled="false"
                     android:paddingHorizontal="8dp" />
+
+                <!-- Empty Search State -->
+                <LinearLayout
+                    android:id="@+id/layout_search_empty"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:paddingHorizontal="24dp"
+                    android:paddingVertical="40dp"
+                    android:visibility="gone">
+
+                    <FrameLayout
+                        android:layout_width="88dp"
+                        android:layout_height="88dp"
+                        android:background="@drawable/bg_icon_circle_soft">
+
+                        <ImageView
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:layout_gravity="center"
+                            android:contentDescription="No items"
+                            android:src="@drawable/ic_search"
+                            app:tint="@color/primary" />
+                    </FrameLayout>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="18dp"
+                        android:fontFamily="sans-serif-black"
+                        android:text="No Dishes Found"
+                        android:textColor="@color/text_primary"
+                        android:textSize="18sp" />
+
+                    <TextView
+                        android:id="@+id/tv_empty_message"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:gravity="center"
+                        android:lineSpacingExtra="3dp"
+                        android:text="Try searching for Biryani, Pizza, Burger, or choose from cuisines above"
+                        android:textColor="@color/text_hint"
+                        android:textSize="13sp" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_clear_search_empty"
+                        style="@style/Widget.AKR.Button.Pill"
+                        android:layout_width="wrap_content"
+                        android:layout_height="46dp"
+                        android:layout_marginTop="18dp"
+                        android:fontFamily="sans-serif-bold"
+                        android:paddingHorizontal="28dp"
+                        android:text="Explore All Menu"
+                        android:textSize="13sp"
+                        app:backgroundTint="@color/primary"
+                        app:elevation="2dp" />
+                </LinearLayout>
             </LinearLayout>
 
         </LinearLayout>

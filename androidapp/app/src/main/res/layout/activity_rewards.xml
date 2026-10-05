@@ -10,22 +10,23 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:paddingBottom="40dp">
 
-        <!-- Gold & Amber Royal Header -->
+        <!-- Top Header & Navigation -->
         <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="250dp"
-            android:background="@drawable/gradient_gold_amber">
+            android:layout_height="wrap_content"
+            android:paddingHorizontal="16dp"
+            android:paddingTop="48dp"
+            android:paddingBottom="12dp">
 
             <FrameLayout
                 android:id="@+id/btn_back"
                 android:layout_width="40dp"
                 android:layout_height="40dp"
-                android:layout_gravity="top|start"
-                android:layout_marginTop="48dp"
-                android:layout_marginStart="16dp"
-                android:background="@drawable/circle_white_20"
+                android:layout_gravity="start|center_vertical"
+                android:background="@drawable/bg_icon_circle_soft"
                 android:clickable="true"
                 android:focusable="true"
                 android:foreground="?attr/selectableItemBackgroundBorderless">
@@ -35,89 +36,159 @@
                     android:layout_height="20dp"
                     android:layout_gravity="center"
                     android:src="@drawable/ic_back"
-                    android:tint="@color/white"
+                    android:tint="@color/text_primary"
                     android:contentDescription="Back" />
             </FrameLayout>
 
-            <LinearLayout
+            <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                android:gravity="center"
-                android:orientation="vertical"
-                android:layout_marginTop="20dp">
+                android:text="Loyalty Rewards Club"
+                android:textColor="@color/text_primary"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:letterSpacing="-0.01" />
 
-                <FrameLayout
-                    android:layout_width="60dp"
-                    android:layout_height="60dp"
-                    android:background="@drawable/circle_white_20">
-
-                    <TextView
-                        android:id="@+id/tv_tier_emoji"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="center"
-                        android:text="🥉"
-                        android:textSize="32sp" />
-                </FrameLayout>
-
-                <TextView
-                    android:id="@+id/tv_points_balance"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="0"
-                    android:textSize="50sp"
-                    android:textStyle="bold"
-                    android:textColor="@color/white"
-                    android:letterSpacing="-0.02" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="AVAILABLE REWARD POINTS"
-                    android:textColor="#EEFFFFFF"
-                    android:textSize="11sp"
-                    android:textStyle="bold"
-                    android:letterSpacing="0.08" />
-
-            </LinearLayout>
-
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="end|center_vertical"
+                android:text="👑 VIP"
+                android:textColor="@color/amber_dark"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:background="@drawable/bg_amber_soft"
+                android:paddingHorizontal="10dp"
+                android:paddingVertical="4dp" />
         </FrameLayout>
 
-        <!-- Tier Progress Card (Overlapping hero) -->
+        <!-- Luxury Obsidian & Gold VIP Membership Card -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="16dp"
-            android:layout_marginTop="-24dp"
-            android:layout_marginBottom="20dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="16dp"
             app:cardCornerRadius="24dp"
-            app:cardElevation="3dp"
-            app:strokeColor="@color/card_border"
-            app:strokeWidth="1dp"
-            app:cardBackgroundColor="@color/surface">
+            app:cardElevation="6dp"
+            app:strokeWidth="0dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:background="@drawable/gradient_vip_gold_card"
                 android:orientation="vertical"
-                android:padding="20dp">
+                android:padding="22dp">
 
+                <!-- Top Row: Tier Emoji & VIP Status -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
 
-                    <TextView
-                        android:id="@+id/tv_tier_name"
+                    <FrameLayout
+                        android:layout_width="44dp"
+                        android:layout_height="44dp"
+                        android:background="@drawable/circle_white_20">
+
+                        <TextView
+                            android:id="@+id/tv_tier_emoji"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:text="🥉"
+                            android:textSize="24sp" />
+                    </FrameLayout>
+
+                    <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="Bronze Member"
-                        android:textSize="17sp"
+                        android:layout_marginStart="12dp"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/tv_tier_name"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Bronze Member"
+                            android:textColor="#FDE68A"
+                            android:textSize="16sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="HUNGER REWARDS CLUB"
+                            android:textColor="#9CA3AF"
+                            android:textSize="10sp"
+                            android:textStyle="bold"
+                            android:letterSpacing="0.08" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="✨ ACTIVE"
+                        android:textColor="#F59E0B"
+                        android:textSize="11sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <!-- Points Balance Display -->
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="bottom"
+                    android:layout_marginTop="20dp">
+
+                    <TextView
+                        android:id="@+id/tv_points_balance"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="0"
+                        android:textSize="48sp"
                         android:textStyle="bold"
-                        android:textColor="@color/text_primary" />
+                        android:textColor="@color/white"
+                        android:letterSpacing="-0.03" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text=" PTS"
+                        android:textColor="#F59E0B"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:layout_marginStart="6dp"
+                        android:layout_marginBottom="8dp" />
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Earn 10 pts for every ₹100 spent • Redeem anytime"
+                    android:textColor="#D1D5DB"
+                    android:textSize="12sp"
+                    android:layout_marginTop="2dp" />
+
+                <!-- Tier Milestone Progress -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="18dp">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Tier Milestone"
+                        android:textColor="#9CA3AF"
+                        android:textSize="11sp" />
 
                     <TextView
                         android:id="@+id/tv_next_tier"
@@ -126,7 +197,7 @@
                         android:text="500 pts to Silver"
                         android:textSize="12sp"
                         android:textStyle="bold"
-                        android:textColor="@color/primary" />
+                        android:textColor="#F59E0B" />
                 </LinearLayout>
 
                 <ProgressBar
@@ -134,10 +205,122 @@
                     style="@style/Widget.AppCompat.ProgressBar.Horizontal"
                     android:layout_width="match_parent"
                     android:layout_height="8dp"
-                    android:layout_marginTop="12dp"
+                    android:layout_marginTop="8dp"
                     android:max="100"
                     android:progress="20"
-                    android:progressTint="@color/primary" />
+                    android:progressDrawable="@drawable/progress_bar_gold" />
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- NEW: Redeem Voucher & Promo Code Section -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginBottom="20dp"
+            app:cardCornerRadius="22dp"
+            app:cardElevation="2dp"
+            app:strokeColor="@color/card_border"
+            app:strokeWidth="1dp"
+            app:cardBackgroundColor="@color/surface">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="18dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <FrameLayout
+                        android:layout_width="38dp"
+                        android:layout_height="38dp"
+                        android:background="@drawable/bg_amber_soft">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:text="🎁"
+                            android:textSize="20sp" />
+                    </FrameLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginStart="12dp"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Redeem Gift or Voucher Code"
+                            android:textColor="@color/text_primary"
+                            android:textSize="15sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Enter secret code to claim bonus points or cash"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="12sp"
+                            android:layout_marginTop="2dp" />
+                    </LinearLayout>
+
+                </LinearLayout>
+
+                <!-- Input Box Row -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginTop="14dp">
+
+                    <EditText
+                        android:id="@+id/et_redeem_code"
+                        android:layout_width="0dp"
+                        android:layout_height="48dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/bg_redeem_card_input"
+                        android:hint="ENTER REDEEM CODE"
+                        android:textColorHint="@color/text_hint"
+                        android:textColor="@color/text_primary"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:letterSpacing="0.08"
+                        android:inputType="textCapCharacters"
+                        android:paddingHorizontal="14dp"
+                        android:layout_marginEnd="10dp" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_submit_redeem"
+                        android:layout_width="wrap_content"
+                        android:layout_height="48dp"
+                        android:text="Redeem"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        app:cornerRadius="14dp"
+                        android:backgroundTint="@color/primary"
+                        android:textColor="@color/white"
+                        android:paddingHorizontal="18dp" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/tv_redeem_status"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="12sp"
+                    android:layout_marginTop="6dp"
+                    android:visibility="gone" />
 
             </LinearLayout>
 
@@ -156,7 +339,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="REDEEM VOUCHERS"
+                android:text="REDEEM PERKS &amp; VOUCHERS"
                 android:textSize="12sp"
                 android:textStyle="bold"
                 android:letterSpacing="0.05"
@@ -186,7 +369,7 @@
                 android:orientation="horizontal" />
         </HorizontalScrollView>
 
-        <!-- Refer Banner -->
+        <!-- Refer Friends Banner -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -254,7 +437,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="POINTS HISTORY"
+            android:text="POINTS ACTIVITY HISTORY"
             android:textSize="12sp"
             android:textStyle="bold"
             android:letterSpacing="0.05"
@@ -283,14 +466,13 @@
 
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Explore Rewards Button -->
+        <!-- Explore Deals Button -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_redeem"
             android:layout_width="match_parent"
             android:layout_height="52dp"
             android:layout_marginHorizontal="16dp"
-            android:layout_marginBottom="32dp"
-            android:text="View All Reward Perks"
+            android:text="Explore Deals &amp; Discounts"
             style="@style/Widget.AKR.Button.Primary" />
 
     </LinearLayout>

@@ -9,21 +9,24 @@
     <!-- Top Header Bar -->
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="60dp"
+        android:layout_height="62dp"
         android:background="@color/surface"
-        android:elevation="1dp"
+        android:elevation="2dp"
         android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:paddingHorizontal="12dp">
+        android:paddingHorizontal="16dp">
 
-        <FrameLayout
+        <com.google.android.material.card.MaterialCardView
             android:id="@+id/btn_back"
             android:layout_width="40dp"
             android:layout_height="40dp"
-            android:background="@drawable/bg_icon_circle_gray"
             android:clickable="true"
             android:focusable="true"
-            android:foreground="?attr/selectableItemBackgroundBorderless">
+            app:cardBackgroundColor="@color/surface_variant"
+            app:cardCornerRadius="20dp"
+            app:cardElevation="0dp"
+            app:strokeColor="@color/card_border"
+            app:strokeWidth="1dp">
 
             <ImageView
                 android:layout_width="20dp"
@@ -31,24 +34,60 @@
                 android:layout_gravity="center"
                 android:src="@drawable/ic_back"
                 app:tint="@color/text_primary" />
-        </FrameLayout>
+        </com.google.android.material.card.MaterialCardView>
 
-        <TextView
+        <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="14dp"
             android:layout_weight="1"
-            android:fontFamily="sans-serif-bold"
-            android:text="@string/wallet"
-            android:textColor="@color/text_primary"
-            android:textSize="20sp" />
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-black"
+                android:text="My Wallet"
+                android:textColor="@color/text_primary"
+                android:textSize="19sp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif"
+                android:text="Balance, Cards, Bank &amp; History"
+                android:textColor="@color/text_secondary"
+                android:textSize="11sp" />
+        </LinearLayout>
+
+        <!-- Help / Support Shortcut -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/btn_wallet_help"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:clickable="true"
+            android:focusable="true"
+            app:cardBackgroundColor="@color/surface_variant"
+            app:cardCornerRadius="20dp"
+            app:cardElevation="0dp"
+            app:strokeColor="@color/card_border"
+            app:strokeWidth="1dp">
+
+            <ImageView
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_support"
+                app:tint="@color/text_primary" />
+        </com.google.android.material.card.MaterialCardView>
     </LinearLayout>
 
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:clipToPadding="false"
-        android:paddingBottom="32dp">
+        android:overScrollMode="never"
+        android:paddingBottom="36dp">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -63,7 +102,7 @@
                 android:layout_height="wrap_content"
                 app:cardBackgroundColor="@android:color/transparent"
                 app:cardCornerRadius="26dp"
-                app:cardElevation="4dp"
+                app:cardElevation="5dp"
                 app:strokeWidth="0dp">
 
                 <LinearLayout
@@ -73,17 +112,17 @@
                     android:gravity="center"
                     android:orientation="vertical"
                     android:paddingHorizontal="24dp"
-                    android:paddingVertical="32dp">
+                    android:paddingVertical="28dp">
 
                     <FrameLayout
-                        android:layout_width="56dp"
-                        android:layout_height="56dp"
+                        android:layout_width="54dp"
+                        android:layout_height="54dp"
                         android:background="@drawable/bg_pill_white"
-                        android:elevation="2dp">
+                        android:elevation="3dp">
 
                         <ImageView
-                            android:layout_width="28dp"
-                            android:layout_height="28dp"
+                            android:layout_width="26dp"
+                            android:layout_height="26dp"
                             android:layout_gravity="center"
                             android:src="@drawable/ic_wallet"
                             app:tint="@color/primary" />
@@ -92,32 +131,34 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="14dp"
+                        android:layout_marginTop="12dp"
                         android:fontFamily="sans-serif-bold"
-                        android:letterSpacing="0.06"
+                        android:letterSpacing="0.08"
                         android:text="TOTAL WALLET BALANCE"
                         android:textColor="#E0FFFFFF"
-                        android:textSize="12sp" />
+                        android:textSize="11sp" />
 
                     <TextView
                         android:id="@+id/tv_balance"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
+                        android:layout_marginTop="2dp"
                         android:fontFamily="sans-serif-black"
+                        android:letterSpacing="-0.02"
                         android:text="₹0.00"
                         android:textColor="#FFFFFF"
-                        android:textSize="38sp" />
+                        android:textSize="36sp" />
 
                     <!-- Quick Secure Badge -->
                     <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
-                        android:background="#20FFFFFF"
+                        android:layout_marginTop="10dp"
+                        android:background="@drawable/bg_pill_white"
+                        android:backgroundTint="#25FFFFFF"
                         android:gravity="center_vertical"
                         android:paddingHorizontal="12dp"
-                        android:paddingVertical="4dp">
+                        android:paddingVertical="5dp">
 
                         <ImageView
                             android:layout_width="12dp"
@@ -129,8 +170,8 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginStart="6dp"
-                            android:fontFamily="sans-serif-medium"
-                            android:text="100% Secure &amp; Instant Checkout"
+                            android:fontFamily="sans-serif-bold"
+                            android:text="100% Secure • Instant Auto-Credit"
                             android:textColor="#FFFFFF"
                             android:textSize="11sp" />
                     </LinearLayout>
@@ -141,7 +182,7 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="18dp"
+                android:layout_marginTop="16dp"
                 android:orientation="horizontal">
 
                 <com.google.android.material.button.MaterialButton
@@ -149,40 +190,774 @@
                     style="@style/Widget.AKR.Button.Pill"
                     android:layout_width="0dp"
                     android:layout_height="52dp"
+                    android:layout_marginEnd="6dp"
                     android:layout_weight="1"
+                    android:elevation="3dp"
                     android:fontFamily="sans-serif-bold"
-                    android:text="➕ Add Money"
+                    android:text="➕ Add Funds"
                     android:textSize="14sp"
-                    app:backgroundTint="@color/primary" />
+                    app:backgroundTint="@color/primary"
+                    app:icon="@drawable/ic_arrow_down_left"
+                    app:iconSize="18dp" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btn_withdraw"
                     style="@style/Widget.AKR.Button.PillSoft"
                     android:layout_width="0dp"
                     android:layout_height="52dp"
-                    android:layout_marginStart="12dp"
+                    android:layout_marginStart="6dp"
                     android:layout_weight="1"
+                    android:elevation="1dp"
                     android:fontFamily="sans-serif-bold"
-                    android:text="💸 Withdraw"
-                    android:textSize="14sp" />
+                    android:text="Withdraw"
+                    android:textSize="14sp"
+                    app:icon="@drawable/ic_arrow_up_right"
+                    app:iconSize="18dp"
+                    app:iconTint="@color/text_primary" />
             </LinearLayout>
 
-            <!-- Transaction History Header -->
-            <TextView
-                android:layout_width="wrap_content"
+            <!-- Quick Stats Grid (Total Spent & Add Funds) -->
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="28dp"
-                android:fontFamily="sans-serif-bold"
-                android:letterSpacing="0.04"
-                android:text="TRANSACTION HISTORY"
-                android:textColor="@color/text_hint"
-                android:textSize="12sp" />
+                android:layout_marginTop="16dp"
+                android:orientation="horizontal">
 
+                <!-- Total Spent Stat -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="6dp"
+                    android:layout_weight="1"
+                    app:cardBackgroundColor="@color/surface"
+                    app:cardCornerRadius="20dp"
+                    app:cardElevation="2dp"
+                    app:strokeColor="@color/card_border"
+                    app:strokeWidth="1dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:orientation="vertical"
+                        android:padding="16dp">
+
+                        <FrameLayout
+                            android:layout_width="38dp"
+                            android:layout_height="38dp"
+                            android:background="@drawable/bg_icon_circle_red">
+
+                            <ImageView
+                                android:layout_width="18dp"
+                                android:layout_height="18dp"
+                                android:layout_gravity="center"
+                                android:src="@drawable/ic_arrow_up_right"
+                                app:tint="@color/error" />
+                        </FrameLayout>
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:fontFamily="sans-serif-bold"
+                            android:text="Total Spent"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="11sp" />
+
+                        <TextView
+                            android:id="@+id/tv_total_spent"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:fontFamily="sans-serif-black"
+                            android:text="₹0"
+                            android:textColor="@color/text_primary"
+                            android:textSize="18sp" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- Total Credits / Top Up Stat -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/card_stat_topup"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp"
+                    android:layout_weight="1"
+                    android:clickable="true"
+                    android:focusable="true"
+                    app:cardBackgroundColor="@color/surface"
+                    app:cardCornerRadius="20dp"
+                    app:cardElevation="2dp"
+                    app:strokeColor="@color/card_border"
+                    app:strokeWidth="1dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:orientation="vertical"
+                        android:padding="16dp">
+
+                        <FrameLayout
+                            android:layout_width="38dp"
+                            android:layout_height="38dp"
+                            android:background="@drawable/bg_icon_circle_green">
+
+                            <ImageView
+                                android:layout_width="18dp"
+                                android:layout_height="18dp"
+                                android:layout_gravity="center"
+                                android:src="@drawable/ic_cash"
+                                app:tint="@color/success" />
+                        </FrameLayout>
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:fontFamily="sans-serif-bold"
+                            android:text="Top Up Funds"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="11sp" />
+
+                        <TextView
+                            android:id="@+id/tv_stat_add_funds"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:fontFamily="sans-serif-black"
+                            android:text="+ Quick Add"
+                            android:textColor="@color/primary"
+                            android:textSize="17sp" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+            </LinearLayout>
+
+            <!-- VIP Membership Card Section (Mirroring Web App) -->
+            <LinearLayout
+                android:id="@+id/ll_membership_section"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:orientation="vertical">
+
+                <!-- 1. Active VIP Membership Card (Dark Glassmorphic) -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/card_vip_membership"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:visibility="gone"
+                    app:cardBackgroundColor="@android:color/transparent"
+                    app:cardCornerRadius="24dp"
+                    app:cardElevation="6dp"
+                    app:strokeColor="#33FFFFFF"
+                    app:strokeWidth="1dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/gradient_vip_card"
+                        android:orientation="vertical"
+                        android:padding="20dp">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:fontFamily="sans-serif-black"
+                                    android:letterSpacing="0.08"
+                                    android:text="AKR PREMIUM"
+                                    android:textColor="#FFFFFF"
+                                    android:textSize="16sp" />
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:fontFamily="sans-serif-bold"
+                                    android:letterSpacing="0.06"
+                                    android:text="VIP MEMBERSHIP CARD"
+                                    android:textColor="#B0BEC5"
+                                    android:textSize="10sp" />
+                            </LinearLayout>
+
+                            <TextView
+                                android:id="@+id/tv_vip_balance"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:background="@drawable/bg_pill_white"
+                                android:backgroundTint="#33FFFFFF"
+                                android:fontFamily="sans-serif-black"
+                                android:paddingHorizontal="10dp"
+                                android:paddingVertical="4dp"
+                                android:text="₹0"
+                                android:textColor="#FFFFFF"
+                                android:textSize="14sp" />
+                        </LinearLayout>
+
+                        <!-- Card Number -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="22dp"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <ImageView
+                                android:layout_width="26dp"
+                                android:layout_height="26dp"
+                                android:src="@drawable/ic_credit_card"
+                                app:tint="#FFFFFF" />
+
+                            <TextView
+                                android:id="@+id/tv_vip_card_number"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="12dp"
+                                android:fontFamily="monospace"
+                                android:letterSpacing="0.14"
+                                android:text="•••• •••• •••• ••••"
+                                android:textColor="#FFFFFF"
+                                android:textSize="17sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+
+                        <!-- Card Meta (Holder & Expiry) -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="20dp"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:fontFamily="sans-serif-bold"
+                                    android:letterSpacing="0.04"
+                                    android:text="CARD HOLDER"
+                                    android:textColor="#90A4AE"
+                                    android:textSize="9sp" />
+
+                                <TextView
+                                    android:id="@+id/tv_vip_holder_name"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:fontFamily="sans-serif-bold"
+                                    android:text="Valued Customer"
+                                    android:textColor="#FFFFFF"
+                                    android:textSize="13sp" />
+                            </LinearLayout>
+
+                            <LinearLayout
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:orientation="vertical">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:fontFamily="sans-serif-bold"
+                                    android:letterSpacing="0.04"
+                                    android:text="VALID THRU"
+                                    android:textColor="#90A4AE"
+                                    android:textSize="9sp" />
+
+                                <TextView
+                                    android:id="@+id/tv_vip_valid_thru"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:fontFamily="monospace"
+                                    android:text="12/28"
+                                    android:textColor="#FFFFFF"
+                                    android:textSize="13sp"
+                                    android:textStyle="bold" />
+                            </LinearLayout>
+                        </LinearLayout>
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- 2. Pending Request Card -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/card_membership_pending"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:visibility="gone"
+                    app:cardBackgroundColor="@color/surface"
+                    app:cardCornerRadius="20dp"
+                    app:cardElevation="1dp"
+                    app:strokeColor="@color/warning"
+                    app:strokeWidth="1.5dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:padding="16dp">
+
+                        <ImageView
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:src="@drawable/ic_clock"
+                            app:tint="@color/warning" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="14dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="sans-serif-bold"
+                                android:text="Membership Request Pending"
+                                android:textColor="@color/text_primary"
+                                android:textSize="14sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:fontFamily="sans-serif"
+                                android:text="Our verification team is reviewing your details. Approval in 24h."
+                                android:textColor="@color/text_secondary"
+                                android:textSize="11sp" />
+                        </LinearLayout>
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- 3. No Membership Card Prompt -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/card_no_membership"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:cardBackgroundColor="@color/surface"
+                    app:cardCornerRadius="20dp"
+                    app:cardElevation="2dp"
+                    app:strokeColor="@color/card_border"
+                    app:strokeWidth="1dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="16dp">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <FrameLayout
+                                android:layout_width="40dp"
+                                android:layout_height="40dp"
+                                android:background="@drawable/bg_icon_circle_soft">
+
+                                <ImageView
+                                    android:layout_width="20dp"
+                                    android:layout_height="20dp"
+                                    android:layout_gravity="center"
+                                    android:src="@drawable/ic_credit_card"
+                                    app:tint="@color/primary" />
+                            </FrameLayout>
+
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="12dp"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:fontFamily="sans-serif-bold"
+                                    android:text="Get AKR VIP Membership"
+                                    android:textColor="@color/text_primary"
+                                    android:textSize="14sp" />
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="2dp"
+                                    android:fontFamily="sans-serif"
+                                    android:text="Exclusive food discounts, free delivery &amp; personalized card"
+                                    android:textColor="@color/text_secondary"
+                                    android:textSize="11sp" />
+                            </LinearLayout>
+                        </LinearLayout>
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btn_request_membership"
+                            style="@style/Widget.AKR.Button.PillSoft"
+                            android:layout_width="match_parent"
+                            android:layout_height="44dp"
+                            android:layout_marginTop="12dp"
+                            android:fontFamily="sans-serif-bold"
+                            android:text="Request VIP Card"
+                            android:textSize="12sp"
+                            app:icon="@drawable/ic_membership_badge"
+                            app:iconSize="16dp"
+                            app:iconTint="@color/primary" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+            </LinearLayout>
+
+            <!-- Linked Bank Account & UPI Section (Mirroring Web App) -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                app:cardBackgroundColor="@color/surface"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="2dp"
+                app:strokeColor="@color/card_border"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <ImageView
+                            android:layout_width="18dp"
+                            android:layout_height="18dp"
+                            android:src="@drawable/ic_bank"
+                            app:tint="@color/primary" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="8dp"
+                            android:layout_weight="1"
+                            android:fontFamily="sans-serif-bold"
+                            android:text="Linked Bank &amp; UPI Details"
+                            android:textColor="@color/text_primary"
+                            android:textSize="14sp" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btn_edit_bank"
+                            style="@style/Widget.AKR.Button.PillSoft"
+                            android:layout_width="wrap_content"
+                            android:layout_height="36dp"
+                            android:fontFamily="sans-serif-bold"
+                            android:paddingHorizontal="12dp"
+                            android:text="Manage"
+                            android:textSize="11sp"
+                            app:icon="@drawable/ic_edit"
+                            app:iconSize="12dp"
+                            app:iconTint="@color/primary" />
+                    </LinearLayout>
+
+                    <!-- Bank details display container -->
+                    <LinearLayout
+                        android:id="@+id/ll_bank_details_content"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:orientation="vertical">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                android:id="@+id/tv_bank_avatar"
+                                android:layout_width="38dp"
+                                android:layout_height="38dp"
+                                android:background="@drawable/bg_pill_soft"
+                                android:fontFamily="sans-serif-black"
+                                android:gravity="center"
+                                android:text="BK"
+                                android:textColor="@color/primary"
+                                android:textSize="13sp" />
+
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="12dp"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+
+                                <TextView
+                                    android:id="@+id/tv_bank_name"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:fontFamily="sans-serif-bold"
+                                    android:text="No Bank Linked"
+                                    android:textColor="@color/text_primary"
+                                    android:textSize="13sp" />
+
+                                <TextView
+                                    android:id="@+id/tv_bank_account"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:fontFamily="sans-serif"
+                                    android:text="Tap Manage to add Bank Account"
+                                    android:textColor="@color/text_secondary"
+                                    android:textSize="11sp" />
+                            </LinearLayout>
+
+                            <TextView
+                                android:id="@+id/tv_bank_verified_badge"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:background="@drawable/bg_pill_soft"
+                                android:fontFamily="sans-serif-bold"
+                                android:paddingHorizontal="8dp"
+                                android:paddingVertical="3dp"
+                                android:text="Verified"
+                                android:textColor="@color/success"
+                                android:textSize="10sp"
+                                android:visibility="gone" />
+                        </LinearLayout>
+
+                        <!-- UPI ID Display Row -->
+                        <LinearLayout
+                            android:id="@+id/row_upi_display"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="10dp"
+                            android:background="@drawable/bg_pill_soft"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:paddingHorizontal="10dp"
+                            android:paddingVertical="6dp"
+                            android:visibility="gone">
+
+                            <ImageView
+                                android:layout_width="14dp"
+                                android:layout_height="14dp"
+                                android:src="@drawable/ic_upi"
+                                app:tint="@color/primary" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="6dp"
+                                android:fontFamily="sans-serif-bold"
+                                android:text="UPI ID:"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="11sp" />
+
+                            <TextView
+                                android:id="@+id/tv_upi_id"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="4dp"
+                                android:layout_weight="1"
+                                android:fontFamily="sans-serif-bold"
+                                android:textColor="@color/text_primary"
+                                android:textSize="11sp" />
+                        </LinearLayout>
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Transaction History Header & Filter Chips -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:fontFamily="sans-serif-black"
+                    android:letterSpacing="0.04"
+                    android:text="TRANSACTION HISTORY"
+                    android:textColor="@color/text_hint"
+                    android:textSize="12sp" />
+
+                <TextView
+                    android:id="@+id/tv_tx_count"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif-bold"
+                    android:textColor="@color/primary"
+                    android:textSize="12sp" />
+            </LinearLayout>
+
+            <!-- Filter Chips (Mirroring Web App: All, Credits, Debits, Refunds, Referrals) -->
+            <HorizontalScrollView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:overScrollMode="never"
+                android:scrollbars="none">
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/chip_filter_all"
+                        android:layout_width="wrap_content"
+                        android:layout_height="36dp"
+                        android:layout_marginEnd="6dp"
+                        android:background="@drawable/bg_chip_filter_selected"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:fontFamily="sans-serif-bold"
+                        android:gravity="center"
+                        android:paddingHorizontal="14dp"
+                        android:text="All"
+                        android:textColor="#FFFFFF"
+                        android:textSize="12sp" />
+
+                    <TextView
+                        android:id="@+id/chip_filter_credits"
+                        android:layout_width="wrap_content"
+                        android:layout_height="36dp"
+                        android:layout_marginEnd="6dp"
+                        android:background="@drawable/bg_chip_filter_unselected"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:fontFamily="sans-serif-bold"
+                        android:gravity="center"
+                        android:paddingHorizontal="14dp"
+                        android:text="Credits 💰"
+                        android:textColor="@color/text_primary"
+                        android:textSize="12sp" />
+
+                    <TextView
+                        android:id="@+id/chip_filter_debits"
+                        android:layout_width="wrap_content"
+                        android:layout_height="36dp"
+                        android:layout_marginEnd="6dp"
+                        android:background="@drawable/bg_chip_filter_unselected"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:fontFamily="sans-serif-bold"
+                        android:gravity="center"
+                        android:paddingHorizontal="14dp"
+                        android:text="Debits 💸"
+                        android:textColor="@color/text_primary"
+                        android:textSize="12sp" />
+
+                    <TextView
+                        android:id="@+id/chip_filter_refunds"
+                        android:layout_width="wrap_content"
+                        android:layout_height="36dp"
+                        android:layout_marginEnd="6dp"
+                        android:background="@drawable/bg_chip_filter_unselected"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:fontFamily="sans-serif-bold"
+                        android:gravity="center"
+                        android:paddingHorizontal="14dp"
+                        android:text="Refunds 🛡️"
+                        android:textColor="@color/text_primary"
+                        android:textSize="12sp" />
+
+                    <TextView
+                        android:id="@+id/chip_filter_referrals"
+                        android:layout_width="wrap_content"
+                        android:layout_height="36dp"
+                        android:background="@drawable/bg_chip_filter_unselected"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:fontFamily="sans-serif-bold"
+                        android:gravity="center"
+                        android:paddingHorizontal="14dp"
+                        android:text="Referrals 🎁"
+                        android:textColor="@color/text_primary"
+                        android:textSize="12sp" />
+                </LinearLayout>
+            </HorizontalScrollView>
+
+            <!-- Loading Spinner -->
+            <ProgressBar
+                android:id="@+id/pb_tx_loading"
+                style="?android:attr/progressBarStyle"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="24dp"
+                android:indeterminateTint="@color/primary"
+                android:visibility="gone" />
+
+            <!-- Empty State Container -->
+            <LinearLayout
+                android:id="@+id/ll_empty_tx"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="32dp"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <FrameLayout
+                    android:layout_width="64dp"
+                    android:layout_height="64dp"
+                    android:background="@drawable/bg_pill_soft">
+
+                    <ImageView
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/ic_wallet"
+                        app:tint="@color/text_hint" />
+                </FrameLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:fontFamily="sans-serif-bold"
+                    android:text="No Transactions Found"
+                    android:textColor="@color/text_primary"
+                    android:textSize="15sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:fontFamily="sans-serif"
+                    android:text="Your wallet activity and order refunds will appear here."
+                    android:textColor="@color/text_secondary"
+                    android:textSize="12sp" />
+            </LinearLayout>
+
+            <!-- Transactions List Container -->
             <LinearLayout
                 android:id="@+id/transactions_container"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
+                android:layout_marginTop="12dp"
                 android:orientation="vertical" />
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>

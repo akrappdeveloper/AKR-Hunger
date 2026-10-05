@@ -163,7 +163,49 @@
         <item name="shapeAppearance">@style/ShapeAppearance.AKR.Dialog</item>
         <item name="shapeAppearanceOverlay">@style/ShapeAppearance.AKR.Dialog</item>
         <item name="colorSurface">@color/surface</item>
-        <item name="android:backgroundDimAmount">0.5</item>
+        <item name="android:backgroundDimAmount">0.55</item>
+        <item name="materialAlertDialogTitleTextStyle">@style/TextAppearance.AKR.Dialog.Title</item>
+        <item name="materialAlertDialogBodyTextStyle">@style/TextAppearance.AKR.Dialog.Body</item>
+        <item name="buttonBarPositiveButtonStyle">@style/Widget.AKR.Dialog.Button.Positive</item>
+        <item name="buttonBarNegativeButtonStyle">@style/Widget.AKR.Dialog.Button.Negative</item>
+        <item name="buttonBarNeutralButtonStyle">@style/Widget.AKR.Dialog.Button.Neutral</item>
+    </style>
+
+    <style name="TextAppearance.AKR.Dialog.Title" parent="MaterialAlertDialog.Material3.Title.Text">
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="android:textSize">19sp</item>
+        <item name="android:fontFamily">sans-serif-black</item>
+    </style>
+
+    <style name="TextAppearance.AKR.Dialog.Body" parent="MaterialAlertDialog.Material3.Body.Text">
+        <item name="android:textColor">@color/text_secondary</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="android:lineSpacingMultiplier">1.3</item>
+    </style>
+
+    <style name="Widget.AKR.Dialog.Button.Positive" parent="Widget.Material3.Button.TextButton.Dialog">
+        <item name="android:textColor">@color/primary</item>
+        <item name="android:fontFamily">sans-serif-bold</item>
+        <item name="android:textSize">13.5sp</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="cornerRadius">18dp</item>
+    </style>
+
+    <style name="Widget.AKR.Dialog.Button.Negative" parent="Widget.Material3.Button.TextButton.Dialog">
+        <item name="android:textColor">@color/text_secondary</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:textSize">13.5sp</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="cornerRadius">18dp</item>
+    </style>
+
+    <style name="Widget.AKR.Dialog.Button.Neutral" parent="Widget.Material3.Button.TextButton.Dialog">
+        <item name="android:textColor">@color/info</item>
+        <item name="android:fontFamily">sans-serif-bold</item>
+        <item name="android:textSize">13.5sp</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="cornerRadius">18dp</item>
     </style>
 
     <style name="ShapeAppearance.AKR.Dialog" parent="">
@@ -208,5 +250,41 @@
     <style name="ShapeAppearance.AKR.Pill" parent="">
         <item name="cornerFamily">rounded</item>
         <item name="cornerSize">16dp</item>
+    </style>
+
+    <!-- Tab Text Appearance -->
+    <style name="TextAppearance.AKR.Tab" parent="TextAppearance.Material3.LabelMedium">
+        <item name="android:textSize">14sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+    </style>
+
+    <!-- Search TextInput Style (tighter height) -->
+    <style name="Widget.AKR.TextInput.Search" parent="Widget.Material3.TextInputLayout.OutlinedBox.Dense">
+        <item name="boxCornerRadiusTopStart">22dp</item>
+        <item name="boxCornerRadiusTopEnd">22dp</item>
+        <item name="boxCornerRadiusBottomStart">22dp</item>
+        <item name="boxCornerRadiusBottomEnd">22dp</item>
+        <item name="boxStrokeColor">@color/card_border</item>
+        <item name="hintTextColor">@color/text_hint</item>
+        <item name="boxBackgroundColor">@color/surface_variant</item>
+    </style>
+
+    <!-- Rounded Bottom Sheet for Permission Dialogs -->
+    <style name="ThemeOverlay_AKR_BottomSheetDialog_Rounded" parent="ThemeOverlay.Material3.BottomSheetDialog">
+        <item name="bottomSheetStyle">@style/Widget.AKR.BottomSheet.Rounded</item>
+        <item name="android:backgroundDimAmount">0.55</item>
+    </style>
+
+    <style name="Widget.AKR.BottomSheet.Rounded" parent="Widget.Material3.BottomSheet">
+        <item name="shapeAppearanceOverlay">@style/ShapeAppearance.AKR.BottomSheet</item>
+        <item name="backgroundTint">@color/surface</item>
+        <item name="android:elevation">16dp</item>
+    </style>
+
+    <!-- Permission Dialog Window (used by BottomSheetDialog internally) -->
+    <style name="Widget.AKR.PermissionDialog" parent="ThemeOverlay.AKR.MaterialAlertDialog">
+        <item name="colorSurface">@color/surface</item>
+        <item name="shapeAppearance">@style/ShapeAppearance.AKR.Dialog</item>
     </style>
 </resources>

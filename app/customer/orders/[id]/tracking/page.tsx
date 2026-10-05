@@ -289,7 +289,7 @@ export default function CustomerLiveTrackingPage() {
     <div className="min-h-screen bg-background text-foreground pb-24 font-sans selection:bg-primary/20">
       {/* Header */}
       <div className="sticky top-0 z-30 bg-background/85 backdrop-blur-xl border-b border-border/60 px-4 py-3 shadow-xs">
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
+        <div className="w-full max-w-[1440px] mx-auto px-1 sm:px-2 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Button
               variant="ghost"
@@ -319,7 +319,7 @@ export default function CustomerLiveTrackingPage() {
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-3 sm:px-4 pt-4 space-y-4">
+      <div className="w-full max-w-[1440px] mx-auto px-3 sm:px-5 pt-4 space-y-4">
         {/* Status Progress Bar */}
         <div className="bg-card border border-border/70 rounded-3xl p-4 sm:p-5 shadow-sm">
           <div className="flex items-center justify-between">

@@ -7,7 +7,7 @@
     android:orientation="vertical"
     android:background="@color/background">
 
-    <!-- Hero Header with Rose-Orange Gradient -->
+    <!-- Luxury Hero Header with Radiant Gradient -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -15,9 +15,10 @@
         android:orientation="vertical"
         android:paddingHorizontal="20dp"
         android:paddingTop="48dp"
-        android:paddingBottom="20dp"
-        android:elevation="4dp">
+        android:paddingBottom="18dp"
+        android:elevation="6dp">
 
+        <!-- Top Navigation Bar & Title -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -26,8 +27,8 @@
 
             <FrameLayout
                 android:id="@+id/btn_back"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
                 android:background="@drawable/circle_white_20"
                 android:clickable="true"
                 android:focusable="true"
@@ -49,20 +50,47 @@
                 android:layout_weight="1"
                 android:orientation="vertical">
 
-                <TextView
+                <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Deals &amp; Offers"
-                    android:textColor="@color/white"
-                    android:textSize="22sp"
-                    android:textStyle="bold" />
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Deals &amp; Offers"
+                        android:textColor="@color/white"
+                        android:textSize="22sp"
+                        android:textStyle="bold"
+                        android:letterSpacing="-0.02" />
+
+                    <!-- Live Cloud Sync Pill -->
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/circle_white_20"
+                        android:paddingHorizontal="8dp"
+                        android:paddingVertical="2dp"
+                        android:layout_marginStart="8dp"
+                        android:gravity="center_vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="⚡ LIVE"
+                            android:textColor="@color/white"
+                            android:textSize="9sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+                </LinearLayout>
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
+                    android:layout_marginTop="3dp"
                     android:text="Tap any promo code to copy &amp; save"
-                    android:textColor="#EEFFFFFF"
+                    android:textColor="#E6FFFFFF"
                     android:textSize="12sp" />
             </LinearLayout>
 
@@ -73,11 +101,55 @@
                 android:textSize="28sp" />
         </LinearLayout>
 
-        <!-- Category Filter Chips -->
+        <!-- Glassmorphic Search Bar -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="44dp"
+            android:layout_marginTop="16dp"
+            android:background="@drawable/bg_input_deals_search"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingHorizontal="14dp">
+
+            <ImageView
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:src="@drawable/ic_search"
+                android:tint="#E6FFFFFF"
+                android:contentDescription="Search Icon" />
+
+            <EditText
+                android:id="@+id/et_search_deals"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:layout_marginStart="10dp"
+                android:background="@null"
+                android:hint="Search codes, discounts, flat offers..."
+                android:textColorHint="#B3FFFFFF"
+                android:textColor="@color/white"
+                android:textSize="13sp"
+                android:inputType="text"
+                android:imeOptions="actionSearch"
+                android:maxLines="1" />
+
+            <ImageView
+                android:id="@+id/iv_clear_search"
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:src="@drawable/ic_close"
+                android:tint="#E6FFFFFF"
+                android:visibility="gone"
+                android:clickable="true"
+                android:focusable="true"
+                android:contentDescription="Clear search" />
+        </LinearLayout>
+
+        <!-- Interactive Category Filter Chips -->
         <HorizontalScrollView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="14dp"
             android:scrollbars="none">
 
             <LinearLayout
@@ -93,8 +165,20 @@
                     android:text="🔥 All Deals"
                     android:textSize="12sp"
                     android:textStyle="bold"
+                    android:textColor="@color/text_primary"
+                    android:background="@drawable/bg_chip_deal_active"
+                    android:gravity="center"
+                    android:paddingHorizontal="14dp"
+                    android:layout_marginEnd="8dp" />
+
+                <TextView
+                    android:id="@+id/chip_percentage"
+                    android:layout_width="wrap_content"
+                    android:layout_height="34dp"
+                    android:text="🏷️ % Discounts"
+                    android:textSize="12sp"
                     android:textColor="@color/white"
-                    android:background="@drawable/circle_white_20"
+                    android:background="@drawable/bg_chip_deal_inactive"
                     android:gravity="center"
                     android:paddingHorizontal="14dp"
                     android:layout_marginEnd="8dp" />
@@ -103,10 +187,10 @@
                     android:id="@+id/chip_flat"
                     android:layout_width="wrap_content"
                     android:layout_height="34dp"
-                    android:text="💸 Flat ₹100 Off"
+                    android:text="💸 Flat ₹ Off"
                     android:textSize="12sp"
-                    android:textColor="#EEFFFFFF"
-                    android:background="@drawable/circle_white_20"
+                    android:textColor="@color/white"
+                    android:background="@drawable/bg_chip_deal_inactive"
                     android:gravity="center"
                     android:paddingHorizontal="14dp"
                     android:layout_marginEnd="8dp" />
@@ -117,8 +201,8 @@
                     android:layout_height="34dp"
                     android:text="🛵 Free Delivery"
                     android:textSize="12sp"
-                    android:textColor="#EEFFFFFF"
-                    android:background="@drawable/circle_white_20"
+                    android:textColor="@color/white"
+                    android:background="@drawable/bg_chip_deal_inactive"
                     android:gravity="center"
                     android:paddingHorizontal="14dp"
                     android:layout_marginEnd="8dp" />
@@ -127,10 +211,22 @@
                     android:id="@+id/chip_biryani"
                     android:layout_width="wrap_content"
                     android:layout_height="34dp"
-                    android:text="🍲 Biryani Special"
+                    android:text="🍲 Biryani Fest"
                     android:textSize="12sp"
-                    android:textColor="#EEFFFFFF"
-                    android:background="@drawable/circle_white_20"
+                    android:textColor="@color/white"
+                    android:background="@drawable/bg_chip_deal_inactive"
+                    android:gravity="center"
+                    android:paddingHorizontal="14dp"
+                    android:layout_marginEnd="8dp" />
+
+                <TextView
+                    android:id="@+id/chip_latenight"
+                    android:layout_width="wrap_content"
+                    android:layout_height="34dp"
+                    android:text="🌙 Late Night"
+                    android:textSize="12sp"
+                    android:textColor="@color/white"
+                    android:background="@drawable/bg_chip_deal_inactive"
                     android:gravity="center"
                     android:paddingHorizontal="14dp" />
 
@@ -140,104 +236,134 @@
 
     </LinearLayout>
 
-    <!-- Scrollable Content -->
-    <androidx.core.widget.NestedScrollView
+    <!-- Swipe Refresh Layout & Scrollable Content -->
+    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+        android:id="@+id/swipe_refresh_deals"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:fillViewport="true"
-        android:clipToPadding="false"
-        android:paddingBottom="40dp">
+        android:layout_height="match_parent">
 
-        <LinearLayout
+        <androidx.core.widget.NestedScrollView
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:paddingHorizontal="16dp"
-            android:paddingTop="16dp">
+            android:layout_height="match_parent"
+            android:fillViewport="true"
+            android:clipToPadding="false"
+            android:paddingBottom="48dp">
 
-            <!-- Banner info pill -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="@drawable/bg_amber_soft"
-                android:orientation="horizontal"
-                android:padding="12dp"
-                android:gravity="center_vertical"
-                android:layout_marginBottom="14dp">
+                android:orientation="vertical"
+                android:paddingHorizontal="16dp"
+                android:paddingTop="16dp">
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="⚡"
-                    android:textSize="18sp"
-                    android:layout_marginEnd="10dp" />
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Deals are automatically synced with Firebase in real time. Apply at checkout!"
-                    android:textColor="@color/amber_dark"
-                    android:textSize="12sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
-
-            <!-- Loading / Empty State Card -->
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/card_deals_empty"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                app:cardCornerRadius="20dp"
-                app:cardElevation="1dp"
-                app:strokeColor="@color/card_border"
-                app:strokeWidth="1dp"
-                app:cardBackgroundColor="@color/surface"
-                android:visibility="gone">
-
+                <!-- Realtime Synced Info Pill -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:gravity="center"
-                    android:padding="32dp">
+                    android:background="@drawable/bg_amber_soft"
+                    android:orientation="horizontal"
+                    android:padding="12dp"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="14dp">
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="🎫"
-                        android:textSize="40sp" />
+                        android:text="⚡"
+                        android:textSize="18sp"
+                        android:layout_marginEnd="10dp" />
 
                     <TextView
-                        android:id="@+id/tv_empty"
-                        android:layout_width="wrap_content"
+                        android:id="@+id/tv_deals_banner_info"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
-                        android:text="Checking for latest deals..."
-                        android:textColor="@color/text_primary"
-                        android:textSize="16sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="6dp"
-                        android:text="New coupons and festive offers are added daily!"
-                        android:textColor="@color/text_secondary"
+                        android:layout_weight="1"
+                        android:text="Deals are synced live from Firebase Database. Codes auto-apply at checkout!"
+                        android:textColor="@color/amber_dark"
                         android:textSize="12sp"
-                        android:gravity="center" />
+                        android:textStyle="bold" />
                 </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
 
-            <!-- Dynamic Deals Container -->
-            <LinearLayout
-                android:id="@+id/deals_container"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical" />
+                <!-- Loading State Progress -->
+                <ProgressBar
+                    android:id="@+id/progress_deals_loading"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_marginVertical="24dp"
+                    android:indeterminateTint="@color/primary"
+                    android:visibility="gone" />
 
-        </LinearLayout>
+                <!-- Empty State Card -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/card_deals_empty"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="20dp"
+                    app:cardCornerRadius="22dp"
+                    app:cardElevation="1dp"
+                    app:strokeColor="@color/card_border"
+                    app:strokeWidth="1dp"
+                    app:cardBackgroundColor="@color/surface"
+                    android:visibility="gone">
 
-    </androidx.core.widget.NestedScrollView>
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:gravity="center"
+                        android:padding="32dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="🎫"
+                            android:textSize="48sp" />
+
+                        <TextView
+                            android:id="@+id/tv_empty"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="12dp"
+                            android:text="No matching deals found"
+                            android:textColor="@color/text_primary"
+                            android:textSize="16sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="6dp"
+                            android:text="Try another search term or clear the filter to discover more offers."
+                            android:textColor="@color/text_secondary"
+                            android:textSize="13sp"
+                            android:gravity="center" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btn_reset_filters"
+                            android:layout_width="wrap_content"
+                            android:layout_height="40dp"
+                            android:layout_marginTop="18dp"
+                            android:text="View All Deals"
+                            android:textSize="12sp"
+                            android:textStyle="bold"
+                            app:cornerRadius="20dp"
+                            android:backgroundTint="@color/primary"
+                            android:textColor="@color/white" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- Dynamic Deals Cards Container -->
+                <LinearLayout
+                    android:id="@+id/deals_container"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical" />
+
+            </LinearLayout>
+
+        </androidx.core.widget.NestedScrollView>
+
+    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
 </LinearLayout>
