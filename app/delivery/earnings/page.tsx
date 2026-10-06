@@ -43,7 +43,6 @@ export default function EarningsPage() {
         const ordersQuery = query(
             collection(db, 'orders'),
             where('deliveryPersonId', '==', user.uid),
-            where('status', '==', 'delivered'),
             orderBy('createdAt', 'asc')
         );
 
@@ -53,20 +52,52 @@ export default function EarningsPage() {
             orderBy('createdAt', 'desc')
         );
 
+        const getOrderEarning = (o: Order) => {
+            if (o.status === 'returned_to_restaurant' || o.deliveryStatus === 'returned_to_restaurant') {
+                return (o as any).cancellationCompensation || 20;
+            }
+            if (typeof (o as any).deliveryEarnings === 'number') {
+                return (o as any).deliveryEarnings;
+            }
+            const charge = Number(o.deliveryCharge || (o as any).deliveryFee || 40);
+            return Math.round(charge * 0.80);
+        };
+
         const unsubOrders = onSnapshot(ordersQuery, (snapshot) => {
-            const fetchedOrders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Order[];
+            const fetchedOrders = snapshot.docs
+                .map(doc => ({ id: doc.id, ...doc.data() } as Order))
+                .filter(o => o.status === 'delivered' || o.status === 'returned_to_restaurant' || o.deliveryStatus === 'returned_to_restaurant');
             setOrders(fetchedOrders);
 
+            // Real 7-day daily earnings aggregation
             const last7Days = Array.from({ length: 7 }, (_, i) => {
                 const d = new Date();
                 d.setDate(d.getDate() - (6 - i));
-                return d.toLocaleDateString('en-US', { weekday: 'short' });
+                d.setHours(0, 0, 0, 0);
+                return d;
             });
 
-            const activeData = last7Days.map(day => ({
-                name: day,
-                total: Math.floor(Math.random() * 200) + 50
-            }));
+            const activeData = last7Days.map(dateObj => {
+                const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'short' });
+                const dayTotal = fetchedOrders.reduce((sum, ord) => {
+                    const rawDate = (ord as any).deliveredAt || (ord as any).returnedAt || ord.createdAt;
+                    if (!rawDate) return sum;
+                    const ordDate = rawDate.toDate ? rawDate.toDate() : new Date(rawDate);
+                    if (
+                        ordDate.getDate() === dateObj.getDate() &&
+                        ordDate.getMonth() === dateObj.getMonth() &&
+                        ordDate.getFullYear() === dateObj.getFullYear()
+                    ) {
+                        return sum + getOrderEarning(ord);
+                    }
+                    return sum;
+                }, 0);
+
+                return {
+                    name: dayName,
+                    total: dayTotal
+                };
+            });
             setChartData(activeData);
         });
 
@@ -83,7 +114,18 @@ export default function EarningsPage() {
         };
     }, [user]);
 
-    const totalEarnings = orders.reduce((acc, curr) => acc + ((curr.deliveryCharge || 0) * 0.70), 0);
+    const getOrderEarning = (o: Order) => {
+        if (o.status === 'returned_to_restaurant' || o.deliveryStatus === 'returned_to_restaurant') {
+            return (o as any).cancellationCompensation || 20;
+        }
+        if (typeof (o as any).deliveryEarnings === 'number') {
+            return (o as any).deliveryEarnings;
+        }
+        const charge = Number(o.deliveryCharge || (o as any).deliveryFee || 40);
+        return Math.round(charge * 0.80);
+    };
+
+    const totalEarnings = orders.reduce((acc, curr) => acc + getOrderEarning(curr), 0);
     const totalWithdrawn = payouts.reduce((acc, curr) => curr.status === 'accepted' ? acc + (parseFloat(curr.amount) || 0) : acc, 0);
     const totalPending = payouts.reduce((acc, curr) => curr.status === 'pending' ? acc + (parseFloat(curr.amount) || 0) : acc, 0);
     const availableBalance = totalEarnings - (totalWithdrawn + totalPending);

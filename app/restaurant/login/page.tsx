@@ -35,9 +35,11 @@ import {
   BarChart3,
   LocateFixed,
   Navigation,
-  Compass
+  Compass,
+  Map as MapIcon
 } from 'lucide-react';
 import ThemeToggle from '@/components/ThemeToggle';
+import MapPickerDialog, { PickedLocation } from '@/components/restaurant/MapPickerDialog';
 
 export default function RestaurantLoginPage() {
   const router = useRouter();
@@ -52,11 +54,26 @@ export default function RestaurantLoginPage() {
   const [cuisines, setCuisines] = useState('');
   const [latitude, setLatitude] = useState('');
   const [longitude, setLongitude] = useState('');
+  const [city, setCity] = useState('');
+  const [stateName, setStateName] = useState('');
+  const [pincode, setPincode] = useState('');
+  const [showMapPicker, setShowMapPicker] = useState(false);
   const [locatingGps, setLocatingGps] = useState(false);
   const [detectedArea, setDetectedArea] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  const handleLocationPicked = (loc: PickedLocation) => {
+    setLatitude(loc.latitude.toFixed(6));
+    setLongitude(loc.longitude.toFixed(6));
+    setAddress(loc.address || loc.formattedAddress);
+    setDetectedArea(loc.formattedAddress);
+    if (loc.city) setCity(loc.city);
+    if (loc.state) setStateName(loc.state);
+    if (loc.pincode) setPincode(loc.pincode);
+    toast.success(`📍 Picked: ${loc.formattedAddress.slice(0, 45)}...`);
+  };
 
   // Derived indicator for valid coordinates
   const hasGpsCoordinates = Boolean(
@@ -254,6 +271,10 @@ export default function RestaurantLoginPage() {
         password: password,
         phone: phone.trim(),
         address: address.trim(),
+        street: address.trim(),
+        city: city.trim() || '',
+        state: stateName.trim() || '',
+        pincode: pincode.trim() || '',
         latitude: latNum,
         longitude: lngNum,
         coordinates: {
@@ -600,26 +621,38 @@ export default function RestaurantLoginPage() {
                               </div>
                             </div>
 
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="outline"
-                              onClick={handleDetectGPS}
-                              disabled={locatingGps}
-                              className="h-8 px-3 rounded-xl border-amber-500/40 hover:bg-amber-500/10 hover:border-amber-500 text-amber-600 dark:text-amber-400 font-bold text-xs gap-1.5 transition-all shadow-sm cursor-pointer self-start sm:self-auto"
-                            >
-                              {locatingGps ? (
-                                <>
-                                  <Spinner className="w-3.5 h-3.5 text-amber-500" />
-                                  <span>Detecting GPS...</span>
-                                </>
-                              ) : (
-                                <>
-                                  <LocateFixed className="w-3.5 h-3.5 text-amber-500 animate-pulse" />
-                                  <span>Auto-Detect GPS</span>
-                                </>
-                              )}
-                            </Button>
+                            <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                onClick={() => setShowMapPicker(true)}
+                                className="h-8 px-3 rounded-xl border-amber-500/40 hover:bg-amber-500/10 hover:border-amber-500 text-amber-600 dark:text-amber-400 font-bold text-xs gap-1.5 transition-all shadow-sm cursor-pointer"
+                              >
+                                <MapIcon className="w-3.5 h-3.5 text-amber-500" />
+                                <span>Pick on Map</span>
+                              </Button>
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                onClick={handleDetectGPS}
+                                disabled={locatingGps}
+                                className="h-8 px-3 rounded-xl border-border hover:bg-muted font-bold text-xs gap-1.5 transition-all shadow-sm cursor-pointer"
+                              >
+                                {locatingGps ? (
+                                  <>
+                                    <Spinner className="w-3.5 h-3.5 text-amber-500" />
+                                    <span>Detecting...</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <LocateFixed className="w-3.5 h-3.5 text-amber-500 animate-pulse" />
+                                    <span>Auto GPS</span>
+                                  </>
+                                )}
+                              </Button>
+                            </div>
                           </div>
 
                           {/* Detected Area Pill if Nominatim succeeded */}
@@ -799,10 +832,16 @@ export default function RestaurantLoginPage() {
         </div>
       </main>
 
-      {/* Footer copyright */}
-      <footer className="w-full py-4 text-center text-xs text-muted-foreground z-10">
-        © {new Date().getFullYear()} AKR Hunger Restaurant Commerce Network. All rights reserved.
-      </footer>
+      {/* Map Location Picker Dialog */}
+      <MapPickerDialog
+        open={showMapPicker}
+        onOpenChange={setShowMapPicker}
+        onLocationSelect={handleLocationPicked}
+        initialLat={latitude ? parseFloat(latitude) : undefined}
+        initialLng={longitude ? parseFloat(longitude) : undefined}
+        initialAddress={address}
+        title="Pinpoint Kitchen Location on Map"
+      />
     </div>
   );
 }

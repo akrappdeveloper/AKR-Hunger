@@ -31,11 +31,12 @@ export default function DeliveryHistoryPage() {
                 const q = query(
                     collection(db, 'orders'),
                     where('deliveryPersonId', '==', user.uid),
-                    where('status', '==', 'delivered'),
                     orderBy('createdAt', 'desc')
                 );
                 const snapshot = await getDocs(q);
-                const historyData = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Order));
+                const historyData = snapshot.docs
+                    .map(doc => ({ ...doc.data(), id: doc.id } as Order))
+                    .filter(o => o.status === 'delivered' || o.status === 'returned_to_restaurant' || o.deliveryStatus === 'returned_to_restaurant');
                 setOrders(historyData);
             } catch (error) {
                 console.error("Error fetching history:", error);
@@ -45,6 +46,17 @@ export default function DeliveryHistoryPage() {
         };
         fetchHistory();
     }, [user]);
+
+    const getOrderEarning = (order: Order) => {
+        if (order.status === 'returned_to_restaurant' || order.deliveryStatus === 'returned_to_restaurant') {
+            return (order as any).cancellationCompensation || 20;
+        }
+        if (typeof (order as any).deliveryEarnings === 'number') {
+            return (order as any).deliveryEarnings;
+        }
+        const charge = Number(order.deliveryCharge || (order as any).deliveryFee || 40);
+        return Math.round(charge * 0.80);
+    };
 
     const filteredOrders = orders.filter(order => {
         if (filter === 'all') return true;
@@ -155,9 +167,15 @@ export default function DeliveryHistoryPage() {
                                     <div className="flex-1 space-y-3">
                                         <div className="flex justify-between items-start">
                                             <h3 className="text-xl font-black text-white group-hover:text-blue-300 transition-colors">{order.restaurantName}</h3>
-                                            <Badge variant="outline" className="border-green-500/30 bg-green-500/10 text-green-400 font-bold px-2 py-0.5">
-                                                DELIVERED
-                                            </Badge>
+                                            {order.status === 'returned_to_restaurant' || order.deliveryStatus === 'returned_to_restaurant' ? (
+                                                <Badge variant="outline" className="border-amber-500/30 bg-amber-500/10 text-amber-400 font-bold px-2 py-0.5">
+                                                    RETURNED
+                                                </Badge>
+                                            ) : (
+                                                <Badge variant="outline" className="border-green-500/30 bg-green-500/10 text-green-400 font-bold px-2 py-0.5">
+                                                    DELIVERED
+                                                </Badge>
+                                            )}
                                         </div>
 
                                         <div className="flex items-center gap-2 text-sm text-gray-400 group-hover:text-gray-300 transition-colors">
@@ -176,8 +194,12 @@ export default function DeliveryHistoryPage() {
                                     {/* Price Column */}
                                     <div className="text-right flex flex-row md:flex-col justify-between items-center md:items-end w-full md:w-auto border-t md:border-t-0 border-white/5 pt-4 md:pt-0 mt-2 md:mt-0">
                                         <div>
-                                            <p className="font-black text-2xl text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-emerald-400">₹{((order.deliveryCharge || 0) * 0.70).toFixed(0)}</p>
-                                            <p className="text-[10px] text-green-500 uppercase font-bold tracking-wider">Earning</p>
+                                            <p className="font-black text-2xl text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-emerald-400">
+                                                ₹{getOrderEarning(order).toFixed(0)}
+                                            </p>
+                                            <p className="text-[10px] text-green-500 uppercase font-bold tracking-wider">
+                                                {order.status === 'returned_to_restaurant' ? 'Compensation' : '80% Earning'}
+                                            </p>
                                         </div>
                                         <Button variant="ghost" size="icon" className="md:hidden text-gray-400">
                                             <ChevronRight className="w-5 h-5" />
@@ -211,7 +233,7 @@ export default function DeliveryHistoryPage() {
                                 </div>
                                 <div className="text-right">
                                     <p className="text-[10px] text-gray-500 uppercase font-bold tracking-wider mb-1">Your Earning</p>
-                                    <p className="text-2xl font-black text-green-400">₹{((selectedOrder.deliveryCharge || 0) * 0.70).toFixed(0)}</p>
+                                    <p className="text-2xl font-black text-green-400">₹{getOrderEarning(selectedOrder).toFixed(0)}</p>
                                 </div>
                             </div>
 

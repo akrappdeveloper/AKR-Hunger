@@ -56,6 +56,8 @@ export default function RestaurantOrdersPage() {
   const [availablePartners, setAvailablePartners] = useState<any[]>([]);
   const [selectedPartnerIds, setSelectedPartnerIds] = useState<string[]>([]);
   const [loadingPartners, setLoadingPartners] = useState(false);
+  const [broadcastMode, setBroadcastMode] = useState<'all' | 'selected'>('all');
+  const [isBroadcasting, setIsBroadcasting] = useState(false);
   // Cancel Dialog
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [cancelTargetOrder, setCancelTargetOrder] = useState<Order | null>(null);
@@ -231,6 +233,8 @@ export default function RestaurantOrdersPage() {
     }
   };
 
+  const isPartnerOnline = (p: any) => p.isAvailable === true || p.status === 'online' || p.isOnline === true;
+
   const openBroadcastModal = async () => {
     setOpenBroadcastDialog(true);
     setLoadingPartners(true);
@@ -239,35 +243,104 @@ export default function RestaurantOrdersPage() {
       const snapshot = await getDocs(q);
       const partners = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setAvailablePartners(partners);
-      const onlineIds = partners.filter((p: any) => p.isAvailable).map((p: any) => p.id);
-      setSelectedPartnerIds(onlineIds);
-    } catch (error) { toast.error("Failed to load partners"); }
-    finally { setLoadingPartners(false); }
+      const onlineIds = partners.filter(isPartnerOnline).map((p: any) => p.id);
+      setSelectedPartnerIds(onlineIds.length > 0 ? onlineIds : partners.map((p: any) => p.id));
+      setBroadcastMode('all');
+    } catch (error) {
+      console.error("Failed to load delivery partners:", error);
+      toast.error("Failed to load partners");
+    } finally {
+      setLoadingPartners(false);
+    }
   };
 
   const handleBroadcast = async () => {
     if (!selectedOrder) return;
-    if (selectedPartnerIds.length === 0) { toast.warning("Select at least one partner"); return; }
+    if (broadcastMode === 'selected' && selectedPartnerIds.length === 0) {
+      toast.warning("Select at least one partner or choose 'Broadcast to All'");
+      return;
+    }
+    setIsBroadcasting(true);
     try {
-      await updateDoc(doc(db, 'orders', selectedOrder.id!), {
-        status: 'ready', targetDeliveryIds: selectedPartnerIds, broadcastVerified: true, updatedAt: new Date()
-      });
-      setOpenBroadcastDialog(false);
-      toast.success(`Broadcasted to ${selectedPartnerIds.length} partners!`);
+      const onlineIds = availablePartners.filter(isPartnerOnline).map((p: any) => p.id);
+      // Empty array in targetDeliveryIds allows any online driver to claim
+      const targetIds = broadcastMode === 'all'
+        ? (onlineIds.length > 0 ? onlineIds : [])
+        : selectedPartnerIds;
 
-      // Trigger Notification
+      await updateDoc(doc(db, 'orders', selectedOrder.id!), {
+        status: 'ready',
+        targetDeliveryIds: targetIds,
+        broadcastVerified: true,
+        broadcastAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      });
+
+      setSelectedOrder(prev => prev ? {
+        ...prev,
+        status: 'ready',
+        targetDeliveryIds: targetIds,
+        broadcastVerified: true
+      } : null);
+
+      setOpenBroadcastDialog(false);
+      const countLabel = broadcastMode === 'all'
+        ? (onlineIds.length > 0 ? `${onlineIds.length} online` : 'all available')
+        : `${selectedPartnerIds.length}`;
+      toast.success(`Broadcasted to ${countLabel} delivery partners! 🛵`);
+
+      // Trigger In-app notifications in Firestore
+      try {
+        const notifTargets = broadcastMode === 'all'
+          ? (onlineIds.length > 0 ? onlineIds : availablePartners.map((p: any) => p.id))
+          : selectedPartnerIds;
+
+        for (const pid of notifTargets) {
+          addDoc(collection(db, 'notifications'), {
+            userId: pid,
+            type: 'order',
+            title: '🛵 New Delivery Request',
+            message: `Order #${formatOrderId(selectedOrder.id)} from ${selectedOrder.restaurantName || 'Restaurant'} is ready for pickup!`,
+            orderId: selectedOrder.id,
+            read: false,
+            isRead: false,
+            createdAt: serverTimestamp()
+          }).catch(() => {});
+        }
+      } catch (e) {
+        console.warn("Could not write in-app notifications:", e);
+      }
+
+      // Trigger FCM Push Notification
       fetch('/api/notifications/delivery-request', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ orderId: selectedOrder.id, partnerIds: selectedPartnerIds })
+        body: JSON.stringify({
+          orderId: selectedOrder.id,
+          partnerIds: broadcastMode === 'all' ? availablePartners.map((p: any) => p.id) : selectedPartnerIds
+        })
       }).catch(err => console.error("Failed to trigger delivery notification", err));
 
       fetchOrders();
-    } catch (error) { toast.error("Broadcast failed"); }
+    } catch (error) {
+      console.error("Broadcast failed:", error);
+      toast.error("Broadcast failed");
+    } finally {
+      setIsBroadcasting(false);
+    }
   };
 
   const togglePartnerSelection = (id: string) => {
     setSelectedPartnerIds(prev => prev.includes(id) ? prev.filter(pid => pid !== id) : [...prev, id]);
+  };
+
+  const selectAllPartners = () => {
+    setSelectedPartnerIds(availablePartners.map((p: any) => p.id));
+  };
+
+  const selectOnlyOnlinePartners = () => {
+    const onlineIds = availablePartners.filter(isPartnerOnline).map((p: any) => p.id);
+    setSelectedPartnerIds(onlineIds);
   };
 
   const filteredOrders = orders.filter(order => {
@@ -502,28 +575,140 @@ export default function RestaurantOrdersPage() {
       <Dialog open={openBroadcastDialog} onOpenChange={setOpenBroadcastDialog}>
         <DialogContent className="bg-card border-border text-card-foreground max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-foreground">Broadcast Request</DialogTitle>
+            <DialogTitle className="text-foreground flex items-center gap-2">
+              <Radio className="w-5 h-5 text-purple-500 animate-pulse" />
+              Broadcast Delivery Request
+            </DialogTitle>
             <DialogDescription className="text-muted-foreground">
-              Found {availablePartners.length} partners. Select who should receive this order.
+              Order #{formatOrderId(selectedOrder?.id)} · ₹{selectedOrder?.total}
             </DialogDescription>
           </DialogHeader>
-          <div className="py-4 space-y-2 max-h-[300px] overflow-y-auto">
-            {availablePartners.map(partner => (
-              <div key={partner.id} onClick={() => togglePartnerSelection(partner.id)} className={`flex items-center p-3 rounded-xl border cursor-pointer transition-all ${selectedPartnerIds.includes(partner.id) ? 'bg-primary/10 border-primary/50 ring-1 ring-primary/30' : 'bg-muted/30 border-border hover:bg-muted/50'}`}>
-                <div className="flex-1">
-                  <p className="font-bold text-foreground">{partner.name}</p>
-                  <div className="flex items-center gap-2 mt-1">
-                    <Badge variant="outline" className={partner.isAvailable ? 'text-emerald-500 border-emerald-500/30' : 'text-muted-foreground border-border'}>{partner.isAvailable ? 'Online' : 'Offline'}</Badge>
-                    <span className="text-xs text-muted-foreground">{partner.vehicle}</span>
-                  </div>
-                </div>
-                <Checkbox checked={selectedPartnerIds.includes(partner.id)} className="border-border data-[state=checked]:bg-primary data-[state=checked]:border-primary" />
-              </div>
-            ))}
+
+          {/* Mode Switcher */}
+          <div className="grid grid-cols-2 gap-2 p-1 bg-muted/50 rounded-xl border border-border">
+            <button
+              type="button"
+              onClick={() => setBroadcastMode('all')}
+              className={`py-2 px-3 rounded-lg text-xs font-bold transition-all ${
+                broadcastMode === 'all'
+                  ? 'bg-primary text-primary-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              ⚡ All Online Riders
+            </button>
+            <button
+              type="button"
+              onClick={() => setBroadcastMode('selected')}
+              className={`py-2 px-3 rounded-lg text-xs font-bold transition-all ${
+                broadcastMode === 'selected'
+                  ? 'bg-primary text-primary-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              🎯 Specific Riders
+            </button>
           </div>
+
+          {broadcastMode === 'all' ? (
+            <div className="p-4 rounded-2xl bg-purple-500/10 border border-purple-500/20 space-y-2">
+              <div className="flex items-center gap-2 text-purple-400 font-bold text-sm">
+                <span className="relative flex h-2.5 w-2.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-purple-500"></span>
+                </span>
+                Open Broadcast to All Riders
+              </div>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                This order will be broadcast to all online delivery partners ({availablePartners.filter(isPartnerOnline).length} currently online). The first partner to accept claims the delivery!
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-muted-foreground">
+                  {selectedPartnerIds.length} of {availablePartners.length} selected
+                </span>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={selectOnlyOnlinePartners}
+                    className="text-xs text-primary hover:underline font-medium"
+                  >
+                    Online Only
+                  </button>
+                  <span>•</span>
+                  <button
+                    type="button"
+                    onClick={selectAllPartners}
+                    className="text-xs text-primary hover:underline font-medium"
+                  >
+                    Select All
+                  </button>
+                </div>
+              </div>
+
+              <div className="py-2 space-y-2 max-h-[260px] overflow-y-auto">
+                {availablePartners.length === 0 ? (
+                  <div className="p-4 text-center text-xs text-muted-foreground">
+                    No registered delivery partners found.
+                  </div>
+                ) : (
+                  availablePartners.map(partner => {
+                    const online = isPartnerOnline(partner);
+                    return (
+                      <div
+                        key={partner.id}
+                        onClick={() => togglePartnerSelection(partner.id)}
+                        className={`flex items-center p-3 rounded-xl border cursor-pointer transition-all ${
+                          selectedPartnerIds.includes(partner.id)
+                            ? 'bg-primary/10 border-primary/50 ring-1 ring-primary/30'
+                            : 'bg-muted/30 border-border hover:bg-muted/50'
+                        }`}
+                      >
+                        <div className="flex-1">
+                          <p className="font-bold text-foreground text-sm">{partner.name || 'Partner'}</p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <Badge
+                              variant="outline"
+                              className={
+                                online
+                                  ? 'text-emerald-500 border-emerald-500/30 bg-emerald-500/10'
+                                  : 'text-muted-foreground border-border'
+                              }
+                            >
+                              {online ? 'Online' : 'Offline'}
+                            </Badge>
+                            <span className="text-xs text-muted-foreground">{partner.vehicle || 'Bike'}</span>
+                          </div>
+                        </div>
+                        <Checkbox
+                          checked={selectedPartnerIds.includes(partner.id)}
+                          className="border-border data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                        />
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+          )}
+
           <DialogFooter>
-            <Button onClick={handleBroadcast} className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-bold" disabled={selectedPartnerIds.length === 0}>
-              Broadcast Now
+            <Button
+              onClick={handleBroadcast}
+              className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold h-11"
+              disabled={isBroadcasting || (broadcastMode === 'selected' && selectedPartnerIds.length === 0)}
+            >
+              {isBroadcasting ? (
+                <>
+                  <Spinner className="w-4 h-4 mr-2" /> Broadcasting...
+                </>
+              ) : (
+                <>
+                  <Radio className="w-4 h-4 mr-2 animate-pulse" /> Broadcast Now
+                </>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

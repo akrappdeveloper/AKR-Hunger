@@ -248,14 +248,33 @@ public class OrderDetailActivity extends BaseActivity {
         double taxable = order.getTaxableValue() > 0 ? order.getTaxableValue() : subtotal;
         double cgst = order.getCgst() > 0 ? order.getCgst() : Math.round((order.getTaxes() / 2.0) * 100.0) / 100.0;
         double sgst = order.getSgst() > 0 ? order.getSgst() : Math.round((order.getTaxes() / 2.0) * 100.0) / 100.0;
+
+        // Delivery Charge calculation: ₹40 standard single item/quantity, ₹60 for multi-quantity or multi-items
+        double delivery = order.getDeliveryCharge();
+        if (delivery <= 0) {
+            int totalQty = 0;
+            if (order.getItems() != null) {
+                for (OrderItem item : order.getItems()) {
+                    totalQty += item.getQuantity();
+                }
+            }
+            delivery = totalQty > 1 ? 60.0 : 40.0;
+            order.setDeliveryCharge(delivery);
+        }
+
         double total = order.getTotal();
+        // If total was recorded without deliveryCharge (e.g. total <= subtotal + taxes), ensure total includes delivery fee
+        if (total <= (subtotal + cgst + sgst) && delivery > 0) {
+            total = subtotal + packaging + platform + delivery + (cgst + sgst) - order.getDiscountAmount();
+        }
+
         double amountPaid = order.getAmountPaid() > 0 ? order.getAmountPaid() : ("cod".equalsIgnoreCase(order.getPaymentMethod()) ? 0.0 : total);
         double balanceDue = order.getBalanceDue() > 0 ? order.getBalanceDue() : ("cod".equalsIgnoreCase(order.getPaymentMethod()) ? total : 0.0);
 
         ((TextView) findViewById(R.id.tv_subtotal)).setText(String.format(Locale.getDefault(), "₹%.2f", subtotal));
         TextView tvPackaging = findViewById(R.id.tv_packaging_charges);
         if (tvPackaging != null) tvPackaging.setText(String.format(Locale.getDefault(), "₹%.2f", packaging));
-        ((TextView) findViewById(R.id.tv_delivery)).setText(order.getDeliveryCharge() == 0 ? "FREE" : String.format(Locale.getDefault(), "₹%.2f", order.getDeliveryCharge()));
+        ((TextView) findViewById(R.id.tv_delivery)).setText(String.format(Locale.getDefault(), "₹%.2f", delivery));
         TextView tvPlatform = findViewById(R.id.tv_platform_fee);
         if (tvPlatform != null) tvPlatform.setText(String.format(Locale.getDefault(), "₹%.2f", platform));
         TextView tvTaxable = findViewById(R.id.tv_taxable_value);

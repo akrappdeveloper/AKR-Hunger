@@ -222,7 +222,9 @@ export default function CartPage() {
 
   const subtotal = getSubtotal();
   const packagingCharges = 0; // restaurant?.packagingCharges || 0
-  const deliveryCharge = restaurant?.deliveryCharge || 40;
+  // Delivery Charge: ₹40 standard single item/quantity, ₹60 for multi-quantity or multi-items
+  const totalItemsQuantity = items.reduce((sum, item) => sum + (item.quantity || 1), 0);
+  const deliveryCharge = totalItemsQuantity > 1 ? 60 : 40;
   const platformFee = 0;
   const discountedSubtotal = Math.max(0, subtotal - discountAmount);
   const taxableValue = discountedSubtotal; // CGST+SGST on food value
@@ -389,6 +391,7 @@ export default function CartPage() {
           cgst,
           sgst,
           deliveryCharge,
+          deliveryFee: deliveryCharge,
           taxes,
           discountAmount: discountAmount || 0,
           promotionId: appliedPromotion?.id || '',
@@ -469,6 +472,7 @@ export default function CartPage() {
         cgst,
         sgst,
         deliveryCharge,
+        deliveryFee: deliveryCharge,
         taxes,
         discountAmount: discountAmount || 0,
         promotionId: appliedPromotion?.id || '',
@@ -1304,7 +1308,12 @@ export default function CartPage() {
                 </div>
 
                 <div className="flex justify-between text-muted-foreground">
-                  <span>Delivery Partner Fee</span>
+                  <span className="flex items-center gap-1.5">
+                    <span>Delivery Partner Fee</span>
+                    <span className="text-[10px] font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded-md">
+                      {totalItemsQuantity > 1 ? 'Multi-item (₹60)' : 'Standard (₹40)'}
+                    </span>
+                  </span>
                   <span className="text-foreground font-semibold">₹{deliveryCharge.toFixed(2)}</span>
                 </div>
 

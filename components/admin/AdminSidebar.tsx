@@ -40,7 +40,9 @@ import {
   Image as ImageIcon,
   RotateCcw,
   Gift,
-  Percent
+  Percent,
+  ShieldCheck,
+  Headset
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -92,6 +94,7 @@ const AdminSidebar = ({ isMobile = false, onClose }: AdminSidebarProps) => {
         { href: '/admin/restaurants', label: 'Restaurants', icon: Store },
         { href: '/admin/delivery', label: 'Delivery Partners', icon: Truck },
         { href: '/admin/drivers', label: 'Driver Fleet', icon: Activity },
+        { href: '/admin/kyc', label: 'KYC Verification', icon: ShieldCheck },
         { href: '/admin/orders', label: 'Orders', icon: ShoppingBag },
       ],
     },
@@ -139,7 +142,8 @@ const AdminSidebar = ({ isMobile = false, onClose }: AdminSidebarProps) => {
         { href: '/admin/reviews', label: 'Reviews', icon: Star },
         { href: '/admin/notifications', label: 'Notifications', icon: Bell },
         { href: '/admin/reports', label: 'Reports', icon: FileText },
-        { href: '/admin/support', label: 'Support', icon: LifeBuoy },
+        { href: '/admin/support', label: 'Support Desk', icon: LifeBuoy },
+        { href: '/admin/support/delivery', label: 'Delivery Support', icon: Headset },
         { href: '/admin/settings', label: 'Settings', icon: Settings },
       ],
     },

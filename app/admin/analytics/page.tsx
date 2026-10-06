@@ -24,12 +24,15 @@ interface PlatformMetrics {
   totalCustomers: number;
   totalRestaurants: number;
   totalDeliveryPartners: number;
+  activeDeliveryPartners: number;
   deliveredOrders: number;
   cancelledOrders: number;
   pendingOrders: number;
   avgOrderValue: number;
   totalDeliveryFees: number;
+  totalDriverPayouts: number;
   totalCommission: number;
+  totalDriverCashInHand: number;
 }
 
 interface TopRestaurant {
@@ -45,6 +48,21 @@ interface TopDeliveryPartner {
   name: string;
   deliveries: number;
   rating: number;
+}
+
+export interface DeliveryPartnerDetail {
+  id: string;
+  name: string;
+  phone: string;
+  email?: string;
+  vehicle: string;
+  vehicleNumber?: string;
+  rating: number;
+  status: 'online' | 'offline' | 'on_delivery' | string;
+  kycStatus?: string;
+  deliveries: number;
+  earnings: number;
+  cashInHand: number;
 }
 
 const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#14B8A6', '#F97316'];
@@ -74,19 +92,100 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 export default function AdminAnalyticsPage() {
   const [metrics, setMetrics] = useState<PlatformMetrics>({
     totalOrders: 0, totalRevenue: 0, totalCustomers: 0,
-    totalRestaurants: 0, totalDeliveryPartners: 0,
+    totalRestaurants: 0, totalDeliveryPartners: 0, activeDeliveryPartners: 0,
     deliveredOrders: 0, cancelledOrders: 0, pendingOrders: 0,
-    avgOrderValue: 0, totalDeliveryFees: 0, totalCommission: 0,
+    avgOrderValue: 0, totalDeliveryFees: 0, totalDriverPayouts: 0, totalCommission: 0,
+    totalDriverCashInHand: 0,
   });
   const [monthlyData, setMonthlyData] = useState<any[]>([]);
   const [statusData, setStatusData] = useState<any[]>([]);
   const [topRestaurants, setTopRestaurants] = useState<TopRestaurant[]>([]);
   const [topPartners, setTopPartners] = useState<TopDeliveryPartner[]>([]);
+  const [deliveryPartners, setDeliveryPartners] = useState<DeliveryPartnerDetail[]>([]);
   const [hourlyData, setHourlyData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState<'week' | 'month' | 'year'>('month');
 
   useEffect(() => {
+    let partnersCache: any[] = [];
+    let ordersCache: any[] = [];
+
+    const recalculateDeliveryAnalytics = () => {
+      const deliveriesMap: Record<string, { count: number; earnings: number; cash: number }> = {};
+
+      ordersCache.forEach((order) => {
+        if (order.status === 'delivered' && order.deliveryPersonId) {
+          const dId = order.deliveryPersonId;
+          if (!deliveriesMap[dId]) {
+            deliveriesMap[dId] = { count: 0, earnings: 0, cash: 0 };
+          }
+          deliveriesMap[dId].count++;
+          const earning = order.deliveryEarnings ?? Math.round((order.deliveryCharge || 40) * 0.8);
+          deliveriesMap[dId].earnings += earning;
+          if (order.paymentMethod === 'cod') {
+            deliveriesMap[dId].cash += (order.total || 0);
+          }
+        }
+      });
+
+      let activeCount = 0;
+      let totalDriverCash = 0;
+      let totalDriverEarnings = 0;
+
+      const detailedPartners: DeliveryPartnerDetail[] = partnersCache.map((p) => {
+        const orderStats = deliveriesMap[p.id] || { count: 0, earnings: 0, cash: 0 };
+        const completedDeliveries = Math.max(
+          p.completedDeliveries || p.totalDeliveries || p.deliveriesCount || 0,
+          orderStats.count
+        );
+        const earnings = Math.max(
+          p.totalEarnings || p.earnings || 0,
+          orderStats.earnings
+        );
+        const cashInHand = p.walletBalance || p.cashInHand || orderStats.cash || 0;
+
+        const isOnline = p.status === 'online' || p.status === 'on_delivery' || p.isAvailable === true;
+        if (isOnline) activeCount++;
+
+        totalDriverCash += cashInHand;
+        totalDriverEarnings += earnings;
+
+        return {
+          id: p.id,
+          name: p.name || p.displayName || 'Delivery Partner',
+          phone: p.phone || p.phoneNumber || 'N/A',
+          email: p.email || '',
+          vehicle: p.vehicle || p.vehicleType || 'Bike',
+          vehicleNumber: p.vehicleNumber || 'N/A',
+          rating: typeof p.rating === 'number' && p.rating > 0 ? p.rating : 4.8,
+          status: p.status || (p.isAvailable ? 'online' : 'offline'),
+          kycStatus: p.kycStatus || (p.isVerified ? 'approved' : 'pending'),
+          deliveries: completedDeliveries,
+          earnings: earnings,
+          cashInHand: cashInHand,
+        };
+      });
+
+      detailedPartners.sort((a, b) => b.deliveries - a.deliveries || b.earnings - a.earnings);
+      setDeliveryPartners(detailedPartners);
+
+      // Top partners for leaderboard
+      setTopPartners(detailedPartners.slice(0, 5).map(p => ({
+        id: p.id,
+        name: p.name,
+        deliveries: p.deliveries,
+        rating: p.rating,
+      })));
+
+      setMetrics(prev => ({
+        ...prev,
+        totalDeliveryPartners: partnersCache.length,
+        activeDeliveryPartners: activeCount,
+        totalDriverPayouts: totalDriverEarnings,
+        totalDriverCashInHand: totalDriverCash,
+      }));
+    };
+
     // Listen to customers count
     const unsubCustomers = onSnapshot(collection(db, 'customers'), (snap) => {
       setMetrics(prev => ({ ...prev, totalCustomers: snap.size }));
@@ -98,27 +197,17 @@ export default function AdminAnalyticsPage() {
       setMetrics(prev => ({ ...prev, totalRestaurants: snap.size }));
     });
 
-    // Listen to delivery partners
-    const unsubDelivery = onSnapshot(collection(db, 'delivery_partners'), (snap) => {
-      const partners = snap.docs.map(doc => ({ id: doc.id, ...doc.data() })) as any[];
-      setMetrics(prev => ({ ...prev, totalDeliveryPartners: snap.size }));
-
-      // Process top delivery partners
-      const sorted = partners
-        .map(p => ({
-          id: p.id,
-          name: p.name || 'Unknown',
-          deliveries: p.completedDeliveries || 0,
-          rating: p.rating || 0,
-        }))
-        .sort((a, b) => b.deliveries - a.deliveries)
-        .slice(0, 5);
-      setTopPartners(sorted);
+    // Listen to delivery partners in deliveryPersons collection
+    const unsubDelivery = onSnapshot(collection(db, 'deliveryPersons'), (snap) => {
+      partnersCache = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      recalculateDeliveryAnalytics();
     });
 
     // Listen to all orders
     const qOrders = query(collection(db, 'orders'), orderBy('createdAt', 'desc'));
     const unsubOrders = onSnapshot(qOrders, (snap) => {
+      ordersCache = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      recalculateDeliveryAnalytics();
       let revenue = 0;
       let deliveryFees = 0;
       let delivered = 0;
@@ -245,7 +334,7 @@ export default function AdminAnalyticsPage() {
     { title: 'Avg Order Value', value: `₹${metrics.avgOrderValue.toFixed(0)}`, icon: TrendingUp, color: 'purple', change: `${fulfillmentRate}% fulfillment` },
     { title: 'Customers', value: metrics.totalCustomers.toLocaleString(), icon: Users, color: 'orange', change: 'All registered' },
     { title: 'Restaurants', value: metrics.totalRestaurants.toLocaleString(), icon: Store, color: 'cyan', change: 'Active partners' },
-    { title: 'Delivery Partners', value: metrics.totalDeliveryPartners.toLocaleString(), icon: Truck, color: 'pink', change: 'Registered drivers' },
+    { title: 'Delivery Partners', value: metrics.totalDeliveryPartners.toLocaleString(), icon: Truck, color: 'pink', change: `${metrics.activeDeliveryPartners} active now • ₹${metrics.totalDriverPayouts.toLocaleString()} payouts` },
   ];
 
   const colorMap: Record<string, string> = {
@@ -497,28 +586,38 @@ export default function AdminAnalyticsPage() {
                 <Truck className="w-5 h-5 text-blue-400" />
                 Top Delivery Partners
               </CardTitle>
-              <Badge variant="outline" className="border-blue-500/30 text-blue-400 bg-blue-500/10 text-[10px]">By Deliveries</Badge>
+              <Badge variant="outline" className="border-blue-500/30 text-blue-400 bg-blue-500/10 text-[10px]">
+                {metrics.activeDeliveryPartners} Active Online
+              </Badge>
             </div>
           </CardHeader>
           <CardContent className="p-0">
             <div className="divide-y divide-white/5">
-              {topPartners.length === 0 ? (
-                <div className="text-center py-8 text-gray-500 text-sm">No delivery data yet</div>
+              {deliveryPartners.length === 0 ? (
+                <div className="text-center py-8 text-gray-500 text-sm">No delivery partner data found</div>
               ) : (
-                topPartners.map((partner, i) => (
+                deliveryPartners.slice(0, 5).map((partner, i) => (
                   <div key={partner.id} className="flex items-center justify-between p-4 hover:bg-white/5 transition-colors group">
                     <div className="flex items-center gap-4">
                       <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold ${i === 0 ? 'bg-yellow-500/20 text-yellow-400' : i === 1 ? 'bg-gray-400/20 text-gray-300' : i === 2 ? 'bg-orange-500/20 text-orange-400' : 'bg-white/5 text-gray-500'}`}>
                         #{i + 1}
                       </div>
                       <div>
-                        <p className="text-white font-medium text-sm">{partner.name}</p>
-                        <p className="text-gray-500 text-xs">⭐ {partner.rating.toFixed(1)} rating</p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-white font-medium text-sm">{partner.name}</p>
+                          <span className={`w-2 h-2 rounded-full ${
+                            partner.status === 'online' ? 'bg-emerald-400 animate-pulse' :
+                            partner.status === 'on_delivery' ? 'bg-amber-400' : 'bg-gray-600'
+                          }`} />
+                        </div>
+                        <p className="text-gray-500 text-xs">
+                          {partner.vehicle} • {partner.phone} • ⭐ {partner.rating.toFixed(1)}
+                        </p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-blue-400 font-bold font-mono text-sm">{partner.deliveries}</p>
-                      <p className="text-gray-600 text-[10px]">deliveries</p>
+                      <p className="text-blue-400 font-bold font-mono text-sm">{partner.deliveries} orders</p>
+                      <p className="text-emerald-400 text-xs font-mono font-medium">₹{partner.earnings.toLocaleString()} earned</p>
                     </div>
                   </div>
                 ))
@@ -527,6 +626,147 @@ export default function AdminAnalyticsPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Comprehensive Delivery Partners Fleet Details & Performance Section */}
+      <Card className="bg-black/40 border-white/10 backdrop-blur-md shadow-xl overflow-hidden">
+        <CardHeader className="border-b border-white/5 bg-white/5 pb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <CardTitle className="text-xl font-bold text-white flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                  <Truck className="w-5 h-5" />
+                </div>
+                Delivery Partners Fleet Overview & Performance
+              </CardTitle>
+              <CardDescription className="text-gray-400 mt-1">
+                Real-time tracking of drivers, completed deliveries, 80% earnings payouts, and cash in hand.
+              </CardDescription>
+            </div>
+            <div className="flex items-center gap-2">
+              <Badge className="bg-emerald-500/15 border-emerald-500/30 text-emerald-400 text-xs py-1 px-3">
+                {metrics.activeDeliveryPartners} Drivers Online
+              </Badge>
+              <Badge className="bg-blue-500/15 border-blue-500/30 text-blue-400 text-xs py-1 px-3">
+                {metrics.totalDeliveryPartners} Total Fleet
+              </Badge>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="p-6 space-y-6">
+          {/* Fleet Performance Summary Cards */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="p-4 rounded-2xl bg-white/5 border border-white/10">
+              <span className="text-xs text-gray-400 uppercase font-semibold">Total Fleet Size</span>
+              <p className="text-2xl font-black text-white mt-1 font-mono">{metrics.totalDeliveryPartners}</p>
+              <span className="text-[11px] text-emerald-400 mt-0.5 block">{metrics.activeDeliveryPartners} currently active</span>
+            </div>
+            <div className="p-4 rounded-2xl bg-white/5 border border-white/10">
+              <span className="text-xs text-gray-400 uppercase font-semibold">Completed Deliveries</span>
+              <p className="text-2xl font-black text-blue-400 mt-1 font-mono">
+                {deliveryPartners.reduce((acc, p) => acc + p.deliveries, 0)}
+              </p>
+              <span className="text-[11px] text-gray-500 mt-0.5 block">Total dropped orders</span>
+            </div>
+            <div className="p-4 rounded-2xl bg-white/5 border border-white/10">
+              <span className="text-xs text-gray-400 uppercase font-semibold">Total Driver Payouts</span>
+              <p className="text-2xl font-black text-emerald-400 mt-1 font-mono">
+                ₹{metrics.totalDriverPayouts.toLocaleString()}
+              </p>
+              <span className="text-[11px] text-gray-500 mt-0.5 block">80% delivery fee share</span>
+            </div>
+            <div className="p-4 rounded-2xl bg-white/5 border border-white/10">
+              <span className="text-xs text-gray-400 uppercase font-semibold">Driver Cash in Hand</span>
+              <p className="text-2xl font-black text-amber-400 mt-1 font-mono">
+                ₹{metrics.totalDriverCashInHand.toLocaleString()}
+              </p>
+              <span className="text-[11px] text-amber-300/70 mt-0.5 block">Pending COD collections</span>
+            </div>
+          </div>
+
+          {/* Delivery Partners Table */}
+          <div className="overflow-x-auto rounded-xl border border-white/10">
+            <table className="w-full text-left text-sm text-gray-300">
+              <thead className="bg-white/5 text-xs uppercase tracking-wider text-gray-400 border-b border-white/10">
+                <tr>
+                  <th className="py-3.5 px-4 font-semibold">Driver</th>
+                  <th className="py-3.5 px-4 font-semibold">Contact & Phone</th>
+                  <th className="py-3.5 px-4 font-semibold">Vehicle</th>
+                  <th className="py-3.5 px-4 font-semibold">Status</th>
+                  <th className="py-3.5 px-4 font-semibold">KYC</th>
+                  <th className="py-3.5 px-4 font-semibold text-right">Deliveries</th>
+                  <th className="py-3.5 px-4 font-semibold text-right">80% Earnings</th>
+                  <th className="py-3.5 px-4 font-semibold text-right">Cash / Dues</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5 font-sans">
+                {deliveryPartners.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} className="text-center py-12 text-gray-500">
+                      No delivery partners registered in the platform yet.
+                    </td>
+                  </tr>
+                ) : (
+                  deliveryPartners.map((partner) => (
+                    <tr key={partner.id} className="hover:bg-white/5 transition-colors">
+                      <td className="py-3.5 px-4 font-medium text-white flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-center justify-center font-bold text-xs shrink-0">
+                          {partner.name.slice(0, 2).toUpperCase()}
+                        </div>
+                        <div>
+                          <p className="font-semibold text-white leading-tight">{partner.name}</p>
+                          <span className="text-[11px] text-gray-500 font-mono">ID: {partner.id.slice(0, 8)}...</span>
+                        </div>
+                      </td>
+                      <td className="py-3.5 px-4 text-gray-300 font-mono text-xs">
+                        {partner.phone}
+                      </td>
+                      <td className="py-3.5 px-4 text-gray-300 text-xs">
+                        <span className="capitalize">{partner.vehicle}</span>
+                        {partner.vehicleNumber && partner.vehicleNumber !== 'N/A' && (
+                          <span className="block text-[10px] text-gray-500 font-mono">{partner.vehicleNumber}</span>
+                        )}
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                          partner.status === 'online'
+                            ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
+                            : partner.status === 'on_delivery'
+                            ? 'bg-amber-500/15 text-amber-400 border border-amber-500/30'
+                            : 'bg-gray-800 text-gray-400 border border-gray-700'
+                        }`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${
+                            partner.status === 'online' ? 'bg-emerald-400' :
+                            partner.status === 'on_delivery' ? 'bg-amber-400' : 'bg-gray-500'
+                          }`} />
+                          {partner.status}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <Badge variant="outline" className={`text-[10px] uppercase font-bold ${
+                          partner.kycStatus === 'approved'
+                            ? 'border-emerald-500/30 text-emerald-400 bg-emerald-500/10'
+                            : 'border-yellow-500/30 text-yellow-400 bg-yellow-500/10'
+                        }`}>
+                          {partner.kycStatus || 'pending'}
+                        </Badge>
+                      </td>
+                      <td className="py-3.5 px-4 text-right font-mono font-bold text-white">
+                        {partner.deliveries}
+                      </td>
+                      <td className="py-3.5 px-4 text-right font-mono font-bold text-emerald-400">
+                        ₹{partner.earnings.toLocaleString()}
+                      </td>
+                      <td className="py-3.5 px-4 text-right font-mono font-semibold text-amber-300">
+                        ₹{partner.cashInHand.toFixed(0)}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

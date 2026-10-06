@@ -186,7 +186,10 @@ export function calculateInvoice(
   // Fees (Separated!)
   // In food delivery under Section 9(5), standard packaging is charged separately
   const packagingFee = (order as any).packagingFee || 0;
-  const deliveryFee = order.deliveryCharge !== undefined ? order.deliveryCharge : 0;
+  const totalItemsQty = order.items?.reduce((s: number, it: any) => s + (it.quantity || 1), 0) || 1;
+  const deliveryFee = (order.deliveryCharge !== undefined && order.deliveryCharge !== null && order.deliveryCharge > 0)
+    ? order.deliveryCharge
+    : ((order as any).deliveryFee > 0 ? (order as any).deliveryFee : (totalItemsQty > 1 ? 60 : 40));
   const platformFee = (order as any).platformFee || 0;
 
   // Taxable base for restaurant food services

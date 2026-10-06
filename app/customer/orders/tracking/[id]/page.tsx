@@ -1199,6 +1199,27 @@ export default function CustomerOrderTrackingPage() {
 
           <div className="pt-3 border-t border-border space-y-1.5 text-xs text-muted-foreground">
             <div className="flex justify-between">
+              <span>Item Subtotal:</span>
+              <span className="font-semibold text-foreground">₹{(order.subtotal || 0).toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="flex items-center gap-1.5">
+                <span>Delivery Fee:</span>
+                <span className="text-[10px] font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded">
+                  {(order.items?.reduce((s, i) => s + (i.quantity || 1), 0) || 1) > 1 ? 'Multi-item (₹60)' : 'Standard (₹40)'}
+                </span>
+              </span>
+              <span className="font-semibold text-foreground">
+                ₹{(
+                  (order.deliveryCharge !== undefined && order.deliveryCharge !== null && order.deliveryCharge > 0)
+                    ? order.deliveryCharge
+                    : ((order as any).deliveryFee > 0
+                      ? (order as any).deliveryFee
+                      : ((order.items?.reduce((s, i) => s + (i.quantity || 1), 0) || 1) > 1 ? 60 : 40))
+                ).toFixed(2)}
+              </span>
+            </div>
+            <div className="flex justify-between">
               <span>Payment Mode:</span>
               <span className="font-bold text-foreground capitalize">{order.paymentMethod}</span>
             </div>

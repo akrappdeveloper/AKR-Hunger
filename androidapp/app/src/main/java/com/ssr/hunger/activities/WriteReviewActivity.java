@@ -10,6 +10,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import com.google.android.material.chip.Chip;
+import com.google.android.material.chip.ChipGroup;
 import com.ssr.hunger.R;
 import com.ssr.hunger.utils.Constants;
 import com.google.firebase.Timestamp;
@@ -42,7 +44,7 @@ public class WriteReviewActivity extends BaseActivity {
     private EditText etComment;
     private TextView tvRestaurantName, tvCharCount;
     private View btnSubmit;
-    private LinearLayout tagsContainer;
+    private ChipGroup tagsContainer;
 
     private final String[] QUICK_TAGS = {
             "😋 Delicious", "🔥 Hot & Fresh", "📦 Well Packaged",
@@ -131,14 +133,17 @@ public class WriteReviewActivity extends BaseActivity {
         tagsContainer.removeAllViews();
 
         for (String tag : QUICK_TAGS) {
-            com.google.android.material.chip.Chip chip = new com.google.android.material.chip.Chip(this);
+            Chip chip = new Chip(this);
             chip.setText(tag);
             chip.setCheckable(true);
             chip.setCheckedIconVisible(true);
             chip.setChipCornerRadius(getResources().getDisplayMetrics().density * 18);
             chip.setOnCheckedChangeListener((v, checked) -> {
-                if (checked) selectedTags.add(tag);
-                else selectedTags.remove(tag);
+                if (checked) {
+                    if (!selectedTags.contains(tag)) selectedTags.add(tag);
+                } else {
+                    selectedTags.remove(tag);
+                }
             });
             tagsContainer.addView(chip);
         }

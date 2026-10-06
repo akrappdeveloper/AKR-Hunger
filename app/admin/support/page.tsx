@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import {
   collection,
   onSnapshot,
@@ -426,6 +427,15 @@ function AdminSupportContent() {
         </div>
 
         <div className="flex items-center gap-2">
+          <Link href="/admin/support/delivery">
+            <Button
+              size="sm"
+              variant="outline"
+              className="border-violet-500/30 text-violet-300 hover:bg-violet-500/10 text-xs gap-1.5 rounded-xl font-bold"
+            >
+              <Truck className="w-3.5 h-3.5" /> Delivery Support Desk
+            </Button>
+          </Link>
           <Button
             variant="outline"
             size="sm"

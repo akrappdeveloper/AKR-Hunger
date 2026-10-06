@@ -81,8 +81,11 @@ public class CartActivity extends BaseActivity implements CartManager.CartChange
         // Log begin checkout if cart has items
         if (!cartManager.isEmpty()) {
             double subtotal = cartManager.getSubtotal();
-            double threshold = remoteConfigHelper != null ? remoteConfigHelper.getFreeDeliveryThreshold() : 199.0;
-            double fee = subtotal >= threshold ? 0 : (remoteConfigHelper != null ? remoteConfigHelper.getDeliveryFee() : 40.0);
+            int totalQty = 0;
+            for (CartItem ci : cartManager.getItems()) {
+                totalQty += ci.getQuantity();
+            }
+            double fee = totalQty > 1 ? 60.0 : 40.0;
             double taxRate = 0.05; // 5% GST (2.5% CGST + 2.5% SGST)
             double total = subtotal + fee + (subtotal * taxRate);
             analyticsHelper.logBeginCheckout(cartManager.getTotalItemCount(), total, paymentMethod);
@@ -211,9 +214,11 @@ public class CartActivity extends BaseActivity implements CartManager.CartChange
             cartContent.setVisibility(View.VISIBLE);
 
             double subtotal = cartManager.getSubtotal();
-            double threshold = remoteConfigHelper != null ? remoteConfigHelper.getFreeDeliveryThreshold() : 199.0;
-            double feeConfig = remoteConfigHelper != null ? remoteConfigHelper.getDeliveryFee() : 40.0;
-            double deliveryFee = subtotal >= threshold ? 0 : feeConfig;
+            int totalQty = 0;
+            for (CartItem ci : items) {
+                totalQty += ci.getQuantity();
+            }
+            double deliveryFee = totalQty > 1 ? 60.0 : 40.0;
             double packagingCharges = 0.0;
             double platformFee = 0.0;
             double taxableValue = subtotal;
@@ -226,7 +231,7 @@ public class CartActivity extends BaseActivity implements CartManager.CartChange
 
             tvSubtotal.setText(String.format(Locale.getDefault(), "₹%.2f", subtotal));
             if (tvPackagingCharges != null) tvPackagingCharges.setText(String.format(Locale.getDefault(), "₹%.2f", packagingCharges));
-            tvDeliveryFee.setText(deliveryFee == 0 ? "FREE" : String.format(Locale.getDefault(), "₹%.2f", deliveryFee));
+            tvDeliveryFee.setText(String.format(Locale.getDefault(), "₹%.2f", deliveryFee));
             if (tvPlatformFee != null) tvPlatformFee.setText(String.format(Locale.getDefault(), "₹%.2f", platformFee));
             if (tvTaxableValue != null) tvTaxableValue.setText(String.format(Locale.getDefault(), "₹%.2f", taxableValue));
             if (tvCgst != null) tvCgst.setText(String.format(Locale.getDefault(), "₹%.2f", cgst));
@@ -367,10 +372,11 @@ public class CartActivity extends BaseActivity implements CartManager.CartChange
         Trace checkoutTrace = startTrace(PerformanceHelper.TRACE_CHECKOUT_PROCESS);
 
         double subtotal = cartManager.getSubtotal();
-        double threshold = remoteConfigHelper != null ? remoteConfigHelper.getFreeDeliveryThreshold() : 199.0;
-        double feeConfig = remoteConfigHelper != null ? remoteConfigHelper.getDeliveryFee() : 40.0;
-
-        double deliveryFee = subtotal >= threshold ? 0 : feeConfig;
+        int totalQty = 0;
+        for (CartItem ci : items) {
+            totalQty += ci.getQuantity();
+        }
+        double deliveryFee = totalQty > 1 ? 60.0 : 40.0;
         double packagingCharges = 0.0;
         double platformFee = 0.0;
         double taxableValue = subtotal;
@@ -443,6 +449,7 @@ public class CartActivity extends BaseActivity implements CartManager.CartChange
         orderData.put("subtotal", subtotal);
         orderData.put("packagingCharges", packagingCharges);
         orderData.put("deliveryCharge", deliveryFee);
+        orderData.put("deliveryFee", deliveryFee);
         orderData.put("platformFee", platformFee);
         orderData.put("taxableValue", taxableValue);
         orderData.put("cgst", cgst);

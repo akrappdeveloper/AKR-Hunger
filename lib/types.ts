@@ -173,7 +173,9 @@ export type DeliveryStage =
   | 'PICKED_UP'         // Food picked up, about to head to customer
   | 'TO_CUSTOMER'       // Driver heading to customer
   | 'ARRIVED_CUSTOMER'  // Driver arrived at customer location
-  | 'DELIVERED';        // Order delivered, GPS tracking stops
+  | 'DELIVERED'         // Order delivered, GPS tracking stops
+  | 'RETURNING_TO_RESTAURANT' // Driver returning cancelled order to restaurant
+  | 'RETURNED_TO_RESTAURANT'; // Cancelled order returned to restaurant counter
 
 export interface DeliveryFlow {
   driverId: string;
@@ -196,6 +198,7 @@ export interface DeliveryFlow {
   pickedUpAt?: any;
   arrivedCustomerAt?: any;
   deliveredAt?: any;
+  returnedAt?: any;
 }
 
 /** Get route destination based on delivery stage */
@@ -203,6 +206,8 @@ export function getRouteDestination(stage?: DeliveryStage): 'restaurant' | 'cust
   switch (stage) {
     case 'TO_PICKUP':
     case 'ARRIVED_PICKUP':
+    case 'RETURNING_TO_RESTAURANT':
+    case 'RETURNED_TO_RESTAURANT':
       return 'restaurant';
     case 'PICKED_UP':
     case 'TO_CUSTOMER':
@@ -223,6 +228,8 @@ export function getStageLabel(stage?: DeliveryStage): string {
     case 'TO_CUSTOMER': return 'On the way to Customer';
     case 'ARRIVED_CUSTOMER': return 'Arrived at Customer';
     case 'DELIVERED': return 'Delivered';
+    case 'RETURNING_TO_RESTAURANT': return 'Returning to Restaurant';
+    case 'RETURNED_TO_RESTAURANT': return 'Returned to Restaurant';
     default: return 'Pending';
   }
 }
@@ -241,6 +248,9 @@ export function getStageColor(stage?: DeliveryStage): { bg: string; text: string
       return { bg: 'bg-green-500/15', text: 'text-green-400', border: 'border-green-500/25' };
     case 'DELIVERED':
       return { bg: 'bg-emerald-500/15', text: 'text-emerald-400', border: 'border-emerald-500/25' };
+    case 'RETURNING_TO_RESTAURANT':
+    case 'RETURNED_TO_RESTAURANT':
+      return { bg: 'bg-amber-500/15', text: 'text-amber-400', border: 'border-amber-500/25' };
     default:
       return { bg: 'bg-gray-500/15', text: 'text-gray-400', border: 'border-gray-500/25' };
   }
@@ -254,9 +264,9 @@ export interface Order {
   restaurantId?: string;
   items?: OrderItem[];
   deliveryAddress?: Address | string;
-  status?: 'pending' | 'confirmed' | 'preparing' | 'ready' | 'out_for_delivery' | 'delivered' | 'cancelled';
+  status?: 'pending' | 'confirmed' | 'preparing' | 'ready' | 'out_for_delivery' | 'delivered' | 'cancelled' | 'returned_to_restaurant';
   paymentMethod?: 'cod' | 'online' | 'wallet';
-  paymentStatus?: 'pending' | 'completed' | 'failed';
+  paymentStatus?: 'pending' | 'completed' | 'failed' | 'paid';
   razorpayOrderId?: string;
   razorpayPaymentId?: string;
   walletTransactionId?: string;
@@ -267,6 +277,7 @@ export interface Order {
   cgst?: number;
   sgst?: number;
   deliveryCharge?: number;
+  deliveryFee?: number;
   taxes?: number;
   total?: number;
   amountPaid?: number;
@@ -287,12 +298,18 @@ export interface Order {
   deliveryPersonName?: string;
   deliveryPersonPhone?: string;
   deliveryVehicle?: string;
-  deliveryStatus?: 'pending_acceptance' | 'going_to_restaurant' | 'picked_up' | 'going_to_customer' | 'delivered';
+  deliveryStatus?: 'pending_acceptance' | 'going_to_restaurant' | 'picked_up' | 'going_to_customer' | 'delivered' | 'returning_to_restaurant' | 'returned_to_restaurant';
   restaurantAddress?: string;
   restaurantLocation?: { lat: number; lng: number };
+  restaurantPhone?: string;
   deliveredAt?: Date | any;
+  returnedAt?: Date | any;
   targetDeliveryIds?: string[]; // IDs of specific delivery partners this order is broadcast to
   deliveryOtp?: string; // OTP for delivery verification
+  returnOtp?: string; // OTP for restaurant return drop verification
+  deliveryEarnings?: number; // Exact earnings credited to driver (80% of delivery fee)
+  cancellationCompensation?: number; // ₹20 travel compensation on customer cancelled return
+  cancellationReason?: string;
   // Professional delivery flow (stage-based)
   delivery?: DeliveryFlow;
   // Extended fields
@@ -337,6 +354,10 @@ export interface DeliveryPerson {
   createdAt: Date;
   // Verification fields
   verificationStatus?: 'pending' | 'approved' | 'rejected';
+  kycStatus?: 'pending' | 'approved' | 'rejected';
+  isVerified?: boolean;
+  kycApprovedAt?: any;
+  kycSubmittedAt?: any;
   rejectionReason?: string;
   vehicleImage?: string;
   drivingLicense?: string;

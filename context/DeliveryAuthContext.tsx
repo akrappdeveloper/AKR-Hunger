@@ -124,11 +124,13 @@ export function DeliveryAuthProvider({ children }: { children: React.ReactNode }
         ...data,
         rating: 5.0, // Initial rating
         status: 'offline',
+        isAvailable: false,
         createdAt: new Date(),
       };
 
       await setDoc(doc(db, 'deliveryPersons', uid), {
         ...newPartner,
+        isAvailable: false,
         password: password,
         createdAt: serverTimestamp()
       });
@@ -177,18 +179,26 @@ export function DeliveryAuthProvider({ children }: { children: React.ReactNode }
   const updateStatus = async (status: 'online' | 'offline' | 'on_delivery') => {
     if (user && deliveryPartner) {
       try {
+        const isAvail = status === 'online';
         await updateDoc(doc(db, 'deliveryPersons', user.uid), {
-          status: status
+          status: status,
+          isAvailable: isAvail,
+          updatedAt: serverTimestamp()
         });
         if (status === 'offline') {
           await updateDoc(doc(db, 'driverLocations', user.uid), {
             isOnline: false,
             updatedAt: serverTimestamp(),
-          }).catch(() => {});
+          }).catch(() => { });
+        } else if (status === 'online') {
+          await updateDoc(doc(db, 'driverLocations', user.uid), {
+            isOnline: true,
+            updatedAt: serverTimestamp(),
+          }).catch(() => { });
         }
         console.log('[v0] Status updated:', status);
         // Optimistic update
-        setDeliveryPartner(prev => prev ? { ...prev, status } : null);
+        setDeliveryPartner(prev => prev ? { ...prev, status, isAvailable: isAvail } : null);
       } catch (error) {
         console.error('[v0] Failed to update status:', error);
       }

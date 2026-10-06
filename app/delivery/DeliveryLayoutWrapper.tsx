@@ -36,8 +36,9 @@ function DeliveryLayoutContent({ children }: { children: React.ReactNode }) {
 
     useEffect(() => {
         if (!loading && deliveryPartner && !isAuthPage) {
-            const balance = deliveryPartner.walletBalance || 0;
-            const locked = balance > 2000;
+            const balance = Number(deliveryPartner.walletBalance || 0);
+            // Account is locked if cash-in-hand debt exceeds ₹2,000 (represented as balance < -2000, or legacy balance > 2000)
+            const locked = balance < -2000 || balance > 2000;
             setIsLocked(locked);
 
             // If account is locked, redirect to wallet page if not already there

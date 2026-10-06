@@ -235,7 +235,7 @@ export default function AdminDealsPage() {
       title: deal.title,
       description: deal.description || '',
       emoji: deal.emoji || '🎫',
-      discountType: deal.discountType || 'percentage',
+      discountType: (deal.discountType === 'fixed' ? 'flat' : deal.discountType) || 'percentage',
       discountValue: deal.discountValue || 0,
       minOrder: deal.minOrder || 0,
       maxDiscount: deal.maxDiscount || 0,

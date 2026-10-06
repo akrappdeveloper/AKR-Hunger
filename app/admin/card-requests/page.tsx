@@ -12,6 +12,7 @@ import { Loader2, CheckCircle2, XCircle, CreditCard, User, Phone, Mail, MapPin, 
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import EditIssuedCardDialog from '@/components/admin/EditIssuedCardDialog';
+import IssueCardDialog from '@/components/admin/IssueCardDialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
     Dialog,
@@ -37,9 +38,11 @@ export default function CardRequestsPage() {
     const [isRejectOpen, setIsRejectOpen] = useState(false);
     const [selectedCardToEdit, setSelectedCardToEdit] = useState<IssuedCard | null>(null);
     const [editCardDialogOpen, setEditCardDialogOpen] = useState(false);
+    const [selectedRequestToIssue, setSelectedRequestToIssue] = useState<MembershipRequest | null>(null);
+    const [issueCardDialogOpen, setIssueCardDialogOpen] = useState(false);
 
     // Filters
-    const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
+    const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'approved' | 'unissued' | 'rejected'>('all');
     const [searchQuery, setSearchQuery] = useState('');
 
     // Fetch All Requests
@@ -149,8 +152,18 @@ export default function CardRequestsPage() {
     };
 
     // Derived State
+    const issuedCustomerIds = new Set(cards.map(c => c.customerId));
+
     const filteredRequests = requests.filter(req => {
-        const matchesStatus = filterStatus === 'all' ? true : req.status === filterStatus;
+        let matchesStatus = true;
+        if (filterStatus === 'all') {
+            matchesStatus = true;
+        } else if (filterStatus === 'unissued') {
+            matchesStatus = req.status === 'approved' && !issuedCustomerIds.has(req.customerId);
+        } else {
+            matchesStatus = req.status === filterStatus;
+        }
+
         const searchLower = searchQuery.toLowerCase();
         const matchesSearch =
             req.customerName.toLowerCase().includes(searchLower) ||
@@ -162,6 +175,8 @@ export default function CardRequestsPage() {
 
     const pendingCount = requests.filter(r => r.status === 'pending').length;
     const approvedCount = requests.filter(r => r.status === 'approved').length;
+    const cardsIssuedCount = cards.length;
+    const unissuedCount = requests.filter(r => r.status === 'approved' && !issuedCustomerIds.has(r.customerId)).length;
     const rejectedCount = requests.filter(r => r.status === 'rejected').length;
 
     return (
@@ -172,12 +187,12 @@ export default function CardRequestsPage() {
                     <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white via-gray-200 to-gray-400">
                         Card Management
                     </h1>
-                    <p className="text-gray-400 mt-2 text-lg">Process new memberships and view history.</p>
+                    <p className="text-gray-400 mt-2 text-lg">Process new memberships, issue virtual cards, and view history.</p>
                 </div>
             </div>
 
             {/* Statistics Dashboard */}
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
                 <Card className="bg-gradient-to-br from-blue-900/20 to-black/40 border-blue-500/20 backdrop-blur-md shadow-[0_0_30px_rgba(59,130,246,0.1)] group hover:shadow-[0_0_40px_rgba(59,130,246,0.2)] transition-all duration-300">
                     <CardHeader className="pb-2">
                         <CardTitle className="text-sm font-bold text-blue-400 uppercase tracking-widest flex items-center gap-2">
@@ -195,12 +210,38 @@ export default function CardRequestsPage() {
                     <CardHeader className="pb-2">
                         <CardTitle className="text-sm font-bold text-amber-400 uppercase tracking-widest flex items-center gap-2">
                             <Clock className="w-4 h-4" />
-                            Pending
+                            Pending Review
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="text-3xl font-bold text-white mb-1 tracking-tight">{pendingCount}</div>
-                        <p className="text-xs text-gray-400 font-medium">Requires Attention</p>
+                        <p className="text-xs text-gray-400 font-medium">Requires Review</p>
+                    </CardContent>
+                </Card>
+
+                {/* Card Pending Issue Stat Card */}
+                <Card
+                    onClick={() => setFilterStatus('unissued')}
+                    className={`bg-gradient-to-br from-amber-950/40 via-yellow-950/20 to-black/60 border-amber-500/30 backdrop-blur-md transition-all duration-300 cursor-pointer ${
+                        unissuedCount > 0 ? 'ring-1 ring-amber-500/30 shadow-[0_0_30px_rgba(245,158,11,0.15)]' : ''
+                    }`}
+                >
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-bold text-amber-300 uppercase tracking-widest flex items-center gap-2">
+                            <CreditCard className="w-4 h-4 text-amber-400" />
+                            Needs Card Issue
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-3xl font-bold text-amber-400 mb-1 tracking-tight flex items-center gap-2">
+                            {unissuedCount}
+                            {unissuedCount > 0 && (
+                                <Badge className="bg-amber-500/20 text-amber-300 border-amber-500/40 text-[10px] px-1.5 py-0">
+                                    Action Required
+                                </Badge>
+                            )}
+                        </div>
+                        <p className="text-xs text-amber-300/70 font-medium">Approved • Card Not Issued</p>
                     </CardContent>
                 </Card>
 
@@ -208,12 +249,12 @@ export default function CardRequestsPage() {
                     <CardHeader className="pb-2">
                         <CardTitle className="text-sm font-bold text-emerald-400 uppercase tracking-widest flex items-center gap-2">
                             <CheckCircle2 className="w-4 h-4" />
-                            Cards Issued
+                            Cards Active
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-3xl font-bold text-white mb-1 tracking-tight">{approvedCount}</div>
-                        <p className="text-xs text-gray-400 font-medium">Total Active Members</p>
+                        <div className="text-3xl font-bold text-white mb-1 tracking-tight">{cardsIssuedCount}</div>
+                        <p className="text-xs text-gray-400 font-medium">Issued Virtual Cards</p>
                     </CardContent>
                 </Card>
 
@@ -234,18 +275,26 @@ export default function CardRequestsPage() {
             {/* Controls Toolbar */}
             <div className="flex flex-col md:flex-row gap-4 items-center justify-between bg-gray-900/40 p-1 rounded-xl border border-white/5 backdrop-blur-sm">
                 <div className="flex p-1 gap-1 w-full md:w-auto bg-black/20 rounded-lg overflow-x-auto">
-                    {(['all', 'pending', 'approved', 'rejected'] as const).map((status) => (
+                    {(['all', 'pending', 'unissued', 'approved', 'rejected'] as const).map((status) => (
                         <button
                             key={status}
                             onClick={() => setFilterStatus(status)}
                             className={`
-                                px-4 py-2 rounded-md text-sm font-medium transition-all capitalize whitespace-nowrap
+                                px-4 py-2 rounded-md text-sm font-medium transition-all whitespace-nowrap
                                 ${filterStatus === status
                                     ? 'bg-gray-700 text-white shadow-lg'
                                     : 'text-gray-400 hover:text-white hover:bg-white/5'}
                             `}
                         >
-                            {status}
+                            {status === 'all'
+                                ? 'All'
+                                : status === 'pending'
+                                ? `Pending (${pendingCount})`
+                                : status === 'unissued'
+                                ? `Needs Card Issue (${unissuedCount})`
+                                : status === 'approved'
+                                ? `Approved (${approvedCount})`
+                                : `Rejected (${rejectedCount})`}
                         </button>
                     ))}
                 </div>
@@ -301,7 +350,7 @@ export default function CardRequestsPage() {
                                                     <User className="w-6 h-6" />
                                                 </div>
                                                 <div>
-                                                    <div className="flex items-center gap-3 mb-1">
+                                                    <div className="flex items-center gap-2 mb-1 flex-wrap">
                                                         <h3 className="font-bold text-white text-lg">{request.customerName}</h3>
                                                         {request.status === 'pending' && (
                                                             <Badge variant="outline" className="text-orange-400 border-orange-500/20 bg-orange-500/10 text-[10px] px-2 py-0.5 uppercase tracking-widest">
@@ -309,9 +358,21 @@ export default function CardRequestsPage() {
                                                             </Badge>
                                                         )}
                                                         {request.status === 'approved' && (
-                                                            <Badge variant="outline" className="text-green-400 border-green-500/20 bg-green-500/10 text-[10px] px-2 py-0.5 uppercase tracking-widest">
-                                                                Member
-                                                            </Badge>
+                                                            <div className="flex items-center gap-1.5 flex-wrap">
+                                                                <Badge variant="outline" className="text-green-400 border-green-500/20 bg-green-500/10 text-[10px] px-2 py-0.5 uppercase tracking-widest">
+                                                                    Approved
+                                                                </Badge>
+                                                                {!issuedCustomerIds.has(request.customerId) ? (
+                                                                    <Badge variant="outline" className="text-amber-300 border-amber-500/40 bg-amber-500/15 text-[10px] px-2 py-0.5 uppercase tracking-wider font-bold animate-pulse flex items-center gap-1">
+                                                                        <Sparkles className="w-2.5 h-2.5 text-amber-400" />
+                                                                        Card Not Issued
+                                                                    </Badge>
+                                                                ) : (
+                                                                    <Badge variant="outline" className="text-blue-400 border-blue-500/30 bg-blue-500/10 text-[10px] px-2 py-0.5 uppercase tracking-wider font-semibold">
+                                                                        Card Active
+                                                                    </Badge>
+                                                                )}
+                                                            </div>
                                                         )}
                                                         {request.status === 'rejected' && (
                                                             <Badge variant="outline" className="text-red-400 border-red-500/20 bg-red-500/10 text-[10px] px-2 py-0.5 uppercase tracking-widest">
@@ -347,10 +408,24 @@ export default function CardRequestsPage() {
                                                     </p>
                                                 </div>
 
-                                                <div className="flex gap-3 w-full sm:w-auto">
+                                                <div className="flex gap-2.5 w-full sm:w-auto flex-wrap">
+                                                    {request.status === 'approved' && !issuedCustomerIds.has(request.customerId) && (
+                                                        <Button
+                                                            size="sm"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setSelectedRequestToIssue(request);
+                                                                setIssueCardDialogOpen(true);
+                                                            }}
+                                                            className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-blue-600/25 px-3 py-1.5 gap-1.5 transition-all"
+                                                        >
+                                                            <CreditCard className="w-3.5 h-3.5" /> Issue Card
+                                                        </Button>
+                                                    )}
+
                                                     <Button
                                                         onClick={() => handleViewDetails(request)}
-                                                        className="flex-1 sm:flex-none bg-white/5 hover:bg-white/10 text-white border border-white/10 hover:border-white/20 transition-all font-medium"
+                                                        className="flex-1 sm:flex-none bg-white/5 hover:bg-white/10 text-white border border-white/10 hover:border-white/20 transition-all font-medium text-xs rounded-xl"
                                                     >
                                                         Details <ChevronRight className="w-4 h-4 ml-1 opacity-50" />
                                                     </Button>
@@ -359,7 +434,7 @@ export default function CardRequestsPage() {
                                                         <div className="flex gap-2">
                                                             <Button
                                                                 size="icon"
-                                                                className="bg-green-500/10 text-green-500 hover:bg-green-500 hover:text-white border border-green-500/20 transition-all"
+                                                                className="bg-green-500/10 text-green-500 hover:bg-green-500 hover:text-white border border-green-500/20 transition-all rounded-xl"
                                                                 onClick={() => handleApprove(request)}
                                                                 title="Quick Approve"
                                                             >
@@ -367,7 +442,7 @@ export default function CardRequestsPage() {
                                                             </Button>
                                                             <Button
                                                                 size="icon"
-                                                                className="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white border border-red-500/20 transition-all"
+                                                                className="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white border border-red-500/20 transition-all rounded-xl"
                                                                 onClick={() => { setSelectedRequest(request); setIsRejectOpen(true); }}
                                                                 title="Quick Reject"
                                                             >
@@ -544,6 +619,30 @@ export default function CardRequestsPage() {
                                                 <p className="text-white text-sm">{selectedRequest.rejectionReason}</p>
                                             </div>
                                         )}
+
+                                        {/* Card Pending Issue Notice */}
+                                        {selectedRequest.status === 'approved' && !issuedCustomerIds.has(selectedRequest.customerId) && (
+                                            <div className="p-4 bg-amber-500/10 border border-amber-500/25 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="p-2.5 rounded-xl bg-amber-500/20 text-amber-400 shrink-0">
+                                                        <CreditCard className="w-5 h-5" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-white font-bold text-sm">Membership Approved — Card Not Issued</p>
+                                                        <p className="text-xs text-gray-400">This member is approved, but their virtual card has not been issued yet.</p>
+                                                    </div>
+                                                </div>
+                                                <Button
+                                                    onClick={() => {
+                                                        setSelectedRequestToIssue(selectedRequest);
+                                                        setIssueCardDialogOpen(true);
+                                                    }}
+                                                    className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs rounded-xl shadow-md gap-1.5 shrink-0"
+                                                >
+                                                    <CreditCard className="w-3.5 h-3.5" /> Issue Card Now
+                                                </Button>
+                                            </div>
+                                        )}
                                     </div>
 
 
@@ -678,11 +777,22 @@ export default function CardRequestsPage() {
                                 </Button>
                             </div>
                         ) : (
-                            <div className="w-full flex gap-3">
-                                <Button variant="ghost" onClick={() => setIsDetailsOpen(false)} className="flex-1">
+                            <div className="w-full flex gap-3 flex-wrap">
+                                {selectedRequest?.status === 'approved' && !issuedCustomerIds.has(selectedRequest.customerId) && (
+                                    <Button
+                                        onClick={() => {
+                                            setSelectedRequestToIssue(selectedRequest);
+                                            setIssueCardDialogOpen(true);
+                                        }}
+                                        className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold rounded-xl shadow-lg shadow-blue-600/20 gap-2"
+                                    >
+                                        <CreditCard className="w-4 h-4" /> Issue Virtual Card
+                                    </Button>
+                                )}
+                                <Button variant="ghost" onClick={() => setIsDetailsOpen(false)} className="flex-1 rounded-xl">
                                     Close Details
                                 </Button>
-                                <Button variant="outline" className="flex-1 border-gray-700 hover:bg-white/5" onClick={() => {
+                                <Button variant="outline" className="flex-1 border-gray-700 hover:bg-white/5 rounded-xl" onClick={() => {
                                     toast.info("Full Account View Coming Soon");
                                 }}>
                                     View Full Account
@@ -727,6 +837,13 @@ export default function CardRequestsPage() {
                 card={selectedCardToEdit}
                 open={editCardDialogOpen}
                 onOpenChange={setEditCardDialogOpen}
+            />
+
+            {/* Issue Card Dialog for Approved Requests lacking a card */}
+            <IssueCardDialog
+                request={selectedRequestToIssue}
+                open={issueCardDialogOpen}
+                onOpenChange={setIssueCardDialogOpen}
             />
 
         </div >

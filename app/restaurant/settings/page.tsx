@@ -37,12 +37,14 @@ import {
   ShieldCheck,
   Eye,
   EyeOff,
-  Palette
+  Palette,
+  Compass
 } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import MapPickerDialog, { PickedLocation } from '@/components/restaurant/MapPickerDialog';
 
 // Reusable Components for Consistency
 const SectionHeader = ({ icon: Icon, title, description, colorClass }: { icon: any, title: string, description: string, colorClass: string }) => (
@@ -99,6 +101,21 @@ export default function RestaurantSettingsPage() {
     image: '',
     servicePincodes: [] as string[],
   });
+
+  const [showMapPicker, setShowMapPicker] = useState(false);
+
+  const handleLocationPicked = (loc: PickedLocation) => {
+    setSettings(prev => ({
+      ...prev,
+      street: loc.street || loc.address || loc.formattedAddress,
+      city: loc.city || prev.city,
+      state: loc.state || prev.state,
+      pincode: loc.pincode || prev.pincode,
+      latitude: loc.latitude,
+      longitude: loc.longitude,
+    }));
+    toast.success('📍 Location updated from map!');
+  };
 
   const [newServicePincode, setNewServicePincode] = useState('');
 
@@ -251,6 +268,10 @@ export default function RestaurantSettingsPage() {
         pincode: settings.pincode,
         latitude: settings.latitude,
         longitude: settings.longitude,
+        coordinates: {
+          latitude: settings.latitude,
+          longitude: settings.longitude,
+        },
         minimumOrder: parseFloat(settings.minimumOrder) || 0,
         deliveryCharge: parseFloat(settings.deliveryCharge) || 0,
         deliveryTime: parseInt(settings.deliveryTime) || 30,
@@ -458,12 +479,22 @@ export default function RestaurantSettingsPage() {
                 </Card>
 
                 <Card className="p-6 md:p-8 bg-card border-border shadow-sm">
-                  <SectionHeader
-                    icon={MapPin}
-                    title="Location & Address"
-                    description="Accurate location ensures timely deliveries"
-                    colorClass="bg-purple-600"
-                  />
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                    <SectionHeader
+                      icon={MapPin}
+                      title="Location & Address"
+                      description="Accurate location ensures delivery riders reach your kitchen directly"
+                      colorClass="bg-purple-600"
+                    />
+                    <Button
+                      type="button"
+                      onClick={() => setShowMapPicker(true)}
+                      className="bg-primary/10 hover:bg-primary/20 text-primary border border-primary/30 rounded-xl h-10 px-4 font-bold text-xs gap-2 shrink-0 self-start sm:self-auto shadow-sm"
+                    >
+                      <MapPin className="w-4 h-4 text-primary" />
+                      Pick on Map
+                    </Button>
+                  </div>
                   <div className="space-y-6">
                     <div className="space-y-2">
                       <Label className="text-foreground">Street Address *</Label>
@@ -828,6 +859,17 @@ export default function RestaurantSettingsPage() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Map Location Picker Dialog */}
+      <MapPickerDialog
+        open={showMapPicker}
+        onOpenChange={setShowMapPicker}
+        onLocationSelect={handleLocationPicked}
+        initialLat={settings.latitude || undefined}
+        initialLng={settings.longitude || undefined}
+        initialAddress={settings.street}
+        title="Pinpoint Restaurant Location on Map"
+      />
     </div>
   );
 }

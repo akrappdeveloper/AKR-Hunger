@@ -9,8 +9,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
     Wallet, TrendingUp, TrendingDown, CreditCard, History,
-    ArrowUpRight, ArrowDownLeft, DollarSign, Calendar, IndianRupee, Banknote, Loader2
+    ArrowUpRight, ArrowDownLeft, DollarSign, Calendar, IndianRupee, Banknote, Loader2,
+    Sparkles, Gift, Users
 } from 'lucide-react';
+import Link from 'next/link';
 import { motion } from 'framer-motion';
 import {
     Dialog,
@@ -35,15 +37,38 @@ declare global {
     }
 }
 
+// Helper to determine if a transaction is a credit (deposit, refund, bonus, referral reward, cashback)
+export const isCreditTransaction = (tx: WalletTransaction) => {
+    const type = (tx.type as string)?.toLowerCase();
+    const desc = (tx.description || '').toLowerCase();
+    return (
+        type === 'credit' ||
+        type === 'deposit' ||
+        type === 'refund' ||
+        type === 'bonus' ||
+        type === 'referral' ||
+        type === 'cashback' ||
+        desc.includes('referral') ||
+        desc.includes('bonus') ||
+        desc.includes('welcome') ||
+        desc.includes('reward') ||
+        desc.includes('deposit') ||
+        desc.includes('added') ||
+        (tx as any).isCredit === true
+    );
+};
+
 export default function WalletPage() {
     const { user, customer } = useAuth();
 
     // Real Balance
     const balance = customer?.walletBalance || 0;
 
-    // Stats (calculated from transactions for simplicity or stored in profile)
+    // Stats
     const [totalSpent, setTotalSpent] = useState(0);
-    // const monthlyBudget = 5000.00; // Hardcoded for now, could be a setting
+    const [referralCount, setReferralCount] = useState(0);
+    const [referralsEarned, setReferralsEarned] = useState(0);
+    const [referralBonusFromTxs, setReferralBonusFromTxs] = useState(0);
 
     const [transactions, setTransactions] = useState<WalletTransaction[]>([]);
     const [issuedCard, setIssuedCard] = useState<IssuedCard | null>(null);
@@ -95,11 +120,21 @@ export default function WalletPage() {
 
             setTransactions(txs);
 
-            // Calculate Total Spent (Debits)
+            // Calculate Total Spent (ONLY debits/payments - NEVER referral bonus or credits)
             const spent = txs
-                .filter(t => t.type === 'payment' || t.type === 'withdrawal')
-                .reduce((acc, curr) => acc + curr.amount, 0);
+                .filter(t => !isCreditTransaction(t) && (t.type === 'payment' || t.type === 'withdrawal' || (t.type as string) === 'debit'))
+                .reduce((acc, curr) => acc + (curr.amount || 0), 0);
             setTotalSpent(spent);
+
+            // Sum referral earnings from transactions
+            const txReferralSum = txs
+                .filter(t => {
+                    const desc = (t.description || '').toLowerCase();
+                    const type = (t.type as string)?.toLowerCase();
+                    return type === 'referral' || desc.includes('referral') || desc.includes('invite');
+                })
+                .reduce((acc, curr) => acc + (curr.amount || 0), 0);
+            setReferralBonusFromTxs(txReferralSum);
 
             setLoadingHistory(false);
         }, () => {
@@ -108,6 +143,22 @@ export default function WalletPage() {
 
         return () => unsubscribe();
     }, [user]);
+
+    // Live Tracking of Referrals
+    useEffect(() => {
+        if (!user) return;
+        const qRef = query(collection(db, 'referrals'), where('referrerId', '==', user.uid));
+        const unsubscribe = onSnapshot(qRef, (snap) => {
+            setReferralCount(snap.size);
+            const totalEarned = snap.docs.reduce((acc, doc) => acc + (Number(doc.data().rewardAmount) || 50), 0);
+            setReferralsEarned(totalEarned);
+        }, () => {});
+        return () => unsubscribe();
+    }, [user]);
+
+    // Derived Total Referral Bonus Balance
+    const profileReferral = (customer as any)?.referralEarnings || (customer as any)?.referralBonus || (customer as any)?.referralPointsEarned || 0;
+    const totalReferralBonus = Math.max(profileReferral, referralsEarned, referralBonusFromTxs);
 
     // Fetch Issued Card
     useEffect(() => {
@@ -461,6 +512,125 @@ export default function WalletPage() {
                             </DialogContent>
                         </Dialog>
                     </div>
+                </div>
+
+                {/* Hero Wallet Balance Overview Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                    {/* 1. Available Balance Card */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 15 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="relative overflow-hidden rounded-3xl p-6 bg-gradient-to-br from-emerald-950/70 via-emerald-900/40 to-card border border-emerald-500/30 shadow-xl group hover:border-emerald-500/50 transition-all"
+                    >
+                        <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none group-hover:scale-110 transition-transform">
+                            <Wallet className="w-24 h-24 text-emerald-400" />
+                        </div>
+                        <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center gap-2.5">
+                                <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                                    <Wallet className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <h3 className="text-xs font-bold uppercase tracking-wider text-emerald-400">Available Balance</h3>
+                                    <p className="text-[11px] text-muted-foreground">Ready for orders & withdrawal</p>
+                                </div>
+                            </div>
+                            <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-[10px] font-bold uppercase">
+                                Usable
+                            </Badge>
+                        </div>
+                        <div className="my-2">
+                            <div className="text-3xl sm:text-4xl font-black text-foreground tracking-tight flex items-baseline gap-1">
+                                <span className="text-emerald-500">₹</span>{balance.toFixed(2)}
+                            </div>
+                        </div>
+                        <div className="pt-3 border-t border-emerald-500/15 flex items-center justify-between text-xs">
+                            <span className="text-muted-foreground">Usable Wallet Amount</span>
+                            <button
+                                onClick={() => setIsAddOpen(true)}
+                                className="text-emerald-500 hover:text-emerald-400 font-bold hover:underline flex items-center gap-1 cursor-pointer"
+                            >
+                                + Add Funds
+                            </button>
+                        </div>
+                    </motion.div>
+
+                    {/* 2. Referral Bonus Balance Card */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 15 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.05 }}
+                        className="relative overflow-hidden rounded-3xl p-6 bg-gradient-to-br from-amber-950/70 via-orange-950/40 to-card border border-amber-500/30 shadow-xl group hover:border-amber-500/50 transition-all"
+                    >
+                        <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none group-hover:scale-110 transition-transform">
+                            <Sparkles className="w-24 h-24 text-amber-400" />
+                        </div>
+                        <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center gap-2.5">
+                                <div className="w-10 h-10 rounded-2xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400">
+                                    <Gift className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <h3 className="text-xs font-bold uppercase tracking-wider text-amber-400">Referral Bonus Balance</h3>
+                                    <p className="text-[11px] text-muted-foreground">Credited to wallet • Never debited</p>
+                                </div>
+                            </div>
+                            <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 text-[10px] font-bold uppercase">
+                                Bonus
+                            </Badge>
+                        </div>
+                        <div className="my-2">
+                            <div className="text-3xl sm:text-4xl font-black text-foreground tracking-tight flex items-baseline gap-1">
+                                <span className="text-amber-500">₹</span>{totalReferralBonus.toFixed(2)}
+                            </div>
+                        </div>
+                        <div className="pt-3 border-t border-amber-500/15 flex items-center justify-between text-xs">
+                            <span className="text-muted-foreground">
+                                {referralCount > 0 ? `${referralCount} Friend${referralCount > 1 ? 's' : ''} Joined` : 'Earn ₹50 per friend'}
+                            </span>
+                            <Link
+                                href="/customer/referral"
+                                className="text-amber-500 hover:text-amber-400 font-bold hover:underline flex items-center gap-1"
+                            >
+                                Invite Friends →
+                            </Link>
+                        </div>
+                    </motion.div>
+
+                    {/* 3. Total Spent / Lifetime Debit Card */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 15 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.1 }}
+                        className="relative overflow-hidden rounded-3xl p-6 bg-gradient-to-br from-blue-950/60 via-slate-900/30 to-card border border-blue-500/25 shadow-xl group hover:border-blue-500/40 transition-all md:col-span-2 lg:col-span-1"
+                    >
+                        <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none group-hover:scale-110 transition-transform">
+                            <TrendingUp className="w-24 h-24 text-blue-400" />
+                        </div>
+                        <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center gap-2.5">
+                                <div className="w-10 h-10 rounded-2xl bg-blue-500/20 border border-blue-500/30 flex items-center justify-center text-blue-400">
+                                    <TrendingUp className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <h3 className="text-xs font-bold uppercase tracking-wider text-blue-400">Total Spent</h3>
+                                    <p className="text-[11px] text-muted-foreground">Food orders & withdrawals</p>
+                                </div>
+                            </div>
+                            <Badge className="bg-blue-500/10 text-blue-400 border-blue-500/20 text-[10px] font-bold uppercase">
+                                Lifetime
+                            </Badge>
+                        </div>
+                        <div className="my-2">
+                            <div className="text-3xl sm:text-4xl font-black text-foreground tracking-tight flex items-baseline gap-1">
+                                <span className="text-blue-500">₹</span>{totalSpent.toFixed(2)}
+                            </div>
+                        </div>
+                        <div className="pt-3 border-t border-blue-500/15 flex items-center justify-between text-xs">
+                            <span className="text-muted-foreground">{transactions.length} Total Transactions</span>
+                            <span className="text-blue-400 font-medium">All-time</span>
+                        </div>
+                    </motion.div>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
@@ -822,44 +992,55 @@ export default function WalletPage() {
                                             <p className="font-semibold text-sm">No transactions yet</p>
                                         </div>
                                     ) : (
-                                        transactions.map((tx) => (
-                                            <div key={tx.id} className="group flex items-center justify-between p-3.5 sm:p-4 rounded-2xl bg-muted/30 hover:bg-muted/60 border border-border/70 hover:border-primary/40 transition-all">
-                                                <div className="flex items-center gap-3 sm:gap-4">
-                                                    <div className={`p-2.5 sm:p-3 rounded-2xl ${tx.type === 'deposit' || tx.type === 'refund' || tx.type === 'bonus'
-                                                        ? 'bg-green-500/10 text-green-600 dark:text-green-400'
-                                                        : 'bg-red-500/10 text-red-600 dark:text-red-400'
+                                        transactions.map((tx) => {
+                                            const isCredit = isCreditTransaction(tx);
+                                            return (
+                                                <div key={tx.id} className="group flex items-center justify-between p-3.5 sm:p-4 rounded-2xl bg-muted/30 hover:bg-muted/60 border border-border/70 hover:border-primary/40 transition-all">
+                                                    <div className="flex items-center gap-3 sm:gap-4">
+                                                        <div className={`p-2.5 sm:p-3 rounded-2xl ${
+                                                            isCredit
+                                                                ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                                                                : 'bg-red-500/10 text-red-600 dark:text-red-400'
                                                         }`}>
-                                                        {tx.type === 'deposit' || tx.type === 'refund' || tx.type === 'bonus' ? (
-                                                            <ArrowDownLeft className="h-5 w-5" />
-                                                        ) : (
-                                                            <ArrowUpRight className="h-5 w-5" />
-                                                        )}
+                                                            {isCredit ? (
+                                                                <ArrowDownLeft className="h-5 w-5" />
+                                                            ) : (
+                                                                <ArrowUpRight className="h-5 w-5" />
+                                                            )}
+                                                        </div>
+                                                        <div>
+                                                            <p className="font-bold text-sm sm:text-base text-foreground group-hover:text-primary transition-colors">{tx.description}</p>
+                                                            <p className="text-xs text-muted-foreground flex items-center gap-2 mt-0.5">
+                                                                <History className="w-3 h-3" /> {tx.createdAt.toLocaleDateString()}
+                                                                <span className="w-1 h-1 bg-border rounded-full" />
+                                                                <span className="capitalize font-medium">{isCredit ? 'Credit' : tx.type}</span>
+                                                                {tx.referenceId && <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded font-mono text-muted-foreground border border-border">{tx.referenceId.slice(0, 8)}...</span>}
+                                                            </p>
+                                                        </div>
                                                     </div>
-                                                    <div>
-                                                        <p className="font-bold text-sm sm:text-base text-foreground group-hover:text-primary transition-colors">{tx.description}</p>
-                                                        <p className="text-xs text-muted-foreground flex items-center gap-2 mt-0.5">
-                                                            <History className="w-3 h-3" /> {tx.createdAt.toLocaleDateString()}
-                                                            <span className="w-1 h-1 bg-border rounded-full" />
-                                                            <span className="capitalize font-medium">{tx.type}</span>
-                                                            {tx.referenceId && <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded font-mono text-muted-foreground border border-border">{tx.referenceId.slice(0, 8)}...</span>}
+                                                    <div className="text-right">
+                                                        <p className={`font-black text-sm sm:text-base ${
+                                                            isCredit
+                                                                ? 'text-emerald-600 dark:text-emerald-400'
+                                                                : 'text-foreground'
+                                                        }`}>
+                                                            {isCredit ? '+' : '-'}₹{tx.amount.toLocaleString()}
                                                         </p>
+                                                        <Badge variant="secondary" className={`mt-1 text-[10px] uppercase font-bold ${
+                                                            tx.status === 'completed'
+                                                                ? isCredit
+                                                                    ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                                                                    : 'bg-green-500/10 text-green-600 dark:text-green-400'
+                                                                : tx.status === 'pending'
+                                                                ? 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400'
+                                                                : 'bg-red-500/10 text-red-600 dark:text-red-400'
+                                                        }`}>
+                                                            {tx.status}
+                                                        </Badge>
                                                     </div>
                                                 </div>
-                                                <div className="text-right">
-                                                    <p className={`font-black text-sm sm:text-base ${tx.type === 'deposit' || tx.type === 'refund' || tx.type === 'bonus'
-                                                        ? 'text-green-600 dark:text-green-400'
-                                                        : 'text-foreground'
-                                                        }`}>
-                                                        {tx.type === 'deposit' || tx.type === 'refund' || tx.type === 'bonus' ? '+' : '-'}₹{tx.amount.toLocaleString()}
-                                                    </p>
-                                                    <Badge variant="secondary" className={`mt-1 text-[10px] uppercase font-bold ${tx.status === 'completed' ? 'bg-green-500/10 text-green-600 dark:text-green-400' :
-                                                        tx.status === 'pending' ? 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400' : 'bg-red-500/10 text-red-600 dark:text-red-400'
-                                                        }`}>
-                                                        {tx.status}
-                                                    </Badge>
-                                                </div>
-                                            </div>
-                                        ))
+                                            );
+                                        })
                                     )}
                                 </div>
                             </CardContent>

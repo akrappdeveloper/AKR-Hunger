@@ -15,10 +15,11 @@ import { Switch } from '@/components/ui/switch';
 import {
   Store, Save, Loader2, Camera, MapPin, Phone, Mail,
   Globe, Instagram, Facebook, CheckCircle2, AlertCircle, Tag,
-  UtensilsCrossed, Star, Percent
+  UtensilsCrossed, Star, Percent, Compass
 } from 'lucide-react';
 import { toast } from 'sonner';
 import SafeImage from '@/components/ui/safe-image';
+import MapPickerDialog, { PickedLocation } from '@/components/restaurant/MapPickerDialog';
 
 const CUISINE_OPTIONS = [
   'North Indian', 'South Indian', 'Chinese', 'Italian', 'Mexican',
@@ -36,6 +37,7 @@ export default function RestaurantProfilePage() {
   const [restaurantId, setRestaurantId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [showMapPicker, setShowMapPicker] = useState(false);
   const [form, setForm] = useState({
     name: '',
     description: '',
@@ -98,6 +100,8 @@ export default function RestaurantProfilePage() {
             city: d.city || '',
             state: d.state || '',
             pincode: d.pincode || '',
+            lat: (d.latitude ?? d.coordinates?.latitude ?? d.lat ?? '')?.toString(),
+            lng: (d.longitude ?? d.coordinates?.longitude ?? d.lng ?? '')?.toString(),
             deliveryRadius: d.deliveryRadius || 5,
             minimumOrder: d.minimumOrder || 100,
             deliveryFee: d.deliveryFee || 30,
@@ -131,10 +135,26 @@ export default function RestaurantProfilePage() {
     }));
   };
 
+  const handleLocationPicked = (loc: PickedLocation) => {
+    setForm(prev => ({
+      ...prev,
+      address: loc.address || loc.formattedAddress,
+      city: loc.city || prev.city,
+      state: loc.state || prev.state,
+      pincode: loc.pincode || prev.pincode,
+      lat: loc.latitude.toFixed(6),
+      lng: loc.longitude.toFixed(6),
+    }));
+    toast.success('📍 Location picked from map!');
+  };
+
   const handleSave = async () => {
     if (!restaurantId || !form.name) { toast.error('Restaurant name is required'); return; }
     setSaving(true);
     try {
+      const latNum = form.lat ? parseFloat(form.lat) : null;
+      const lngNum = form.lng ? parseFloat(form.lng) : null;
+
       await updateDoc(doc(db, 'restaurants', restaurantId), {
         name: form.name,
         description: form.description,
@@ -145,9 +165,13 @@ export default function RestaurantProfilePage() {
         website: form.website,
         socialLinks: { instagram: form.instagram, facebook: form.facebook },
         address: form.address,
+        street: form.address,
         city: form.city,
         state: form.state,
         pincode: form.pincode,
+        latitude: latNum,
+        longitude: lngNum,
+        coordinates: latNum && lngNum ? { latitude: latNum, longitude: lngNum } : null,
         deliveryRadius: form.deliveryRadius,
         minimumOrder: form.minimumOrder,
         deliveryFee: form.deliveryFee,
@@ -288,7 +312,17 @@ export default function RestaurantProfilePage() {
 
       {/* Address */}
       <Card className="rounded-2xl border-0 shadow-md">
-        <CardHeader className="pb-3"><CardTitle className="text-base flex items-center gap-2"><MapPin className="w-4 h-4" />Location</CardTitle></CardHeader>
+        <CardHeader className="pb-3 flex flex-row items-center justify-between">
+          <CardTitle className="text-base flex items-center gap-2"><MapPin className="w-4 h-4 text-orange-500" />Location & Address</CardTitle>
+          <Button
+            type="button"
+            size="sm"
+            onClick={() => setShowMapPicker(true)}
+            className="h-8 px-3 rounded-xl bg-orange-500/10 hover:bg-orange-500/20 text-orange-600 dark:text-orange-400 border border-orange-500/30 text-xs font-bold gap-1.5"
+          >
+            <Compass className="w-3.5 h-3.5" /> Pick on Map
+          </Button>
+        </CardHeader>
         <CardContent className="space-y-4">
           <div>
             <Label>Full Address</Label>
@@ -308,9 +342,23 @@ export default function RestaurantProfilePage() {
               <Input value={form.pincode} onChange={f('pincode')} className="mt-1 rounded-xl" placeholder="000000" maxLength={6} />
             </div>
           </div>
-          <div>
-            <Label>Delivery Radius (km)</Label>
-            <Input type="number" value={form.deliveryRadius} onChange={f('deliveryRadius')} className="mt-1 rounded-xl w-32" min={1} max={50} />
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-center">
+            <div>
+              <Label>Delivery Radius (km)</Label>
+              <Input type="number" value={form.deliveryRadius} onChange={f('deliveryRadius')} className="mt-1 rounded-xl" min={1} max={50} />
+            </div>
+            <div className="sm:col-span-2">
+              {form.lat && form.lng ? (
+                <div className="flex items-center gap-2 text-xs bg-emerald-500/10 border border-emerald-500/25 text-emerald-600 dark:text-emerald-400 p-2.5 rounded-xl mt-3">
+                  <CheckCircle2 className="w-4 h-4 shrink-0" />
+                  <span className="font-mono font-medium">GPS Locked: {Number(form.lat).toFixed(4)}°, {Number(form.lng).toFixed(4)}°</span>
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground mt-3">
+                  Click <strong className="text-foreground">"Pick on Map"</strong> above to pin your restaurant's exact pickup counter on the map.
+                </p>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -371,6 +419,16 @@ export default function RestaurantProfilePage() {
           </div>
         </CardContent>
       </Card>
+      {/* Map Location Picker Dialog */}
+      <MapPickerDialog
+        open={showMapPicker}
+        onOpenChange={setShowMapPicker}
+        onLocationSelect={handleLocationPicked}
+        initialLat={form.lat ? parseFloat(form.lat) : undefined}
+        initialLng={form.lng ? parseFloat(form.lng) : undefined}
+        initialAddress={form.address}
+        title="Pinpoint Restaurant Location on Map"
+      />
     </div>
   );
 }

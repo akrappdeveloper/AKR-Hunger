@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Loader } from '@/components/ui/spinner';
-import { MapPin, Clock, ArrowRight, DollarSign, Bike, RefreshCw, ShoppingBag, Navigation } from 'lucide-react';
+import { MapPin, Clock, ArrowRight, DollarSign, Bike, RefreshCw, ShoppingBag, Navigation, ShieldCheck } from 'lucide-react';
 import { Order } from '@/lib/types';
 import { db } from '@/lib/firebase';
 import { collection, query, where, onSnapshot, orderBy, updateDoc, doc, serverTimestamp, getDoc } from 'firebase/firestore';
@@ -19,6 +19,11 @@ export default function AvailableOrdersPage() {
     const { user, deliveryPartner, loading: authLoading } = useDeliveryAuth();
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
+
+    const isKycApproved =
+        deliveryPartner?.kycStatus === 'approved' ||
+        deliveryPartner?.verificationStatus === 'approved' ||
+        (deliveryPartner as any)?.isVerified === true;
 
     useEffect(() => {
         if (!authLoading && !user) {
@@ -32,8 +37,7 @@ export default function AvailableOrdersPage() {
 
         const q = query(
             collection(db, 'orders'),
-            where('status', 'in', ['confirmed', 'preparing', 'ready']),
-            orderBy('createdAt', 'desc')
+            where('status', 'in', ['confirmed', 'preparing', 'ready'])
         );
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -42,12 +46,59 @@ export default function AvailableOrdersPage() {
                 id: doc.id
             })) as Order[];
 
+            // Sort in memory (newest first)
+            fetchedOrders.sort((a, b) => {
+                const timeA = a.createdAt?.seconds
+                    ? a.createdAt.seconds * 1000
+                    : (a.createdAt?.toDate ? a.createdAt.toDate().getTime() : new Date(a.createdAt || 0).getTime());
+                const timeB = b.createdAt?.seconds
+                    ? b.createdAt.seconds * 1000
+                    : (b.createdAt?.toDate ? b.createdAt.toDate().getTime() : new Date(b.createdAt || 0).getTime());
+                return timeB - timeA;
+            });
+
             let availableOrders = fetchedOrders.filter(o => !o.deliveryPersonId);
 
             if (user) {
                 availableOrders = availableOrders.filter(order => {
                     if (!order.targetDeliveryIds || order.targetDeliveryIds.length === 0) return true;
                     return order.targetDeliveryIds.includes(user.uid);
+                });
+            }
+
+            // Strict Service Pincode Filtering
+            const servicePincodes = (deliveryPartner as any)?.servicePincodes || [];
+            const isPincodeFilterActive = (deliveryPartner as any)?.pincodeFilterActive === true && servicePincodes.length > 0;
+            if (isPincodeFilterActive) {
+                availableOrders = availableOrders.filter(order => {
+                    const pins = new Set<string>();
+                    if ((order as any).restaurantPincode) {
+                        const p = String((order as any).restaurantPincode).trim();
+                        if (/^\d{6}$/.test(p)) pins.add(p);
+                    }
+                    if (order.restaurantAddress && typeof order.restaurantAddress === 'string') {
+                        const matches = order.restaurantAddress.match(/\b[1-9]\d{5}\b/g);
+                        if (matches) matches.forEach(m => pins.add(m));
+                    }
+                    if (typeof order.deliveryAddress === 'object' && order.deliveryAddress) {
+                        const addr = order.deliveryAddress as any;
+                        if (addr.pincode && /^\d{6}$/.test(String(addr.pincode).trim())) pins.add(String(addr.pincode).trim());
+                        if (addr.postalCode && /^\d{6}$/.test(String(addr.postalCode).trim())) pins.add(String(addr.postalCode).trim());
+                        const combined = `${addr.street || ''} ${addr.city || ''} ${addr.fullAddress || ''} ${addr.address || ''}`;
+                        const matches = combined.match(/\b[1-9]\d{5}\b/g);
+                        if (matches) matches.forEach(m => pins.add(m));
+                    } else if (typeof order.deliveryAddress === 'string') {
+                        const matches = order.deliveryAddress.match(/\b[1-9]\d{5}\b/g);
+                        if (matches) matches.forEach(m => pins.add(m));
+                    }
+                    if ((order as any).pincode && /^\d{6}$/.test(String((order as any).pincode).trim())) {
+                        pins.add(String((order as any).pincode).trim());
+                    }
+
+                    if (pins.size > 0) {
+                        return Array.from(pins).some(p => servicePincodes.includes(p));
+                    }
+                    return false;
                 });
             }
 
@@ -67,18 +118,33 @@ export default function AvailableOrdersPage() {
             return;
         }
 
+        if (!isKycApproved) {
+            toast.error("KYC Verification Required! Complete KYC in your profile before accepting orders.");
+            router.push('/delivery/profile');
+            return;
+        }
+
         try {
             let currentRestaurantAddress = '';
+            let restaurantPhone = '';
+            let restaurantLat = 0;
+            let restaurantLng = 0;
             const targetOrder = orders.find(o => o.id === orderId);
 
             if (targetOrder) {
                 currentRestaurantAddress = targetOrder.restaurantAddress || '';
-                if (!currentRestaurantAddress && targetOrder.restaurantId) {
+                if (targetOrder.restaurantId) {
                     try {
                         const restaurantDoc = await getDoc(doc(db, 'restaurants', targetOrder.restaurantId));
                         if (restaurantDoc.exists()) {
                             const data = restaurantDoc.data();
-                            currentRestaurantAddress = data.address || '';
+                            const fullAddr = data.street || data.address
+                                ? `${data.street || data.address}${data.city ? ', ' + data.city : ''}${data.pincode ? ' - ' + data.pincode : ''}`
+                                : data.address;
+                            currentRestaurantAddress = fullAddr || data.name || 'Restaurant Location';
+                            restaurantPhone = data.phone || '';
+                            restaurantLat = data.latitude || data.coordinates?.latitude || 0;
+                            restaurantLng = data.longitude || data.coordinates?.longitude || 0;
                         }
                     } catch (err) {
                         console.error("Error fetching restaurant address", err);
@@ -92,6 +158,8 @@ export default function AvailableOrdersPage() {
                 deliveryPersonPhone: deliveryPartner?.phone || '',
                 deliveryVehicle: deliveryPartner?.vehicle || 'Vehicle',
                 restaurantAddress: currentRestaurantAddress || 'Unknown Location',
+                restaurantPhone: restaurantPhone,
+                restaurantLocation: { lat: restaurantLat, lng: restaurantLng },
                 status: 'ready',
                 deliveryStatus: 'going_to_restaurant',
                 updatedAt: serverTimestamp()
@@ -129,6 +197,37 @@ export default function AvailableOrdersPage() {
             animate="visible"
             className="p-4 md:p-8 space-y-8 max-w-7xl mx-auto pb-24 md:pb-8"
         >
+            {/* KYC Barrier Banner */}
+            {!isKycApproved && (
+                <motion.div
+                    variants={itemVariants}
+                    className="p-5 rounded-3xl bg-gradient-to-r from-amber-500/15 via-rose-500/15 to-orange-500/15 border-2 border-amber-500/30 backdrop-blur-xl shadow-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+                >
+                    <div className="flex items-center gap-3.5">
+                        <div className="w-12 h-12 rounded-2xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400 font-bold shrink-0">
+                            <ShieldCheck className="w-6 h-6 text-amber-400" />
+                        </div>
+                        <div>
+                            <div className="flex items-center gap-2">
+                                <h3 className="font-bold text-white text-base">KYC Approval Required</h3>
+                                <Badge className="bg-amber-500/20 text-amber-300 border-amber-500/40 text-[10px] font-mono">
+                                    Action Required
+                                </Badge>
+                            </div>
+                            <p className="text-gray-300 text-xs mt-0.5 max-w-xl">
+                                You cannot accept marketplace orders until your KYC documents are verified. Submit your driving license and vehicle RC now.
+                            </p>
+                        </div>
+                    </div>
+                    <Button
+                        onClick={() => router.push('/delivery/profile')}
+                        className="w-full sm:w-auto h-11 px-5 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-white font-bold text-xs gap-2 shadow-lg shadow-amber-500/30 shrink-0"
+                    >
+                        Complete KYC <ArrowRight className="w-4 h-4" />
+                    </Button>
+                </motion.div>
+            )}
+
             {/* Header */}
             <motion.div variants={itemVariants} className="relative overflow-hidden p-8 rounded-3xl bg-white/5 backdrop-blur-2xl border border-white/10 shadow-2xl">
                 <div className="absolute inset-0 bg-gradient-to-tr from-orange-500/10 via-red-500/10 to-purple-500/10 animate-pulse" />
@@ -197,7 +296,7 @@ export default function AvailableOrdersPage() {
                                             <MapPin className="w-6 h-6 text-orange-400 drop-shadow-md" />
                                         </div>
                                         <Badge className="bg-green-500/20 text-green-300 border-green-500/30 backdrop-blur-md px-3 py-1 text-sm font-bold shadow-lg">
-                                            +₹{((order.deliveryCharge || 0) * 0.40).toFixed(0)} Earnings
+                                            +₹{(((order.deliveryCharge || (order as any).deliveryFee || 40) * 0.80)).toFixed(0)} Earnings (80%)
                                         </Badge>
                                     </div>
 

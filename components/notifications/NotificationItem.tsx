@@ -8,9 +8,10 @@ import { X, ShoppingBag, AlertCircle, CheckCircle, Info, Bell } from 'lucide-rea
 
 interface NotificationItemProps {
   notification: Notification;
+  onClose?: () => void;
 }
 
-export default function NotificationItem({ notification }: NotificationItemProps) {
+export default function NotificationItem({ notification, onClose }: NotificationItemProps) {
   const { markAsRead, deleteNotification } = useNotifications();
 
   const handleClick = () => {
@@ -18,6 +19,7 @@ export default function NotificationItem({ notification }: NotificationItemProps
       markAsRead(notification.id);
     }
     if (notification.actionUrl) {
+      if (onClose) onClose();
       window.location.href = notification.actionUrl;
     }
   };

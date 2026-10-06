@@ -69,6 +69,8 @@ public class OrderTrackingActivity extends BaseActivity {
     private TextView tvEta, tvOrderStatus, tvRestaurantName, tvOrderId;
     private TextView tvDriverName, tvDriverPhone, tvDriverVehicle;
     private TextView tvDeliveryAddress, tvGpsCoords;
+    private TextView tvOrderTotal, tvDeliveryChargeInfo;
+    private TextView tvTrackingSubtotal, tvTrackingDeliveryCharge, tvTrackingGrandTotal, tvTrackingDeliveryBadge;
     private LinearLayout stepContainer;
     private ProgressBar progressTrack;
     private CardView cardDriverPartner;
@@ -153,6 +155,12 @@ public class OrderTrackingActivity extends BaseActivity {
         btnBack            = findViewById(R.id.btn_back);
         btnHelp            = findViewById(R.id.btn_help);
         gpsLiveBadge       = (View) findViewById(R.id.gps_live_badge);
+        tvOrderTotal               = findViewById(R.id.tv_order_total);
+        tvDeliveryChargeInfo       = findViewById(R.id.tv_delivery_charge_info);
+        tvTrackingSubtotal         = findViewById(R.id.tv_tracking_subtotal);
+        tvTrackingDeliveryCharge   = findViewById(R.id.tv_tracking_delivery_charge);
+        tvTrackingGrandTotal       = findViewById(R.id.tv_tracking_grand_total);
+        tvTrackingDeliveryBadge    = findViewById(R.id.tv_tracking_delivery_badge);
     }
 
     // ─── Animated Map Placeholder ─────────────────────────────────────────────
@@ -235,8 +243,36 @@ public class OrderTrackingActivity extends BaseActivity {
                 String deliveryPersonId = snap.getString("deliveryPersonId");
                 String deliveryPersonName = snap.getString("deliveryPersonName");
                 String deliveryPersonPhone = snap.getString("deliveryPersonPhone");
+                Double rawTotal = snap.getDouble("total");
+                Double rawSubtotal = snap.getDouble("subtotal");
+                Double deliveryCharge = snap.getDouble("deliveryCharge");
+                if (deliveryCharge == null || deliveryCharge <= 0) {
+                    deliveryCharge = snap.getDouble("deliveryFee");
+                }
+
+                // Determine total items quantity for delivery charge calculation (₹40 standard, ₹60 multi)
+                int totalQty = 0;
+                Object itemsObj = snap.get("items");
+                if (itemsObj instanceof java.util.List) {
+                    for (Object it : (java.util.List<?>) itemsObj) {
+                        if (it instanceof Map) {
+                            Object q = ((Map<?, ?>) it).get("quantity");
+                            if (q instanceof Number) totalQty += ((Number) q).intValue();
+                            else totalQty += 1;
+                        }
+                    }
+                }
+                if (deliveryCharge == null || deliveryCharge <= 0) {
+                    deliveryCharge = totalQty > 1 ? 60.0 : 40.0;
+                }
+
+                double total = rawTotal != null ? rawTotal : 0.0;
+                double subtotal = rawSubtotal != null ? rawSubtotal : Math.max(0, total - deliveryCharge);
+                if (total <= subtotal && deliveryCharge > 0) {
+                    total = subtotal + deliveryCharge;
+                }
+
                 String vehicleNumber = snap.getString("vehicleNumber");
-                Double total = snap.getDouble("total");
 
                 // Delivery address
                 Object addrObj = snap.get("deliveryAddress");
@@ -271,7 +307,7 @@ public class OrderTrackingActivity extends BaseActivity {
 
                 updateUI(status, restaurantName, restaurantAddress,
                     deliveryPersonName, deliveryPersonPhone, vehicleNumber,
-                    addrStr, total);
+                    addrStr, total, subtotal, deliveryCharge, totalQty);
 
                 // Handle Delivery Verification OTP
                 String otp = snap.getString("deliveryOtp");
@@ -353,12 +389,33 @@ public class OrderTrackingActivity extends BaseActivity {
 
     private void updateUI(String status, String restaurant, String restaurantAddr,
                           String driverName, String driverPhone, String vehicleNum,
-                          String deliveryAddr, Double total) {
+                          String deliveryAddr, Double total, Double subtotal,
+                          Double deliveryCharge, int totalQty) {
         runOnUiThread(() -> {
             if (tvRestaurantName != null && restaurant != null) tvRestaurantName.setText(restaurant);
             if (tvOrderId != null) tvOrderId.setText("#" + orderId.substring(Math.max(0, orderId.length() - 8)).toUpperCase());
             if (tvDeliveryAddress != null && !deliveryAddr.isEmpty()) tvDeliveryAddress.setText(deliveryAddr);
             if (tvOrderStatus != null && status != null) tvOrderStatus.setText(getStatusEmoji(status) + " " + getStatusLabel(status));
+
+            if (tvOrderTotal != null && total != null) {
+                tvOrderTotal.setVisibility(View.VISIBLE);
+                tvOrderTotal.setText(String.format(Locale.getDefault(), "₹%.0f", total));
+            }
+            if (tvDeliveryChargeInfo != null && deliveryCharge != null) {
+                tvDeliveryChargeInfo.setText(String.format(Locale.getDefault(), "Delivery: ₹%.2f", deliveryCharge));
+            }
+            if (tvTrackingSubtotal != null && subtotal != null) {
+                tvTrackingSubtotal.setText(String.format(Locale.getDefault(), "₹%.2f", subtotal));
+            }
+            if (tvTrackingDeliveryCharge != null && deliveryCharge != null) {
+                tvTrackingDeliveryCharge.setText(String.format(Locale.getDefault(), "₹%.2f", deliveryCharge));
+            }
+            if (tvTrackingGrandTotal != null && total != null) {
+                tvTrackingGrandTotal.setText(String.format(Locale.getDefault(), "₹%.2f", total));
+            }
+            if (tvTrackingDeliveryBadge != null) {
+                tvTrackingDeliveryBadge.setText(totalQty > 1 ? "Multi-item ₹60" : "Standard ₹40");
+            }
 
             // Driver card
             boolean hasDriver = driverName != null && !driverName.isEmpty();
