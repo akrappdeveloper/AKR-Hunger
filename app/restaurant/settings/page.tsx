@@ -38,7 +38,8 @@ import {
   Eye,
   EyeOff,
   Palette,
-  Compass
+  Compass,
+  AlertCircle
 } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { toast } from 'sonner';
@@ -79,6 +80,7 @@ export default function RestaurantSettingsPage() {
 
   const [loading, setLoading] = useState(false);
   const [pincodeLoading, setPincodeLoading] = useState(false);
+  const [locatingGps, setLocatingGps] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
 
   // Restaurant Settings State
@@ -114,7 +116,63 @@ export default function RestaurantSettingsPage() {
       latitude: loc.latitude,
       longitude: loc.longitude,
     }));
-    toast.success('📍 Location updated from map!');
+    toast.success(`📍 Map Location Locked: ${loc.street || loc.address} (PIN: ${loc.pincode || 'Set'})`);
+  };
+
+  const handleAutoDetectGPS = () => {
+    if (typeof window === 'undefined' || !navigator.geolocation) {
+      toast.error('Geolocation is not supported by your browser');
+      return;
+    }
+    setLocatingGps(true);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        setLocatingGps(false);
+        const lat = parseFloat(pos.coords.latitude.toFixed(6));
+        const lng = parseFloat(pos.coords.longitude.toFixed(6));
+
+        setSettings(prev => ({
+          ...prev,
+          latitude: lat,
+          longitude: lng,
+        }));
+
+        try {
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&addressdetails=1`,
+            { headers: { 'User-Agent': 'AKR-Hunger-Restaurant-Settings/2.0' } }
+          );
+          if (res.ok) {
+            const data = await res.json();
+            const addr = data.address || {};
+            const road = addr.road || addr.street || addr.suburb || '';
+            const cName = addr.city || addr.town || addr.village || addr.county || '';
+            const sName = addr.state || '';
+            let pCode = addr.postcode || '';
+            if (!pCode && data.display_name) {
+              const m = data.display_name.match(/\b([1-9][0-9]{5})\b/);
+              if (m) pCode = m[1];
+            }
+
+            setSettings(prev => ({
+              ...prev,
+              street: road || prev.street,
+              city: cName || prev.city,
+              state: sName || prev.state,
+              pincode: pCode || prev.pincode,
+            }));
+          }
+        } catch (e) {
+          console.warn('Auto GPS reverse geocoding notice:', e);
+        }
+        toast.success(`📍 Live GPS Locked: ${lat}°, ${lng}°`);
+      },
+      (err) => {
+        setLocatingGps(false);
+        toast.error('Could not get GPS: ' + err.message);
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
   };
 
   const [newServicePincode, setNewServicePincode] = useState('');
@@ -171,40 +229,31 @@ export default function RestaurantSettingsPage() {
   };
 
   const fetchCityStateFromPincode = async (pincode: string) => {
-    if (pincode.length !== 6 || !/^\d{6}$/.test(pincode)) return;
+    const cleanPin = pincode.replace(/\D/g, '').slice(0, 6);
+    if (cleanPin.length !== 6) return;
 
     try {
       setPincodeLoading(true);
-      const postResponse = await fetch(`https://api.postalpincode.in/pincode/${pincode}`);
+      const postResponse = await fetch(`https://api.postalpincode.in/pincode/${cleanPin}`);
       const postData = await postResponse.json();
 
       let city = '';
       let state = '';
 
-      if (postData[0].Status === 'Success' && postData[0].PostOffice?.length > 0) {
-        city = postData[0].PostOffice[0].District;
-        state = postData[0].PostOffice[0].State;
+      if (postData[0]?.Status === 'Success' && postData[0].PostOffice?.length > 0) {
+        city = postData[0].PostOffice[0].District || postData[0].PostOffice[0].Block || '';
+        state = postData[0].PostOffice[0].State || '';
+        toast.success(`Postal match: ${city}, ${state}`);
       }
 
-      const geoResponse = await fetch(
-        `https://nominatim.openstreetmap.org/search?postalcode=${pincode}&country=India&format=json&limit=1`,
-        { headers: { 'User-Agent': 'AKR-Hunger-Platform' } }
-      );
-      const geoData = await geoResponse.json();
-
-      let latitude: number | null = null;
-      let longitude: number | null = null;
-
-      if (geoData?.length > 0) {
-        latitude = parseFloat(geoData[0].lat);
-        longitude = parseFloat(geoData[0].lon);
-      }
-
-      setSettings(prev => ({ ...prev, city, state, latitude, longitude }));
-      toast.success('Location details auto-filled!');
+      setSettings(prev => ({
+        ...prev,
+        pincode: cleanPin,
+        city: city || prev.city,
+        state: state || prev.state,
+      }));
     } catch (error) {
-      console.error('[Settings] Error fetching location data:', error);
-      toast.error('Failed to fetch location data');
+      console.error('[Settings] Error fetching postal data:', error);
     } finally {
       setPincodeLoading(false);
     }
@@ -483,23 +532,41 @@ export default function RestaurantSettingsPage() {
                     <SectionHeader
                       icon={MapPin}
                       title="Location & Address"
-                      description="Accurate location ensures delivery riders reach your kitchen directly"
+                      description="Accurate GPS location ensures delivery riders reach your kitchen pickup counter directly"
                       colorClass="bg-purple-600"
                     />
-                    <Button
-                      type="button"
-                      onClick={() => setShowMapPicker(true)}
-                      className="bg-primary/10 hover:bg-primary/20 text-primary border border-primary/30 rounded-xl h-10 px-4 font-bold text-xs gap-2 shrink-0 self-start sm:self-auto shadow-sm"
-                    >
-                      <MapPin className="w-4 h-4 text-primary" />
-                      Pick on Map
-                    </Button>
+                    <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
+                      <Button
+                        type="button"
+                        onClick={() => setShowMapPicker(true)}
+                        className="bg-primary/10 hover:bg-primary/20 text-primary border border-primary/30 rounded-xl h-10 px-4 font-bold text-xs gap-2 shrink-0 shadow-sm"
+                      >
+                        <MapPin className="w-4 h-4 text-primary" />
+                        Pinpoint on Map
+                      </Button>
+                      <Button
+                        type="button"
+                        onClick={handleAutoDetectGPS}
+                        disabled={locatingGps}
+                        variant="outline"
+                        className="h-10 px-3.5 rounded-xl border-border hover:bg-muted font-bold text-xs gap-1.5 shrink-0"
+                      >
+                        {locatingGps ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />
+                        ) : (
+                          <Compass className="w-3.5 h-3.5 text-primary" />
+                        )}
+                        <span>{locatingGps ? 'Detecting...' : 'Live GPS'}</span>
+                      </Button>
+                    </div>
                   </div>
+
                   <div className="space-y-6">
                     <div className="space-y-2">
-                      <Label className="text-foreground">Street Address *</Label>
+                      <Label className="text-foreground">Street Address / Landmark *</Label>
                       <StyledInput
-                        placeholder="Shop No, Building, Street"
+                        icon={MapPin}
+                        placeholder="Shop No, Building Name, Street / Landmark"
                         value={settings.street}
                         onChange={(e: any) => setSettings({ ...settings, street: e.target.value })}
                       />
@@ -507,43 +574,90 @@ export default function RestaurantSettingsPage() {
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                       <div className="space-y-2 relative">
-                        <Label className="text-foreground">Pincode *</Label>
+                        <div className="flex items-center justify-between">
+                          <Label className="text-foreground">Real Pincode (6 Digits) *</Label>
+                          {settings.pincode && settings.pincode.length === 6 && (
+                            <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1">
+                              <CheckCircle className="w-3 h-3" /> Postal Match
+                            </span>
+                          )}
+                        </div>
                         <div className="relative">
                           <StyledInput
-                            placeholder="400001"
+                            placeholder="e.g. 110001"
                             maxLength={6}
                             value={settings.pincode}
-                            onChange={(e: any) => setSettings({ ...settings, pincode: e.target.value })}
+                            onChange={(e: any) => {
+                              const val = e.target.value.replace(/\D/g, '').slice(0, 6);
+                              setSettings({ ...settings, pincode: val });
+                              if (val.length === 6) {
+                                fetchCityStateFromPincode(val);
+                              }
+                            }}
                             onBlur={(e: any) => fetchCityStateFromPincode(e.target.value)}
                           />
-                          {pincodeLoading && <Loader2 className="absolute right-3 top-3.5 w-5 h-5 text-primary animate-spin" />}
+                          {pincodeLoading && (
+                            <Loader2 className="absolute right-3 top-3.5 w-5 h-5 text-primary animate-spin" />
+                          )}
                         </div>
                       </div>
+
                       <div className="space-y-2">
-                        <Label className="text-foreground">City</Label>
+                        <Label className="text-foreground">City / District</Label>
                         <StyledInput
-                          readOnly
-                          className="bg-muted/50 opacity-70 cursor-not-allowed text-muted-foreground border-border"
+                          placeholder="e.g. New Delhi"
                           value={settings.city}
+                          onChange={(e: any) => setSettings({ ...settings, city: e.target.value })}
                         />
                       </div>
+
                       <div className="space-y-2">
                         <Label className="text-foreground">State</Label>
                         <StyledInput
-                          readOnly
-                          className="bg-muted/50 opacity-70 cursor-not-allowed text-muted-foreground border-border"
+                          placeholder="e.g. Delhi"
                           value={settings.state}
+                          onChange={(e: any) => setSettings({ ...settings, state: e.target.value })}
                         />
                       </div>
                     </div>
 
-                    {settings.latitude && (
-                      <div className="flex items-center gap-2 text-xs text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 p-4 rounded-xl border border-emerald-500/20">
-                        <Globe className="w-4 h-4" />
-                        <div>
-                          <p className="font-bold">Geolocation Active</p>
-                          <p className="opacity-70">Coordinates: {settings.latitude.toFixed(6)}, {settings.longitude?.toFixed(6)}</p>
+                    {settings.latitude && settings.longitude ? (
+                      <div className="flex items-center justify-between p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-700 dark:text-emerald-300">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-xl bg-emerald-500/20 flex items-center justify-center shrink-0">
+                            <Globe className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                          </div>
+                          <div>
+                            <p className="font-bold text-xs sm:text-sm">Exact GPS Coordinates Locked</p>
+                            <p className="text-[11px] opacity-80 font-mono">
+                              Latitude: {settings.latitude.toFixed(6)}°N · Longitude: {settings.longitude.toFixed(6)}°E
+                            </p>
+                          </div>
                         </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setShowMapPicker(true)}
+                          className="text-xs font-bold text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/20 rounded-xl"
+                        >
+                          Adjust on Map
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-between p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-300 text-xs">
+                        <div className="flex items-center gap-2">
+                          <AlertCircle className="w-4 h-4 text-amber-500 shrink-0" />
+                          <span>Pinpoint your restaurant on the map to allow riders to navigate straight to your counter.</span>
+                        </div>
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={() => setShowMapPicker(true)}
+                          className="h-8 px-3 bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs rounded-xl shrink-0"
+                        >
+                          Pinpoint Now
+                        </Button>
                       </div>
                     )}
                   </div>

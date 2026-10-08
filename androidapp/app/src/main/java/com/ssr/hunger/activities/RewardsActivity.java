@@ -17,7 +17,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 
 import com.google.android.material.button.MaterialButton;
-import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.ssr.hunger.dialogs.ModernDialogHelper;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -344,13 +344,13 @@ public class RewardsActivity extends BaseActivity {
     }
 
     private void showRedeemSuccess(int points, String code, String benefitText) {
-        new MaterialAlertDialogBuilder(this)
-                .setTitle("🎉 Code Redeemed Successfully!")
-                .setMessage(String.format(Locale.getDefault(),
-                        "Awesome! Voucher code \"%s\" was applied successfully.\n\n%s has been credited directly to your account!",
-                        code, benefitText))
-                .setPositiveButton("Awesome!", (d, w) -> d.dismiss())
-                .show();
+        ModernDialogHelper.showInfoDialog(
+                this,
+                "Voucher Redeemed! 🎉",
+                String.format(Locale.getDefault(),
+                        "Awesome! Voucher code \"%s\" was applied successfully.\n\n%s has been credited directly to your Hunger account!",
+                        code, benefitText)
+        );
     }
 
     private void showRedeemFailure(String message) {
@@ -529,10 +529,12 @@ public class RewardsActivity extends BaseActivity {
             card.setOnClickListener(v -> {
                 int requiredPts = Integer.parseInt(r[1].replaceAll("[^0-9]", ""));
                 if (currentPointsBalance >= requiredPts) {
-                    new MaterialAlertDialogBuilder(this)
-                            .setTitle("Claim " + r[0])
-                            .setMessage("Would you like to redeem " + requiredPts + " points for this voucher?")
-                            .setPositiveButton("Redeem", (d, w) -> {
+                    ModernDialogHelper.showWarningDialog(
+                            this,
+                            "Claim " + r[0],
+                            "Would you like to redeem " + requiredPts + " points for this voucher?",
+                            "Redeem",
+                            () -> {
                                 String uid = auth.getCurrentUser() != null ? auth.getCurrentUser().getUid() : null;
                                 if (uid != null) {
                                     db.collection(Constants.COLLECTION_USERS).document(uid)
@@ -546,9 +548,8 @@ public class RewardsActivity extends BaseActivity {
                                             .collection("pointActivities").add(act);
                                     Toast.makeText(this, "🎉 Voucher claimed! Applied to your next order.", Toast.LENGTH_SHORT).show();
                                 }
-                            })
-                            .setNegativeButton("Cancel", null)
-                            .show();
+                            }
+                    );
                 } else {
                     Toast.makeText(this, "Need " + (requiredPts - currentPointsBalance) + " more points to claim this perk!", Toast.LENGTH_SHORT).show();
                 }

@@ -31,9 +31,9 @@ public class Constants {
     public static final String COLLECTION_AI_REQUESTS = "aiRequests";
     public static final String COLLECTION_REWARD_ACCOUNTS = "rewardAccounts";
 
-    // Backend & App Base URLs
-    public static final String API_BASE_URL = "https://akrhunger.vercel.app";
-    public static final String APP_BASE_URL = "https://akrhunger.vercel.app"; // Used for group order invite links
+    // Backend & App Base URLs (Hunger Official Web Platform)
+    public static final String API_BASE_URL = "https://shungher.vercel.app";
+    public static final String APP_BASE_URL = "https://shungher.vercel.app"; // Used for web invites & sharing
 
     // Razorpay
     public static final String RAZORPAY_KEY_ID = "rzp_live_RbvSxxE0Qca3fp";

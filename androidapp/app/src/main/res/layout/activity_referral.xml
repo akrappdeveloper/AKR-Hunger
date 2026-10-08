@@ -273,7 +273,7 @@
                         android:ellipsize="middle"
                         android:fontFamily="sans-serif-medium"
                         android:maxLines="1"
-                        android:text="https://shunger.vercel.app/customer/referral/..."
+                        android:text="https://shungher.vercel.app/customer/referral/..."
                         android:textColor="@color/text_primary"
                         android:textSize="12sp" />
 

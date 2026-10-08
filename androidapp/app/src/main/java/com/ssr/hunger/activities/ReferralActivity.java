@@ -35,7 +35,7 @@ import java.util.Map;
  */
 public class ReferralActivity extends BaseActivity {
 
-    private static final String PLATFORM_REFERRAL_BASE_URL = "https://shunger.vercel.app/customer/referral/";
+    private static final String PLATFORM_REFERRAL_BASE_URL = "https://shungher.vercel.app/customer/referral/";
 
     private FirebaseFirestore db;
     private FirebaseAuth auth;
@@ -225,7 +225,7 @@ public class ReferralActivity extends BaseActivity {
 
         String textToCopy = isCodeOnly ? (PLATFORM_REFERRAL_BASE_URL + referralCode) : (PLATFORM_REFERRAL_BASE_URL + referralCode);
         ClipboardManager clipboard = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
-        ClipData clip = ClipData.newPlainText("AKR Hunger Referral Link", textToCopy);
+        ClipData clip = ClipData.newPlainText("Hunger Referral Link", textToCopy);
         clipboard.setPrimaryClip(clip);
 
         if (btnCopyCode instanceof MaterialButton) {

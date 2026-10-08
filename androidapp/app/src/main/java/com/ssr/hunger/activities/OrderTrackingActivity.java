@@ -104,8 +104,16 @@ public class OrderTrackingActivity extends BaseActivity {
     private static final String[] STEP_LABELS = {
         "Order Placed", "Confirmed", "Kitchen Preparing", "Food Ready", "Out for Delivery", "Delivered!"
     };
+    private static final String[] STEP_SUBTITLES = {
+        "Order received and sent to restaurant kitchen queue",
+        "Restaurant confirmed order & queued for cooking",
+        "Master chefs are cooking meal with hygiene seal",
+        "Freshly prepared & packed hot, awaiting pickup",
+        "Valet picked up order and riding to your doorstep with live GPS",
+        "Delivered! Enjoy your hot meal & share your rating 🎉"
+    };
     private static final int[] STEP_COLORS = {
-        0xFFFF9800, 0xFF2196F3, 0xFFFF9800, 0xFF9C27B0, 0xFFFF5722, 0xFF4CAF50
+        0xFFFF9800, 0xFF2196F3, 0xFFFF9800, 0xFF9C27B0, 0xFFFF5722, 0xFF10B981
     };
 
     // ETA
@@ -220,7 +228,7 @@ public class OrderTrackingActivity extends BaseActivity {
         ws.setUseWideViewPort(true);
         ws.setCacheMode(android.webkit.WebSettings.LOAD_DEFAULT);
         // Modern Chrome User-Agent prevents any tile server 418/403 blocking
-        ws.setUserAgentString("Mozilla/5.0 (Linux; Android " + android.os.Build.VERSION.RELEASE + "; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36 AKRHunger/1.0");
+        ws.setUserAgentString("Mozilla/5.0 (Linux; Android " + android.os.Build.VERSION.RELEASE + "; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36 HungerApp/1.0");
         ws.setMixedContentMode(android.webkit.WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
 
         wvLiveMap.addJavascriptInterface(new Object() {
@@ -264,7 +272,7 @@ public class OrderTrackingActivity extends BaseActivity {
         });
 
         String html = buildLeafletHtml(28.6139, 77.2090, 14);
-        wvLiveMap.loadDataWithBaseURL("https://akrhunger.app", html, "text/html", "UTF-8", null);
+        wvLiveMap.loadDataWithBaseURL("https://shungher.vercel.app", html, "text/html", "UTF-8", null);
 
         // Theme switcher buttons
         View btnStreet = findViewById(R.id.btn_map_theme_street);
@@ -944,11 +952,12 @@ public class OrderTrackingActivity extends BaseActivity {
         String rest = (tvRestaurantName != null && tvRestaurantName.getText() != null) ? tvRestaurantName.getText().toString() : "Restaurant";
         String eta = (tvEta != null && tvEta.getText() != null) ? tvEta.getText().toString() : "soon";
         String shortId = orderId != null && orderId.length() >= 8 ? orderId.substring(orderId.length() - 8).toUpperCase() : (orderId != null ? orderId : "");
-        String shareMsg = "🍔 Live Order Tracking from *" + rest + "* on AKR Hunger!\n"
+        String shareMsg = "🍔 Live Order Tracking from *" + rest + "* on Hunger!\n"
             + "📦 Order #" + shortId + "\n"
             + "⏱️ Estimated Delivery: " + eta + "\n"
             + "🛵 Status: " + getStatusLabel(lastStatus) + "\n"
-            + "📍 Fresh & Sealed Delivery!";
+            + "📍 Track Online: https://shungher.vercel.app\n"
+            + "✨ Fresh & Sealed Delivery!";
         Intent sendIntent = new Intent(Intent.ACTION_SEND);
         sendIntent.putExtra(Intent.EXTRA_TEXT, shareMsg);
         sendIntent.setType("text/plain");
@@ -1018,20 +1027,73 @@ public class OrderTrackingActivity extends BaseActivity {
             } else {
                 TextView tvEmoji  = row.findViewById(R.id.tv_step_emoji);
                 TextView tvLabel  = row.findViewById(R.id.tv_step_label);
+                TextView tvDesc   = row.findViewById(R.id.tv_step_desc);
+                TextView tvBadge  = row.findViewById(R.id.tv_step_badge);
                 View     vLine    = row.findViewById(R.id.v_step_line);
+                View     vLineTop = row.findViewById(R.id.v_step_line_top);
                 View     vDot     = row.findViewById(R.id.v_step_dot);
+                View     cardContent = row.findViewById(R.id.card_step_content);
+                View     frameNode = row.findViewById(R.id.frame_step_node);
 
-                if (tvEmoji != null) tvEmoji.setText(STEP_EMOJIS[i]);
+                if (tvEmoji != null) {
+                    tvEmoji.setText(done ? "✓" : STEP_EMOJIS[i]);
+                }
                 if (tvLabel != null) {
                     tvLabel.setText(STEP_LABELS[i]);
-                    tvLabel.setTextColor(done ? 0xFF4CAF50 : active ? STEP_COLORS[i] : 0xFF757575);
-                    tvLabel.setAlpha(upcoming ? 0.4f : 1f);
+                    if (done) {
+                        tvLabel.setTextColor(0xFF10B981);
+                    } else if (active) {
+                        tvLabel.setTextColor(STEP_COLORS[i]);
+                    } else {
+                        tvLabel.setTextColor(0xFF94A3B8);
+                        tvLabel.setAlpha(0.6f);
+                    }
                 }
+                if (tvDesc != null && i < STEP_SUBTITLES.length) {
+                    tvDesc.setText(STEP_SUBTITLES[i]);
+                    if (upcoming) tvDesc.setAlpha(0.5f);
+                }
+                if (tvBadge != null) {
+                    if (done) {
+                        tvBadge.setText("COMPLETED ✓");
+                        tvBadge.setBackgroundResource(R.drawable.bg_pill_emerald_soft);
+                        tvBadge.setTextColor(0xFF10B981);
+                    } else if (active) {
+                        tvBadge.setText("LIVE STAGE ⚡");
+                        tvBadge.setBackgroundResource(R.drawable.bg_pill_soft);
+                        tvBadge.setTextColor(STEP_COLORS[i]);
+                    } else {
+                        tvBadge.setText("NEXT");
+                        tvBadge.setBackgroundResource(R.drawable.bg_icon_circle_soft);
+                        tvBadge.setTextColor(0xFF94A3B8);
+                        tvBadge.setAlpha(0.5f);
+                    }
+                }
+
                 if (vDot != null) {
-                    vDot.setBackgroundColor(done ? 0xFF4CAF50 : active ? STEP_COLORS[i] : 0xFFE0E0E0);
-                    if (active) startPulseOnView(vDot);
+                    if (done) {
+                        vDot.setBackgroundResource(R.drawable.bg_step_node_completed);
+                    } else if (active) {
+                        vDot.setBackgroundResource(R.drawable.bg_step_node_active);
+                        if (frameNode != null) startPulseOnView(frameNode);
+                    } else {
+                        vDot.setBackgroundResource(R.drawable.bg_step_node_upcoming);
+                    }
                 }
-                if (vLine != null && i == STEPS.length - 1) vLine.setVisibility(View.INVISIBLE);
+
+                if (cardContent != null) {
+                    cardContent.setBackgroundResource(active ? R.drawable.bg_step_card_active : R.drawable.bg_step_card_idle);
+                    if (upcoming) cardContent.setAlpha(0.7f);
+                }
+
+                if (vLineTop != null) {
+                    vLineTop.setVisibility(i == 0 ? View.INVISIBLE : View.VISIBLE);
+                    vLineTop.setBackgroundColor(done || active ? 0xFF10B981 : 0xFFE2E8F0);
+                }
+                if (vLine != null) {
+                    vLine.setVisibility(i == STEPS.length - 1 ? View.INVISIBLE : View.VISIBLE);
+                    vLine.setBackgroundColor(done ? 0xFF10B981 : 0xFFE2E8F0);
+                }
             }
 
             stepContainer.addView(row);
@@ -1039,11 +1101,11 @@ public class OrderTrackingActivity extends BaseActivity {
             // Animate each row in with slide+fade
             final View finalRow = row;
             finalRow.setAlpha(0f);
-            finalRow.setTranslationX(-40f);
+            finalRow.setTranslationX(-35f);
             finalRow.animate()
                 .alpha(1f).translationX(0f)
-                .setDuration(300)
-                .setStartDelay(i * 80L)
+                .setDuration(320)
+                .setStartDelay(i * 70L)
                 .setInterpolator(new AccelerateDecelerateInterpolator())
                 .start();
         }

@@ -260,7 +260,7 @@ public class MapPickerDialog extends BottomSheetDialogFragment {
         settings.setDatabaseEnabled(true);
         settings.setCacheMode(WebSettings.LOAD_DEFAULT);
         // Modern Android browser User-Agent prevents any tile CDN 418 / policy blocking
-        settings.setUserAgentString("Mozilla/5.0 (Linux; Android " + android.os.Build.VERSION.RELEASE + "; " + android.os.Build.MODEL + ") AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36 AKRHunger/1.0");
+        settings.setUserAgentString("Mozilla/5.0 (Linux; Android " + android.os.Build.VERSION.RELEASE + "; " + android.os.Build.MODEL + ") AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36 Hunger/1.0");
         settings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
 
         webView.addJavascriptInterface(new Object() {
@@ -410,7 +410,7 @@ public class MapPickerDialog extends BottomSheetDialogFragment {
                 "</body>\n" +
                 "</html>";
 
-        webView.loadDataWithBaseURL("https://akrhunger.com", html, "text/html", "UTF-8", null);
+        webView.loadDataWithBaseURL("https://shungher.vercel.app", html, "text/html", "UTF-8", null);
     }
 
     private void detectCurrentLocationAndCenter() {
@@ -587,7 +587,7 @@ public class MapPickerDialog extends BottomSheetDialogFragment {
                             "https://nominatim.openstreetmap.org/reverse?format=json&lat=%.6f&lon=%.6f&zoom=18&addressdetails=1",
                             lat, lon));
                     HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                    conn.setRequestProperty("User-Agent", "AKRHungerApp/1.0 (Android Food Delivery Platform)");
+                    conn.setRequestProperty("User-Agent", "HungerApp/1.0 (Android Food Delivery Platform)");
                     conn.setConnectTimeout(4000);
                     conn.setReadTimeout(4000);
 

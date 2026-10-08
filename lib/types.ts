@@ -90,6 +90,20 @@ export interface Restaurant {
     updatedAt?: Date;
   };
   servicePincodes?: string[];
+  fssaiLicense?: string;
+  fssaiNumber?: string;
+  fssaiDocument?: string;
+  fssaiDocumentName?: string;
+  fssaiVerified?: boolean;
+  isVeg?: boolean;
+  isPureVeg?: boolean;
+  isJainFriendly?: boolean;
+  isGlutenFree?: boolean;
+  isKetoFriendly?: boolean;
+  isLateNight?: boolean;
+  isEcoPackaging?: boolean;
+  isKidsFriendly?: boolean;
+  isFreshlyPrepared?: boolean;
 }
 
 export interface MenuItem {

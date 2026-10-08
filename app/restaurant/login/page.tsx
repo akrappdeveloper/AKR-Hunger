@@ -36,10 +36,14 @@ import {
   LocateFixed,
   Navigation,
   Compass,
-  Map as MapIcon
+  Map as MapIcon,
+  FileText,
+  UploadCloud,
+  Check
 } from 'lucide-react';
 import ThemeToggle from '@/components/ThemeToggle';
 import MapPickerDialog, { PickedLocation } from '@/components/restaurant/MapPickerDialog';
+import { uploadImage } from '@/lib/imageUpload';
 
 export default function RestaurantLoginPage() {
   const router = useRouter();
@@ -57,6 +61,12 @@ export default function RestaurantLoginPage() {
   const [city, setCity] = useState('');
   const [stateName, setStateName] = useState('');
   const [pincode, setPincode] = useState('');
+  // FSSAI and GST compliance states
+  const [fssaiNumber, setFssaiNumber] = useState('');
+  const [fssaiDocumentUrl, setFssaiDocumentUrl] = useState('');
+  const [fssaiDocumentName, setFssaiDocumentName] = useState('');
+  const [uploadingFssai, setUploadingFssai] = useState(false);
+  const [gstNumber, setGstNumber] = useState('');
   const [showMapPicker, setShowMapPicker] = useState(false);
   const [locatingGps, setLocatingGps] = useState(false);
   const [detectedArea, setDetectedArea] = useState('');
@@ -72,7 +82,7 @@ export default function RestaurantLoginPage() {
     if (loc.city) setCity(loc.city);
     if (loc.state) setStateName(loc.state);
     if (loc.pincode) setPincode(loc.pincode);
-    toast.success(`📍 Picked: ${loc.formattedAddress.slice(0, 45)}...`);
+    toast.success(`📍 Picked: ${loc.formattedAddress.slice(0, 45)}... (PIN: ${loc.pincode || 'Set'})`);
   };
 
   // Derived indicator for valid coordinates
@@ -232,6 +242,37 @@ export default function RestaurantLoginPage() {
     setLoading(true);
 
     try {
+      // Validation: Phone Number (10 digits)
+      const cleanPhone = phone.replace(/\D/g, '');
+      if (!cleanPhone || cleanPhone.length < 10) {
+        setError('Please provide a valid 10-digit mobile number for order dispatch and customer contact.');
+        setLoading(false);
+        return;
+      }
+
+      // Validation: FSSAI ID (14 digits mandatory)
+      const cleanFssai = fssaiNumber.replace(/\D/g, '').slice(0, 14);
+      if (!cleanFssai || cleanFssai.length !== 14) {
+        setError('FSSAI ID is mandatory! Please enter your complete 14-digit Food Safety License Number.');
+        setLoading(false);
+        return;
+      }
+
+      // Validation: FSSAI Document Certificate
+      if (!fssaiDocumentUrl) {
+        setError('FSSAI Document is mandatory! Please upload your Food Safety Certificate document.');
+        setLoading(false);
+        return;
+      }
+
+      // Validation: GSTIN (Optional)
+      const cleanGst = gstNumber.trim().toUpperCase();
+      if (cleanGst && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(cleanGst)) {
+        setError('Invalid GST format. GSTIN must be 15 characters (e.g. 22AAAAA0000A1Z5), or leave it empty as it is optional.');
+        setLoading(false);
+        return;
+      }
+
       // 1. Check if email is already registered to a restaurant (restaurants has public read permission)
       const cleanEmail = email.trim().toLowerCase();
       try {
@@ -269,7 +310,7 @@ export default function RestaurantLoginPage() {
         ownerId: userId,
         email: cleanEmail,
         password: password,
-        phone: phone.trim(),
+        phone: cleanPhone,
         address: address.trim(),
         street: address.trim(),
         city: city.trim() || '',
@@ -283,6 +324,14 @@ export default function RestaurantLoginPage() {
         },
         cuisines: cuisineArray.length > 0 ? cuisineArray : ['Multi-Cuisine'],
         description: `Delicious ${cuisineArray.join(', ') || 'Multi-Cuisine'} cuisine`,
+        // Legal & Compliance fields
+        fssaiNumber: cleanFssai,
+        fssaiLicense: cleanFssai,
+        fssaiDocument: fssaiDocumentUrl,
+        fssaiDocumentName: fssaiDocumentName || 'fssai_certificate.pdf',
+        fssaiVerified: false,
+        gstNumber: cleanGst || '',
+        gstVerified: false,
         rating: 0,
         reviews: 0,
         deliveryTime: 30,
@@ -542,18 +591,25 @@ export default function RestaurantLoginPage() {
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                           <div>
-                            <label className="text-xs font-bold text-foreground block mb-1.5">
-                              Phone Number *
-                            </label>
+                            <div className="flex items-center justify-between mb-1.5">
+                              <label className="text-xs font-bold text-foreground">
+                                Phone Number *
+                              </label>
+                              <span className="text-[10px] text-amber-600 dark:text-amber-400 font-bold">Important</span>
+                            </div>
                             <div className="relative">
-                              <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+                              <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-muted-foreground font-semibold text-xs border-r border-border/80 pr-2 pointer-events-none">
+                                <Phone className="w-3.5 h-3.5 text-amber-500" />
+                                <span>+91</span>
+                              </div>
                               <Input
                                 type="tel"
-                                placeholder="+91 98765 43210"
+                                maxLength={10}
+                                placeholder="98765 43210"
                                 value={phone}
-                                onChange={(e) => setPhone(e.target.value)}
+                                onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
                                 required={!isLogin}
-                                className="pl-10 h-11 rounded-xl bg-muted/40 border-border/70 text-foreground placeholder:text-muted-foreground focus:bg-background focus:border-amber-500 text-sm font-medium transition-all"
+                                className="pl-16 h-11 rounded-xl bg-muted/40 border-border/70 text-foreground placeholder:text-muted-foreground focus:bg-background focus:border-amber-500 text-sm font-medium transition-all"
                               />
                             </div>
                           </div>
@@ -708,6 +764,152 @@ export default function RestaurantLoginPage() {
                                   className="pl-8 h-9 rounded-lg bg-card/80 border-border/70 text-foreground text-xs font-mono transition-all"
                                 />
                               </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Legal & Food Safety Compliance Section (FSSAI & GST) */}
+                        <div className="p-4 rounded-2xl bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-transparent border border-amber-500/30 space-y-3.5 shadow-sm">
+                          <div className="flex items-center gap-2.5 pb-2 border-b border-border/40">
+                            <div className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-500 flex items-center justify-center ring-1 ring-amber-500/30 shrink-0">
+                              <ShieldCheck className="w-4 h-4 text-amber-500" />
+                            </div>
+                            <div>
+                              <h4 className="text-xs font-bold text-foreground">
+                                Legal Compliance & Food Licenses
+                              </h4>
+                              <p className="text-[11px] text-muted-foreground">
+                                Mandatory FSSAI license & certificate for food delivery safety compliance
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* FSSAI 14-Digit Number & Document Upload Grid */}
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                            <div>
+                              <div className="flex items-center justify-between mb-1.5">
+                                <label className="text-xs font-bold text-foreground flex items-center gap-1">
+                                  <span>FSSAI License ID *</span>
+                                </label>
+                                <span className={`text-[10px] font-mono ${fssaiNumber.length === 14 ? 'text-emerald-500 font-bold' : 'text-muted-foreground'}`}>
+                                  {fssaiNumber.length}/14 digits
+                                </span>
+                              </div>
+                              <div className="relative">
+                                <ShieldCheck className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+                                <Input
+                                  type="text"
+                                  maxLength={14}
+                                  placeholder="14-digit FSSAI Number"
+                                  value={fssaiNumber}
+                                  onChange={(e) => setFssaiNumber(e.target.value.replace(/\D/g, '').slice(0, 14))}
+                                  required={!isLogin}
+                                  className="pl-10 h-11 rounded-xl bg-muted/40 border-border/70 text-foreground placeholder:text-muted-foreground focus:bg-background focus:border-amber-500 text-sm font-mono transition-all"
+                                />
+                              </div>
+                              <p className="text-[10px] text-muted-foreground mt-1">14-digit Food Safety License Number</p>
+                            </div>
+
+                            {/* FSSAI Certificate Document Upload */}
+                            <div>
+                              <label className="text-xs font-bold text-foreground block mb-1.5">
+                                FSSAI Document (Certificate) *
+                              </label>
+                              <div className="relative">
+                                {fssaiDocumentUrl ? (
+                                  <div className="h-11 rounded-xl bg-emerald-500/10 border border-emerald-500/30 px-3 flex items-center justify-between text-xs text-emerald-600 dark:text-emerald-400">
+                                    <div className="flex items-center gap-1.5 truncate pr-2">
+                                      <CheckCircle2 className="w-4 h-4 shrink-0" />
+                                      <span className="truncate font-medium">{fssaiDocumentName || 'Certificate Attached'}</span>
+                                    </div>
+                                    <label className="text-[10px] font-bold text-amber-500 hover:underline cursor-pointer shrink-0">
+                                      Change
+                                      <input
+                                        type="file"
+                                        accept="application/pdf,image/*"
+                                        className="hidden"
+                                        onChange={async (e) => {
+                                          const file = e.target.files?.[0];
+                                          if (!file) return;
+                                          setUploadingFssai(true);
+                                          try {
+                                            const url = await uploadImage(file, 'fssai-documents', 'signup');
+                                            setFssaiDocumentUrl(url);
+                                            setFssaiDocumentName(file.name);
+                                            toast.success('FSSAI Certificate attached!');
+                                          } catch {
+                                            toast.error('Upload failed');
+                                          } finally {
+                                            setUploadingFssai(false);
+                                          }
+                                        }}
+                                      />
+                                    </label>
+                                  </div>
+                                ) : (
+                                  <label className="h-11 rounded-xl bg-muted/40 hover:bg-muted/70 border border-dashed border-amber-500/50 hover:border-amber-500 px-3 flex items-center justify-center gap-2 text-xs font-semibold text-muted-foreground hover:text-foreground cursor-pointer transition-all">
+                                    {uploadingFssai ? (
+                                      <>
+                                        <Spinner className="w-4 h-4 text-amber-500" />
+                                        <span>Uploading Certificate...</span>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <UploadCloud className="w-4 h-4 text-amber-500" />
+                                        <span>Attach FSSAI Doc (PDF / Image) *</span>
+                                      </>
+                                    )}
+                                    <input
+                                      type="file"
+                                      accept="application/pdf,image/*"
+                                      className="hidden"
+                                      disabled={uploadingFssai}
+                                      onChange={async (e) => {
+                                        const file = e.target.files?.[0];
+                                        if (!file) return;
+                                        setUploadingFssai(true);
+                                        try {
+                                          const url = await uploadImage(file, 'fssai-documents', 'signup');
+                                          setFssaiDocumentUrl(url);
+                                          setFssaiDocumentName(file.name);
+                                          toast.success('FSSAI Certificate uploaded!');
+                                        } catch {
+                                          toast.error('Upload failed. Please try an image or PDF under 5MB.');
+                                        } finally {
+                                          setUploadingFssai(false);
+                                        }
+                                      }}
+                                    />
+                                  </label>
+                                )}
+                              </div>
+                              <p className="text-[10px] text-muted-foreground mt-1">Upload PDF or photo of license certificate</p>
+                            </div>
+                          </div>
+
+                          {/* GST Number (Optional) */}
+                          <div>
+                            <div className="flex items-center justify-between mb-1.5">
+                              <label className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                                <FileText className="w-3.5 h-3.5 text-muted-foreground" />
+                                <span>GST Number</span>
+                                <span className="text-[10px] font-semibold text-muted-foreground bg-muted px-1.5 py-0.5 rounded-md">
+                                  Optional
+                                </span>
+                              </label>
+                              <span className="text-[10px] text-muted-foreground">
+                                Optional for turnover under ₹20 Lakhs
+                              </span>
+                            </div>
+                            <div className="relative">
+                              <Input
+                                type="text"
+                                maxLength={15}
+                                placeholder="e.g. 22AAAAA0000A1Z5 (Optional)"
+                                value={gstNumber}
+                                onChange={(e) => setGstNumber(e.target.value.toUpperCase())}
+                                className="h-11 rounded-xl bg-muted/40 border-border/70 text-foreground placeholder:text-muted-foreground focus:bg-background focus:border-amber-500 text-sm font-mono transition-all"
+                              />
                             </div>
                           </div>
                         </div>

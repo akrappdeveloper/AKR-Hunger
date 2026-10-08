@@ -20,7 +20,7 @@ import androidx.core.content.FileProvider;
 import com.bumptech.glide.Glide;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.button.MaterialButton;
-import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.ssr.hunger.dialogs.ModernDialogHelper;
 import com.google.android.material.materialswitch.MaterialSwitch;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.FirebaseAuth;
@@ -460,12 +460,13 @@ public class EditProfileActivity extends BaseActivity {
         String label = (String) addrMap.get("label");
         String name = !TextUtils.isEmpty(label) ? label : (street != null ? street : "this address");
 
-        new MaterialAlertDialogBuilder(this)
-                .setTitle("Delete Address")
-                .setMessage("Remove \"" + name + "\" from your saved addresses?")
-                .setPositiveButton("Delete", (d, w) -> deleteAddress(addrMap))
-                .setNegativeButton("Cancel", null)
-                .show();
+        ModernDialogHelper.showDangerDialog(
+                this,
+                "Delete Address",
+                "Are you sure you want to remove \"" + name + "\" from your saved addresses?",
+                "Delete",
+                () -> deleteAddress(addrMap)
+        );
     }
 
     private void deleteAddress(Map<String, Object> addrMap) {
@@ -563,12 +564,13 @@ public class EditProfileActivity extends BaseActivity {
     }
 
     private void confirmRemoveAvatar() {
-        new MaterialAlertDialogBuilder(this)
-                .setTitle("Remove Profile Photo")
-                .setMessage("Are you sure you want to remove your profile photo and reset to default?")
-                .setPositiveButton("Remove", (d, w) -> removeAvatar())
-                .setNegativeButton("Cancel", null)
-                .show();
+        ModernDialogHelper.showDangerDialog(
+                this,
+                "Remove Profile Photo",
+                "Are you sure you want to remove your profile photo and reset to default?",
+                "Remove",
+                this::removeAvatar
+        );
     }
 
     private void removeAvatar() {
@@ -696,12 +698,13 @@ public class EditProfileActivity extends BaseActivity {
     @Override
     public void onBackPressed() {
         if (hasUnsavedChanges()) {
-            new MaterialAlertDialogBuilder(this)
-                    .setTitle("Discard Changes?")
-                    .setMessage("You have unsaved changes in your profile. Are you sure you want to discard them?")
-                    .setPositiveButton("Discard", (dialog, which) -> super.onBackPressed())
-                    .setNegativeButton("Keep Editing", null)
-                    .show();
+            ModernDialogHelper.showWarningDialog(
+                    this,
+                    "Discard Changes?",
+                    "You have unsaved changes in your profile. Are you sure you want to discard them?",
+                    "Discard",
+                    () -> super.onBackPressed()
+            );
         } else {
             super.onBackPressed();
         }

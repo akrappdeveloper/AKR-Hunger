@@ -16,6 +16,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.materialswitch.MaterialSwitch;
 import com.ssr.hunger.R;
+import com.ssr.hunger.dialogs.ModernDialogHelper;
 import com.ssr.hunger.models.Address;
 import com.ssr.hunger.utils.Constants;
 import com.google.firebase.auth.FirebaseAuth;
@@ -267,10 +268,12 @@ public class AddressesActivity extends BaseActivity {
     }
 
     private void confirmDelete(String addrId, String label) {
-        new MaterialAlertDialogBuilder(this)
-                .setTitle("Remove Address")
-                .setMessage("Remove \"" + label + "\" from your saved addresses?")
-                .setPositiveButton("Remove", (d, w) -> {
+        ModernDialogHelper.showDangerDialog(
+                this,
+                "Remove Address",
+                "Are you sure you want to remove \"" + label + "\" from your saved addresses?",
+                "Remove",
+                () -> {
                     String uid = auth.getCurrentUser().getUid();
                     db.collection(Constants.COLLECTION_USERS).document(uid)
                             .collection("addresses").document(addrId)
@@ -280,9 +283,8 @@ public class AddressesActivity extends BaseActivity {
                                 logBreadcrumb("Address deleted: " + addrId);
                             })
                             .addOnFailureListener(e -> recordException("Address_delete_fail", e));
-                })
-                .setNegativeButton("Cancel", null)
-                .show();
+                }
+        );
     }
 
     private void setAsDefault(String newDefaultId) {

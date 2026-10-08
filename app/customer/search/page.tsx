@@ -490,7 +490,7 @@ export default function SearchPage() {
                           {Array.isArray(rest.cuisineType) ? rest.cuisineType.join(', ') : rest.description || 'Gourmet Kitchen'}
                         </p>
                         <div className="pt-2 flex items-center justify-between text-xs text-muted-foreground border-t border-border/50">
-                          <span>₹{rest.minimumOrder || 150} min order</span>
+                          <span>{rest.minimumOrder ? `₹${rest.minimumOrder} min order` : 'No min order'}</span>
                           <span className="text-primary font-bold flex items-center gap-1">
                             View Menu <ArrowUpRight className="w-3.5 h-3.5" />
                           </span>

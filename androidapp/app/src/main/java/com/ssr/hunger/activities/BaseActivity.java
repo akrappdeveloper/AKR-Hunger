@@ -39,8 +39,13 @@ public abstract class BaseActivity extends AppCompatActivity {
     private Trace screenTrace;
 
     // ──────────────────────────────────────────────────────────────────
-    // Lifecycle
+    // Lifecycle & Open Language Locale Attachment
     // ──────────────────────────────────────────────────────────────────
+
+    @Override
+    protected void attachBaseContext(android.content.Context newBase) {
+        super.attachBaseContext(com.ssr.hunger.utils.LocaleHelper.onAttach(newBase));
+    }
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {

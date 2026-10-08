@@ -587,10 +587,10 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="14dp"
                 app:cardBackgroundColor="@color/surface"
-                app:cardCornerRadius="22dp"
+                app:cardCornerRadius="26dp"
                 app:cardElevation="2dp"
                 app:strokeColor="@color/card_border"
-                app:strokeWidth="1dp">
+                app:strokeWidth="1.2dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -789,10 +789,10 @@
                 android:layout_marginBottom="14dp"
                 android:visibility="gone"
                 app:cardBackgroundColor="@color/surface"
-                app:cardCornerRadius="22dp"
+                app:cardCornerRadius="26dp"
                 app:cardElevation="2dp"
                 app:strokeColor="@color/card_border"
-                app:strokeWidth="1dp">
+                app:strokeWidth="1.2dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -928,50 +928,81 @@
 
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Step Tracker Timeline Card -->
+            <!-- Step Tracker Timeline Card (2050 Futuristic Soft Style) -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="14dp"
+                android:layout_marginBottom="16dp"
                 app:cardBackgroundColor="@color/surface"
-                app:cardCornerRadius="22dp"
-                app:cardElevation="2dp"
+                app:cardCornerRadius="26dp"
+                app:cardElevation="3dp"
                 app:strokeColor="@color/card_border"
-                app:strokeWidth="1dp">
+                app:strokeWidth="1.2dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="20dp">
+                    android:paddingHorizontal="20dp"
+                    android:paddingTop="22dp"
+                    android:paddingBottom="18dp">
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginBottom="16dp"
+                        android:layout_marginBottom="18dp"
                         android:gravity="center_vertical"
                         android:orientation="horizontal">
 
-                        <TextView
+                        <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:fontFamily="sans-serif-bold"
-                            android:letterSpacing="0.06"
-                            android:text="LIVE STATUS TIMELINE"
-                            android:textColor="@color/text_hint"
-                            android:textSize="11sp" />
+                            android:orientation="vertical">
 
-                        <TextView
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="sans-serif-black"
+                                android:letterSpacing="0.04"
+                                android:text="LIVE STATUS TIMELINE"
+                                android:textColor="@color/text_primary"
+                                android:textSize="13sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:fontFamily="sans-serif"
+                                android:text="Real-time kitchen &amp; delivery valet dispatch"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="11sp" />
+                        </LinearLayout>
+
+                        <LinearLayout
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:background="@drawable/bg_pill_emerald_soft"
-                            android:fontFamily="sans-serif-bold"
-                            android:paddingHorizontal="8dp"
-                            android:paddingVertical="2dp"
-                            android:text="REALTIME"
-                            android:textColor="@color/success"
-                            android:textSize="9.5sp" />
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:paddingHorizontal="10dp"
+                            android:paddingVertical="4dp">
+
+                            <View
+                                android:layout_width="6dp"
+                                android:layout_height="6dp"
+                                android:layout_marginEnd="6dp"
+                                android:background="@drawable/bg_tracking_active_dot" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="sans-serif-bold"
+                                android:letterSpacing="0.02"
+                                android:text="REALTIME ⚡"
+                                android:textColor="@color/success"
+                                android:textSize="10sp" />
+                        </LinearLayout>
                     </LinearLayout>
 
                     <!-- Dynamic Steps List -->
@@ -991,10 +1022,10 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="16dp"
                 app:cardBackgroundColor="@color/surface"
-                app:cardCornerRadius="22dp"
+                app:cardCornerRadius="26dp"
                 app:cardElevation="2dp"
                 app:strokeColor="@color/card_border"
-                app:strokeWidth="1dp">
+                app:strokeWidth="1.2dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -1053,10 +1084,10 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="16dp"
                 app:cardBackgroundColor="@color/surface"
-                app:cardCornerRadius="22dp"
+                app:cardCornerRadius="26dp"
                 app:cardElevation="2dp"
                 app:strokeColor="@color/card_border"
-                app:strokeWidth="1dp">
+                app:strokeWidth="1.2dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"

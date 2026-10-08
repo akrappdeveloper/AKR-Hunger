@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useRestaurantAuth } from '@/context/RestaurantAuthContext';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -15,7 +16,7 @@ import {
   Clock, CheckCircle, Truck, AlertCircle, ShoppingCart,
   Search, Package,
   ChefHat, ArrowRight, Timer, Users, Radio, Filter, MapPin,
-  Ban, IndianRupee, X, RotateCcw
+  Ban, IndianRupee, X, RotateCcw, ExternalLink
 } from 'lucide-react';
 import {
   Dialog,
@@ -33,6 +34,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 type OrderStatus = 'pending' | 'confirmed' | 'preparing' | 'ready' | 'out_for_delivery' | 'delivered' | 'cancelled';
 const statusSteps: OrderStatus[] = ['pending', 'confirmed', 'preparing', 'ready', 'out_for_delivery', 'delivered'];
 
+type OrderFilter = 'active' | 'shipped' | 'completed' | 'cancelled' | 'all';
+
 const RESTAURANT_CANCEL_REASONS = [
   'Out of stock / ingredients not available',
   'Restaurant too busy to fulfill',
@@ -48,7 +51,7 @@ export default function RestaurantOrdersPage() {
 
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<'all' | 'active' | 'shipped' | 'completed'>('active');
+  const [filter, setFilter] = useState<OrderFilter>('active');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   // Broadcast Dialog
@@ -65,11 +68,18 @@ export default function RestaurantOrdersPage() {
   const [cancelCustomReason, setCancelCustomReason] = useState('');
   const [isCancelling, setIsCancelling] = useState(false);
 
-  // Statistics
+  // Statistics & Tab Counts
   const [todayOrders, setTodayOrders] = useState(0);
   const [activeOrders, setActiveOrders] = useState(0);
   const [pendingOrders, setPendingOrders] = useState(0);
   const [completedToday, setCompletedToday] = useState(0);
+  const [counts, setCounts] = useState({
+    active: 0,
+    shipped: 0,
+    completed: 0,
+    cancelled: 0,
+    all: 0,
+  });
 
   useEffect(() => {
     if (authLoading) return;
@@ -86,9 +96,9 @@ export default function RestaurantOrdersPage() {
       const ordersRef = collection(db, 'orders');
       const q = query(ordersRef, where('restaurantId', '==', user!.uid));
       const snapshot = await getDocs(q);
-      let allOrders = snapshot.docs.map((docSnap) => ({ ...docSnap.data(), id: docSnap.id })) as Order[];
+      const allOrders = snapshot.docs.map((docSnap) => ({ ...docSnap.data(), id: docSnap.id })) as Order[];
 
-      allOrders = allOrders.sort((a, b) => {
+      allOrders.sort((a, b) => {
         const dateA = a.createdAt?.toDate?.() || new Date(0);
         const dateB = b.createdAt?.toDate?.() || new Date(0);
         return dateB.getTime() - dateA.getTime();
@@ -98,20 +108,39 @@ export default function RestaurantOrdersPage() {
       today.setHours(0, 0, 0, 0);
       const todayOrdersList = allOrders.filter(order => (order.createdAt?.toDate?.() || new Date(0)) >= today);
 
+      const activeList = allOrders.filter(
+        order => order.status && ['pending', 'confirmed', 'preparing', 'ready'].includes(order.status) && !order.deliveryPersonId
+      );
+      const shippedList = allOrders.filter(
+        order => order.status === 'out_for_delivery' || (order.status && ['ready', 'confirmed'].includes(order.status) && !!order.deliveryPersonId)
+      );
+      const completedList = allOrders.filter(order => order.status === 'delivered');
+      const cancelledList = allOrders.filter(order => order.status === 'cancelled');
+
       setTodayOrders(todayOrdersList.length);
-      setActiveOrders(allOrders.filter(o => o.status && ['pending', 'confirmed', 'preparing', 'ready'].includes(o.status)).length);
+      setActiveOrders(activeList.length);
       setPendingOrders(allOrders.filter(o => o.status === 'pending').length);
       setCompletedToday(todayOrdersList.filter(o => o.status === 'delivered').length);
 
-      if (filter === 'active') {
-        allOrders = allOrders.filter(order => order.status && ['pending', 'confirmed', 'preparing', 'ready'].includes(order.status) && !order.deliveryPersonId);
-      } else if (filter === 'shipped') {
-        allOrders = allOrders.filter(order => order.status === 'out_for_delivery' || (order.status && ['ready', 'confirmed'].includes(order.status) && !!order.deliveryPersonId));
-      } else if (filter === 'completed') {
-        allOrders = allOrders.filter(order => order.status && ['delivered', 'cancelled'].includes(order.status));
-      }
+      setCounts({
+        active: activeList.length,
+        shipped: shippedList.length,
+        completed: completedList.length,
+        cancelled: cancelledList.length,
+        all: allOrders.length,
+      });
 
-      setOrders(allOrders);
+      if (filter === 'active') {
+        setOrders(activeList);
+      } else if (filter === 'shipped') {
+        setOrders(shippedList);
+      } else if (filter === 'completed') {
+        setOrders(completedList);
+      } else if (filter === 'cancelled') {
+        setOrders(cancelledList);
+      } else {
+        setOrders(allOrders);
+      }
     } catch (error) {
       console.error('[Orders] Error:', error);
     } finally {
@@ -305,7 +334,7 @@ export default function RestaurantOrdersPage() {
             read: false,
             isRead: false,
             createdAt: serverTimestamp()
-          }).catch(() => {});
+          }).catch(() => { });
         }
       } catch (e) {
         console.warn("Could not write in-app notifications:", e);
@@ -369,133 +398,267 @@ export default function RestaurantOrdersPage() {
         </div>
       </motion.div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      {/* Stats Grid - 5 Cards including Cancelled Orders */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
         {[
           { label: 'Today', value: todayOrders, icon: ShoppingCart, color: 'text-blue-500', gradient: 'from-blue-500/10 to-indigo-500/10' },
-          { label: 'Active', value: activeOrders, icon: Clock, color: 'text-orange-500', gradient: 'from-orange-500/10 to-red-500/10' },
+          { label: 'Active', value: counts.active, icon: Clock, color: 'text-orange-500', gradient: 'from-orange-500/10 to-red-500/10' },
           { label: 'Pending', value: pendingOrders, icon: AlertCircle, color: 'text-amber-500', gradient: 'from-amber-500/10 to-yellow-500/10' },
-          { label: 'Completed', value: completedToday, icon: CheckCircle, color: 'text-emerald-500', gradient: 'from-emerald-500/10 to-green-500/10' },
+          { label: 'Completed', value: counts.completed, icon: CheckCircle, color: 'text-emerald-500', gradient: 'from-emerald-500/10 to-green-500/10' },
+          { label: 'Cancelled', value: counts.cancelled, icon: Ban, color: 'text-red-500', gradient: 'from-red-500/10 to-rose-500/10' },
         ].map((stat, i) => (
-          <motion.div key={i} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.1 }}>
-            <Card className={`p-5 bg-card/60 bg-gradient-to-br ${stat.gradient} border-border backdrop-blur-md relative overflow-hidden group hover:border-primary/30 transition-all`}>
-              <div className="flex items-center gap-4 relative z-10">
-                <div className={`p-3 rounded-xl bg-muted/60 ${stat.color} ring-1 ring-border`}>
-                  <stat.icon className="w-6 h-6" />
+          <motion.div key={i} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.08 }}>
+            <Card className={`p-4 sm:p-5 bg-card/60 bg-gradient-to-br ${stat.gradient} border-border backdrop-blur-md relative overflow-hidden group hover:border-primary/30 transition-all`}>
+              <div className="flex items-center gap-3.5 relative z-10">
+                <div className={`p-2.5 sm:p-3 rounded-xl bg-muted/60 ${stat.color} ring-1 ring-border shrink-0`}>
+                  <stat.icon className="w-5 h-5 sm:w-6 sm:h-6" />
                 </div>
                 <div>
-                  <p className="text-xs sm:text-sm text-muted-foreground font-medium uppercase tracking-wider">{stat.label}</p>
-                  <p className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">{stat.value}</p>
+                  <p className="text-[11px] sm:text-xs text-muted-foreground font-semibold uppercase tracking-wider">{stat.label}</p>
+                  <p className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-foreground tracking-tight">{stat.value}</p>
                 </div>
               </div>
-              <div className={`absolute -right-6 -bottom-6 w-24 h-24 bg-current opacity-10 blur-3xl rounded-full ${stat.color}`} />
+              <div className={`absolute -right-6 -bottom-6 w-20 h-20 bg-current opacity-10 blur-2xl rounded-full ${stat.color}`} />
             </Card>
           </motion.div>
         ))}
       </div>
 
-      {/* Search & Filters */}
-      <div className="flex flex-col md:flex-row gap-4">
+      {/* Search & Filters (Tabs: Active | In Delivery | Completed | Cancelled Orders | All Orders) */}
+      <div className="flex flex-col lg:flex-row gap-4">
         <div className="flex-1 relative group">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
           <Input
-            placeholder="Search Order ID, Customer..."
+            placeholder="Search Order ID, Customer name..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-12 bg-card border-border text-foreground placeholder:text-muted-foreground h-12 rounded-xl focus:border-primary/50 focus:ring-primary/20 transition-all"
+            className="pl-12 bg-card border-border text-foreground placeholder:text-muted-foreground h-12 rounded-2xl focus:border-primary/50 focus:ring-primary/20 transition-all"
           />
         </div>
-        <div className="flex bg-muted/50 p-1 rounded-xl border border-border">
-          {(['all', 'active', 'shipped', 'completed'] as const).map((f) => (
-            <button
-              key={f}
-              onClick={() => setFilter(f)}
-              className={`px-4 sm:px-6 py-2 rounded-lg text-sm font-semibold transition-all ${filter === f
-                ? 'bg-primary text-primary-foreground shadow-md'
-                : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-                }`}
-            >
-              {f.charAt(0).toUpperCase() + f.slice(1)}
-            </button>
-          ))}
+
+        {/* Tab Switcher: Notice Cancelled Orders tab is placed directly to the right side of Completed tab */}
+        <div className="flex flex-wrap bg-muted/50 p-1.5 rounded-2xl border border-border gap-1 items-center">
+          {[
+            { key: 'active', label: 'Active', count: counts.active },
+            { key: 'shipped', label: 'In Delivery', count: counts.shipped },
+            { key: 'completed', label: 'Completed', count: counts.completed },
+            { key: 'cancelled', label: 'Cancelled Orders', count: counts.cancelled, isCancel: true },
+            { key: 'all', label: 'All Orders', count: counts.all },
+          ].map((tab) => {
+            const isActive = filter === tab.key;
+            return (
+              <button
+                key={tab.key}
+                onClick={() => setFilter(tab.key as OrderFilter)}
+                className={`px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 ${isActive
+                  ? tab.isCancel
+                    ? 'bg-red-600 text-white shadow-md shadow-red-600/30'
+                    : 'bg-primary text-primary-foreground shadow-md'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                  }`}
+              >
+                <span>{tab.label}</span>
+                <span
+                  className={`px-1.5 py-0.5 rounded-full text-[10px] font-mono font-bold ${isActive
+                    ? 'bg-black/25 text-white'
+                    : tab.isCancel && tab.count > 0
+                      ? 'bg-red-500/15 text-red-500'
+                      : 'bg-muted text-muted-foreground'
+                    }`}
+                >
+                  {tab.count}
+                </span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Orders List */}
         <div className="lg:col-span-2 space-y-4">
-          <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
-            <Filter className="w-5 h-5 text-muted-foreground" />
-            {filter === 'all' ? 'All Orders' : `${filter.charAt(0).toUpperCase() + filter.slice(1)} Orders`}
-          </h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+              <Filter className="w-5 h-5 text-muted-foreground" />
+              {filter === 'all'
+                ? 'All Orders'
+                : filter === 'cancelled'
+                  ? 'Cancelled Orders'
+                  : filter === 'shipped'
+                    ? 'In Delivery Orders'
+                    : `${filter.charAt(0).toUpperCase() + filter.slice(1)} Orders`}
+            </h2>
+            <Badge variant="outline" className="text-xs font-mono font-semibold">
+              Showing {filteredOrders.length}
+            </Badge>
+          </div>
+
           <div className="space-y-3">
             <AnimatePresence>
               {filteredOrders.length === 0 ? (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-12 text-center bg-card/40 border-border border-dashed rounded-3xl">
                   <Package className="w-16 h-16 text-muted-foreground mx-auto mb-4 opacity-60" />
-                  <p className="text-muted-foreground text-lg">No orders found matching your criteria</p>
+                  <p className="text-muted-foreground text-lg">
+                    {filter === 'cancelled' ? 'No cancelled orders found' : 'No orders found matching your criteria'}
+                  </p>
                 </motion.div>
               ) : (
-                filteredOrders.map((order) => (
-                  <motion.div
-                    key={order.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    layout
-                    onClick={() => setSelectedOrder(order)}
-                  >
-                    <Card className={`p-5 cursor-pointer transition-all border-border hover:border-primary/50 hover:bg-muted/30 group ${selectedOrder?.id === order.id ? 'bg-primary/10 border-primary ring-1 ring-primary/50' : 'bg-card'}`}>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                          <div className={`p-3 rounded-xl bg-muted border border-border`}>
-                            {getStatusIcon(order.status)}
+                filteredOrders.map((order) => {
+                  const isCancelled = order.status === 'cancelled';
+                  const isSelected = selectedOrder?.id === order.id;
+
+                  return (
+                    <motion.div
+                      key={order.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      layout
+                      onClick={() => setSelectedOrder(order)}
+                    >
+                      <Card
+                        className={`p-5 cursor-pointer transition-all border ${isCancelled
+                          ? isSelected
+                            ? 'bg-red-500/10 border-red-500 ring-1 ring-red-500'
+                            : 'bg-red-500/[0.04] border-red-500/30 hover:border-red-500/50'
+                          : isSelected
+                            ? 'bg-primary/10 border-primary ring-1 ring-primary/50'
+                            : 'bg-card border-border hover:border-primary/50 hover:bg-muted/30'
+                          }`}
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex items-start gap-4">
+                            <div className={`p-3 rounded-2xl border ${isCancelled
+                              ? 'bg-red-500/15 border-red-500/30 text-red-500'
+                              : 'bg-muted border-border'
+                              }`}>
+                              {getStatusIcon(order.status)}
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <h4 className="font-bold text-foreground text-lg">#{formatOrderId(order.id)}</h4>
+                                {isCancelled && (
+                                  <Badge className="bg-red-500/20 text-red-600 dark:text-red-400 border border-red-500/30 text-[10px]">
+                                    Cancelled
+                                  </Badge>
+                                )}
+                              </div>
+                              <p className="text-sm text-muted-foreground">{order.customerName} • {order.items?.length || 0} items</p>
+
+                              {/* If cancelled, show reason & who cancelled */}
+                              {isCancelled && (
+                                <div className="mt-2 p-2 rounded-xl bg-red-500/10 border border-red-500/20 text-xs text-red-600 dark:text-red-400 space-y-0.5">
+                                  <p className="font-semibold">
+                                    Reason: {order.cancellationReason || (order as any).reason || 'Cancelled'}
+                                  </p>
+                                  <p className="text-[11px] text-muted-foreground">
+                                    Cancelled by: {(order as any).cancelledBy || 'System / Restaurant'}
+                                  </p>
+                                </div>
+                              )}
+
+                              {/* Direct Link to Single Order Page */}
+                              <div className="mt-2.5 flex items-center gap-3">
+                                <Link
+                                  href={`/restaurant/orders/${order.id}`}
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="text-xs font-bold text-primary hover:underline inline-flex items-center gap-1"
+                                >
+                                  Open Order Page <ArrowRight className="w-3.5 h-3.5" />
+                                </Link>
+                              </div>
+                            </div>
                           </div>
-                          <div>
-                            <h4 className="font-bold text-foreground text-lg">#{formatOrderId(order.id)}</h4>
-                            <p className="text-sm text-muted-foreground">{order.customerName} • {order.items?.length} items</p>
+
+                          <div className="text-right shrink-0">
+                            <p className="text-xl font-bold text-foreground mb-1 font-mono">₹{order.total}</p>
+                            <Badge variant="outline" className={`${getStatusColor(order.status)} border font-medium`}>
+                              {order.status?.replace('_', ' ') || 'Pending'}
+                            </Badge>
                           </div>
                         </div>
-                        <div className="text-right">
-                          <p className="text-xl font-bold text-foreground mb-1">₹{order.total}</p>
-                          <Badge variant="outline" className={`${getStatusColor(order.status)} border font-medium`}>
-                            {order.status?.replace('_', ' ') || 'Pending'}
-                          </Badge>
-                        </div>
-                      </div>
-                    </Card>
-                  </motion.div>
-                ))
+                      </Card>
+                    </motion.div>
+                  );
+                })
               )}
             </AnimatePresence>
           </div>
 
-          {/* Quick Actions Panel (Sticky) */}
-          {selectedOrder && selectedOrder.status !== 'delivered' && selectedOrder.status !== 'cancelled' && !selectedOrder.deliveryPersonId && (
+          {/* Quick Actions Panel (Sticky) - Restaurant ONLY actions: Accept (confirmed) & Start Preparing (preparing). Ready, Dispatched, Delivered are managed by Delivery Partner */}
+          {selectedOrder && selectedOrder.status !== 'delivered' && selectedOrder.status !== 'cancelled' && (
             <motion.div
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              className="sticky bottom-6 z-20 p-4 bg-card/95 border border-border rounded-2xl shadow-2xl flex flex-col sm:flex-row items-center gap-4 backdrop-blur-xl"
+              className="sticky bottom-6 z-20 p-4 bg-card/95 border border-border rounded-2xl shadow-2xl flex flex-col sm:flex-row items-center justify-between gap-4 backdrop-blur-xl"
             >
-              <div className="flex-1 flex gap-2 overflow-x-auto w-full sm:w-auto pb-2 sm:pb-0 hide-scrollbar">
-                {statusSteps.filter(s => !['out_for_delivery', 'delivered'].includes(s)).map((status) => (
+              <div className="flex items-center gap-3 w-full sm:w-auto">
+                {selectedOrder.status === 'pending' && (
+                  <div className="flex items-center gap-2">
+                    <Button
+                      onClick={() => handleStatusUpdate(selectedOrder.id!, 'confirmed')}
+                      size="sm"
+                      className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl h-10 px-4 gap-1.5 shadow-md shadow-emerald-600/20"
+                    >
+                      <CheckCircle className="w-4 h-4" /> Accept Order
+                    </Button>
+                    <Button
+                      onClick={() => openCancelDialog(selectedOrder)}
+                      variant="outline"
+                      size="sm"
+                      className="border-destructive/30 text-destructive hover:bg-destructive/10 font-bold text-xs rounded-xl h-10 px-3 gap-1"
+                    >
+                      <Ban className="w-4 h-4" /> Cancel
+                    </Button>
+                  </div>
+                )}
+
+                {selectedOrder.status === 'confirmed' && (
                   <Button
-                    key={status}
-                    onClick={() => handleStatusUpdate(selectedOrder.id!, status)}
-                    disabled={selectedOrder.status === status}
+                    onClick={() => handleStatusUpdate(selectedOrder.id!, 'preparing')}
                     size="sm"
-                    variant="outline"
-                    className={`shrink-0 border-border ${selectedOrder.status === status ? 'bg-primary text-primary-foreground border-primary' : 'bg-muted/50 text-muted-foreground hover:text-foreground hover:bg-muted'}`}
+                    className="bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs rounded-xl h-10 px-4 gap-1.5 shadow-md shadow-amber-600/20"
                   >
-                    {status.replace('_', ' ')}
+                    <ChefHat className="w-4 h-4" /> Start Preparing Food
                   </Button>
-                ))}
+                )}
+
+                {selectedOrder.status === 'preparing' && (
+                  <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs">
+                    <span className="font-bold text-foreground">👨‍🍳 Kitchen Preparing</span>
+                    <span className="text-muted-foreground block text-[11px]">
+                      Ready for Pickup, Dispatched & Delivered are managed by Delivery Partner.
+                    </span>
+                  </div>
+                )}
+
+                {selectedOrder.status && ['ready', 'out_for_delivery'].includes(selectedOrder.status) && (
+                  <div className="p-2.5 rounded-xl bg-blue-500/10 border border-blue-500/20 text-xs">
+                    <span className="font-bold text-blue-500">🛵 Delivery Partner Managing</span>
+                    <span className="text-muted-foreground block text-[11px]">
+                      Rider updates pickup handover and customer delivery.
+                    </span>
+                  </div>
+                )}
               </div>
-              <Button
-                onClick={openBroadcastModal}
-                className="w-full sm:w-auto bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-lg shadow-purple-900/40 whitespace-nowrap"
-              >
-                <Radio className="w-4 h-4 mr-2 animate-pulse" /> Broadcast
-              </Button>
+
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <Button
+                  asChild
+                  variant="outline"
+                  size="sm"
+                  className="rounded-xl h-10 border-border font-bold text-xs gap-1.5"
+                >
+                  <Link href={`/restaurant/orders/${selectedOrder.id}`}>
+                    <ExternalLink className="w-3.5 h-3.5" /> Full Page
+                  </Link>
+                </Button>
+                <Button
+                  onClick={openBroadcastModal}
+                  className="w-full sm:w-auto bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-lg shadow-purple-900/40 whitespace-nowrap rounded-xl h-10 text-xs font-bold"
+                >
+                  <Radio className="w-4 h-4 mr-1.5 animate-pulse" /> Broadcast to Riders
+                </Button>
+              </div>
             </motion.div>
           )}
         </div>
@@ -516,7 +679,7 @@ export default function RestaurantOrdersPage() {
                     <div className="flex justify-between items-start mb-4">
                       <div>
                         <Badge variant="outline" className="mb-2 border-border text-muted-foreground font-mono">#{formatOrderId(selectedOrder.id)}</Badge>
-                        <h3 className="text-3xl font-bold text-foreground">₹{selectedOrder.total}</h3>
+                        <h3 className="text-3xl font-bold text-foreground font-mono">₹{selectedOrder.total}</h3>
                       </div>
                       <div className={`p-2 rounded-lg ${getStatusColor(selectedOrder.status)}`}>
                         {getStatusIcon(selectedOrder.status)}
@@ -526,6 +689,16 @@ export default function RestaurantOrdersPage() {
                       <MapPin className="w-4 h-4 text-primary shrink-0" />
                       <span className="truncate max-w-[250px]">{typeof selectedOrder.deliveryAddress === 'string' ? selectedOrder.deliveryAddress : 'Address details'}</span>
                     </div>
+
+                    {/* Direct Button to Open Full Order Page */}
+                    <Button
+                      asChild
+                      className="w-full mt-4 h-10 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-xs gap-1.5 shadow-md"
+                    >
+                      <Link href={`/restaurant/orders/${selectedOrder.id}`}>
+                        <ExternalLink className="w-4 h-4" /> Open Full Order Management Page
+                      </Link>
+                    </Button>
                   </div>
 
                   <div className="p-6 space-y-6">
@@ -553,7 +726,7 @@ export default function RestaurantOrdersPage() {
                         <span>Delivery</span>
                         <span>₹{selectedOrder.deliveryCharge}</span>
                       </div>
-                      <div className="flex justify-between text-foreground font-bold text-lg pt-2 border-t border-border">
+                      <div className="flex justify-between text-foreground font-bold text-lg pt-2 border-t border-border font-mono">
                         <span>Total</span>
                         <span className="text-emerald-500">₹{selectedOrder.total}</span>
                       </div>
@@ -589,22 +762,20 @@ export default function RestaurantOrdersPage() {
             <button
               type="button"
               onClick={() => setBroadcastMode('all')}
-              className={`py-2 px-3 rounded-lg text-xs font-bold transition-all ${
-                broadcastMode === 'all'
-                  ? 'bg-primary text-primary-foreground shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
+              className={`py-2 px-3 rounded-lg text-xs font-bold transition-all ${broadcastMode === 'all'
+                ? 'bg-primary text-primary-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground'
+                }`}
             >
               ⚡ All Online Riders
             </button>
             <button
               type="button"
               onClick={() => setBroadcastMode('selected')}
-              className={`py-2 px-3 rounded-lg text-xs font-bold transition-all ${
-                broadcastMode === 'selected'
-                  ? 'bg-primary text-primary-foreground shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
+              className={`py-2 px-3 rounded-lg text-xs font-bold transition-all ${broadcastMode === 'selected'
+                ? 'bg-primary text-primary-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground'
+                }`}
             >
               🎯 Specific Riders
             </button>
@@ -660,11 +831,10 @@ export default function RestaurantOrdersPage() {
                       <div
                         key={partner.id}
                         onClick={() => togglePartnerSelection(partner.id)}
-                        className={`flex items-center p-3 rounded-xl border cursor-pointer transition-all ${
-                          selectedPartnerIds.includes(partner.id)
-                            ? 'bg-primary/10 border-primary/50 ring-1 ring-primary/30'
-                            : 'bg-muted/30 border-border hover:bg-muted/50'
-                        }`}
+                        className={`flex items-center p-3 rounded-xl border cursor-pointer transition-all ${selectedPartnerIds.includes(partner.id)
+                          ? 'bg-primary/10 border-primary/50 ring-1 ring-primary/30'
+                          : 'bg-muted/30 border-border hover:bg-muted/50'
+                          }`}
                       >
                         <div className="flex-1">
                           <p className="font-bold text-foreground text-sm">{partner.name || 'Partner'}</p>
@@ -740,11 +910,10 @@ export default function RestaurantOrdersPage() {
             {RESTAURANT_CANCEL_REASONS.map(r => (
               <button key={r}
                 onClick={() => setCancelReason(r)}
-                className={`w-full text-left px-4 py-2.5 rounded-2xl text-sm font-medium border transition-all ${
-                  cancelReason === r
-                    ? 'bg-primary/10 border-primary text-primary'
-                    : 'border-border hover:bg-muted'
-                }`}>
+                className={`w-full text-left px-4 py-2.5 rounded-2xl text-sm font-medium border transition-all ${cancelReason === r
+                  ? 'bg-primary/10 border-primary text-primary'
+                  : 'border-border hover:bg-muted'
+                  }`}>
                 {cancelReason === r ? '✔ ' : ''}{r}
               </button>
             ))}

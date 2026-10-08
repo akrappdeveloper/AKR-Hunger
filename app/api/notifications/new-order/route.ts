@@ -25,34 +25,58 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Restaurant ID not found on order' }, { status: 404 });
         }
 
-        // 2. Fetch the Restaurant to get FCM Token
-        const restaurantSnap = await admin.firestore().collection('restaurants').doc(restaurantId).get();
-        const restaurantData = restaurantSnap.data();
-        const fcmToken = restaurantData?.fcmToken;
+        // 2. Always persist notification in Firestore for the restaurant
+        const shortCode = orderId.slice(-6).toUpperCase();
+        const totalAmount = orderData?.total || 0;
+        const notifTitle = 'New Order Received! 🔔';
+        const notifBody = `Order #${shortCode} placed for ₹${totalAmount}. Tap to view items & start preparing.`;
 
-        if (!fcmToken) {
-            console.log(`No FCM token found for restaurant ${restaurantId}`);
-            return NextResponse.json({ message: 'No FCM token for restaurant', success: false });
+        await admin.firestore().collection('notifications').add({
+            userId: restaurantId,
+            restaurantId: restaurantId,
+            userType: 'restaurant',
+            type: 'order',
+            subType: 'new_order',
+            title: notifTitle,
+            message: notifBody,
+            orderId: orderId,
+            isRead: false,
+            read: false,
+            actionLink: `/restaurant/orders/${orderId}`,
+            createdAt: new Date().toISOString(),
+            timestamp: admin.firestore.FieldValue.serverTimestamp(),
+        });
+
+        // 3. Fetch the Restaurant to get FCM Token
+        let fcmSent = false;
+        try {
+            const restaurantSnap = await admin.firestore().collection('restaurants').doc(restaurantId).get();
+            const restaurantData = restaurantSnap.data();
+            const fcmToken = restaurantData?.fcmToken;
+
+            if (fcmToken && messaging) {
+                const message = {
+                    notification: {
+                        title: notifTitle,
+                        body: notifBody,
+                    },
+                    data: {
+                        orderId: orderId,
+                        type: 'new_order',
+                        actionUrl: `/restaurant/orders/${orderId}`
+                    },
+                    token: fcmToken,
+                };
+                await messaging.send(message);
+                fcmSent = true;
+            }
+        } catch (fcmErr) {
+            console.warn('FCM delivery notice for restaurant:', fcmErr);
         }
 
-        // 3. Send Notification
-        const message = {
-            notification: {
-                title: 'New Order Received! 🔔',
-                body: `Order #${orderId.slice(0, 6).toUpperCase()} for ₹${orderData?.total}`,
-            },
-            data: {
-                orderId: orderId,
-                type: 'new_order'
-            },
-            token: fcmToken,
-        };
-
-        await messaging.send(message);
-
-        return NextResponse.json({ success: true, message: 'Notification sent' });
+        return NextResponse.json({ success: true, message: 'Notification created in Firestore', fcmSent });
     } catch (error: any) {
-        console.error('Error sending new order notification:', error);
+        console.error('Error creating new order notification:', error);
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }

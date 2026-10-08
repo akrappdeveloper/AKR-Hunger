@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useRestaurantAuth } from '@/context/RestaurantAuthContext';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,8 +11,10 @@ import { collection, query, where, getDocs, addDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import {
     Wallet as WalletIcon, TrendingUp, DollarSign, Clock,
-    CheckCircle, Landmark, ArrowDownCircle, ArrowUpCircle
+    CheckCircle, Landmark, ArrowDownCircle, ArrowUpCircle,
+    Lock, ShieldAlert, AlertTriangle, ArrowRight
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { Spinner } from '@/components/ui/spinner';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -150,21 +153,33 @@ export default function RestaurantWalletPage() {
         }
     };
 
+    const hasValidBank = Boolean(
+      restaurant?.bankDetails &&
+      restaurant.bankDetails.bankName?.trim() &&
+      restaurant.bankDetails.accountNumber?.trim() &&
+      restaurant.bankDetails.ifscCode?.trim()
+    );
+
     const handleWithdrawalSubmit = async () => {
         try {
-            if (!restaurant?.bankDetails) {
-                alert('Please add bank details in Settings first');
+            if (!hasValidBank) {
+                toast.error('Withdrawal Locked: Bank account details are required before requesting a payout.');
+                setFeedback({
+                    type: 'error',
+                    message: 'You cannot request a withdrawal without adding your verified bank account details. Please add your bank details in Settings first.',
+                    open: true
+                });
                 return;
             }
 
             const amount = parseFloat(withdrawAmount);
             if (isNaN(amount) || amount <= 0) {
-                alert('Please enter a valid amount');
+                toast.error('Please enter a valid withdrawal amount');
                 return;
             }
 
             if (amount > availableBalance) {
-                alert(`Cannot withdraw more than available balance (₹${availableBalance.toFixed(2)})`);
+                toast.error(`Cannot withdraw more than available balance (₹${availableBalance.toFixed(2)})`);
                 return;
             }
 
@@ -173,14 +188,14 @@ export default function RestaurantWalletPage() {
             // Save withdrawal request to Firestore with bank details
             await addDoc(collection(db, 'withdrawalRequests'), {
                 restaurantId: user!.uid,
-                restaurantName: restaurant.name || 'Restaurant',
+                restaurantName: restaurant?.name || 'Restaurant',
                 amount: amount,
                 status: 'pending',
                 bankDetails: {
-                    bankName: restaurant.bankDetails.bankName,
-                    accountHolderName: restaurant.bankDetails.accountHolderName,
-                    accountNumber: restaurant.bankDetails.accountNumber,
-                    ifscCode: restaurant.bankDetails.ifscCode,
+                    bankName: restaurant?.bankDetails?.bankName || '',
+                    accountHolderName: restaurant?.bankDetails?.accountHolderName || restaurant?.name || '',
+                    accountNumber: restaurant?.bankDetails?.accountNumber || '',
+                    ifscCode: restaurant?.bankDetails?.ifscCode || '',
                 },
                 requestedAt: new Date(),
                 createdAt: new Date(),
@@ -193,6 +208,7 @@ export default function RestaurantWalletPage() {
                 message: 'Your withdrawal request has been submitted successfully to the admin.',
                 open: true
             });
+            toast.success('Withdrawal request submitted successfully!');
 
             // Reload wallet data
             loadWalletData();
@@ -203,6 +219,7 @@ export default function RestaurantWalletPage() {
                 message: 'Failed to submit withdrawal request. Please try again later or contact support.',
                 open: true
             });
+            toast.error('Failed to submit withdrawal request.');
         } finally {
             setSubmittingWithdrawal(false);
         }
@@ -290,21 +307,26 @@ export default function RestaurantWalletPage() {
                 </Card>
             </div>
 
-            {/* Bank Account Info */}
-            {restaurant?.bankDetails && (
+            {/* Bank Account Info & Withdrawal Control */}
+            {hasValidBank ? (
                 <Card className="p-6 bg-card border-border shadow-sm">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div className="flex items-center gap-4">
-                            <div className="w-14 h-14 bg-emerald-500/10 border border-emerald-500/30 rounded-xl flex items-center justify-center shadow-sm">
-                                <Landmark className="w-8 h-8 text-emerald-500" />
+                            <div className="w-14 h-14 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl flex items-center justify-center shadow-sm">
+                                <Landmark className="w-7 h-7 text-emerald-500" />
                             </div>
                             <div>
-                                <p className="text-foreground font-bold text-lg">Linked Bank Account</p>
+                                <div className="flex items-center gap-2">
+                                  <p className="text-foreground font-bold text-lg">Linked Bank Account</p>
+                                  <Badge className="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 text-xs font-bold">
+                                    Verified & Ready
+                                  </Badge>
+                                </div>
                                 <p className="text-muted-foreground text-sm font-medium mt-1">
-                                    {restaurant?.bankDetails?.accountHolderName} • {restaurant?.bankDetails?.bankName}
+                                    {restaurant?.bankDetails?.accountHolderName || restaurant?.name} • {restaurant?.bankDetails?.bankName} (IFSC: {restaurant?.bankDetails?.ifscCode})
                                 </p>
-                                <p className="text-muted-foreground text-sm font-mono">
-                                    {restaurant?.bankDetails?.accountNumber.replace(/./g, (c: string, i: number) =>
+                                <p className="text-muted-foreground text-sm font-mono mt-0.5">
+                                    Account No: {restaurant?.bankDetails?.accountNumber.replace(/./g, (c: string, i: number) =>
                                         i < (restaurant?.bankDetails?.accountNumber.length || 0) - 4 ? '•' : c
                                     )}
                                 </p>
@@ -312,24 +334,50 @@ export default function RestaurantWalletPage() {
                         </div>
                         <Button
                             onClick={() => setWithdrawalDialog(true)}
-                            className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold shadow-md"
-                            disabled={availableBalance === 0}
+                            className="bg-primary text-primary-foreground hover:bg-primary/90 font-bold text-sm shadow-md h-11 px-6 rounded-xl"
+                            disabled={availableBalance <= 0}
                         >
                             Request Withdrawal
                         </Button>
                     </div>
                 </Card>
-            )}
+            ) : (
+                <Card className="p-6 bg-red-500/10 border-red-500/30">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div className="flex items-start gap-3.5">
+                            <div className="w-12 h-12 rounded-2xl bg-red-500/20 text-red-500 flex items-center justify-center shrink-0">
+                                <Lock className="w-6 h-6" />
+                            </div>
+                            <div>
+                                <div className="flex items-center gap-2">
+                                  <p className="text-foreground font-bold text-base">Withdrawal Locked — Bank Account Required</p>
+                                  <Badge className="bg-red-500/20 text-red-600 dark:text-red-400 border border-red-500/30 text-[10px]">
+                                    Not Configured
+                                  </Badge>
+                                </div>
+                                <p className="text-muted-foreground text-xs sm:text-sm mt-1 max-w-xl">
+                                    You cannot request a withdrawal without adding your verified bank account details (Bank Name, Account Holder Name, Account Number, and IFSC Code).
+                                </p>
+                            </div>
+                        </div>
 
-            {!restaurant?.bankDetails && (
-                <Card className="p-6 bg-amber-500/10 border-amber-500/30">
-                    <div className="flex items-center gap-3">
-                        <Clock className="w-6 h-6 text-amber-500" />
-                        <div>
-                            <p className="text-foreground font-semibold">Bank Account Not Configured</p>
-                            <p className="text-muted-foreground text-sm mt-1">
-                                Please add your bank details in Settings to enable withdrawals.
-                            </p>
+                        <div className="flex items-center gap-3 shrink-0">
+                            <Button
+                                asChild
+                                className="bg-red-600 hover:bg-red-500 text-white font-bold text-xs h-10 px-4 rounded-xl gap-1.5 shadow-md shadow-red-600/20"
+                            >
+                                <Link href="/restaurant/settings">
+                                    <Landmark className="w-4 h-4" /> Link Bank in Settings
+                                </Link>
+                            </Button>
+                            <Button
+                                disabled
+                                variant="outline"
+                                className="border-border text-muted-foreground opacity-60 font-semibold text-xs h-10 px-3 rounded-xl cursor-not-allowed"
+                                title="Add bank account in Settings to enable withdrawal"
+                            >
+                                <Lock className="w-3.5 h-3.5 mr-1" /> Request Locked
+                            </Button>
                         </div>
                     </div>
                 </Card>

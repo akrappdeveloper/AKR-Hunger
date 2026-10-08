@@ -482,6 +482,25 @@ service cloud.firestore {
       // Admins can list all driver locations
       allow list: if request.auth != null && isAdmin(request.auth.uid);
     }
+
+    // ==========================================
+    // 32. Kitchen Hygiene Audits, Cold Chain Temperature Logs & Quality Incidents
+    // ==========================================
+    match /kitchenAudits/{auditId} {
+      allow read, list, create, update: if request.auth.uid != null;
+      allow delete: if request.auth.uid != null && (resource.data.restaurantId == request.auth.uid || isAdmin(request.auth.uid));
+    }
+
+    match /temperatureLogs/{logId} {
+      allow read, list, create, update: if request.auth.uid != null;
+      allow delete: if request.auth.uid != null && (resource.data.restaurantId == request.auth.uid || isAdmin(request.auth.uid));
+    }
+
+    match /qualityIncidents/{incidentId} {
+      allow read, list, create, update: if request.auth.uid != null;
+      allow delete: if request.auth.uid != null && (resource.data.restaurantId == request.auth.uid || isAdmin(request.auth.uid));
+    }
   }
 }
+
 

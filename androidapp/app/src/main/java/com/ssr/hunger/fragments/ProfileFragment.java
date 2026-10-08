@@ -25,6 +25,7 @@ import com.ssr.hunger.activities.StudentModeActivity;
 import com.ssr.hunger.activities.SubscriptionActivity;
 import com.ssr.hunger.activities.GroupOrderActivity;
 import com.ssr.hunger.activities.DeliveryPartnerDashboardActivity;
+import com.ssr.hunger.dialogs.ModernDialogHelper;
 import com.ssr.hunger.utils.Constants;
 import com.bumptech.glide.Glide;
 import com.google.firebase.auth.FirebaseAuth;
@@ -121,16 +122,17 @@ public class ProfileFragment extends Fragment {
         safeClick(view, R.id.card_delivery_dashboard, () -> nav(DeliveryPartnerDashboardActivity.class));
 
         safeClick(view, R.id.btn_logout, () ->
-                new com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
-                        .setTitle("Logout")
-                        .setMessage(R.string.logout_confirm)
-                        .setPositiveButton(R.string.yes, (d, w) -> {
+                ModernDialogHelper.showDangerDialog(
+                        requireActivity(),
+                        "Sign Out",
+                        "Are you sure you want to sign out of Hunger?",
+                        "Sign Out",
+                        () -> {
                             FirebaseAuth.getInstance().signOut();
                             nav(LoginActivity.class);
                             requireActivity().finish();
-                        })
-                        .setNegativeButton(R.string.no, null)
-                        .show()
+                        }
+                )
         );
     }
 

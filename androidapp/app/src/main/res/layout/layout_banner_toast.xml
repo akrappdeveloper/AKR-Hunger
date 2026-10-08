@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/banner_toast_root"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_banner_toast_warning"
+    android:elevation="6dp"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:padding="14dp">
+
+    <!-- Status Icon -->
+    <ImageView
+        android:id="@+id/iv_banner_icon"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_gravity="top"
+        android:layout_marginTop="1dp"
+        android:contentDescription="Status"
+        android:src="@drawable/ic_dialog_warning_outline" />
+
+    <!-- Content: Title + Subtitle -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_marginEnd="8dp"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tv_banner_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="sans-serif-bold"
+            android:text="You have few tokens left!"
+            android:textColor="@color/text_primary"
+            android:textSize="13.5sp" />
+
+        <TextView
+            android:id="@+id/tv_banner_message"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:fontFamily="sans-serif"
+            android:lineSpacingExtra="1.5dp"
+            android:text="Don't forget that you need to have enough tokens on your balance to keep your work with the chat going."
+            android:textColor="@color/text_secondary"
+            android:textSize="12sp" />
+    </LinearLayout>
+
+    <!-- Close 'x' Button -->
+    <ImageView
+        android:id="@+id/btn_banner_close"
+        android:layout_width="22dp"
+        android:layout_height="22dp"
+        android:layout_gravity="top"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:clickable="true"
+        android:contentDescription="Close"
+        android:focusable="true"
+        android:padding="2dp"
+        android:src="@drawable/ic_dialog_close" />
+
+</LinearLayout>

@@ -97,11 +97,11 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data
                     android:scheme="https"
-                    android:host="shunger.vercel.app"
+                    android:host="shungher.vercel.app"
                     android:pathPrefix="/customer/referral" />
                 <data
                     android:scheme="https"
-                    android:host="akrhunger.vercel.app"
+                    android:host="shunger.vercel.app"
                     android:pathPrefix="/customer/referral" />
             </intent-filter>
         </activity>
@@ -204,7 +204,7 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data
                     android:scheme="https"
-                    android:host="akrhunger.vercel.app"
+                    android:host="shungher.vercel.app"
                     android:pathPrefix="/customer/group" />
             </intent-filter>
         </activity>

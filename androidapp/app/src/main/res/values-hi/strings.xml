@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Hunger</string>
+    <string name="app_tagline">ऑनलाइन खाना ऑर्डर करें • तेज़ डिलीवरी</string>
+
+    <!-- Login -->
+    <string name="login_title">वापसी पर स्वागत है!</string>
+    <string name="login_subtitle">स्वादिष्ट खाना ऑर्डर करने के लिए साइन इन करें</string>
+    <string name="signup_title">खाता बनाएं</string>
+    <string name="signup_subtitle">लाजवाब खाने के लिए Hunger से जुड़ें</string>
+    <string name="email_hint">ईमेल पता</string>
+    <string name="password_hint">पासवर्ड</string>
+    <string name="name_hint">पूरा नाम</string>
+    <string name="phone_hint">फ़ोन नंबर</string>
+    <string name="login_button">साइन इन करें</string>
+    <string name="signup_button">खाता बनाएं</string>
+    <string name="google_signin">Google के साथ जारी रखें</string>
+    <string name="no_account">खाता नहीं है?</string>
+    <string name="have_account">पहले से खाता है?</string>
+
+    <!-- Bottom Nav -->
+    <string name="nav_home">होम</string>
+    <string name="nav_search">खोजें</string>
+    <string name="nav_orders">ऑर्डर</string>
+    <string name="nav_favorites">पसंदीदा</string>
+    <string name="nav_profile">प्रोफ़ाइल</string>
+
+    <!-- Home -->
+    <string name="eat_happy">वही खाएं जो आपको खुश करे</string>
+    <string name="all_food">सभी</string>
+    <string name="featured_restaurants">खास रेस्टोरेंट</string>
+    <string name="popular_near">आपके पास लोकप्रिय</string>
+    <string name="free_delivery">मुफ़्त डिलीवरी</string>
+    <string name="view_all">सभी देखें</string>
+    <string name="offer_title">50% छूट</string>
+    <string name="offer_subtitle">आपके पहले ऑर्डर पर</string>
+    <string name="offer_code">चेकआउट पर TASTY50 कोड का उपयोग करें। ₹199 से ऊपर के ऑर्डर पर मान्य।</string>
+    <string name="order_now">अभी ऑर्डर करें</string>
+    <string name="limited_offer">सीमित समय का ऑफ़र</string>
+
+    <!-- Search -->
+    <string name="search_hint">खाना, रेस्टोरेंट खोजें…</string>
+    <string name="trending">ट्रेंडिंग में 🔥</string>
+    <string name="popular_cuisines">लोकप्रिय व्यंजन</string>
+    <string name="recent_searches">हाल की खोजें</string>
+    <string name="no_results">कोई परिणाम नहीं मिला</string>
+    <string name="clear_all">सब हटाएं</string>
+
+    <!-- Cart -->
+    <string name="your_cart">आपकी कार्ट</string>
+    <string name="empty_cart">आपकी कार्ट खाली है</string>
+    <string name="empty_cart_desc">शुरू करने के लिए रेस्टोरेंट या मेनू से आइटम जोड़ें</string>
+    <string name="browse_menu">मेनू देखें</string>
+    <string name="special_instructions">विशेष निर्देश</string>
+    <string name="special_instructions_hint">उदा., कम तीखा, बिना प्याज…</string>
+    <string name="order_summary">ऑर्डर सारांश</string>
+    <string name="subtotal">उप-कुल</string>
+    <string name="delivery_fee">डिलीवरी शुल्क</string>
+    <string name="taxes">कर (5%)</string>
+    <string name="total">कुल</string>
+    <string name="apply_coupon">कूपन लागू करें</string>
+    <string name="coupon_hint">प्रोमो कोड दर्ज करें</string>
+    <string name="apply">लागू करें</string>
+    <string name="payment_method">भुगतान विधि</string>
+    <string name="cash_on_delivery">कैश ऑन डिलीवरी</string>
+    <string name="pay_online">ऑनलाइन भुगतान</string>
+    <string name="pay_wallet">Hunger वॉलेट</string>
+    <string name="place_order">ऑर्डर दें</string>
+    <string name="delivery_address">डिलीवरी का पता</string>
+    <string name="change">बदलें</string>
+
+    <!-- Orders -->
+    <string name="my_orders">मेरे ऑर्डर</string>
+    <string name="no_orders">अभी तक कोई ऑर्डर नहीं</string>
+    <string name="no_orders_desc">हमारे बेहतरीन रेस्टोरेंट से स्वादिष्ट खाना ऑर्डर करना शुरू करें</string>
+    <string name="reorder">फिर से ऑर्डर करें</string>
+    <string name="rate_order">रेटिंग दें</string>
+    <string name="cancel_order">ऑर्डर रद्द करें</string>
+    <string name="track_order">ऑर्डर ट्रैक करें</string>
+    <string name="order_placed">ऑर्डर दिया गया</string>
+    <string name="order_confirmed">पुष्टि की गई</string>
+    <string name="order_preparing">तैयार हो रहा है</string>
+    <string name="order_on_way">रास्ते में है</string>
+    <string name="order_delivered">डिलीवर किया गया</string>
+    <string name="order_cancelled">रद्द किया गया</string>
+
+    <!-- Profile & Settings -->
+    <string name="my_profile">मेरी प्रोफ़ाइल</string>
+    <string name="edit_profile">प्रोफ़ाइल संपादित करें</string>
+    <string name="my_addresses">मेरे पते</string>
+    <string name="add_address">पता जोड़ें</string>
+    <string name="wallet">वॉलेट</string>
+    <string name="notifications">सूचनाएं</string>
+    <string name="help_support">सहायता एवं सहयोग</string>
+    <string name="logout">लॉग आउट</string>
+    <string name="logout_confirm">क्या आप वाकई लॉग आउट करना चाहते हैं?</string>
+    <string name="save">सहेजें</string>
+    <string name="cancel">रद्द करें</string>
+    <string name="yes">हाँ</string>
+    <string name="no">नहीं</string>
+
+    <!-- Tracking -->
+    <string name="live_tracking">🔴 लाइव ट्रैकिंग</string>
+    <string name="eta_label">अनुमानित आगमन समय</string>
+    <string name="arriving_now">अभी आ रहा है! 🎉</string>
+    <string name="step_placed">📦 ऑर्डर दिया गया</string>
+    <string name="step_confirmed">✅ पुष्टि की गई</string>
+    <string name="step_preparing">👨‍🍳 रसोई में तैयार हो रहा है</string>
+    <string name="step_ready">🍱 खाना तैयार है</string>
+    <string name="step_out">🛵 डिलीवरी के लिए रवाना</string>
+    <string name="step_delivered">🎉 डिलीवर हो गया!</string>
+    <string name="driver_heading_to_restaurant">🏍️ डिलीवरी साथी रेस्टोरेंट जा रहा है</string>
+    <string name="driver_collecting_food">🍱 डिलीवरी साथी खाना ले रहा है</string>
+    <string name="driver_on_way">🚀 डिलीवरी साथी आपकी ओर आ रहा है</string>
+    <string name="driver_at_door">📍 डिलीवरी साथी आपके दरवाज़े पर है!</string>
+    <string name="call_driver">कॉल करें</string>
+    <string name="your_delivery_partner">आपका डिलीवरी पार्टनर</string>
+    <string name="gps_live">📡 जीपीएस लाइव</string>
+    <string name="order_delivered_msg">🎉 आपका ऑर्डर डिलीवर हो गया है! स्वादिष्ट भोजन का आनंद लें!</string>
+
+    <string name="loading">लोड हो रहा है…</string>
+    <string name="error_occurred">त्रुटि हुई</string>
+    <string name="retry">पुनः प्रयास करें</string>
+    <string name="ok">ठीक है</string>
+    <string name="done">संपन्न</string>
+    <string name="continue_text">जारी रखें</string>
+    <string name="skip">छोड़ें</string>
+    <string name="rupee_symbol">₹</string>
+    <string name="save_changes">बदलाव सहेजें</string>
+</resources>

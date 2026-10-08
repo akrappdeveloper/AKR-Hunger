@@ -29,12 +29,17 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.ssr.hunger.BuildConfig;
 import com.ssr.hunger.R;
+import com.ssr.hunger.dialogs.ModernDialogHelper;
 import com.ssr.hunger.utils.Constants;
 import com.ssr.hunger.utils.LocaleHelper;
+import com.ssr.hunger.utils.OpenLanguageSystem;
 import com.ssr.hunger.utils.PermissionManager;
 import com.ssr.hunger.utils.SettingsHelper;
 import com.ssr.hunger.utils.ThemeHelper;
 import com.ssr.hunger.utils.VoiceHelper;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import org.json.JSONObject;
 
@@ -283,7 +288,7 @@ public class SettingsActivity extends BaseActivity {
             String phone = user.getPhoneNumber();
 
             if (tvUserName != null) {
-                tvUserName.setText(name != null && !name.trim().isEmpty() ? name : "AKR Foodie");
+                tvUserName.setText(name != null && !name.trim().isEmpty() ? name : "Hunger Foodie");
             }
             if (tvUserContact != null) {
                 String contact = email != null && !email.trim().isEmpty() ? email : (phone != null ? phone : "Registered Account");
@@ -442,6 +447,9 @@ public class SettingsActivity extends BaseActivity {
                     "Call upon arrival only 📞"
             };
 
+            List<ModernDialogHelper.ChoiceOption> choiceList = new ArrayList<>();
+            for (String s : options) choiceList.add(new ModernDialogHelper.ChoiceOption(s));
+
             int selected = 0;
             String current = SettingsHelper.getDeliveryPreset(this);
             for (int i = 0; i < options.length; i++) {
@@ -451,17 +459,19 @@ public class SettingsActivity extends BaseActivity {
                 }
             }
 
-            new MaterialAlertDialogBuilder(this)
-                    .setTitle("Default Delivery Drop Preset")
-                    .setSingleChoiceItems(options, selected, (dialog, which) -> {
-                        String chosen = options[which];
+            ModernDialogHelper.showChoiceDialog(
+                    this,
+                    R.drawable.ic_clock,
+                    "Default Delivery Drop Preset",
+                    "Applied automatically to all your food deliveries",
+                    choiceList,
+                    selected,
+                    (idx, chosen) -> {
                         prefs.edit().putString(SettingsHelper.KEY_DELIVERY_PRESET, chosen).apply();
                         if (tvDeliveryInstructionsVal != null) tvDeliveryInstructionsVal.setText(chosen);
                         Toast.makeText(this, "Preset updated: " + chosen, Toast.LENGTH_SHORT).show();
-                        dialog.dismiss();
-                    })
-                    .setNegativeButton("Cancel", null)
-                    .show();
+                    }
+            );
         });
 
         // Spice Level Preference
@@ -476,6 +486,9 @@ public class SettingsActivity extends BaseActivity {
                     "Extra Spicy / Desi Hot 🌶️🔥"
             };
 
+            List<ModernDialogHelper.ChoiceOption> choiceList = new ArrayList<>();
+            for (String s : options) choiceList.add(new ModernDialogHelper.ChoiceOption(s));
+
             int selected = 1;
             String current = SettingsHelper.getSpiceLevel(this);
             for (int i = 0; i < options.length; i++) {
@@ -485,20 +498,22 @@ public class SettingsActivity extends BaseActivity {
                 }
             }
 
-            new MaterialAlertDialogBuilder(this)
-                    .setTitle("Default Spice Level")
-                    .setSingleChoiceItems(options, selected, (dialog, which) -> {
-                        String chosen = options[which];
+            ModernDialogHelper.showChoiceDialog(
+                    this,
+                    R.drawable.ic_dialog_warning_outline,
+                    "Default Spice Level",
+                    "Restaurant kitchens adjust spice intensity accordingly",
+                    choiceList,
+                    selected,
+                    (idx, chosen) -> {
                         prefs.edit().putString(SettingsHelper.KEY_SPICE_LEVEL, chosen).apply();
                         if (tvSpiceLevelVal != null) tvSpiceLevelVal.setText(chosen);
                         Toast.makeText(this, "Spice preference: " + chosen, Toast.LENGTH_SHORT).show();
-                        dialog.dismiss();
-                    })
-                    .setNegativeButton("Cancel", null)
-                    .show();
+                    }
+            );
         });
 
-        // Cooking & Allergy Instructions
+        // Cooking & Allergy Instructions (Modern Input Dialog matching reference screenshot)
         String savedCooking = SettingsHelper.getCookingInstruction(this);
         if (tvCookingInstructionsVal != null) tvCookingInstructionsVal.setText(savedCooking);
 
@@ -506,34 +521,21 @@ public class SettingsActivity extends BaseActivity {
         if (rowCooking != null) {
             rowCooking.setOnClickListener(v -> {
                 SettingsHelper.triggerHapticClick(this);
-                String[] cookingOptions = {
-                        "Standard (Kitchen defaults)",
-                        "Less oil & less salt 🧂",
-                        "No onion & garlic (Jain friendly) 🥬",
-                        "Gluten sensitive / Celiac safe 🌾",
-                        "Extra paper napkins & mints ✨"
-                };
-
-                int selected = 0;
                 String current = SettingsHelper.getCookingInstruction(this);
-                for (int i = 0; i < cookingOptions.length; i++) {
-                    if (cookingOptions[i].equals(current)) {
-                        selected = i;
-                        break;
-                    }
-                }
 
-                new MaterialAlertDialogBuilder(this)
-                        .setTitle("Kitchen Prep & Allergy Notes")
-                        .setSingleChoiceItems(cookingOptions, selected, (dialog, which) -> {
-                            String chosen = cookingOptions[which];
-                            prefs.edit().putString(SettingsHelper.KEY_COOKING_INSTRUCTION, chosen).apply();
-                            if (tvCookingInstructionsVal != null) tvCookingInstructionsVal.setText(chosen);
-                            Toast.makeText(this, "Kitchen preference: " + chosen, Toast.LENGTH_SHORT).show();
-                            dialog.dismiss();
-                        })
-                        .setNegativeButton("Cancel", null)
-                        .show();
+                ModernDialogHelper.showInputDialog(
+                        this,
+                        R.drawable.ic_dialog_edit_outline,
+                        "Cooking Instructions",
+                        "Permanent kitchen instructions sent with all food orders",
+                        "e.g. Less spicy, less salt, extra paper napkins",
+                        current,
+                        text -> {
+                            prefs.edit().putString(SettingsHelper.KEY_COOKING_INSTRUCTION, text).apply();
+                            if (tvCookingInstructionsVal != null) tvCookingInstructionsVal.setText(text.isEmpty() ? "Standard" : text);
+                            Toast.makeText(this, "Kitchen preference saved!", Toast.LENGTH_SHORT).show();
+                        }
+                );
             });
         }
     }
@@ -618,11 +620,14 @@ public class SettingsActivity extends BaseActivity {
             rowPayment.setOnClickListener(v -> {
                 SettingsHelper.triggerHapticClick(this);
                 String[] paymentMethods = {
-                        "UPI / Google Pay / PhonePe",
-                        "Hunger Wallet (Fast 1-tap)",
-                        "Credit / Debit Card",
-                        "Cash on Delivery (COD)"
+                        "UPI / Google Pay / PhonePe 📲",
+                        "Hunger Wallet 💳 (Fast 1-tap)",
+                        "Credit / Debit Card 💳",
+                        "Cash on Delivery 💵 (COD)"
                 };
+
+                List<ModernDialogHelper.ChoiceOption> choiceList = new ArrayList<>();
+                for (String s : paymentMethods) choiceList.add(new ModernDialogHelper.ChoiceOption(s));
 
                 int selected = 0;
                 String current = SettingsHelper.getDefaultPayment(this);
@@ -633,17 +638,19 @@ public class SettingsActivity extends BaseActivity {
                     }
                 }
 
-                new MaterialAlertDialogBuilder(this)
-                        .setTitle("Preferred Payment Method")
-                        .setSingleChoiceItems(paymentMethods, selected, (dialog, which) -> {
-                            String chosen = paymentMethods[which];
+                ModernDialogHelper.showChoiceDialog(
+                        this,
+                        R.drawable.ic_credit_card,
+                        "Preferred Payment Method",
+                        "Pre-selected at checkout screen for faster ordering",
+                        choiceList,
+                        selected,
+                        (idx, chosen) -> {
                             prefs.edit().putString(SettingsHelper.KEY_DEFAULT_PAYMENT, chosen).apply();
                             if (tvDefaultPaymentVal != null) tvDefaultPaymentVal.setText(chosen);
                             Toast.makeText(this, "Payment preference: " + chosen, Toast.LENGTH_SHORT).show();
-                            dialog.dismiss();
-                        })
-                        .setNegativeButton("Cancel", null)
-                        .show();
+                        }
+                );
             });
         }
     }
@@ -749,25 +756,26 @@ public class SettingsActivity extends BaseActivity {
             KeyguardManager km = (KeyguardManager) getSystemService(Context.KEYGUARD_SERVICE);
             if (km == null || !km.isDeviceSecure()) {
                 switchBiometric.setChecked(false);
-                new MaterialAlertDialogBuilder(this)
-                        .setTitle("Screen Lock Required 🔒")
-                        .setMessage("To protect payments with biometrics, your device needs a PIN, Pattern, or Fingerprint lock set in Android Settings.")
-                        .setPositiveButton("Set Up Lock", (d, w) -> {
+                ModernDialogHelper.showWarningDialog(
+                        this,
+                        "Screen Lock Required 🔒",
+                        "To protect payments and checkout with biometrics, your device needs a PIN, Pattern, or Fingerprint lock set in Android Settings.",
+                        "Set Up Lock",
+                        () -> {
                             try {
                                 startActivity(new Intent(Settings.ACTION_SECURITY_SETTINGS));
                             } catch (Exception ignored) {
                                 PermissionManager.openAppSettings(this);
                             }
-                        })
-                        .setNegativeButton("Cancel", null)
-                        .show();
+                        }
+                );
                 return;
             }
 
             if (willEnable) {
                 // Verify credential before enabling
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                    Intent confirmIntent = km.createConfirmDeviceCredentialIntent("AKR Hunger Security", "Confirm lock to activate biometric protection");
+                    Intent confirmIntent = km.createConfirmDeviceCredentialIntent("Hunger Security", "Confirm lock to activate biometric protection");
                     if (confirmIntent != null) {
                         startActivityForResult(confirmIntent, REQ_DEVICE_CREDENTIAL_TOGGLE);
                         return;
@@ -855,14 +863,14 @@ public class SettingsActivity extends BaseActivity {
                 "• Status: Authenticated & Encrypted ✅\n\n" +
                 "No suspicious login attempts detected.";
 
-        new MaterialAlertDialogBuilder(this)
-                .setTitle("Active Login Sessions")
-                .setMessage(message)
-                .setPositiveButton("Keep Session", null)
-                .setNegativeButton("Sign Out Other Devices", (d, w) -> {
-                    Toast.makeText(this, "All other sessions terminated", Toast.LENGTH_SHORT).show();
-                })
-                .show();
+        ModernDialogHelper.showInfoDialog(
+                this,
+                R.drawable.ic_shield_check,
+                "Active Login Sessions",
+                message,
+                "Sign Out Others",
+                () -> Toast.makeText(this, "All other sessions terminated", Toast.LENGTH_SHORT).show()
+        );
     }
 
     private void showPasswordResetDialog() {
@@ -872,18 +880,19 @@ public class SettingsActivity extends BaseActivity {
             return;
         }
 
-        new MaterialAlertDialogBuilder(this)
-                .setTitle("Reset Password")
-                .setMessage("Send a secure password reset link to:\n" + user.getEmail() + "?")
-                .setPositiveButton("Send Reset Link", (d, w) -> {
+        ModernDialogHelper.showWarningDialog(
+                this,
+                "Reset Password",
+                "Send a secure password reset link to:\n" + user.getEmail() + "?",
+                "Send Link",
+                () -> {
                     FirebaseAuth.getInstance().sendPasswordResetEmail(user.getEmail())
                             .addOnSuccessListener(aVoid ->
                                     Toast.makeText(this, "✅ Password reset link sent to your email!", Toast.LENGTH_LONG).show())
                             .addOnFailureListener(e ->
                                     Toast.makeText(this, "Failed: " + e.getMessage(), Toast.LENGTH_SHORT).show());
-                })
-                .setNegativeButton("Cancel", null)
-                .show();
+                }
+        );
     }
 
     @Override
@@ -908,7 +917,7 @@ public class SettingsActivity extends BaseActivity {
     }
 
     // ──────────────────────────────────────────────────────────────────
-    // 7. Language & Regional Format
+    // 7. Language & Regional Format (Custom Open Working Language System)
     // ──────────────────────────────────────────────────────────────────
 
     private void setupLanguageAndRegional() {
@@ -919,41 +928,33 @@ public class SettingsActivity extends BaseActivity {
         if (rowLang != null) {
             rowLang.setOnClickListener(v -> {
                 SettingsHelper.triggerHapticClick(this);
-                String[] languages = {
-                        "English (India)",
-                        "Hindi (हिंदी)",
-                        "Hinglish (हिंग्लिश)",
-                        "Bengali (বাংলা)",
-                        "Marathi (मराठी)",
-                        "Tamil (தமிழ்)",
-                        "Telugu (తెలుగు)",
-                        "Gujarati (ગુજરાતી)"
-                };
 
+                List<OpenLanguageSystem.LanguageItem> languages = OpenLanguageSystem.getSupportedLanguages();
+                List<ModernDialogHelper.ChoiceOption> options = new ArrayList<>();
                 int selected = 0;
                 String current = SettingsHelper.getAppLanguage(this);
-                for (int i = 0; i < languages.length; i++) {
-                    if (languages[i].equals(current)) {
+
+                for (int i = 0; i < languages.size(); i++) {
+                    OpenLanguageSystem.LanguageItem item = languages.get(i);
+                    options.add(new ModernDialogHelper.ChoiceOption(item.displayName, item.nativeScript, item.badge));
+                    if (item.displayName.equalsIgnoreCase(current) || item.nativeScript.equalsIgnoreCase(current)) {
                         selected = i;
-                        break;
                     }
                 }
 
-                new MaterialAlertDialogBuilder(this)
-                        .setTitle("Select App Language")
-                        .setSingleChoiceItems(languages, selected, (dialog, which) -> {
-                            String chosen = languages[which];
-                            prefs.edit().putString(SettingsHelper.KEY_APP_LANGUAGE, chosen).apply();
-                            if (tvLanguageVal != null) tvLanguageVal.setText(chosen);
+                ModernDialogHelper.showChoiceDialog(
+                        this,
+                        "Select App Language",
+                        options,
+                        selected,
+                        (which, val) -> {
+                            OpenLanguageSystem.LanguageItem chosen = languages.get(which);
+                            prefs.edit().putString(SettingsHelper.KEY_APP_LANGUAGE, chosen.displayName).apply();
+                            if (tvLanguageVal != null) tvLanguageVal.setText(chosen.displayName);
 
-                            String code = LocaleHelper.getLanguageCodeFromName(chosen);
-                            LocaleHelper.setLocale(this, code);
-
-                            Toast.makeText(this, "Language set to " + chosen + " 🌐", Toast.LENGTH_SHORT).show();
-                            dialog.dismiss();
-                        })
-                        .setNegativeButton("Cancel", null)
-                        .show();
+                            OpenLanguageSystem.applyLanguage(this, chosen);
+                        }
+                );
             });
         }
 
@@ -964,7 +965,16 @@ public class SettingsActivity extends BaseActivity {
         if (rowCurr != null) {
             rowCurr.setOnClickListener(v -> {
                 SettingsHelper.triggerHapticClick(this);
-                String[] currencies = {
+
+                List<ModernDialogHelper.ChoiceOption> currOptions = new ArrayList<>();
+                currOptions.add(new ModernDialogHelper.ChoiceOption("Indian Rupee (₹ INR)", "Default for India delivery", "PRIMARY"));
+                currOptions.add(new ModernDialogHelper.ChoiceOption("US Dollar ($ USD)", "Global Card / PayPal", "$"));
+                currOptions.add(new ModernDialogHelper.ChoiceOption("Euro (€ EUR)", "European Union", "€"));
+                currOptions.add(new ModernDialogHelper.ChoiceOption("British Pound (£ GBP)", "United Kingdom", "£"));
+                currOptions.add(new ModernDialogHelper.ChoiceOption("UAE Dirham (AED)", "Middle East", "AED"));
+
+                String[] symbols = {"₹", "$", "€", "£", "AED"};
+                String[] names = {
                         "Indian Rupee (₹ INR) — Primary",
                         "US Dollar ($ USD)",
                         "Euro (€ EUR)",
@@ -972,35 +982,31 @@ public class SettingsActivity extends BaseActivity {
                         "UAE Dirham (AED)"
                 };
 
-                int selected = 0;
-                String current = SettingsHelper.getCurrency(this);
-                for (int i = 0; i < currencies.length; i++) {
-                    if (currencies[i].equals(current)) {
-                        selected = i;
+                int selCurr = 0;
+                String curStr = SettingsHelper.getCurrency(this);
+                for (int i = 0; i < names.length; i++) {
+                    if (names[i].equals(curStr)) {
+                        selCurr = i;
                         break;
                     }
                 }
 
-                new MaterialAlertDialogBuilder(this)
-                        .setTitle("Currency & Country Format")
-                        .setSingleChoiceItems(currencies, selected, (dialog, which) -> {
-                            String chosen = currencies[which];
-                            String symbol = "₹";
-                            if (which == 1) symbol = "$";
-                            else if (which == 2) symbol = "€";
-                            else if (which == 3) symbol = "£";
-                            else if (which == 4) symbol = "AED";
-
+                ModernDialogHelper.showChoiceDialog(
+                        this,
+                        "Currency & Country Format",
+                        currOptions,
+                        selCurr,
+                        (which, val) -> {
+                            String chosen = names[which];
+                            String symbol = symbols[which];
                             prefs.edit().putString(SettingsHelper.KEY_CURRENCY, chosen)
                                     .putString(SettingsHelper.KEY_CURRENCY_SYMBOL, symbol)
                                     .apply();
 
                             if (tvCurrencyVal != null) tvCurrencyVal.setText(chosen);
                             Toast.makeText(this, "Currency format updated: " + chosen, Toast.LENGTH_SHORT).show();
-                            dialog.dismiss();
-                        })
-                        .setNegativeButton("Cancel", null)
-                        .show();
+                        }
+                );
             });
         }
     }
@@ -1014,12 +1020,13 @@ public class SettingsActivity extends BaseActivity {
 
         findViewById(R.id.btn_clear_cache).setOnClickListener(v -> {
             SettingsHelper.triggerHapticClick(this);
-            new MaterialAlertDialogBuilder(this)
-                    .setTitle("Clear Temporary Cache")
-                    .setMessage("This will remove downloaded restaurant thumbnails, cached menus, and temporary network files. Your login session, reward points, and orders remain safe.")
-                    .setPositiveButton("Clear Now", (dialog, which) -> clearAppCache())
-                    .setNegativeButton("Cancel", null)
-                    .show();
+            ModernDialogHelper.showDangerDialog(
+                    this,
+                    "Clear Temporary Cache",
+                    "This will remove downloaded restaurant thumbnails, cached menus, and temporary network files. Your login session, reward points, and orders remain safe.",
+                    "Clear Now",
+                    this::clearAppCache
+            );
         });
 
         boolean dataSaver = SettingsHelper.isDataSaverEnabled(this);
@@ -1165,10 +1172,12 @@ public class SettingsActivity extends BaseActivity {
         if (rowReset != null) {
             rowReset.setOnClickListener(v -> {
                 SettingsHelper.triggerHapticClick(this);
-                new MaterialAlertDialogBuilder(this)
-                        .setTitle("Reset All Settings?")
-                        .setMessage("This will restore default food preferences, theme, and notification settings. Your account and orders remain intact.")
-                        .setPositiveButton("Reset to Defaults", (d, w) -> {
+                ModernDialogHelper.showWarningDialog(
+                        this,
+                        "Reset All Settings?",
+                        "This will restore default food preferences, theme, and notification settings. Your account and orders remain intact.",
+                        "Reset to Defaults",
+                        () -> {
                             SettingsHelper.resetAll(this);
                             ThemeHelper.setThemeMode(this, ThemeHelper.MODE_SYSTEM);
                             updateThemeUI(ThemeHelper.MODE_SYSTEM);
@@ -1178,9 +1187,8 @@ public class SettingsActivity extends BaseActivity {
                             setupSecuritySection();
                             setupLanguageAndRegional();
                             Toast.makeText(this, "All settings restored to defaults! 🔄", Toast.LENGTH_SHORT).show();
-                        })
-                        .setNegativeButton("Cancel", null)
-                        .show();
+                        }
+                );
             });
         }
 
@@ -1189,32 +1197,34 @@ public class SettingsActivity extends BaseActivity {
         if (rowSignOut != null) {
             rowSignOut.setOnClickListener(v -> {
                 SettingsHelper.triggerHapticClick(this);
-                new MaterialAlertDialogBuilder(this)
-                        .setTitle("Sign Out")
-                        .setMessage("Are you sure you want to sign out of AKR Hunger?")
-                        .setPositiveButton("Sign Out", (d, w) -> {
+                ModernDialogHelper.showDangerDialog(
+                        this,
+                        "Sign Out",
+                        "Are you sure you want to sign out of Hunger?",
+                        "Sign Out",
+                        () -> {
                             FirebaseAuth.getInstance().signOut();
                             Intent intent = new Intent(this, LoginActivity.class);
                             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                             startActivity(intent);
                             finish();
-                        })
-                        .setNegativeButton("Cancel", null)
-                        .show();
+                        }
+                );
             });
         }
 
-        // Delete Account (Danger Zone)
+        // Delete Account (Danger Zone - reference screenshot style)
         findViewById(R.id.row_delete_account).setOnClickListener(v -> {
             SettingsHelper.triggerHapticClick(this);
-            new MaterialAlertDialogBuilder(this)
-                    .setTitle("Delete Account Permanently ⚠️")
-                    .setMessage("Are you sure you want to permanently delete your Hunger account?\n\nThis action cannot be undone. All active orders, Hunger coins, and saved addresses will be deleted.")
-                    .setPositiveButton("Delete Permanently", (dialog, which) -> {
+            ModernDialogHelper.showDangerDialog(
+                    this,
+                    "Delete Account",
+                    "Are you sure you want to delete your Hunger account forever?\n\nAll active orders, Hunger coins, and saved addresses will be permanently deleted.",
+                    "Delete Forever",
+                    () -> {
                         Toast.makeText(this, "Account deletion request submitted. Support will process your request within 24 hours.", Toast.LENGTH_LONG).show();
-                    })
-                    .setNegativeButton("Keep Account", null)
-                    .show();
+                    }
+            );
         });
     }
 
@@ -1226,7 +1236,7 @@ public class SettingsActivity extends BaseActivity {
 
         try {
             JSONObject root = new JSONObject();
-            root.put("appName", "AKR Hunger Food Delivery");
+            root.put("appName", "Hunger Food Delivery");
             root.put("appVersion", BuildConfig.VERSION_NAME);
             root.put("exportTimestamp", new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US).format(new Date()));
 
@@ -1239,7 +1249,7 @@ public class SettingsActivity extends BaseActivity {
 
             root.put("preferences", SettingsHelper.exportAsJson(this));
 
-            File exportFile = new File(getCacheDir(), "AKR_Hunger_Personal_Data_" + uid + ".json");
+            File exportFile = new File(getCacheDir(), "Hunger_Personal_Data_" + uid + ".json");
             FileOutputStream fos = new FileOutputStream(exportFile);
             fos.write(root.toString(4).getBytes(StandardCharsets.UTF_8));
             fos.flush();
@@ -1247,8 +1257,8 @@ public class SettingsActivity extends BaseActivity {
 
             Intent shareIntent = new Intent(Intent.ACTION_SEND);
             shareIntent.setType("application/json");
-            shareIntent.putExtra(Intent.EXTRA_SUBJECT, "AKR Hunger Personal Data Archive");
-            shareIntent.putExtra(Intent.EXTRA_TEXT, "Here is your exported AKR Hunger personal data archive:\n\n" + root.toString(2));
+            shareIntent.putExtra(Intent.EXTRA_SUBJECT, "Hunger Personal Data Archive");
+            shareIntent.putExtra(Intent.EXTRA_TEXT, "Here is your exported Hunger personal data archive:\n\n" + root.toString(2));
             startActivity(Intent.createChooser(shareIntent, "Save or Share Data Archive"));
 
             Toast.makeText(this, "Personal data archive generated successfully! 📦", Toast.LENGTH_SHORT).show();
@@ -1267,19 +1277,31 @@ public class SettingsActivity extends BaseActivity {
             tvAppVersion.setText(String.format("v%s (Build %d)", BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE));
         }
 
+        // Official Web Platform (2050 Web App)
+        View rowWeb = findViewById(R.id.row_open_website);
+        if (rowWeb != null) {
+            rowWeb.setOnClickListener(v -> {
+                SettingsHelper.triggerHapticClick(this);
+                Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://shungher.vercel.app"));
+                startActivity(browserIntent);
+            });
+        }
+
         // 24x7 Customer Support
         findViewById(R.id.row_help_support).setOnClickListener(v -> {
             SettingsHelper.triggerHapticClick(this);
-            String[] contactOptions = {
-                    "Support Ticket Center 📋 (Submit & track queries)",
-                    "WhatsApp Live Chat 💬 (Instant response)",
-                    "Call Toll-Free Support (1800-486-437) 📞",
-                    "Email Support Desk (support@hungerapp.com) ✉️"
-            };
+            List<ModernDialogHelper.ChoiceOption> contactOpts = new ArrayList<>();
+            contactOpts.add(new ModernDialogHelper.ChoiceOption("Support Ticket Center", "Submit & track live queries", "TICKET"));
+            contactOpts.add(new ModernDialogHelper.ChoiceOption("WhatsApp Live Chat", "Instant 24x7 chat response", "CHAT"));
+            contactOpts.add(new ModernDialogHelper.ChoiceOption("Call Toll-Free Helpline", "1800-486-437 (Free)", "CALL"));
+            contactOpts.add(new ModernDialogHelper.ChoiceOption("Email Support Desk", "support@hungerapp.com", "EMAIL"));
 
-            new MaterialAlertDialogBuilder(this)
-                    .setTitle("24x7 Customer Helpdesk")
-                    .setItems(contactOptions, (dialog, which) -> {
+            ModernDialogHelper.showChoiceDialog(
+                    this,
+                    "24x7 Customer Helpdesk",
+                    contactOpts,
+                    -1,
+                    (which, val) -> {
                         if (which == 0) {
                             startActivity(new Intent(this, SupportActivity.class));
                         } else if (which == 1) {
@@ -1296,12 +1318,11 @@ public class SettingsActivity extends BaseActivity {
                         } else {
                             Intent mailIntent = new Intent(Intent.ACTION_SENDTO);
                             mailIntent.setData(Uri.parse("mailto:support@hungerapp.com"));
-                            mailIntent.putExtra(Intent.EXTRA_SUBJECT, "Customer Support Inquiry - AKR Hunger");
+                            mailIntent.putExtra(Intent.EXTRA_SUBJECT, "Customer Support Inquiry - Hunger");
                             startActivity(Intent.createChooser(mailIntent, "Contact Support"));
                         }
-                    })
-                    .setNegativeButton("Close", null)
-                    .show();
+                    }
+            );
         });
 
         // Rate App
@@ -1324,9 +1345,9 @@ public class SettingsActivity extends BaseActivity {
                 SettingsHelper.triggerHapticClick(this);
                 Intent sendIntent = new Intent(Intent.ACTION_SEND);
                 sendIntent.setType("text/plain");
-                sendIntent.putExtra(Intent.EXTRA_SUBJECT, "Try AKR Hunger Food Delivery!");
-                sendIntent.putExtra(Intent.EXTRA_TEXT, "Hey! I order delicious food on AKR Hunger with ultra-fast delivery & awesome discounts! Download now: https://akrhunger.vercel.app");
-                startActivity(Intent.createChooser(sendIntent, "Share AKR Hunger with friends"));
+                sendIntent.putExtra(Intent.EXTRA_SUBJECT, "Try Hunger Food Delivery!");
+                sendIntent.putExtra(Intent.EXTRA_TEXT, "Hey! I order delicious food on Hunger with ultra-fast delivery & awesome discounts! Experience now: https://shungher.vercel.app");
+                startActivity(Intent.createChooser(sendIntent, "Share Hunger with friends"));
             });
         }
 
@@ -1335,11 +1356,11 @@ public class SettingsActivity extends BaseActivity {
             SettingsHelper.triggerHapticClick(this);
             showInfoDialog(
                     "Terms & Conditions",
-                    "1. Orders & Deliveries: All food orders placed on AKR Hunger are prepared by verified culinary partners and dispatched with live GPS tracking.\n\n" +
+                    "1. Orders & Deliveries: All food orders placed on Hunger are prepared by verified culinary partners and dispatched with live GPS tracking.\n\n" +
                             "2. Cancellations & Refunds: Orders can be cancelled free of charge within 5 minutes before food preparation begins. Wallet refunds are processed instantly.\n\n" +
                             "3. Food Quality: Every partner kitchen undergoes safety and hygiene audits.\n\n" +
                             "4. Fair Usage: Coupons, discounts, and referral bonuses are subject to fair usage guidelines.\n\n" +
-                            "By using AKR Hunger, you agree to these service commitments."
+                            "By using Hunger, you agree to these service commitments."
             );
         });
 
@@ -1348,7 +1369,7 @@ public class SettingsActivity extends BaseActivity {
             SettingsHelper.triggerHapticClick(this);
             showInfoDialog(
                     "Privacy Policy & Data Security",
-                    "AKR Hunger is committed to safeguarding your personal information:\n\n" +
+                    "Hunger is committed to safeguarding your personal information:\n\n" +
                             "• GPS Location: Used solely to calculate restaurant distance and provide real-time delivery rider tracking.\n" +
                             "• Contact Details: Phone number and email are used exclusively for order updates, receipts, and authentication.\n" +
                             "• Financial Privacy: Payment credentials are processed via Razorpay over TLS 1.3 encryption. We never store credit card numbers or UPI PINs.\n" +
@@ -1361,7 +1382,7 @@ public class SettingsActivity extends BaseActivity {
             SettingsHelper.triggerHapticClick(this);
             showInfoDialog(
                     "Open Source Software Licenses",
-                    "AKR Hunger is proudly built using world-class open-source software:\n\n" +
+                    "Hunger is proudly built using world-class open-source software:\n\n" +
                             "• Google AndroidX & Material Components (Apache 2.0)\n" +
                             "• Google Firebase Suite & Analytics (Apache 2.0)\n" +
                             "• Bumptech Glide Image Loader (BSD, MIT, Apache 2.0)\n" +
@@ -1375,11 +1396,7 @@ public class SettingsActivity extends BaseActivity {
     }
 
     private void showInfoDialog(String title, String message) {
-        new MaterialAlertDialogBuilder(this)
-                .setTitle(title)
-                .setMessage(message)
-                .setPositiveButton("Close", null)
-                .show();
+        ModernDialogHelper.showInfoDialog(this, title, message);
     }
 
     @Override

@@ -30,6 +30,7 @@ import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.WriteBatch;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.ssr.hunger.dialogs.ModernDialogHelper;
 import com.razorpay.Checkout;
 import com.razorpay.PaymentResultListener;
 import org.json.JSONObject;
@@ -454,18 +455,19 @@ public class CartActivity extends BaseActivity implements CartManager.CartChange
                             String pincodeList = String.join(", ", servicePincodes);
                             runOnUiThread(() -> {
                                 findViewById(R.id.btn_place_order).setEnabled(true);
-                                new MaterialAlertDialogBuilder(CartActivity.this)
-                                        .setTitle("\uD83D\uDEAB Delivery Not Available")
-                                        .setMessage("Sorry, "
+                                ModernDialogHelper.showWarningDialog(
+                                        CartActivity.this,
+                                        "Delivery Not Available",
+                                        "Sorry, "
                                                 + (restaurantName2 != null ? restaurantName2 : "this restaurant")
                                                 + " does not deliver to PIN code "
                                                 + finalDeliveryPincode
                                                 + ".\n\nThey currently serve: "
                                                 + pincodeList
-                                                + "\n\nPlease select a different delivery address or choose another restaurant.")
-                                        .setPositiveButton("Change Address", (d, w) -> openAddressSelector())
-                                        .setNegativeButton("Cancel", null)
-                                        .show();
+                                                + "\n\nPlease select a different delivery address or choose another restaurant.",
+                                        "Change Address",
+                                        () -> openAddressSelector()
+                                );
                             });
                         } else {
                             runOnUiThread(() -> {

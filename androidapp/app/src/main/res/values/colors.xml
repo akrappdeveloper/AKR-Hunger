@@ -19,9 +19,13 @@
     <color name="background">#F8F9FA</color>
     <color name="surface">#FFFFFF</color>
     <color name="surface_variant">#F3F4F6</color>
+    <color name="surface_container">#F3F4F6</color>
+    <color name="surface_container_high">#E5E7EB</color>
     <color name="surface_elevated">#FFFFFF</color>
     <color name="on_background">#111827</color>
     <color name="on_surface">#111827</color>
+    <color name="ripple_dark">#1F000000</color>
+    <color name="ripple_light">#1FFFFFFF</color>
 
     <!-- iOS Card & Borders -->
     <color name="card_background">#FFFFFF</color>
