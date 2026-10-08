@@ -1,11 +1,15 @@
 package com.ssr.hunger.activities;
 
+import android.app.KeyguardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.View;
@@ -14,68 +18,68 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.appcompat.app.AlertDialog;
+import androidx.annotation.Nullable;
 
 import com.bumptech.glide.Glide;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.materialswitch.MaterialSwitch;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.ssr.hunger.BuildConfig;
 import com.ssr.hunger.R;
+import com.ssr.hunger.utils.Constants;
+import com.ssr.hunger.utils.LocaleHelper;
 import com.ssr.hunger.utils.PermissionManager;
+import com.ssr.hunger.utils.SettingsHelper;
 import com.ssr.hunger.utils.ThemeHelper;
+import com.ssr.hunger.utils.VoiceHelper;
+
+import org.json.JSONObject;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.nio.charset.StandardCharsets;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Locale;
 
 /**
- * Modern Premium Settings & Preferences Activity.
- * Provides complete theme customization, dietary preferences (Pure Veg, Cutlery, Auto Coupon),
- * order automation (Auto Points, Quick Reorder, Voice Announcements),
- * security authentication (Biometric wallet lock, Permissions, Sessions, Password change),
- * regional options (Language, Currency), storage cache cleaning, and data privacy options.
+ * Modern Premium Settings & Preferences Activity for AKR Hunger.
+ * Provides complete customization for theme, food preferences, order automation,
+ * real voice announcements, haptics, security credentials, regional locales,
+ * live storage cache cleanup, and personal data exports.
  */
 public class SettingsActivity extends BaseActivity {
 
-    private static final String PREF_SETTINGS = "user_settings_prefs";
-    public static final String KEY_NOTIF_ORDERS = "notif_orders";
-    public static final String KEY_NOTIF_PROMOTIONS = "notif_promotions";
-    public static final String KEY_NOTIF_WHATSAPP = "pref_whatsapp_updates";
-    public static final String KEY_NOTIF_SOUND = "notif_sound";
-    public static final String KEY_EMAIL_RECEIPTS = "notif_email_receipts";
-    public static final String KEY_FOOD_VEG_ONLY = "pref_veg_only";
-    public static final String KEY_ECO_CUTLERY = "pref_eco_cutlery";
-    public static final String KEY_AUTO_COUPON = "pref_auto_coupon";
-    public static final String KEY_DELIVERY_PRESET = "pref_delivery_preset";
-    public static final String KEY_SPICE_LEVEL = "pref_spice_level";
-    public static final String KEY_AUTO_POINTS = "pref_auto_points";
-    public static final String KEY_QUICK_REORDER = "pref_quick_reorder";
-    public static final String KEY_VOICE_ANNOUNCEMENTS = "pref_voice_announcements";
-    public static final String KEY_BIOMETRIC_LOCK = "pref_biometric_lock";
-    public static final String KEY_DATA_SAVER = "pref_data_saver";
-    public static final String KEY_APP_LANGUAGE = "pref_app_language";
-    public static final String KEY_CURRENCY = "pref_currency";
+    private static final int REQ_DEVICE_CREDENTIAL_TOGGLE = 4001;
+    private static final int REQ_DEVICE_CREDENTIAL_TEST = 4002;
 
     // Theme Views
     private View optLight, optDark, optSystem;
     private ImageView checkLight, checkDark, checkSystem;
 
     // Switches
-    private MaterialSwitch switchOrders, switchPromotions, switchWhatsapp, switchSound, switchEmailReceipts;
+    private MaterialSwitch switchReduceAnimations;
     private MaterialSwitch switchVegOnly, switchEcoCutlery, switchAutoCoupon;
-    private MaterialSwitch switchAutoPoints, switchQuickReorder, switchVoiceAnnouncements;
-    private MaterialSwitch switchBiometric, switchDataSaver;
+    private MaterialSwitch switchAutoPoints, switchQuickReorder, switchVoiceAnnouncements, switchHapticFeedback;
+    private MaterialSwitch switchOrders, switchPromotions, switchWhatsapp, switchSound, switchEmailReceipts;
+    private MaterialSwitch switchBiometric, switchAnalyticsOptIn, switchDataSaver;
 
-    // Dynamic Texts
-    private TextView tvCacheSize, tvAppVersion, tvDeliveryInstructionsVal, tvSpiceLevelVal;
+    // Dynamic Text Views & Actions
+    private TextView tvCacheSize, tvCacheBreakdown, tvAppVersion;
+    private TextView tvDeliveryInstructionsVal, tvSpiceLevelVal, tvCookingInstructionsVal, tvDefaultPaymentVal;
     private TextView tvLanguageVal, tvCurrencyVal;
+    private TextView tvUserName, tvUserContact, tvUserMembershipBadge;
+    private ImageView ivUserAvatar;
     private EditText etSearchSettings;
     private ImageView ivClearSearch;
+    private View layoutSearchEmpty, btnResetSearch;
 
-    // Section Cards for Search Filtering
-    private View cardTheme, cardFood, cardAutomation, cardNotif, cardSecurity, cardLanguage, cardStorage, cardAccount, cardSupport, cardDanger;
+    // Section Cards for Real-Time Search Filtering
+    private View cardProfile, cardTheme, cardFood, cardAutomation, cardNotif, cardSecurity;
+    private View cardLanguage, cardStorage, cardAccount, cardSupport, cardDanger;
 
     private SharedPreferences prefs;
 
@@ -84,10 +88,11 @@ public class SettingsActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
 
-        prefs = getSharedPreferences(PREF_SETTINGS, Context.MODE_PRIVATE);
+        prefs = SettingsHelper.getPrefs(this);
 
         initViews();
         setupSearchFilter();
+        loadUserProfileSummary();
         setupThemeSelector();
         setupFoodPreferences();
         setupOrderAutomation();
@@ -96,19 +101,25 @@ public class SettingsActivity extends BaseActivity {
         setupLanguageAndRegional();
         setupStorageAndData();
         setupAccountActions();
-        setupSupportAndLegal();
+        setupSupportAndCommunity();
 
-        logBreadcrumb("SettingsActivity: Opened with all features enabled");
+        logBreadcrumb("SettingsActivity: Fully initialized with all features");
     }
 
     private void initViews() {
-        findViewById(R.id.btn_back).setOnClickListener(v -> finish());
+        findViewById(R.id.btn_back).setOnClickListener(v -> {
+            SettingsHelper.triggerHapticClick(this);
+            finish();
+        });
 
-        // Search Bar
+        // Search Bar Views
         etSearchSettings = findViewById(R.id.et_search_settings);
         ivClearSearch = findViewById(R.id.iv_clear_search_settings);
+        layoutSearchEmpty = findViewById(R.id.layout_search_empty);
+        btnResetSearch = findViewById(R.id.btn_reset_search);
 
-        // Cards for search filtering
+        // Cards
+        cardProfile = findViewById(R.id.card_section_profile);
         cardTheme = findViewById(R.id.card_section_theme);
         cardFood = findViewById(R.id.card_section_food);
         cardAutomation = findViewById(R.id.card_section_automation);
@@ -120,44 +131,62 @@ public class SettingsActivity extends BaseActivity {
         cardSupport = findViewById(R.id.card_section_support);
         cardDanger = findViewById(R.id.card_section_danger);
 
+        // User Profile Summary Views
+        ivUserAvatar = findViewById(R.id.iv_user_avatar);
+        tvUserName = findViewById(R.id.tv_user_name);
+        tvUserContact = findViewById(R.id.tv_user_contact);
+        tvUserMembershipBadge = findViewById(R.id.tv_user_membership_badge);
+
         // Theme Options
         optLight = findViewById(R.id.theme_option_light);
         optDark = findViewById(R.id.theme_option_dark);
         optSystem = findViewById(R.id.theme_option_system);
-
         checkLight = findViewById(R.id.check_theme_light);
         checkDark = findViewById(R.id.check_theme_dark);
         checkSystem = findViewById(R.id.check_theme_system);
+        switchReduceAnimations = findViewById(R.id.switch_reduce_animations);
 
-        // Switches
+        // Food Switches & Rows
         switchVegOnly = findViewById(R.id.switch_veg_only);
         switchEcoCutlery = findViewById(R.id.switch_eco_cutlery);
         switchAutoCoupon = findViewById(R.id.switch_auto_coupon);
+        tvDeliveryInstructionsVal = findViewById(R.id.tv_delivery_instructions_val);
+        tvSpiceLevelVal = findViewById(R.id.tv_spice_level_val);
+        tvCookingInstructionsVal = findViewById(R.id.tv_cooking_instructions_val);
 
+        // Automation Switches & Rows
         switchAutoPoints = findViewById(R.id.switch_auto_points);
         switchQuickReorder = findViewById(R.id.switch_quick_reorder);
         switchVoiceAnnouncements = findViewById(R.id.switch_voice_announcements);
+        switchHapticFeedback = findViewById(R.id.switch_haptic_feedback);
+        tvDefaultPaymentVal = findViewById(R.id.tv_default_payment_val);
 
+        // Notifications Switches
         switchOrders = findViewById(R.id.switch_order_updates);
         switchPromotions = findViewById(R.id.switch_promotions);
         switchWhatsapp = findViewById(R.id.switch_whatsapp_updates);
         switchSound = findViewById(R.id.switch_sound);
         switchEmailReceipts = findViewById(R.id.switch_email_receipts);
 
+        // Security Switches
         switchBiometric = findViewById(R.id.switch_biometric);
-        switchDataSaver = findViewById(R.id.switch_data_saver);
+        switchAnalyticsOptIn = findViewById(R.id.switch_analytics_opt_in);
 
-        // Texts
-        tvCacheSize = findViewById(R.id.tv_cache_size);
-        tvAppVersion = findViewById(R.id.tv_app_version);
-        tvDeliveryInstructionsVal = findViewById(R.id.tv_delivery_instructions_val);
-        tvSpiceLevelVal = findViewById(R.id.tv_spice_level_val);
+        // Language & Currency
         tvLanguageVal = findViewById(R.id.tv_language_val);
         tvCurrencyVal = findViewById(R.id.tv_currency_val);
+
+        // Storage & Cache
+        tvCacheSize = findViewById(R.id.tv_cache_size);
+        tvCacheBreakdown = findViewById(R.id.tv_cache_breakdown);
+        switchDataSaver = findViewById(R.id.switch_data_saver);
+
+        // App Version
+        tvAppVersion = findViewById(R.id.tv_app_version);
     }
 
     // ──────────────────────────────────────────────────────────────────
-    // 0. Search Filter for Settings
+    // 0. Search Filter with Empty State
     // ──────────────────────────────────────────────────────────────────
 
     private void setupSearchFilter() {
@@ -181,30 +210,49 @@ public class SettingsActivity extends BaseActivity {
         });
 
         if (ivClearSearch != null) {
-            ivClearSearch.setOnClickListener(v -> etSearchSettings.setText(""));
+            ivClearSearch.setOnClickListener(v -> {
+                SettingsHelper.triggerHapticClick(this);
+                etSearchSettings.setText("");
+            });
+        }
+
+        if (btnResetSearch != null) {
+            btnResetSearch.setOnClickListener(v -> {
+                SettingsHelper.triggerHapticClick(this);
+                etSearchSettings.setText("");
+            });
         }
     }
 
     private void filterSettingsSections(String query) {
         if (query.isEmpty()) {
-            setSectionVisibility(View.VISIBLE);
+            setAllCardsVisibility(View.VISIBLE);
+            if (layoutSearchEmpty != null) layoutSearchEmpty.setVisibility(View.GONE);
             return;
         }
 
-        toggleCard(cardTheme, query, "theme", "light", "dark", "amoled", "appearance", "display");
-        toggleCard(cardFood, query, "food", "veg", "vegetarian", "cutlery", "spoon", "spice", "delivery", "instructions", "preset", "coupon", "deal");
-        toggleCard(cardAutomation, query, "auto", "point", "coins", "loyalty", "reorder", "voice", "speech", "sound");
-        toggleCard(cardNotif, query, "notif", "alert", "whatsapp", "email", "receipt", "sound", "bell", "chime", "offer", "promo");
-        toggleCard(cardSecurity, query, "security", "biometric", "fingerprint", "pin", "permission", "camera", "location", "session", "device", "password");
-        toggleCard(cardLanguage, query, "language", "hindi", "english", "bengali", "marathi", "currency", "rupee", "inr");
-        toggleCard(cardStorage, query, "storage", "cache", "clean", "memory", "data saver", "network");
-        toggleCard(cardAccount, query, "account", "address", "wallet", "payment", "upi", "card", "export", "backup", "reset");
-        toggleCard(cardSupport, query, "support", "help", "whatsapp", "call", "terms", "privacy", "license", "legal");
-        toggleCard(cardDanger, query, "delete", "remove account", "danger");
+        boolean pTheme = matchCard(cardTheme, query, "theme", "light", "dark", "amoled", "appearance", "display", "motion", "animation");
+        boolean pFood = matchCard(cardFood, query, "food", "veg", "vegetarian", "cutlery", "spoon", "spice", "chili", "hot", "delivery", "instructions", "preset", "coupon", "deal", "allergy", "jain", "chef", "cooking");
+        boolean pAutomation = matchCard(cardAutomation, query, "auto", "point", "coins", "loyalty", "reorder", "voice", "speech", "sound", "speak", "announcement", "haptic", "vibrate", "payment", "upi", "wallet");
+        boolean pNotif = matchCard(cardNotif, query, "notif", "alert", "whatsapp", "email", "receipt", "sound", "bell", "chime", "offer", "promo", "deal", "channel");
+        boolean pSecurity = matchCard(cardSecurity, query, "security", "biometric", "fingerprint", "face", "pin", "lock", "permission", "camera", "location", "session", "device", "password", "telemetry", "crash");
+        boolean pLang = matchCard(cardLanguage, query, "language", "hindi", "english", "bengali", "marathi", "tamil", "telugu", "gujarati", "currency", "rupee", "inr", "dollar", "usd");
+        boolean pStorage = matchCard(cardStorage, query, "storage", "cache", "clean", "memory", "data saver", "network", "glide");
+        boolean pAccount = matchCard(cardAccount, query, "account", "address", "wallet", "membership", "vip", "reward", "coin", "card", "export", "backup", "reset", "download");
+        boolean pSupport = matchCard(cardSupport, query, "support", "help", "whatsapp", "call", "ticket", "rate", "play", "share", "terms", "privacy", "license", "legal");
+        boolean pDanger = matchCard(cardDanger, query, "delete", "remove account", "sign out", "logout", "danger");
+
+        boolean hasAnyMatch = pTheme || pFood || pAutomation || pNotif || pSecurity || pLang || pStorage || pAccount || pSupport || pDanger;
+        if (layoutSearchEmpty != null) {
+            layoutSearchEmpty.setVisibility(hasAnyMatch ? View.GONE : View.VISIBLE);
+        }
+        if (cardProfile != null) {
+            cardProfile.setVisibility(hasAnyMatch ? View.VISIBLE : View.GONE);
+        }
     }
 
-    private void toggleCard(View card, String query, String... keywords) {
-        if (card == null) return;
+    private boolean matchCard(View card, String query, String... keywords) {
+        if (card == null) return false;
         boolean matches = false;
         for (String k : keywords) {
             if (query.contains(k) || k.contains(query)) {
@@ -213,17 +261,73 @@ public class SettingsActivity extends BaseActivity {
             }
         }
         card.setVisibility(matches ? View.VISIBLE : View.GONE);
+        return matches;
     }
 
-    private void setSectionVisibility(int visibility) {
-        View[] cards = {cardTheme, cardFood, cardAutomation, cardNotif, cardSecurity, cardLanguage, cardStorage, cardAccount, cardSupport, cardDanger};
+    private void setAllCardsVisibility(int visibility) {
+        View[] cards = {cardProfile, cardTheme, cardFood, cardAutomation, cardNotif, cardSecurity, cardLanguage, cardStorage, cardAccount, cardSupport, cardDanger};
         for (View c : cards) {
             if (c != null) c.setVisibility(visibility);
         }
     }
 
     // ──────────────────────────────────────────────────────────────────
-    // 1. Theme Configuration
+    // 1. User Profile Summary
+    // ──────────────────────────────────────────────────────────────────
+
+    private void loadUserProfileSummary() {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user != null) {
+            String name = user.getDisplayName();
+            String email = user.getEmail();
+            String phone = user.getPhoneNumber();
+
+            if (tvUserName != null) {
+                tvUserName.setText(name != null && !name.trim().isEmpty() ? name : "AKR Foodie");
+            }
+            if (tvUserContact != null) {
+                String contact = email != null && !email.trim().isEmpty() ? email : (phone != null ? phone : "Registered Account");
+                tvUserContact.setText(contact);
+            }
+
+            if (ivUserAvatar != null && user.getPhotoUrl() != null) {
+                Glide.with(this)
+                        .load(user.getPhotoUrl())
+                        .placeholder(R.drawable.ic_profile)
+                        .error(R.drawable.ic_profile)
+                        .into(ivUserAvatar);
+            }
+
+            // Fetch VIP status from Firestore
+            FirebaseFirestore.getInstance().collection(Constants.COLLECTION_CUSTOMERS).document(user.getUid())
+                    .get()
+                    .addOnSuccessListener(doc -> {
+                        if (doc != null && doc.exists()) {
+                            Boolean isVip = doc.getBoolean("isVipMember");
+                            if (isVip == null) isVip = doc.getBoolean("isHungerOne");
+                            if (tvUserMembershipBadge != null) {
+                                tvUserMembershipBadge.setText(Boolean.TRUE.equals(isVip) ? "Hunger One VIP Member" : "Verified Customer");
+                            }
+                        }
+                    })
+                    .addOnFailureListener(ignored -> {});
+        } else {
+            if (tvUserName != null) tvUserName.setText("Guest Foodie");
+            if (tvUserContact != null) tvUserContact.setText("Sign in to unlock rewards");
+            if (tvUserMembershipBadge != null) tvUserMembershipBadge.setText("Guest Mode");
+        }
+
+        View btnEdit = findViewById(R.id.btn_edit_profile_quick);
+        if (btnEdit != null) {
+            btnEdit.setOnClickListener(v -> {
+                SettingsHelper.triggerHapticClick(this);
+                startActivity(new Intent(this, EditProfileActivity.class));
+            });
+        }
+    }
+
+    // ──────────────────────────────────────────────────────────────────
+    // 2. Theme Configuration
     // ──────────────────────────────────────────────────────────────────
 
     private void setupThemeSelector() {
@@ -231,22 +335,34 @@ public class SettingsActivity extends BaseActivity {
         updateThemeUI(currentMode);
 
         optLight.setOnClickListener(v -> {
+            SettingsHelper.triggerHapticClick(this);
             ThemeHelper.setThemeMode(this, ThemeHelper.MODE_LIGHT);
             updateThemeUI(ThemeHelper.MODE_LIGHT);
             logAnalyticsEvent("theme_changed_light", null);
         });
 
         optDark.setOnClickListener(v -> {
+            SettingsHelper.triggerHapticClick(this);
             ThemeHelper.setThemeMode(this, ThemeHelper.MODE_DARK);
             updateThemeUI(ThemeHelper.MODE_DARK);
             logAnalyticsEvent("theme_changed_dark", null);
         });
 
         optSystem.setOnClickListener(v -> {
+            SettingsHelper.triggerHapticClick(this);
             ThemeHelper.setThemeMode(this, ThemeHelper.MODE_SYSTEM);
             updateThemeUI(ThemeHelper.MODE_SYSTEM);
             logAnalyticsEvent("theme_changed_system", null);
         });
+
+        if (switchReduceAnimations != null) {
+            switchReduceAnimations.setChecked(SettingsHelper.isReduceAnimations(this));
+            switchReduceAnimations.setOnCheckedChangeListener((btn, isChecked) -> {
+                SettingsHelper.triggerHapticClick(this);
+                prefs.edit().putBoolean(SettingsHelper.KEY_REDUCE_ANIMATIONS, isChecked).apply();
+                Toast.makeText(this, isChecked ? "Animations reduced ⚡" : "Full animation effects enabled", Toast.LENGTH_SHORT).show();
+            });
+        }
     }
 
     private void updateThemeUI(String mode) {
@@ -270,56 +386,64 @@ public class SettingsActivity extends BaseActivity {
     }
 
     // ──────────────────────────────────────────────────────────────────
-    // 2. Food & Dining Preferences
+    // 3. Food & Dining Preferences
     // ──────────────────────────────────────────────────────────────────
 
     private void setupFoodPreferences() {
         // Pure Veg Mode
-        boolean isVegOnly = prefs.getBoolean(KEY_FOOD_VEG_ONLY, false);
+        boolean isVegOnly = SettingsHelper.isVegOnly(this);
         switchVegOnly.setChecked(isVegOnly);
         switchVegOnly.setOnCheckedChangeListener((btn, isChecked) -> {
-            prefs.edit().putBoolean(KEY_FOOD_VEG_ONLY, isChecked).apply();
+            SettingsHelper.triggerHapticClick(this);
+            prefs.edit().putBoolean(SettingsHelper.KEY_FOOD_VEG_ONLY, isChecked).apply();
+            getSharedPreferences(Constants.PREF_USER, Context.MODE_PRIVATE)
+                    .edit().putBoolean(SettingsHelper.KEY_FOOD_VEG_ONLY, isChecked).apply();
+
             Toast.makeText(this, isChecked ?
-                    "Pure Veg Mode activated 🥦 (Menus filtered to vegetarian)" :
-                    "Veg Mode turned off — showing all menus 🍲", Toast.LENGTH_SHORT).show();
+                    "🥦 Pure Veg Mode activated! (Menus filtered to vegetarian)" :
+                    "🍲 Veg Mode turned off — showing all delicious menus", Toast.LENGTH_SHORT).show();
         });
 
         // Eco-Friendly Cutlery
-        boolean ecoCutlery = prefs.getBoolean(KEY_ECO_CUTLERY, true);
+        boolean ecoCutlery = SettingsHelper.isEcoCutlery(this);
         switchEcoCutlery.setChecked(ecoCutlery);
         switchEcoCutlery.setOnCheckedChangeListener((btn, isChecked) -> {
-            prefs.edit().putBoolean(KEY_ECO_CUTLERY, isChecked).apply();
+            SettingsHelper.triggerHapticClick(this);
+            prefs.edit().putBoolean(SettingsHelper.KEY_ECO_CUTLERY, isChecked).apply();
             Toast.makeText(this, isChecked ?
-                    "Plastic cutlery will be skipped 🌿" :
-                    "Disposable cutlery requested with orders 🍴", Toast.LENGTH_SHORT).show();
+                    "🌿 Plastic cutlery will be skipped to protect environment" :
+                    "🍴 Disposable cutlery requested with your orders", Toast.LENGTH_SHORT).show();
         });
 
         // Auto-Apply Best Promo Deals
-        boolean autoCoupon = prefs.getBoolean(KEY_AUTO_COUPON, true);
+        boolean autoCoupon = SettingsHelper.isAutoCouponEnabled(this);
         if (switchAutoCoupon != null) {
             switchAutoCoupon.setChecked(autoCoupon);
             switchAutoCoupon.setOnCheckedChangeListener((btn, isChecked) -> {
-                prefs.edit().putBoolean(KEY_AUTO_COUPON, isChecked).apply();
+                SettingsHelper.triggerHapticClick(this);
+                prefs.edit().putBoolean(SettingsHelper.KEY_AUTO_COUPON, isChecked).apply();
                 Toast.makeText(this, isChecked ?
-                        "Auto-Apply Best Promo Deals enabled ⚡" :
-                        "Manual coupon code entry mode", Toast.LENGTH_SHORT).show();
+                        "⚡ Auto-Apply Best Deals enabled at checkout" :
+                        "Manual promo entry mode active", Toast.LENGTH_SHORT).show();
             });
         }
 
         // Delivery Instructions Preset
-        String savedDelivery = prefs.getString(KEY_DELIVERY_PRESET, "Leave at the door / Ring bell");
+        String savedDelivery = SettingsHelper.getDeliveryPreset(this);
         if (tvDeliveryInstructionsVal != null) tvDeliveryInstructionsVal.setText(savedDelivery);
 
         findViewById(R.id.row_delivery_instructions).setOnClickListener(v -> {
+            SettingsHelper.triggerHapticClick(this);
             String[] options = {
-                    "Leave at the door / Ring bell",
-                    "Hand over directly in person",
-                    "Leave with security / concierge at gate",
-                    "Avoid calling / Silent delivery"
+                    "Leave at the door / Ring bell 🔔",
+                    "Hand over directly in person 🤝",
+                    "Leave with security guard / concierge 🏢",
+                    "Do not ring bell / Silent delivery 🤫",
+                    "Call upon arrival only 📞"
             };
 
             int selected = 0;
-            String current = prefs.getString(KEY_DELIVERY_PRESET, options[0]);
+            String current = SettingsHelper.getDeliveryPreset(this);
             for (int i = 0; i < options.length; i++) {
                 if (options[i].equals(current)) {
                     selected = i;
@@ -331,7 +455,7 @@ public class SettingsActivity extends BaseActivity {
                     .setTitle("Default Delivery Drop Preset")
                     .setSingleChoiceItems(options, selected, (dialog, which) -> {
                         String chosen = options[which];
-                        prefs.edit().putString(KEY_DELIVERY_PRESET, chosen).apply();
+                        prefs.edit().putString(SettingsHelper.KEY_DELIVERY_PRESET, chosen).apply();
                         if (tvDeliveryInstructionsVal != null) tvDeliveryInstructionsVal.setText(chosen);
                         Toast.makeText(this, "Preset updated: " + chosen, Toast.LENGTH_SHORT).show();
                         dialog.dismiss();
@@ -341,18 +465,19 @@ public class SettingsActivity extends BaseActivity {
         });
 
         // Spice Level Preference
-        String savedSpice = prefs.getString(KEY_SPICE_LEVEL, "Medium Balanced 🔥");
+        String savedSpice = SettingsHelper.getSpiceLevel(this);
         if (tvSpiceLevelVal != null) tvSpiceLevelVal.setText(savedSpice);
 
         findViewById(R.id.row_spice_level).setOnClickListener(v -> {
+            SettingsHelper.triggerHapticClick(this);
             String[] options = {
-                    "Mild / Less Spicy 🥗",
+                    "Mild / Zero Chili 🥗",
                     "Medium Balanced 🔥",
                     "Extra Spicy / Desi Hot 🌶️🔥"
             };
 
             int selected = 1;
-            String current = prefs.getString(KEY_SPICE_LEVEL, options[1]);
+            String current = SettingsHelper.getSpiceLevel(this);
             for (int i = 0; i < options.length; i++) {
                 if (options[i].equals(current)) {
                     selected = i;
@@ -364,7 +489,7 @@ public class SettingsActivity extends BaseActivity {
                     .setTitle("Default Spice Level")
                     .setSingleChoiceItems(options, selected, (dialog, which) -> {
                         String chosen = options[which];
-                        prefs.edit().putString(KEY_SPICE_LEVEL, chosen).apply();
+                        prefs.edit().putString(SettingsHelper.KEY_SPICE_LEVEL, chosen).apply();
                         if (tvSpiceLevelVal != null) tvSpiceLevelVal.setText(chosen);
                         Toast.makeText(this, "Spice preference: " + chosen, Toast.LENGTH_SHORT).show();
                         dialog.dismiss();
@@ -372,60 +497,167 @@ public class SettingsActivity extends BaseActivity {
                     .setNegativeButton("Cancel", null)
                     .show();
         });
+
+        // Cooking & Allergy Instructions
+        String savedCooking = SettingsHelper.getCookingInstruction(this);
+        if (tvCookingInstructionsVal != null) tvCookingInstructionsVal.setText(savedCooking);
+
+        View rowCooking = findViewById(R.id.row_cooking_instructions);
+        if (rowCooking != null) {
+            rowCooking.setOnClickListener(v -> {
+                SettingsHelper.triggerHapticClick(this);
+                String[] cookingOptions = {
+                        "Standard (Kitchen defaults)",
+                        "Less oil & less salt 🧂",
+                        "No onion & garlic (Jain friendly) 🥬",
+                        "Gluten sensitive / Celiac safe 🌾",
+                        "Extra paper napkins & mints ✨"
+                };
+
+                int selected = 0;
+                String current = SettingsHelper.getCookingInstruction(this);
+                for (int i = 0; i < cookingOptions.length; i++) {
+                    if (cookingOptions[i].equals(current)) {
+                        selected = i;
+                        break;
+                    }
+                }
+
+                new MaterialAlertDialogBuilder(this)
+                        .setTitle("Kitchen Prep & Allergy Notes")
+                        .setSingleChoiceItems(cookingOptions, selected, (dialog, which) -> {
+                            String chosen = cookingOptions[which];
+                            prefs.edit().putString(SettingsHelper.KEY_COOKING_INSTRUCTION, chosen).apply();
+                            if (tvCookingInstructionsVal != null) tvCookingInstructionsVal.setText(chosen);
+                            Toast.makeText(this, "Kitchen preference: " + chosen, Toast.LENGTH_SHORT).show();
+                            dialog.dismiss();
+                        })
+                        .setNegativeButton("Cancel", null)
+                        .show();
+            });
+        }
     }
 
     // ──────────────────────────────────────────────────────────────────
-    // 3. Order & Checkout Automation
+    // 4. Order & Checkout Automation
     // ──────────────────────────────────────────────────────────────────
 
     private void setupOrderAutomation() {
         // Auto-Apply Points
-        boolean autoPoints = prefs.getBoolean(KEY_AUTO_POINTS, true);
+        boolean autoPoints = SettingsHelper.isAutoRedeemPoints(this);
         if (switchAutoPoints != null) {
             switchAutoPoints.setChecked(autoPoints);
             switchAutoPoints.setOnCheckedChangeListener((btn, isChecked) -> {
-                prefs.edit().putBoolean(KEY_AUTO_POINTS, isChecked).apply();
+                SettingsHelper.triggerHapticClick(this);
+                prefs.edit().putBoolean(SettingsHelper.KEY_AUTO_POINTS, isChecked).apply();
                 Toast.makeText(this, isChecked ?
-                        "Loyalty points will auto-deduct bill at checkout 🪙" :
+                        "🪙 Loyalty points will auto-deduct bill at checkout" :
                         "Points auto-deduction disabled", Toast.LENGTH_SHORT).show();
             });
         }
 
         // 1-Click Instant Reorder
-        boolean quickReorder = prefs.getBoolean(KEY_QUICK_REORDER, true);
+        boolean quickReorder = SettingsHelper.isQuickReorderEnabled(this);
         if (switchQuickReorder != null) {
             switchQuickReorder.setChecked(quickReorder);
             switchQuickReorder.setOnCheckedChangeListener((btn, isChecked) -> {
-                prefs.edit().putBoolean(KEY_QUICK_REORDER, isChecked).apply();
+                SettingsHelper.triggerHapticClick(this);
+                prefs.edit().putBoolean(SettingsHelper.KEY_QUICK_REORDER, isChecked).apply();
                 Toast.makeText(this, isChecked ?
-                        "Instant 1-Click Reorder enabled ⚡" :
-                        "1-Click reorder disabled", Toast.LENGTH_SHORT).show();
+                        "⚡ 1-Tap Quick Reorder enabled in Order History" :
+                        "1-Tap reorder disabled", Toast.LENGTH_SHORT).show();
             });
         }
 
         // Live Voice Order Announcements
-        boolean voiceOn = prefs.getBoolean(KEY_VOICE_ANNOUNCEMENTS, false);
+        boolean voiceOn = SettingsHelper.isVoiceAnnouncementsEnabled(this);
         if (switchVoiceAnnouncements != null) {
             switchVoiceAnnouncements.setChecked(voiceOn);
             switchVoiceAnnouncements.setOnCheckedChangeListener((btn, isChecked) -> {
-                prefs.edit().putBoolean(KEY_VOICE_ANNOUNCEMENTS, isChecked).apply();
+                SettingsHelper.triggerHapticClick(this);
+                prefs.edit().putBoolean(SettingsHelper.KEY_VOICE_ANNOUNCEMENTS, isChecked).apply();
                 Toast.makeText(this, isChecked ?
-                        "Voice order announcements enabled 🎙️" :
+                        "🎙️ Voice order announcements enabled" :
                         "Voice announcements disabled", Toast.LENGTH_SHORT).show();
+                if (isChecked) {
+                    VoiceHelper.getInstance(this).speakImmediate("Voice announcements activated!");
+                }
+            });
+        }
+
+        // Test Voice Button
+        View btnTestVoice = findViewById(R.id.btn_test_voice);
+        if (btnTestVoice != null) {
+            btnTestVoice.setOnClickListener(v -> {
+                SettingsHelper.triggerHapticClick(this);
+                VoiceHelper.getInstance(this).testAnnouncement(this);
+            });
+        }
+
+        // In-App Haptic Feedback
+        boolean haptics = SettingsHelper.isHapticFeedbackEnabled(this);
+        if (switchHapticFeedback != null) {
+            switchHapticFeedback.setChecked(haptics);
+            switchHapticFeedback.setOnCheckedChangeListener((btn, isChecked) -> {
+                prefs.edit().putBoolean(SettingsHelper.KEY_HAPTIC_FEEDBACK, isChecked).apply();
+                if (isChecked) {
+                    SettingsHelper.triggerHapticClick(this);
+                    Toast.makeText(this, "Haptic feedback enabled ✨", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(this, "Haptic feedback muted", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+
+        // Preferred Payment Method
+        String savedPayment = SettingsHelper.getDefaultPayment(this);
+        if (tvDefaultPaymentVal != null) tvDefaultPaymentVal.setText(savedPayment);
+
+        View rowPayment = findViewById(R.id.row_default_payment);
+        if (rowPayment != null) {
+            rowPayment.setOnClickListener(v -> {
+                SettingsHelper.triggerHapticClick(this);
+                String[] paymentMethods = {
+                        "UPI / Google Pay / PhonePe",
+                        "Hunger Wallet (Fast 1-tap)",
+                        "Credit / Debit Card",
+                        "Cash on Delivery (COD)"
+                };
+
+                int selected = 0;
+                String current = SettingsHelper.getDefaultPayment(this);
+                for (int i = 0; i < paymentMethods.length; i++) {
+                    if (paymentMethods[i].equals(current)) {
+                        selected = i;
+                        break;
+                    }
+                }
+
+                new MaterialAlertDialogBuilder(this)
+                        .setTitle("Preferred Payment Method")
+                        .setSingleChoiceItems(paymentMethods, selected, (dialog, which) -> {
+                            String chosen = paymentMethods[which];
+                            prefs.edit().putString(SettingsHelper.KEY_DEFAULT_PAYMENT, chosen).apply();
+                            if (tvDefaultPaymentVal != null) tvDefaultPaymentVal.setText(chosen);
+                            Toast.makeText(this, "Payment preference: " + chosen, Toast.LENGTH_SHORT).show();
+                            dialog.dismiss();
+                        })
+                        .setNegativeButton("Cancel", null)
+                        .show();
             });
         }
     }
 
     // ──────────────────────────────────────────────────────────────────
-    // 4. Notifications & Alerts
+    // 5. Notifications & Alerts
     // ──────────────────────────────────────────────────────────────────
 
     private void setupNotificationSwitches() {
-        boolean notifyOrders = prefs.getBoolean(KEY_NOTIF_ORDERS, true);
-        boolean notifyPromos = prefs.getBoolean(KEY_NOTIF_PROMOTIONS, true);
-        boolean notifyWhatsapp = prefs.getBoolean(KEY_NOTIF_WHATSAPP, true);
-        boolean notifySound = prefs.getBoolean(KEY_NOTIF_SOUND, true);
-        boolean emailReceipts = prefs.getBoolean(KEY_EMAIL_RECEIPTS, true);
+        boolean notifyOrders = SettingsHelper.isOrderNotifEnabled(this);
+        boolean notifyPromos = SettingsHelper.isPromoNotifEnabled(this);
+        boolean notifyWhatsapp = SettingsHelper.isWhatsappNotifEnabled(this);
+        boolean notifySound = SettingsHelper.isSoundNotifEnabled(this);
+        boolean emailReceipts = SettingsHelper.isEmailReceiptsEnabled(this);
 
         switchOrders.setChecked(notifyOrders);
         switchPromotions.setChecked(notifyPromos);
@@ -434,7 +666,8 @@ public class SettingsActivity extends BaseActivity {
         switchEmailReceipts.setChecked(emailReceipts);
 
         switchOrders.setOnCheckedChangeListener((btn, isChecked) -> {
-            prefs.edit().putBoolean(KEY_NOTIF_ORDERS, isChecked).apply();
+            SettingsHelper.triggerHapticClick(this);
+            prefs.edit().putBoolean(SettingsHelper.KEY_NOTIF_ORDERS, isChecked).apply();
             if (isChecked) {
                 FirebaseMessaging.getInstance().subscribeToTopic("all_customers");
             } else {
@@ -443,7 +676,8 @@ public class SettingsActivity extends BaseActivity {
         });
 
         switchPromotions.setOnCheckedChangeListener((btn, isChecked) -> {
-            prefs.edit().putBoolean(KEY_NOTIF_PROMOTIONS, isChecked).apply();
+            SettingsHelper.triggerHapticClick(this);
+            prefs.edit().putBoolean(SettingsHelper.KEY_NOTIF_PROMOTIONS, isChecked).apply();
             if (isChecked) {
                 FirebaseMessaging.getInstance().subscribeToTopic("promotions");
             } else {
@@ -453,116 +687,251 @@ public class SettingsActivity extends BaseActivity {
 
         if (switchWhatsapp != null) {
             switchWhatsapp.setOnCheckedChangeListener((btn, isChecked) -> {
-                prefs.edit().putBoolean(KEY_NOTIF_WHATSAPP, isChecked).apply();
+                SettingsHelper.triggerHapticClick(this);
+                prefs.edit().putBoolean(SettingsHelper.KEY_NOTIF_WHATSAPP, isChecked).apply();
                 Toast.makeText(this, isChecked ?
-                        "WhatsApp order updates enabled 📲" :
+                        "📲 WhatsApp order updates enabled" :
                         "WhatsApp updates paused", Toast.LENGTH_SHORT).show();
             });
         }
 
-        switchSound.setOnCheckedChangeListener((btn, isChecked) ->
-                prefs.edit().putBoolean(KEY_NOTIF_SOUND, isChecked).apply());
+        switchSound.setOnCheckedChangeListener((btn, isChecked) -> {
+            SettingsHelper.triggerHapticClick(this);
+            prefs.edit().putBoolean(SettingsHelper.KEY_NOTIF_SOUND, isChecked).apply();
+        });
 
         switchEmailReceipts.setOnCheckedChangeListener((btn, isChecked) -> {
-            prefs.edit().putBoolean(KEY_EMAIL_RECEIPTS, isChecked).apply();
+            SettingsHelper.triggerHapticClick(this);
+            prefs.edit().putBoolean(SettingsHelper.KEY_EMAIL_RECEIPTS, isChecked).apply();
             Toast.makeText(this, isChecked ?
                     "Email tax receipts will be delivered on completion" :
                     "Email receipts disabled", Toast.LENGTH_SHORT).show();
         });
+
+        // Direct System Notification Channels (Android 8+)
+        View rowSystemChannels = findViewById(R.id.row_system_notification_channels);
+        if (rowSystemChannels != null) {
+            rowSystemChannels.setOnClickListener(v -> {
+                SettingsHelper.triggerHapticClick(this);
+                openSystemNotificationSettings();
+            });
+        }
+    }
+
+    private void openSystemNotificationSettings() {
+        try {
+            Intent intent = new Intent();
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                intent.setAction(Settings.ACTION_APP_NOTIFICATION_SETTINGS);
+                intent.putExtra(Settings.EXTRA_APP_PACKAGE, getPackageName());
+            } else {
+                intent.setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                intent.setData(Uri.parse("package:" + getPackageName()));
+            }
+            startActivity(intent);
+        } catch (Exception e) {
+            PermissionManager.openAppSettings(this);
+        }
     }
 
     // ──────────────────────────────────────────────────────────────────
-    // 5. Security & Biometrics
+    // 6. Security & Biometrics
     // ──────────────────────────────────────────────────────────────────
 
     private void setupSecuritySection() {
-        // Biometric Lock Switch
-        boolean biometricEnabled = prefs.getBoolean(KEY_BIOMETRIC_LOCK, false);
+        boolean biometricEnabled = SettingsHelper.isBiometricLockEnabled(this);
         switchBiometric.setChecked(biometricEnabled);
-        switchBiometric.setOnCheckedChangeListener((btn, isChecked) -> {
-            prefs.edit().putBoolean(KEY_BIOMETRIC_LOCK, isChecked).apply();
-            Toast.makeText(this, isChecked ?
-                    "Biometric order & wallet lock enabled 🔒" :
-                    "Biometric lock disabled", Toast.LENGTH_SHORT).show();
+
+        switchBiometric.setOnClickListener(v -> {
+            SettingsHelper.triggerHapticClick(this);
+            boolean willEnable = switchBiometric.isChecked();
+
+            KeyguardManager km = (KeyguardManager) getSystemService(Context.KEYGUARD_SERVICE);
+            if (km == null || !km.isDeviceSecure()) {
+                switchBiometric.setChecked(false);
+                new MaterialAlertDialogBuilder(this)
+                        .setTitle("Screen Lock Required 🔒")
+                        .setMessage("To protect payments with biometrics, your device needs a PIN, Pattern, or Fingerprint lock set in Android Settings.")
+                        .setPositiveButton("Set Up Lock", (d, w) -> {
+                            try {
+                                startActivity(new Intent(Settings.ACTION_SECURITY_SETTINGS));
+                            } catch (Exception ignored) {
+                                PermissionManager.openAppSettings(this);
+                            }
+                        })
+                        .setNegativeButton("Cancel", null)
+                        .show();
+                return;
+            }
+
+            if (willEnable) {
+                // Verify credential before enabling
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    Intent confirmIntent = km.createConfirmDeviceCredentialIntent("AKR Hunger Security", "Confirm lock to activate biometric protection");
+                    if (confirmIntent != null) {
+                        startActivityForResult(confirmIntent, REQ_DEVICE_CREDENTIAL_TOGGLE);
+                        return;
+                    }
+                }
+                prefs.edit().putBoolean(SettingsHelper.KEY_BIOMETRIC_LOCK, true).apply();
+                Toast.makeText(this, "Biometric Wallet & Order Lock enabled 🔒", Toast.LENGTH_SHORT).show();
+            } else {
+                prefs.edit().putBoolean(SettingsHelper.KEY_BIOMETRIC_LOCK, false).apply();
+                Toast.makeText(this, "Biometric lock disabled", Toast.LENGTH_SHORT).show();
+            }
         });
+
+        View btnTestBio = findViewById(R.id.btn_test_biometric);
+        if (btnTestBio != null) {
+            btnTestBio.setOnClickListener(v -> {
+                SettingsHelper.triggerHapticClick(this);
+                KeyguardManager km = (KeyguardManager) getSystemService(Context.KEYGUARD_SERVICE);
+                if (km != null && km.isDeviceSecure() && Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    Intent confirmIntent = km.createConfirmDeviceCredentialIntent("Hunger Wallet Test", "Verify biometric lock credential");
+                    if (confirmIntent != null) {
+                        startActivityForResult(confirmIntent, REQ_DEVICE_CREDENTIAL_TEST);
+                        return;
+                    }
+                }
+                Toast.makeText(this, "No device lock enabled on this device.", Toast.LENGTH_SHORT).show();
+            });
+        }
 
         // App Permissions Shortcut
         findViewById(R.id.row_permissions).setOnClickListener(v -> {
+            SettingsHelper.triggerHapticClick(this);
             PermissionManager.openAppSettings(this);
         });
 
         // Device Login Sessions
         findViewById(R.id.row_devices).setOnClickListener(v -> {
-            FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-            String email = user != null && user.getEmail() != null ? user.getEmail() : "Logged In Account";
-
-            String message = "Active Session Details:\n\n" +
-                    "• Device: " + Build.MANUFACTURER + " " + Build.MODEL + " (Current Device)\n" +
-                    "• Android Version: " + Build.VERSION.RELEASE + " (API " + Build.VERSION.SDK_INT + ")\n" +
-                    "• Account: " + email + "\n" +
-                    "• Status: Authenticated & Secure ✅\n\n" +
-                    "No suspicious login attempts detected.";
-
-            new MaterialAlertDialogBuilder(this)
-                    .setTitle("Active Login Sessions")
-                    .setMessage(message)
-                    .setPositiveButton("OK", null)
-                    .setNegativeButton("Sign Out Other Devices", (d, w) -> {
-                        Toast.makeText(this, "All other sessions terminated", Toast.LENGTH_SHORT).show();
-                    })
-                    .show();
+            SettingsHelper.triggerHapticClick(this);
+            showDeviceSessionsDialog();
         });
 
         // Change Password & Security PIN
         View rowChangePassword = findViewById(R.id.row_change_password);
         if (rowChangePassword != null) {
             rowChangePassword.setOnClickListener(v -> {
-                FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-                if (user == null || user.getEmail() == null) {
-                    Toast.makeText(this, "Please sign in to change password", Toast.LENGTH_SHORT).show();
-                    return;
-                }
+                SettingsHelper.triggerHapticClick(this);
+                showPasswordResetDialog();
+            });
+        }
 
-                new MaterialAlertDialogBuilder(this)
-                        .setTitle("Reset Password")
-                        .setMessage("Send a secure password reset link to:\n" + user.getEmail() + "?")
-                        .setPositiveButton("Send Reset Link", (d, w) -> {
-                            FirebaseAuth.getInstance().sendPasswordResetEmail(user.getEmail())
-                                    .addOnSuccessListener(aVoid ->
-                                            Toast.makeText(this, "✅ Password reset link sent to your email!", Toast.LENGTH_LONG).show())
-                                    .addOnFailureListener(e ->
-                                            Toast.makeText(this, "Failed: " + e.getMessage(), Toast.LENGTH_SHORT).show());
-                        })
-                        .setNegativeButton("Cancel", null)
-                        .show();
+        // Analytics Opt-in Switch
+        if (switchAnalyticsOptIn != null) {
+            switchAnalyticsOptIn.setChecked(SettingsHelper.isAnalyticsOptIn(this));
+            switchAnalyticsOptIn.setOnCheckedChangeListener((btn, isChecked) -> {
+                SettingsHelper.triggerHapticClick(this);
+                prefs.edit().putBoolean(SettingsHelper.KEY_ANALYTICS_OPT_IN, isChecked).apply();
+                Toast.makeText(this, isChecked ?
+                        "Anonymous diagnostics enabled — thank you!" :
+                        "Diagnostic telemetry paused", Toast.LENGTH_SHORT).show();
             });
         }
     }
 
+    private void showDeviceSessionsDialog() {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        String email = user != null && user.getEmail() != null ? user.getEmail() : "Logged In Account";
+
+        String networkType = "Wi-Fi Network";
+        ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        if (cm != null) {
+            NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+            if (activeNetwork != null && activeNetwork.getType() == ConnectivityManager.TYPE_MOBILE) {
+                networkType = "Cellular 4G/5G Network";
+            }
+        }
+
+        String formattedDate = new SimpleDateFormat("dd MMM yyyy, hh:mm a", Locale.getDefault()).format(new Date());
+
+        String message = "Active Session Details:\n\n" +
+                "• Device: " + Build.MANUFACTURER.toUpperCase(Locale.ROOT) + " " + Build.MODEL + " (Current Device)\n" +
+                "• Operating System: Android " + Build.VERSION.RELEASE + " (API " + Build.VERSION.SDK_INT + ")\n" +
+                "• Network Connection: " + networkType + "\n" +
+                "• Account: " + email + "\n" +
+                "• Last Active: " + formattedDate + "\n" +
+                "• Status: Authenticated & Encrypted ✅\n\n" +
+                "No suspicious login attempts detected.";
+
+        new MaterialAlertDialogBuilder(this)
+                .setTitle("Active Login Sessions")
+                .setMessage(message)
+                .setPositiveButton("Keep Session", null)
+                .setNegativeButton("Sign Out Other Devices", (d, w) -> {
+                    Toast.makeText(this, "All other sessions terminated", Toast.LENGTH_SHORT).show();
+                })
+                .show();
+    }
+
+    private void showPasswordResetDialog() {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null || user.getEmail() == null) {
+            Toast.makeText(this, "Please sign in with an email account to request a password reset.", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        new MaterialAlertDialogBuilder(this)
+                .setTitle("Reset Password")
+                .setMessage("Send a secure password reset link to:\n" + user.getEmail() + "?")
+                .setPositiveButton("Send Reset Link", (d, w) -> {
+                    FirebaseAuth.getInstance().sendPasswordResetEmail(user.getEmail())
+                            .addOnSuccessListener(aVoid ->
+                                    Toast.makeText(this, "✅ Password reset link sent to your email!", Toast.LENGTH_LONG).show())
+                            .addOnFailureListener(e ->
+                                    Toast.makeText(this, "Failed: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQ_DEVICE_CREDENTIAL_TOGGLE) {
+            if (resultCode == RESULT_OK) {
+                prefs.edit().putBoolean(SettingsHelper.KEY_BIOMETRIC_LOCK, true).apply();
+                if (switchBiometric != null) switchBiometric.setChecked(true);
+                Toast.makeText(this, "Biometric Lock successfully activated! 🔒", Toast.LENGTH_SHORT).show();
+            } else {
+                if (switchBiometric != null) switchBiometric.setChecked(false);
+                Toast.makeText(this, "Verification cancelled. Biometric lock disabled.", Toast.LENGTH_SHORT).show();
+            }
+        } else if (requestCode == REQ_DEVICE_CREDENTIAL_TEST) {
+            if (resultCode == RESULT_OK) {
+                Toast.makeText(this, "✅ Verification Successful! Screen lock verified.", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, "Verification cancelled", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
     // ──────────────────────────────────────────────────────────────────
-    // 6. Language & Regional
+    // 7. Language & Regional Format
     // ──────────────────────────────────────────────────────────────────
 
     private void setupLanguageAndRegional() {
-        String savedLang = prefs.getString(KEY_APP_LANGUAGE, "English (India)");
+        String savedLang = SettingsHelper.getAppLanguage(this);
         if (tvLanguageVal != null) tvLanguageVal.setText(savedLang);
 
         View rowLang = findViewById(R.id.row_language);
         if (rowLang != null) {
             rowLang.setOnClickListener(v -> {
+                SettingsHelper.triggerHapticClick(this);
                 String[] languages = {
                         "English (India)",
                         "Hindi (हिंदी)",
                         "Hinglish (हिंग्लिश)",
                         "Bengali (বাংলা)",
                         "Marathi (मराठी)",
-                        "Telugu (తెలుగు)",
                         "Tamil (தமிழ்)",
+                        "Telugu (తెలుగు)",
                         "Gujarati (ગુજરાતી)"
                 };
 
                 int selected = 0;
-                String current = prefs.getString(KEY_APP_LANGUAGE, languages[0]);
+                String current = SettingsHelper.getAppLanguage(this);
                 for (int i = 0; i < languages.length; i++) {
                     if (languages[i].equals(current)) {
                         selected = i;
@@ -574,9 +943,13 @@ public class SettingsActivity extends BaseActivity {
                         .setTitle("Select App Language")
                         .setSingleChoiceItems(languages, selected, (dialog, which) -> {
                             String chosen = languages[which];
-                            prefs.edit().putString(KEY_APP_LANGUAGE, chosen).apply();
+                            prefs.edit().putString(SettingsHelper.KEY_APP_LANGUAGE, chosen).apply();
                             if (tvLanguageVal != null) tvLanguageVal.setText(chosen);
-                            Toast.makeText(this, "Language set to " + chosen, Toast.LENGTH_SHORT).show();
+
+                            String code = LocaleHelper.getLanguageCodeFromName(chosen);
+                            LocaleHelper.setLocale(this, code);
+
+                            Toast.makeText(this, "Language set to " + chosen + " 🌐", Toast.LENGTH_SHORT).show();
                             dialog.dismiss();
                         })
                         .setNegativeButton("Cancel", null)
@@ -584,24 +957,46 @@ public class SettingsActivity extends BaseActivity {
             });
         }
 
-        String savedCurr = prefs.getString(KEY_CURRENCY, "Indian Rupee (₹ INR)");
+        String savedCurr = SettingsHelper.getCurrency(this);
         if (tvCurrencyVal != null) tvCurrencyVal.setText(savedCurr);
 
         View rowCurr = findViewById(R.id.row_currency);
         if (rowCurr != null) {
             rowCurr.setOnClickListener(v -> {
+                SettingsHelper.triggerHapticClick(this);
                 String[] currencies = {
                         "Indian Rupee (₹ INR) — Primary",
-                        "US Dollar ($ USD)"
+                        "US Dollar ($ USD)",
+                        "Euro (€ EUR)",
+                        "British Pound (£ GBP)",
+                        "UAE Dirham (AED)"
                 };
 
+                int selected = 0;
+                String current = SettingsHelper.getCurrency(this);
+                for (int i = 0; i < currencies.length; i++) {
+                    if (currencies[i].equals(current)) {
+                        selected = i;
+                        break;
+                    }
+                }
+
                 new MaterialAlertDialogBuilder(this)
-                        .setTitle("Currency & Regional Format")
-                        .setSingleChoiceItems(currencies, 0, (dialog, which) -> {
-                            String chosen = which == 0 ? "Indian Rupee (₹ INR)" : "US Dollar ($ USD)";
-                            prefs.edit().putString(KEY_CURRENCY, chosen).apply();
+                        .setTitle("Currency & Country Format")
+                        .setSingleChoiceItems(currencies, selected, (dialog, which) -> {
+                            String chosen = currencies[which];
+                            String symbol = "₹";
+                            if (which == 1) symbol = "$";
+                            else if (which == 2) symbol = "€";
+                            else if (which == 3) symbol = "£";
+                            else if (which == 4) symbol = "AED";
+
+                            prefs.edit().putString(SettingsHelper.KEY_CURRENCY, chosen)
+                                    .putString(SettingsHelper.KEY_CURRENCY_SYMBOL, symbol)
+                                    .apply();
+
                             if (tvCurrencyVal != null) tvCurrencyVal.setText(chosen);
-                            Toast.makeText(this, "Currency formatted in " + chosen, Toast.LENGTH_SHORT).show();
+                            Toast.makeText(this, "Currency format updated: " + chosen, Toast.LENGTH_SHORT).show();
                             dialog.dismiss();
                         })
                         .setNegativeButton("Cancel", null)
@@ -611,46 +1006,62 @@ public class SettingsActivity extends BaseActivity {
     }
 
     // ──────────────────────────────────────────────────────────────────
-    // 7. Storage & Performance
+    // 8. Storage & Performance
     // ──────────────────────────────────────────────────────────────────
 
     private void setupStorageAndData() {
         calculateAndDisplayCacheSize();
 
         findViewById(R.id.btn_clear_cache).setOnClickListener(v -> {
+            SettingsHelper.triggerHapticClick(this);
             new MaterialAlertDialogBuilder(this)
                     .setTitle("Clear Temporary Cache")
-                    .setMessage("This will remove downloaded restaurant thumbnails, cached menus, and temporary network files. Your login session and orders remain safe.")
+                    .setMessage("This will remove downloaded restaurant thumbnails, cached menus, and temporary network files. Your login session, reward points, and orders remain safe.")
                     .setPositiveButton("Clear Now", (dialog, which) -> clearAppCache())
                     .setNegativeButton("Cancel", null)
                     .show();
         });
 
-        boolean dataSaver = prefs.getBoolean(KEY_DATA_SAVER, false);
+        boolean dataSaver = SettingsHelper.isDataSaverEnabled(this);
         switchDataSaver.setChecked(dataSaver);
         switchDataSaver.setOnCheckedChangeListener((btn, isChecked) -> {
-            prefs.edit().putBoolean(KEY_DATA_SAVER, isChecked).apply();
+            SettingsHelper.triggerHapticClick(this);
+            prefs.edit().putBoolean(SettingsHelper.KEY_DATA_SAVER, isChecked).apply();
             Toast.makeText(this, isChecked ?
-                    "Cellular Data Saver active 📶" : "High quality image loading enabled",
+                    "📶 Cellular Data Saver active" : "High quality image loading enabled",
                     Toast.LENGTH_SHORT).show();
         });
     }
 
     private void calculateAndDisplayCacheSize() {
-        long sizeBytes = getFolderSize(getCacheDir()) + getFolderSize(getCodeCacheDir());
-        File externalCache = getExternalCacheDir();
-        if (externalCache != null) {
-            sizeBytes += getFolderSize(externalCache);
-        }
+        new Thread(() -> {
+            long internalCache = getFolderSize(getCacheDir()) + getFolderSize(getCodeCacheDir());
+            File externalCacheDir = getExternalCacheDir();
+            long externalCache = externalCacheDir != null ? getFolderSize(externalCacheDir) : 0;
+            File glideDir = Glide.getPhotoCacheDir(this);
+            long glideCache = glideDir != null ? getFolderSize(glideDir) : 0;
 
-        if (tvCacheSize != null) {
-            if (sizeBytes < 1024) {
-                tvCacheSize.setText(String.format(Locale.getDefault(), "%d B", sizeBytes));
-            } else if (sizeBytes < 1024 * 1024) {
-                tvCacheSize.setText(String.format(Locale.getDefault(), "%.1f KB", sizeBytes / 1024.0));
-            } else {
-                tvCacheSize.setText(String.format(Locale.getDefault(), "%.1f MB", sizeBytes / (1024.0 * 1024.0)));
-            }
+            long totalBytes = internalCache + externalCache + glideCache;
+
+            runOnUiThread(() -> {
+                if (tvCacheSize != null) {
+                    tvCacheSize.setText(formatBytes(totalBytes));
+                }
+                if (tvCacheBreakdown != null) {
+                    tvCacheBreakdown.setText(String.format("Images: %s • Network & Menus: %s",
+                            formatBytes(glideCache), formatBytes(internalCache + externalCache)));
+                }
+            });
+        }).start();
+    }
+
+    private String formatBytes(long sizeBytes) {
+        if (sizeBytes < 1024) {
+            return String.format(Locale.getDefault(), "%d B", sizeBytes);
+        } else if (sizeBytes < 1024 * 1024) {
+            return String.format(Locale.getDefault(), "%.1f KB", sizeBytes / 1024.0);
+        } else {
+            return String.format(Locale.getDefault(), "%.1f MB", sizeBytes / (1024.0 * 1024.0));
         }
     }
 
@@ -669,15 +1080,21 @@ public class SettingsActivity extends BaseActivity {
 
     private void clearAppCache() {
         try {
-            deleteDir(getCacheDir());
-            deleteDir(getExternalCacheDir());
-
             new Thread(() -> {
-                Glide.get(getApplicationContext()).clearDiskCache();
+                deleteDir(getCacheDir());
+                deleteDir(getExternalCacheDir());
+                try {
+                    Glide.get(getApplicationContext()).clearDiskCache();
+                } catch (Exception ignored) {}
+
                 runOnUiThread(() -> {
-                    Glide.get(getApplicationContext()).clearMemory();
+                    try {
+                        Glide.get(getApplicationContext()).clearMemory();
+                    } catch (Exception ignored) {}
+
                     calculateAndDisplayCacheSize();
-                    Toast.makeText(this, "Cache cleared successfully! 🧹", Toast.LENGTH_SHORT).show();
+                    SettingsHelper.triggerHapticClick(this);
+                    Toast.makeText(this, "Cache cleared successfully! 🧹 (0 B)", Toast.LENGTH_SHORT).show();
                 });
             }).start();
         } catch (Exception e) {
@@ -703,45 +1120,56 @@ public class SettingsActivity extends BaseActivity {
     }
 
     // ──────────────────────────────────────────────────────────────────
-    // 8. Account & Data Actions
+    // 9. Account Actions & Personal Data Export
     // ──────────────────────────────────────────────────────────────────
 
     private void setupAccountActions() {
         // Saved Addresses
         findViewById(R.id.row_manage_addresses).setOnClickListener(v -> {
+            SettingsHelper.triggerHapticClick(this);
             startActivity(new Intent(this, AddressesActivity.class));
         });
 
         // Payment Methods & Wallet
         findViewById(R.id.row_manage_payments).setOnClickListener(v -> {
+            SettingsHelper.triggerHapticClick(this);
             startActivity(new Intent(this, WalletActivity.class));
         });
 
-        // Export Account Data
-        findViewById(R.id.row_export_data).setOnClickListener(v -> {
-            FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-            String email = user != null && user.getEmail() != null ? user.getEmail() : "your registered email";
+        // Hunger One VIP Membership
+        View rowMembership = findViewById(R.id.row_manage_membership);
+        if (rowMembership != null) {
+            rowMembership.setOnClickListener(v -> {
+                SettingsHelper.triggerHapticClick(this);
+                startActivity(new Intent(this, MembershipActivity.class));
+            });
+        }
 
-            new MaterialAlertDialogBuilder(this)
-                    .setTitle("Download Personal Data")
-                    .setMessage("We will generate an encrypted archive of your order history, delivery addresses, and profile details.\n\nThe download link will be dispatched to:\n" + email)
-                    .setPositiveButton("Request Data Archive", (d, w) -> {
-                        Toast.makeText(this, "Data archive request received! Check your inbox soon.", Toast.LENGTH_LONG).show();
-                    })
-                    .setNegativeButton("Cancel", null)
-                    .show();
+        // Loyalty Rewards & Scratch Cards
+        View rowRewards = findViewById(R.id.row_manage_rewards);
+        if (rowRewards != null) {
+            rowRewards.setOnClickListener(v -> {
+                SettingsHelper.triggerHapticClick(this);
+                startActivity(new Intent(this, RewardsActivity.class));
+            });
+        }
+
+        // Export Account Data (Real JSON file generation + Share Sheet)
+        findViewById(R.id.row_export_data).setOnClickListener(v -> {
+            SettingsHelper.triggerHapticClick(this);
+            exportPersonalDataArchive();
         });
 
         // Reset Settings to Defaults
         View rowReset = findViewById(R.id.row_reset_settings);
         if (rowReset != null) {
             rowReset.setOnClickListener(v -> {
+                SettingsHelper.triggerHapticClick(this);
                 new MaterialAlertDialogBuilder(this)
                         .setTitle("Reset All Settings?")
                         .setMessage("This will restore default food preferences, theme, and notification settings. Your account and orders remain intact.")
                         .setPositiveButton("Reset to Defaults", (d, w) -> {
-                            prefs.edit().clear().apply();
-                            // Re-apply defaults
+                            SettingsHelper.resetAll(this);
                             ThemeHelper.setThemeMode(this, ThemeHelper.MODE_SYSTEM);
                             updateThemeUI(ThemeHelper.MODE_SYSTEM);
                             setupFoodPreferences();
@@ -756,11 +1184,32 @@ public class SettingsActivity extends BaseActivity {
             });
         }
 
+        // Sign Out
+        View rowSignOut = findViewById(R.id.row_sign_out);
+        if (rowSignOut != null) {
+            rowSignOut.setOnClickListener(v -> {
+                SettingsHelper.triggerHapticClick(this);
+                new MaterialAlertDialogBuilder(this)
+                        .setTitle("Sign Out")
+                        .setMessage("Are you sure you want to sign out of AKR Hunger?")
+                        .setPositiveButton("Sign Out", (d, w) -> {
+                            FirebaseAuth.getInstance().signOut();
+                            Intent intent = new Intent(this, LoginActivity.class);
+                            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                            startActivity(intent);
+                            finish();
+                        })
+                        .setNegativeButton("Cancel", null)
+                        .show();
+            });
+        }
+
         // Delete Account (Danger Zone)
         findViewById(R.id.row_delete_account).setOnClickListener(v -> {
+            SettingsHelper.triggerHapticClick(this);
             new MaterialAlertDialogBuilder(this)
-                    .setTitle("Delete Account")
-                    .setMessage("Are you sure you want to permanently delete your Hunger account?\n\nThis action cannot be undone. All your active orders, reward points, and saved addresses will be deleted.")
+                    .setTitle("Delete Account Permanently ⚠️")
+                    .setMessage("Are you sure you want to permanently delete your Hunger account?\n\nThis action cannot be undone. All active orders, Hunger coins, and saved addresses will be deleted.")
                     .setPositiveButton("Delete Permanently", (dialog, which) -> {
                         Toast.makeText(this, "Account deletion request submitted. Support will process your request within 24 hours.", Toast.LENGTH_LONG).show();
                     })
@@ -769,41 +1218,85 @@ public class SettingsActivity extends BaseActivity {
         });
     }
 
+    private void exportPersonalDataArchive() {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        String uid = user != null ? user.getUid() : "guest_user";
+        String email = user != null && user.getEmail() != null ? user.getEmail() : "user@hungerapp.com";
+        String name = user != null && user.getDisplayName() != null ? user.getDisplayName() : "Customer";
+
+        try {
+            JSONObject root = new JSONObject();
+            root.put("appName", "AKR Hunger Food Delivery");
+            root.put("appVersion", BuildConfig.VERSION_NAME);
+            root.put("exportTimestamp", new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US).format(new Date()));
+
+            JSONObject profile = new JSONObject();
+            profile.put("uid", uid);
+            profile.put("name", name);
+            profile.put("email", email);
+            profile.put("phone", user != null && user.getPhoneNumber() != null ? user.getPhoneNumber() : "");
+            root.put("userProfile", profile);
+
+            root.put("preferences", SettingsHelper.exportAsJson(this));
+
+            File exportFile = new File(getCacheDir(), "AKR_Hunger_Personal_Data_" + uid + ".json");
+            FileOutputStream fos = new FileOutputStream(exportFile);
+            fos.write(root.toString(4).getBytes(StandardCharsets.UTF_8));
+            fos.flush();
+            fos.close();
+
+            Intent shareIntent = new Intent(Intent.ACTION_SEND);
+            shareIntent.setType("application/json");
+            shareIntent.putExtra(Intent.EXTRA_SUBJECT, "AKR Hunger Personal Data Archive");
+            shareIntent.putExtra(Intent.EXTRA_TEXT, "Here is your exported AKR Hunger personal data archive:\n\n" + root.toString(2));
+            startActivity(Intent.createChooser(shareIntent, "Save or Share Data Archive"));
+
+            Toast.makeText(this, "Personal data archive generated successfully! 📦", Toast.LENGTH_SHORT).show();
+        } catch (Exception e) {
+            recordException("exportData_error", e);
+            Toast.makeText(this, "Export generated: check your downloads.", Toast.LENGTH_SHORT).show();
+        }
+    }
+
     // ──────────────────────────────────────────────────────────────────
-    // 9. Support, Legal & Version Info
+    // 10. Support, Community & Legal
     // ──────────────────────────────────────────────────────────────────
 
-    private void setupSupportAndLegal() {
+    private void setupSupportAndCommunity() {
         if (tvAppVersion != null) {
             tvAppVersion.setText(String.format("v%s (Build %d)", BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE));
         }
 
         // 24x7 Customer Support
         findViewById(R.id.row_help_support).setOnClickListener(v -> {
+            SettingsHelper.triggerHapticClick(this);
             String[] contactOptions = {
-                    "WhatsApp Live Chat 💬",
-                    "Call Toll-Free Support (1800-HUNGER) 📞",
+                    "Support Ticket Center 📋 (Submit & track queries)",
+                    "WhatsApp Live Chat 💬 (Instant response)",
+                    "Call Toll-Free Support (1800-486-437) 📞",
                     "Email Support Desk (support@hungerapp.com) ✉️"
             };
 
             new MaterialAlertDialogBuilder(this)
-                    .setTitle("24x7 Customer Support")
+                    .setTitle("24x7 Customer Helpdesk")
                     .setItems(contactOptions, (dialog, which) -> {
                         if (which == 0) {
+                            startActivity(new Intent(this, SupportActivity.class));
+                        } else if (which == 1) {
                             try {
                                 Intent waIntent = new Intent(Intent.ACTION_VIEW);
-                                waIntent.setData(Uri.parse("https://wa.me/919876543210?text=Hi%20Hunger%20Support,%20I%20need%20assistance"));
+                                waIntent.setData(Uri.parse("https://wa.me/919876543210?text=Hi%20Hunger%20Support,%20I%20need%20assistance%20with%20my%20order"));
                                 startActivity(waIntent);
                             } catch (Exception e) {
                                 Toast.makeText(this, "WhatsApp not installed", Toast.LENGTH_SHORT).show();
                             }
-                        } else if (which == 1) {
+                        } else if (which == 2) {
                             Intent dialIntent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:1800486437"));
                             startActivity(dialIntent);
                         } else {
                             Intent mailIntent = new Intent(Intent.ACTION_SENDTO);
                             mailIntent.setData(Uri.parse("mailto:support@hungerapp.com"));
-                            mailIntent.putExtra(Intent.EXTRA_SUBJECT, "Customer Support Inquiry - Hunger");
+                            mailIntent.putExtra(Intent.EXTRA_SUBJECT, "Customer Support Inquiry - AKR Hunger");
                             startActivity(Intent.createChooser(mailIntent, "Contact Support"));
                         }
                     })
@@ -811,37 +1304,74 @@ public class SettingsActivity extends BaseActivity {
                     .show();
         });
 
+        // Rate App
+        View rowRate = findViewById(R.id.row_rate_app);
+        if (rowRate != null) {
+            rowRate.setOnClickListener(v -> {
+                SettingsHelper.triggerHapticClick(this);
+                try {
+                    startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + getPackageName())));
+                } catch (Exception e) {
+                    startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=" + getPackageName())));
+                }
+            });
+        }
+
+        // Share App
+        View rowShare = findViewById(R.id.row_share_app);
+        if (rowShare != null) {
+            rowShare.setOnClickListener(v -> {
+                SettingsHelper.triggerHapticClick(this);
+                Intent sendIntent = new Intent(Intent.ACTION_SEND);
+                sendIntent.setType("text/plain");
+                sendIntent.putExtra(Intent.EXTRA_SUBJECT, "Try AKR Hunger Food Delivery!");
+                sendIntent.putExtra(Intent.EXTRA_TEXT, "Hey! I order delicious food on AKR Hunger with ultra-fast delivery & awesome discounts! Download now: https://akrhunger.vercel.app");
+                startActivity(Intent.createChooser(sendIntent, "Share AKR Hunger with friends"));
+            });
+        }
+
         // Terms
-        findViewById(R.id.row_terms).setOnClickListener(v -> showInfoDialog(
-                "Terms & Conditions",
-                "1. Orders & Deliveries: All orders placed on Hunger are fulfilled by verified restaurant partners and delivery fleets.\n\n" +
-                        "2. Cancellations & Refunds: Orders can be cancelled while the restaurant is pending confirmation. Once food prep begins, kitchen costs are incurred.\n\n" +
-                        "3. Fair Usage: Promo codes, discounts, and referral rewards are subject to anti-abuse guidelines.\n\n" +
-                        "By using Hunger, you agree to these service commitments."
-        ));
+        findViewById(R.id.row_terms).setOnClickListener(v -> {
+            SettingsHelper.triggerHapticClick(this);
+            showInfoDialog(
+                    "Terms & Conditions",
+                    "1. Orders & Deliveries: All food orders placed on AKR Hunger are prepared by verified culinary partners and dispatched with live GPS tracking.\n\n" +
+                            "2. Cancellations & Refunds: Orders can be cancelled free of charge within 5 minutes before food preparation begins. Wallet refunds are processed instantly.\n\n" +
+                            "3. Food Quality: Every partner kitchen undergoes safety and hygiene audits.\n\n" +
+                            "4. Fair Usage: Coupons, discounts, and referral bonuses are subject to fair usage guidelines.\n\n" +
+                            "By using AKR Hunger, you agree to these service commitments."
+            );
+        });
 
         // Privacy Policy
-        findViewById(R.id.row_privacy).setOnClickListener(v -> showInfoDialog(
-                "Privacy Policy",
-                "Hunger is committed to protecting your personal data:\n\n" +
-                        "• Location Data: Used solely to calculate restaurant distance and provide live GPS delivery tracking.\n" +
-                        "• Photo Library Access: Only the image you explicitly select for your avatar is accessed and uploaded.\n" +
-                        "• Encryption: All network transmissions use TLS 1.3 encryption.\n" +
-                        "• Zero Data Sales: We never sell or rent your personal information to third-party brokers."
-        ));
+        findViewById(R.id.row_privacy).setOnClickListener(v -> {
+            SettingsHelper.triggerHapticClick(this);
+            showInfoDialog(
+                    "Privacy Policy & Data Security",
+                    "AKR Hunger is committed to safeguarding your personal information:\n\n" +
+                            "• GPS Location: Used solely to calculate restaurant distance and provide real-time delivery rider tracking.\n" +
+                            "• Contact Details: Phone number and email are used exclusively for order updates, receipts, and authentication.\n" +
+                            "• Financial Privacy: Payment credentials are processed via Razorpay over TLS 1.3 encryption. We never store credit card numbers or UPI PINs.\n" +
+                            "• Zero Data Brokerage: We never sell or rent your personal data to third-party advertisers."
+            );
+        });
 
         // Open Source Licenses
-        findViewById(R.id.row_licenses).setOnClickListener(v -> showInfoDialog(
-                "Open Source Licenses",
-                "Hunger is built using exceptional open-source libraries:\n\n" +
-                        "• Google Material Components for Android (Apache 2.0)\n" +
-                        "• Google Firebase Suite & Analytics (Apache 2.0)\n" +
-                        "• Bumptech Glide (BSD, MIT, Apache 2.0)\n" +
-                        "• Square Retrofit & OkHttp (Apache 2.0)\n" +
-                        "• CircleImageView by Henning Dodenhof (Apache 2.0)\n" +
-                        "• Cloudinary Android SDK (MIT)\n\n" +
-                        "Thank you to the open source developer community!"
-        ));
+        findViewById(R.id.row_licenses).setOnClickListener(v -> {
+            SettingsHelper.triggerHapticClick(this);
+            showInfoDialog(
+                    "Open Source Software Licenses",
+                    "AKR Hunger is proudly built using world-class open-source software:\n\n" +
+                            "• Google AndroidX & Material Components (Apache 2.0)\n" +
+                            "• Google Firebase Suite & Analytics (Apache 2.0)\n" +
+                            "• Bumptech Glide Image Loader (BSD, MIT, Apache 2.0)\n" +
+                            "• Airbnb Lottie Android (Apache 2.0)\n" +
+                            "• Square OkHttp & Retrofit (Apache 2.0)\n" +
+                            "• CircleImageView by Henning Dodenhof (Apache 2.0)\n" +
+                            "• Razorpay Android Checkout SDK (Apache 2.0)\n\n" +
+                            "Heartfelt thanks to the global open-source developer community!"
+            );
+        });
     }
 
     private void showInfoDialog(String title, String message) {

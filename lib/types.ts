@@ -308,6 +308,9 @@ export interface Order {
   deliveryOtp?: string; // OTP for delivery verification
   returnOtp?: string; // OTP for restaurant return drop verification
   deliveryEarnings?: number; // Exact earnings credited to driver (80% of delivery fee)
+  earnings?: number; // Driver delivery earnings
+  tip?: number; // Customer tip to driver (100% to driver)
+  tipAmount?: number;
   cancellationCompensation?: number; // ₹20 travel compensation on customer cancelled return
   cancellationReason?: string;
   // Professional delivery flow (stage-based)
@@ -366,10 +369,100 @@ export interface DeliveryPerson {
     holderName: string;
     accountNumber: string;
     ifscCode: string;
+    upiId?: string;
   };
-  walletBalance?: number; // Positive = Debt (Cash in Hand), Negative = Earnings
+  walletBalance?: number; // Net settlement balance (Available Earnings - COD Outstanding)
+  availableEarnings?: number; // Amount eligible for withdrawal
+  pendingEarnings?: number; // Earnings under review/verification
+  totalEarnings?: number; // Lifetime gross earnings
+  deliveryEarnings?: number; // 80% delivery fee share
+  tips?: number; // 100% customer tips
+  incentives?: number; // Milestones / peak-hour incentives
+  cancellationCompensation?: number; // Cancelled order compensation
+  codCollected?: number; // Total COD cash physically collected
+  codDeposited?: number; // Total verified COD cash deposited
+  codOutstanding?: number; // codCollected - codDeposited
+  codLimit?: number; // Configured cash limit (default ₹3,000)
+  codBlocked?: boolean; // Blocked from receiving new COD orders when outstanding >= limit
+  withdrawnAmount?: number; // Total amount already withdrawn
+  lastWithdrawalAt?: any;
+  lastSettlementAt?: any;
   servicePincodes?: string[];
   pincodeFilterActive?: boolean;
+}
+
+export type WalletTransactionType =
+  | 'PREPAID_DELIVERY_EARNING'
+  | 'COD_DELIVERY_EARNING'
+  | 'CUSTOMER_TIP'
+  | 'INCENTIVE'
+  | 'BONUS'
+  | 'CANCELLATION_COMPENSATION'
+  | 'REFUND_ADJUSTMENT'
+  | 'WITHDRAWAL'
+  | 'ADMIN_ADJUSTMENT'
+  | 'COD_SETTLEMENT'
+  | 'REVERSAL'
+  | 'deposit'
+  | 'payment'
+  | 'earnings'
+  | 'cod_collection';
+
+export interface RiderWalletTransaction {
+  id?: string;
+  transactionId: string;
+  riderId: string;
+  orderId?: string;
+  type: WalletTransactionType;
+  amount: number;
+  direction: 'CREDIT' | 'DEBIT';
+  balanceBefore?: number;
+  balanceAfter?: number;
+  status: 'COMPLETED' | 'PENDING' | 'FAILED' | 'REVERSED';
+  createdAt: any;
+  description: string;
+  isDebit?: boolean;
+  metadata?: Record<string, any>;
+}
+
+export interface WithdrawalRequest {
+  id: string;
+  withdrawalId: string;
+  riderId: string;
+  riderName?: string;
+  amount: number;
+  paymentMethod: 'bank' | 'upi';
+  destinationReference: string;
+  requestedAt: any;
+  processedAt?: any;
+  status: 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
+  failureReason?: string;
+  adminReference?: string;
+}
+
+export interface CodSettlementRequest {
+  id: string;
+  settlementId: string;
+  riderId: string;
+  riderName?: string;
+  amount: number;
+  paymentMethod: string;
+  transactionReference: string;
+  status: 'PENDING' | 'UNDER_REVIEW' | 'VERIFIED' | 'FAILED';
+  requestedAt: any;
+  verifiedAt?: any;
+  verifiedBy?: string;
+  rejectionReason?: string;
+}
+
+export interface RiderEarningSettings {
+  deliveryChargeRiderShare: number; // default: 80%
+  platformShare: number; // default: 20%
+  defaultCodLimit: number; // default: 3000
+  allowPrepaidWhenCodBlocked: boolean; // default: true
+  minWithdrawal: number; // default: 100
+  maxDailyWithdrawal: number; // default: 5000
+  withdrawalProcessingFee: number; // default: 0
 }
 
 // Alias for admin panel

@@ -5,33 +5,68 @@ import * as maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { getRoute, RouteCoordinate } from '@/lib/osrm';
 
-// Dark map style using free CartoCDN dark matter tiles
-const MAP_STYLE: maplibregl.StyleSpecification = {
-  version: 8,
-  name: 'Dark',
-  sources: {
-    osm: {
-      type: 'raster',
-      tiles: [
-        'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
-        'https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
-        'https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
+export type MapTheme = 'dark' | 'streets' | 'satellite';
+
+// 100% Free, Reliable OpenStreetMap & ESRI Tile Styles (Zero API Key Needed, No Watermarks)
+const OSM_TILES = [
+  'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png',
+  'https://b.tile.openstreetmap.org/{z}/{x}/{y}.png',
+  'https://c.tile.openstreetmap.org/{z}/{x}/{y}.png',
+];
+
+const SATELLITE_TILES = [
+  'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+];
+
+function buildMapStyle(theme: MapTheme): maplibregl.StyleSpecification {
+  if (theme === 'satellite') {
+    return {
+      version: 8,
+      name: 'Satellite',
+      sources: {
+        satellite: {
+          type: 'raster',
+          tiles: SATELLITE_TILES,
+          tileSize: 256,
+          attribution: '&copy; Esri, Maxar, Earthstar Geographics',
+          maxzoom: 19,
+        },
+      },
+      layers: [
+        {
+          id: 'satellite-tiles',
+          type: 'raster',
+          source: 'satellite',
+          minzoom: 0,
+          maxzoom: 19,
+        },
       ],
-      tileSize: 256,
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
-      maxzoom: 19,
+    };
+  }
+
+  return {
+    version: 8,
+    name: 'OpenStreetMap',
+    sources: {
+      osm: {
+        type: 'raster',
+        tiles: OSM_TILES,
+        tileSize: 256,
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        maxzoom: 19,
+      },
     },
-  },
-  layers: [
-    {
-      id: 'osm-tiles',
-      type: 'raster',
-      source: 'osm',
-      minzoom: 0,
-      maxzoom: 19,
-    },
-  ],
-};
+    layers: [
+      {
+        id: 'osm-tiles',
+        type: 'raster',
+        source: 'osm',
+        minzoom: 0,
+        maxzoom: 19,
+      },
+    ],
+  };
+}
 
 export interface MapMarker {
   id: string;
@@ -44,41 +79,28 @@ export interface MapMarker {
 }
 
 interface LiveTrackingMapProps {
-  /** Array of markers to display */
   markers: MapMarker[];
-  /** Whether to show route between first restaurant and first customer via driver */
   showRoute?: boolean;
-  /** Driver position for route origin */
   driverPosition?: { latitude: number; longitude: number } | null;
-  /** Restaurant position */
   restaurantPosition?: { latitude: number; longitude: number } | null;
-  /** Customer position */
   customerPosition?: { latitude: number; longitude: number } | null;
-  /** Explicit route destination: 'restaurant' = Driver→Restaurant, 'customer' = Driver→Customer, 'auto' = auto-detect */
   routeDestination?: 'restaurant' | 'customer' | 'auto';
-  /** Whether to auto-follow the driver marker */
   followDriver?: boolean;
-  /** Custom CSS class */
   className?: string;
-  /** Map height */
   height?: string;
-  /** Route info callback */
   onRouteInfo?: (info: { distance: string; eta: string; distanceMeters: number; durationSeconds: number } | null) => void;
-  /** Center coordinates override */
   center?: [number, number];
-  /** Zoom level override */
   zoom?: number;
-  /** Click on marker callback */
   onMarkerClick?: (markerId: string) => void;
 }
 
-// Create marker HTML element
+// Create custom animated marker element
 function createMarkerElement(type: MapMarker['type'], heading?: number): HTMLDivElement {
   const el = document.createElement('div');
   el.className = 'custom-marker';
 
-  const size = type === 'driver' ? 44 : 36;
-  const innerSize = type === 'driver' ? 28 : 22;
+  const size = type === 'driver' ? 44 : 38;
+  const innerSize = type === 'driver' ? 28 : 24;
 
   el.style.width = `${size}px`;
   el.style.height = `${size}px`;
@@ -96,33 +118,33 @@ function createMarkerElement(type: MapMarker['type'], heading?: number): HTMLDiv
 
   switch (type) {
     case 'driver':
-      bgColor = 'rgba(59, 130, 246, 0.2)';
-      borderColor = 'rgba(59, 130, 246, 0.8)';
+      bgColor = 'rgba(59, 130, 246, 0.25)';
+      borderColor = '#3b82f6';
       emoji = '🛵';
-      glowColor = 'rgba(59, 130, 246, 0.4)';
+      glowColor = 'rgba(59, 130, 246, 0.6)';
       break;
     case 'restaurant':
-      bgColor = 'rgba(249, 115, 22, 0.2)';
-      borderColor = 'rgba(249, 115, 22, 0.8)';
+      bgColor = 'rgba(249, 115, 22, 0.25)';
+      borderColor = '#f97316';
       emoji = '🍔';
-      glowColor = 'rgba(249, 115, 22, 0.3)';
+      glowColor = 'rgba(249, 115, 22, 0.5)';
       break;
     case 'customer':
-      bgColor = 'rgba(34, 197, 94, 0.2)';
-      borderColor = 'rgba(34, 197, 94, 0.8)';
+      bgColor = 'rgba(34, 197, 94, 0.25)';
+      borderColor = '#22c55e';
       emoji = '🏠';
-      glowColor = 'rgba(34, 197, 94, 0.3)';
+      glowColor = 'rgba(34, 197, 94, 0.5)';
       break;
     default:
-      bgColor = 'rgba(168, 85, 247, 0.2)';
-      borderColor = 'rgba(168, 85, 247, 0.8)';
+      bgColor = 'rgba(168, 85, 247, 0.25)';
+      borderColor = '#a855f7';
       emoji = '📍';
-      glowColor = 'rgba(168, 85, 247, 0.3)';
+      glowColor = 'rgba(168, 85, 247, 0.5)';
   }
 
   el.style.backgroundColor = bgColor;
-  el.style.border = `2px solid ${borderColor}`;
-  el.style.boxShadow = `0 0 15px ${glowColor}, 0 0 30px ${glowColor}`;
+  el.style.border = `2.5px solid ${borderColor}`;
+  el.style.boxShadow = `0 0 14px ${glowColor}, 0 2px 6px rgba(0,0,0,0.3)`;
 
   if (type === 'driver' && heading !== undefined && heading > 0) {
     el.style.transform = `rotate(${heading}deg)`;
@@ -134,10 +156,9 @@ function createMarkerElement(type: MapMarker['type'], heading?: number): HTMLDiv
   inner.textContent = emoji;
 
   if (type === 'driver') {
-    // Add pulse animation for driver
     const pulse = document.createElement('div');
     pulse.style.position = 'absolute';
-    pulse.style.inset = '-4px';
+    pulse.style.inset = '-6px';
     pulse.style.borderRadius = '50%';
     pulse.style.border = `2px solid ${borderColor}`;
     pulse.style.animation = 'marker-pulse 2s ease-out infinite';
@@ -170,77 +191,105 @@ export default function LiveTrackingMap({
   const markersRef = useRef<Map<string, maplibregl.Marker>>(new Map());
   const routeSourceAdded = useRef(false);
   const [mapLoaded, setMapLoaded] = useState(false);
+  const [currentTheme, setCurrentTheme] = useState<MapTheme>('dark');
+  const resizeObserverRef = useRef<ResizeObserver | null>(null);
 
-  // Initialize map
+  // Setup layers on map load or style change
+  const setupLayers = useCallback((map: maplibregl.Map) => {
+    if (map.getSource('route')) return;
+
+    map.addSource('route', {
+      type: 'geojson',
+      data: {
+        type: 'Feature',
+        properties: {},
+        geometry: { type: 'LineString', coordinates: [] },
+      },
+    });
+
+    map.addLayer({
+      id: 'route-glow',
+      type: 'line',
+      source: 'route',
+      layout: { 'line-join': 'round', 'line-cap': 'round' },
+      paint: {
+        'line-color': '#3b82f6',
+        'line-width': 8,
+        'line-opacity': 0.35,
+        'line-blur': 3,
+      },
+    });
+
+    map.addLayer({
+      id: 'route-line',
+      type: 'line',
+      source: 'route',
+      layout: { 'line-join': 'round', 'line-cap': 'round' },
+      paint: {
+        'line-color': '#3b82f6',
+        'line-width': 4,
+        'line-opacity': 0.95,
+        'line-dasharray': [2, 1],
+      },
+    });
+
+    routeSourceAdded.current = true;
+  }, []);
+
+  // Initialize MapLibre
   useEffect(() => {
     if (!mapContainer.current || mapRef.current) return;
 
-    // Determine initial center
     const initialCenter = center || (() => {
       const firstMarker = markers[0];
       if (firstMarker) return [firstMarker.longitude, firstMarker.latitude] as [number, number];
       if (driverPosition) return [driverPosition.longitude, driverPosition.latitude] as [number, number];
-      return [80.9462, 26.8467] as [number, number]; // Default: Lucknow
+      return [80.9462, 26.8467] as [number, number]; // Default
     })();
 
     const map = new maplibregl.Map({
       container: mapContainer.current,
-      style: MAP_STYLE,
+      style: buildMapStyle(currentTheme),
       center: initialCenter,
       zoom: zoom,
       attributionControl: false,
     });
 
-    map.addControl(new maplibregl.NavigationControl(), 'top-right');
+    map.addControl(new maplibregl.NavigationControl({ showCompass: true }), 'top-right');
     map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-right');
 
     map.on('load', () => {
       setMapLoaded(true);
-
-      // Add route source
-      map.addSource('route', {
-        type: 'geojson',
-        data: {
-          type: 'Feature',
-          properties: {},
-          geometry: { type: 'LineString', coordinates: [] },
-        },
-      });
-
-      // Route glow layer
-      map.addLayer({
-        id: 'route-glow',
-        type: 'line',
-        source: 'route',
-        layout: { 'line-join': 'round', 'line-cap': 'round' },
-        paint: {
-          'line-color': '#3b82f6',
-          'line-width': 8,
-          'line-opacity': 0.3,
-          'line-blur': 3,
-        },
-      });
-
-      // Route line layer
-      map.addLayer({
-        id: 'route-line',
-        type: 'line',
-        source: 'route',
-        layout: { 'line-join': 'round', 'line-cap': 'round' },
-        paint: {
-          'line-color': '#3b82f6',
-          'line-width': 4,
-          'line-opacity': 0.9,
-          'line-dasharray': [2, 1],
-        },
-      });
-
-      routeSourceAdded.current = true;
+      setupLayers(map);
+      // Auto-resize immediately and with staggered delays for full container coverage
+      map.resize();
+      setTimeout(() => map.resize(), 80);
+      setTimeout(() => map.resize(), 300);
+      setTimeout(() => map.resize(), 700);
     });
 
     mapRef.current = map;
 
+    // Attach ResizeObserver to keep canvas sized accurately at all times
+    if (typeof ResizeObserver !== 'undefined' && mapContainer.current) {
+      resizeObserverRef.current = new ResizeObserver(() => {
+        if (mapRef.current) {
+          mapRef.current.resize();
+        }
+      });
+      resizeObserverRef.current.observe(mapContainer.current);
+    }
+
+    const handleWindowResize = () => {
+      mapRef.current?.resize();
+    };
+    window.addEventListener('resize', handleWindowResize);
+
     return () => {
+      window.removeEventListener('resize', handleWindowResize);
+      if (resizeObserverRef.current) {
+        resizeObserverRef.current.disconnect();
+      }
       markersRef.current.forEach((m) => m.remove());
       markersRef.current.clear();
       map.remove();
@@ -248,15 +297,28 @@ export default function LiveTrackingMap({
       routeSourceAdded.current = false;
       setMapLoaded(false);
     };
-  }, []); // Only initialize once
+  }, []);
 
-  // Update markers when they change
+  // Switch Theme
+  const changeTheme = useCallback((newTheme: MapTheme) => {
+    setCurrentTheme(newTheme);
+    if (!mapRef.current) return;
+
+    mapRef.current.setStyle(buildMapStyle(newTheme));
+    mapRef.current.once('style.load', () => {
+      if (mapRef.current) {
+        setupLayers(mapRef.current);
+        mapRef.current.resize();
+      }
+    });
+  }, [setupLayers]);
+
+  // Update markers
   useEffect(() => {
     if (!mapRef.current || !mapLoaded) return;
 
     const currentMarkerIds = new Set(markers.map((m) => m.id));
 
-    // Remove markers no longer in the list
     markersRef.current.forEach((marker, id) => {
       if (!currentMarkerIds.has(id)) {
         marker.remove();
@@ -264,22 +326,16 @@ export default function LiveTrackingMap({
       }
     });
 
-    // Add or update markers
     markers.forEach((m) => {
       const existing = markersRef.current.get(m.id);
       if (existing) {
-        // Update position with smooth transition
         existing.setLngLat([m.longitude, m.latitude]);
-
-        // Update rotation for driver
         if (m.type === 'driver' && m.heading !== undefined && m.heading > 0) {
           const el = existing.getElement();
           el.style.transform = `rotate(${m.heading}deg)`;
         }
       } else {
-        // Create new marker
         const el = createMarkerElement(m.type, m.heading);
-
         if (onMarkerClick) {
           el.addEventListener('click', () => onMarkerClick(m.id));
         }
@@ -290,7 +346,7 @@ export default function LiveTrackingMap({
         if (m.popup) {
           marker.setPopup(
             new maplibregl.Popup({ offset: 25, className: 'dark-popup' })
-              .setHTML(`<div style="background:#1a1a2e;color:white;padding:8px 12px;border-radius:8px;font-size:13px;font-family:system-ui;">${m.popup}</div>`)
+              .setHTML(`<div style="background:#111827;color:#f9fafb;padding:8px 12px;border-radius:10px;font-size:12.5px;font-family:system-ui;border:1px solid #374151;">${m.popup}</div>`)
           );
         }
 
@@ -310,32 +366,28 @@ export default function LiveTrackingMap({
     });
   }, [driverPosition?.latitude, driverPosition?.longitude, followDriver, mapLoaded]);
 
-  // Update route — stage-aware routing
+  // Update Route
   useEffect(() => {
-    if (!mapRef.current || !mapLoaded || !routeSourceAdded.current || !showRoute) return;
+    if (!mapRef.current || !mapLoaded || !showRoute) return;
 
     const calculateRoute = async () => {
       let from: RouteCoordinate | null = null;
       let to: RouteCoordinate | null = null;
-      let routeColor = '#3b82f6'; // default blue
+      let routeColor = '#3b82f6';
 
-      // Stage-aware route destination
       if (routeDestination === 'restaurant') {
-        // Driver → Restaurant (pickup phase)
         if (driverPosition && restaurantPosition) {
           from = { latitude: driverPosition.latitude, longitude: driverPosition.longitude };
           to = { latitude: restaurantPosition.latitude, longitude: restaurantPosition.longitude };
-          routeColor = '#f97316'; // orange for pickup
+          routeColor = '#f97316';
         }
       } else if (routeDestination === 'customer') {
-        // Driver → Customer (delivery phase)
         if (driverPosition && customerPosition) {
           from = { latitude: driverPosition.latitude, longitude: driverPosition.longitude };
           to = { latitude: customerPosition.latitude, longitude: customerPosition.longitude };
-          routeColor = '#3b82f6'; // blue for delivery
+          routeColor = '#3b82f6';
         }
       } else {
-        // Auto-detect (backward compat)
         if (driverPosition && restaurantPosition && !customerPosition) {
           from = { latitude: driverPosition.latitude, longitude: driverPosition.longitude };
           to = { latitude: restaurantPosition.latitude, longitude: restaurantPosition.longitude };
@@ -355,7 +407,6 @@ export default function LiveTrackingMap({
         return;
       }
 
-      // Update route line color based on phase
       try {
         if (mapRef.current?.getLayer('route-glow')) {
           mapRef.current.setPaintProperty('route-glow', 'line-color', routeColor);
@@ -363,12 +414,11 @@ export default function LiveTrackingMap({
         if (mapRef.current?.getLayer('route-line')) {
           mapRef.current.setPaintProperty('route-line', 'line-color', routeColor);
         }
-      } catch (_) { /* layer may not exist yet */ }
+      } catch (_) { }
 
       const route = await getRoute(from, to);
       if (!route || !mapRef.current) return;
 
-      // Update route on map
       const source = mapRef.current.getSource('route') as maplibregl.GeoJSONSource;
       if (source) {
         source.setData({
@@ -399,45 +449,115 @@ export default function LiveTrackingMap({
     showRoute, mapLoaded, onRouteInfo, routeDestination,
   ]);
 
-  // Fit bounds to show all markers
+  // Fit bounds dynamically with safe padding check
   const fitBounds = useCallback(() => {
     if (!mapRef.current || markers.length === 0) return;
 
+    mapRef.current.resize();
+
     const bounds = new maplibregl.LngLatBounds();
     markers.forEach((m) => bounds.extend([m.longitude, m.latitude]));
+
+    const containerHeight = mapContainer.current?.clientHeight || 400;
+    const containerWidth = mapContainer.current?.clientWidth || 400;
+    const padTop = Math.min(50, Math.floor(containerHeight * 0.12));
+    const padSide = Math.min(50, Math.floor(containerWidth * 0.12));
 
     if (markers.length === 1) {
       mapRef.current.flyTo({
         center: [markers[0].longitude, markers[0].latitude],
         zoom: 15,
-        duration: 1000,
+        duration: 900,
       });
     } else {
       mapRef.current.fitBounds(bounds, {
-        padding: { top: 80, bottom: 80, left: 60, right: 60 },
+        padding: { top: padTop, bottom: padTop, left: padSide, right: padSide },
         maxZoom: 16,
-        duration: 1000,
+        duration: 900,
       });
     }
   }, [markers]);
 
-  // Fit bounds when markers first load
   useEffect(() => {
     if (mapLoaded && markers.length > 0) {
-      const timer = setTimeout(fitBounds, 500);
+      const timer = setTimeout(fitBounds, 400);
       return () => clearTimeout(timer);
     }
   }, [mapLoaded, markers.length > 0]);
 
   return (
-    <div className={`relative ${className}`} style={{ height }}>
-      <div ref={mapContainer} className="absolute inset-0 rounded-2xl overflow-hidden" />
+    <div
+      className={`relative w-full h-full min-h-[380px] overflow-hidden rounded-2xl ${className} ${currentTheme === 'dark' ? 'dark-canvas-filter' : ''}`}
+      style={{ height }}
+    >
+      <div
+        ref={mapContainer}
+        className="w-full h-full min-h-[380px] absolute inset-0 rounded-2xl overflow-hidden"
+      />
 
-      {/* Pulse animation style */}
+      {/* Map Control Bar: Recenter + Style Switcher */}
+      <div className="absolute top-3 left-3 z-10 flex items-center gap-2">
+        <button
+          type="button"
+          onClick={fitBounds}
+          className="bg-black/75 hover:bg-black/90 backdrop-blur-md border border-white/15 text-white px-3 py-1.5 rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-1.5 cursor-pointer"
+          title="Fit all markers in view"
+        >
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <circle cx="12" cy="12" r="3" />
+            <path d="M12 2v4m0 12v4M2 12h4m12 0h4" />
+          </svg>
+          Recenter
+        </button>
+
+        {/* Theme Pills */}
+        <div className="bg-black/75 backdrop-blur-md border border-white/15 rounded-xl p-0.5 flex items-center gap-0.5 shadow-md">
+          <button
+            type="button"
+            onClick={() => changeTheme('dark')}
+            className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all ${currentTheme === 'dark'
+              ? 'bg-blue-600 text-white shadow-xs'
+              : 'text-gray-300 hover:text-white'
+              }`}
+          >
+            🌙 Dark
+          </button>
+          <button
+            type="button"
+            onClick={() => changeTheme('streets')}
+            className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all ${currentTheme === 'streets'
+              ? 'bg-blue-600 text-white shadow-xs'
+              : 'text-gray-300 hover:text-white'
+              }`}
+          >
+            🗺️ Street
+          </button>
+          <button
+            type="button"
+            onClick={() => changeTheme('satellite')}
+            className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all ${currentTheme === 'satellite'
+              ? 'bg-blue-600 text-white shadow-xs'
+              : 'text-gray-300 hover:text-white'
+              }`}
+          >
+            🛰️ Sat
+          </button>
+        </div>
+      </div>
+
+      {/* Global Map Styles & High-Contrast Dark Filter */}
       <style jsx global>{`
         @keyframes marker-pulse {
-          0% { transform: scale(1); opacity: 0.5; }
-          100% { transform: scale(2.5); opacity: 0; }
+          0% { transform: scale(1); opacity: 0.6; }
+          100% { transform: scale(2.6); opacity: 0; }
+        }
+        .dark-canvas-filter .maplibregl-canvas {
+          filter: invert(90%) hue-rotate(180deg) brightness(95%) contrast(90%);
+        }
+        .maplibregl-canvas {
+          width: 100% !important;
+          height: 100% !important;
+          outline: none;
         }
         .maplibregl-popup-content {
           background: transparent !important;
@@ -445,38 +565,27 @@ export default function LiveTrackingMap({
           padding: 0 !important;
         }
         .maplibregl-popup-tip {
-          border-top-color: #1a1a2e !important;
+          border-top-color: #111827 !important;
         }
         .maplibregl-ctrl-group {
-          background: rgba(0, 0, 0, 0.7) !important;
-          border: 1px solid rgba(255, 255, 255, 0.1) !important;
+          background: rgba(17, 24, 39, 0.85) !important;
+          border: 1px solid rgba(255, 255, 255, 0.15) !important;
           backdrop-filter: blur(10px);
+          border-radius: 12px !important;
+          overflow: hidden;
         }
         .maplibregl-ctrl-group button {
           filter: invert(1);
+          width: 32px !important;
+          height: 32px !important;
         }
         .maplibregl-ctrl-attrib {
           background: rgba(0, 0, 0, 0.5) !important;
           color: rgba(255, 255, 255, 0.5) !important;
           font-size: 10px !important;
-        }
-        .maplibregl-ctrl-attrib a {
-          color: rgba(255, 255, 255, 0.6) !important;
+          border-radius: 6px;
         }
       `}</style>
-
-      {/* Recenter button */}
-      <button
-        onClick={fitBounds}
-        className="absolute top-3 left-3 z-10 bg-black/60 backdrop-blur-md border border-white/10 text-white px-3 py-2 rounded-xl text-xs font-bold hover:bg-black/80 transition-all flex items-center gap-2"
-        title="Fit all markers"
-      >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <circle cx="12" cy="12" r="3" />
-          <path d="M12 2v4m0 12v4M2 12h4m12 0h4" />
-        </svg>
-        Recenter
-      </button>
     </div>
   );
 }

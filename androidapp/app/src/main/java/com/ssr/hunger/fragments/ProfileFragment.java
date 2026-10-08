@@ -21,6 +21,10 @@ import com.ssr.hunger.activities.RewardsActivity;
 import com.ssr.hunger.activities.SettingsActivity;
 import com.ssr.hunger.activities.SupportActivity;
 import com.ssr.hunger.activities.WalletActivity;
+import com.ssr.hunger.activities.StudentModeActivity;
+import com.ssr.hunger.activities.SubscriptionActivity;
+import com.ssr.hunger.activities.GroupOrderActivity;
+import com.ssr.hunger.activities.DeliveryPartnerDashboardActivity;
 import com.ssr.hunger.utils.Constants;
 import com.bumptech.glide.Glide;
 import com.google.firebase.auth.FirebaseAuth;
@@ -108,10 +112,14 @@ public class ProfileFragment extends Fragment {
         safeClick(view, R.id.card_addresses, () -> nav(AddressesActivity.class));
         safeClick(view, R.id.card_rewards, () -> nav(RewardsActivity.class));
         safeClick(view, R.id.card_membership, () -> nav(MembershipActivity.class));
-        safeClick(view, R.id.card_deals, () -> nav(DealsActivity.class));
         safeClick(view, R.id.card_referral, () -> nav(ReferralActivity.class));
 
-        // --- Logout ---
+        // --- Next-Gen Hunger Features ---
+        safeClick(view, R.id.card_student_mode, () -> nav(StudentModeActivity.class));
+        safeClick(view, R.id.card_subscriptions, () -> nav(SubscriptionActivity.class));
+        safeClick(view, R.id.card_group_order, () -> nav(GroupOrderActivity.class));
+        safeClick(view, R.id.card_delivery_dashboard, () -> nav(DeliveryPartnerDashboardActivity.class));
+
         safeClick(view, R.id.btn_logout, () ->
                 new com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
                         .setTitle("Logout")

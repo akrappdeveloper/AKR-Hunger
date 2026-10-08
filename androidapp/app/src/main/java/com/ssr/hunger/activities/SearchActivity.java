@@ -104,6 +104,10 @@ public class SearchActivity extends BaseActivity {
         setupVoiceSearchListeners();
         setupFilterChipListeners();
 
+        if (com.ssr.hunger.utils.SettingsHelper.isVegOnly(this) && chipFilterVeg != null) {
+            chipFilterVeg.setChecked(true);
+        }
+
         // Check if opened with explicit voice search intent
         if (getIntent() != null && getIntent().getBooleanExtra(Constants.EXTRA_START_VOICE_SEARCH, false)) {
             checkPermissionAndLaunchVoice();

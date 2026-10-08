@@ -102,7 +102,7 @@ export default function RestaurantLiveTrackingPage() {
                 speed: data.speed || 0,
                 heading: data.heading || 0,
                 accuracy: data.accuracy || 0,
-                isOnline: data.isOnline || false,
+                isOnline: data.isOnline !== false, // treat missing/undefined as online
               });
               return newMap;
             });
@@ -159,7 +159,7 @@ export default function RestaurantLiveTrackingPage() {
 
     // Driver markers
     driverLocations.forEach((loc, driverId) => {
-      if (loc.isOnline && loc.latitude) {
+      if (loc.latitude && loc.longitude) { // show driver regardless of explicit isOnline flag
         const order = activeOrders.find(o => o.deliveryPersonId === driverId);
         const stage = (order?.delivery?.stage || (order?.deliveryStatus === 'going_to_restaurant' ? 'TO_PICKUP' : 'TO_CUSTOMER')) as DeliveryStage;
         markers.push({
@@ -177,7 +177,7 @@ export default function RestaurantLiveTrackingPage() {
     return markers;
   }, [restaurant, driverLocations, activeOrders, selectedOrder]);
 
-  const driverPos = selectedDriverLoc?.isOnline && selectedDriverLoc.latitude
+  const driverPos = selectedDriverLoc?.latitude && selectedDriverLoc.longitude
     ? { latitude: selectedDriverLoc.latitude, longitude: selectedDriverLoc.longitude }
     : null;
 
@@ -279,7 +279,7 @@ export default function RestaurantLiveTrackingPage() {
 
       {/* Map Card */}
       <Card className="overflow-hidden border-border/60 shadow-lg relative">
-        <div className="h-[52vh] relative">
+        <div className="h-[52vh] min-h-[450px] w-full relative">
           {mapMarkers.length > 0 ? (
             <>
               <LiveTrackingMap

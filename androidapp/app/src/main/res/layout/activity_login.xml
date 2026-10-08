@@ -269,6 +269,7 @@
                     app:helperTextTextColor="@color/primary"
                     app:startIconDrawable="@drawable/ic_discount_coupon"
                     app:startIconMinSize="48dp"
+                    android:padding="2dp"
                     app:startIconScaleType="centerInside"
                     app:startIconTint="@color/primary">
 

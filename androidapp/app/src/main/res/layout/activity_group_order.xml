@@ -1,0 +1,326 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/surface"
+        app:elevation="0dp">
+
+        <androidx.appcompat.widget.Toolbar
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:paddingStart="4dp"
+            android:paddingEnd="16dp">
+
+            <ImageButton
+                android:id="@+id/btn_back"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Back"
+                android:src="@drawable/ic_back"
+                app:tint="@color/text_primary" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:fontFamily="sans-serif-black"
+                android:text="Group Ordering 👥"
+                android:textColor="@color/text_primary"
+                android:textSize="20sp" />
+        </androidx.appcompat.widget.Toolbar>
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+        <ProgressBar
+            android:id="@+id/progress_bar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:visibility="gone" />
+
+        <!-- 1. Home Screen (Create or Join) -->
+        <LinearLayout
+            android:id="@+id/layout_home"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:padding="24dp"
+            android:visibility="visible">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="🍕"
+                android:textSize="64sp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:fontFamily="sans-serif-black"
+                android:gravity="center"
+                android:text="Order Together, Pay Together"
+                android:textColor="@color/text_primary"
+                android:textSize="22sp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:fontFamily="sans-serif"
+                android:gravity="center"
+                android:text="Create a shared group with friends, hostel mates, or colleagues. Everyone adds what they want!"
+                android:textColor="@color/text_secondary"
+                android:textSize="14sp" />
+
+            <Button
+                android:id="@+id/btn_create_group"
+                style="@style/Widget.MaterialComponents.Button"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:layout_marginTop="32dp"
+                android:backgroundTint="@color/primary"
+                android:fontFamily="sans-serif-bold"
+                android:text="Start New Group Order"
+                android:textColor="@android:color/white"
+                app:cornerRadius="16dp" />
+
+            <Button
+                android:id="@+id/btn_join_group"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:layout_marginTop="12dp"
+                android:fontFamily="sans-serif-bold"
+                android:text="Join with Invite Code"
+                android:textColor="@color/primary"
+                app:cornerRadius="16dp"
+                app:strokeColor="@color/primary" />
+        </LinearLayout>
+
+        <!-- 2. Join Group Screen -->
+        <LinearLayout
+            android:id="@+id/layout_join"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:padding="24dp"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-black"
+                android:text="Enter 6-Letter Code"
+                android:textColor="@color/text_primary"
+                android:textSize="20sp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:fontFamily="sans-serif"
+                android:text="Ask your group host for the 6-character code"
+                android:textColor="@color/text_secondary"
+                android:textSize="13sp" />
+
+            <EditText
+                android:id="@+id/et_invite_code"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:layout_marginTop="20dp"
+                android:background="@drawable/bg_input_rounded"
+                android:fontFamily="sans-serif-black"
+                android:gravity="center"
+                android:hint="e.g. HNGR42"
+                android:inputType="textCapCharacters"
+                android:maxLength="6"
+                android:padding="12dp"
+                android:textColor="@color/text_primary"
+                android:textSize="22sp" />
+
+            <Button
+                android:id="@+id/btn_join_submit"
+                style="@style/Widget.MaterialComponents.Button"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:layout_marginTop="20dp"
+                android:backgroundTint="@color/primary"
+                android:fontFamily="sans-serif-bold"
+                android:text="Join Group"
+                android:textColor="@android:color/white"
+                app:cornerRadius="16dp" />
+        </LinearLayout>
+
+        <!-- 3. Active Group Screen -->
+        <LinearLayout
+            android:id="@+id/layout_active"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:padding="16dp"
+            android:visibility="gone">
+
+            <!-- Group Header Card -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                app:cardBackgroundColor="@color/surface"
+                app:cardCornerRadius="18dp"
+                app:cardElevation="2dp"
+                app:strokeColor="@color/card_border"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:id="@+id/tv_group_name"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="sans-serif-black"
+                        android:text="Host's Group"
+                        android:textColor="@color/text_primary"
+                        android:textSize="18sp" />
+
+                    <TextView
+                        android:id="@+id/tv_restaurant_name"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:fontFamily="sans-serif-medium"
+                        android:text="Restaurant Name"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="13sp" />
+
+                    <!-- Invite Code Pill -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:background="@drawable/bg_code_pill"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingHorizontal="14dp"
+                        android:paddingVertical="10dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="sans-serif"
+                            android:text="Code: "
+                            android:textColor="@color/text_secondary"
+                            android:textSize="13sp" />
+
+                        <TextView
+                            android:id="@+id/tv_invite_code"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:fontFamily="sans-serif-black"
+                            android:letterSpacing="0.1"
+                            android:text="CODE12"
+                            android:textColor="@color/primary"
+                            android:textSize="16sp" />
+
+                        <Button
+                            android:id="@+id/btn_copy_code"
+                            style="@style/Widget.MaterialComponents.Button.TextButton"
+                            android:layout_width="wrap_content"
+                            android:layout_height="36dp"
+                            android:text="Copy"
+                            android:textColor="@color/primary"
+                            android:textSize="12sp" />
+
+                        <Button
+                            android:id="@+id/btn_share"
+                            style="@style/Widget.MaterialComponents.Button.TextButton"
+                            android:layout_width="wrap_content"
+                            android:layout_height="36dp"
+                            android:text="Share"
+                            android:textColor="@color/primary"
+                            android:textSize="12sp" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/tv_group_total"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:fontFamily="sans-serif-black"
+                            android:text="Group Total: ₹0"
+                            android:textColor="@color/text_primary"
+                            android:textSize="16sp" />
+
+                        <TextView
+                            android:id="@+id/tv_group_status"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:background="@drawable/bg_badge_status"
+                            android:fontFamily="sans-serif-bold"
+                            android:paddingHorizontal="10dp"
+                            android:paddingVertical="4dp"
+                            android:text="Status: OPEN"
+                            android:textColor="@color/primary"
+                            android:textSize="11sp" />
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:fontFamily="sans-serif-bold"
+                android:text="Group Members"
+                android:textColor="@color/text_primary"
+                android:textSize="15sp" />
+
+            <!-- Members List -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rv_members"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:clipToPadding="false"
+                android:overScrollMode="never" />
+
+            <!-- Host Lock Button -->
+            <Button
+                android:id="@+id/btn_lock_order"
+                style="@style/Widget.MaterialComponents.Button"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:layout_marginTop="12dp"
+                android:backgroundTint="@color/primary"
+                android:fontFamily="sans-serif-bold"
+                android:text="Lock Order &amp; Proceed to Pay"
+                android:textColor="@android:color/white"
+                android:visibility="gone"
+                app:cornerRadius="16dp" />
+        </LinearLayout>
+    </FrameLayout>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

@@ -59,5 +59,7 @@ if (!admin.apps.length) {
     app = admin.app();
 }
 
+export const adminApp = app;
+export const adminDb = app ? admin.firestore(app) : (admin.apps.length > 0 ? admin.firestore() : null as any);
 export const messaging = app ? admin.messaging(app) : null;
 export { admin };

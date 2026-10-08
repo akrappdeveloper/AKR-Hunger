@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.text.TextUtils;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -27,6 +28,9 @@ import com.bumptech.glide.Glide;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.perf.metrics.Trace;
+import android.location.Geocoder;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -86,6 +90,66 @@ public class RestaurantDetailActivity extends BaseActivity {
         }
 
         loadRestaurant();
+    }
+
+    /**
+     * After the restaurant loads, check GPS pincode vs servicePincodes and show banner.
+     */
+    @android.annotation.SuppressLint("MissingPermission")
+    private void checkRestaurantAvailabilityByGps(Restaurant restaurant) {
+        List<String> servicePincodes = restaurant.getServicePincodes();
+        // No restriction set — skip check
+        if (servicePincodes == null || servicePincodes.isEmpty()) return;
+
+        // Only check if GPS permission is already granted (non-blocking)
+        boolean hasGps = checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION)
+                == android.content.pm.PackageManager.PERMISSION_GRANTED
+                || checkSelfPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION)
+                == android.content.pm.PackageManager.PERMISSION_GRANTED;
+        if (!hasGps) return;
+
+        FusedLocationProviderClient fusedLocation = LocationServices.getFusedLocationProviderClient(this);
+        fusedLocation.getLastLocation().addOnSuccessListener(location -> {
+            if (location == null) return;
+            try {
+                Geocoder geocoder = new Geocoder(this, Locale.getDefault());
+                List<android.location.Address> addresses = geocoder.getFromLocation(
+                        location.getLatitude(), location.getLongitude(), 1);
+                if (addresses == null || addresses.isEmpty()) return;
+                String postalCode = addresses.get(0).getPostalCode();
+                if (TextUtils.isEmpty(postalCode)) return;
+
+                boolean canDeliver = false;
+                for (String sp : servicePincodes) {
+                    if (sp != null && sp.trim().equalsIgnoreCase(postalCode.trim())) {
+                        canDeliver = true;
+                        break;
+                    }
+                }
+
+                final boolean deliverable = canDeliver;
+                final String detectedPin = postalCode;
+                runOnUiThread(() -> {
+                    if (!deliverable) {
+                        String pincodeList = String.join(", ", servicePincodes);
+                        // Show non-blocking Toast warning about delivery area
+                        Toast.makeText(RestaurantDetailActivity.this,
+                                "\uD83D\uDEAB " + restaurant.getName()
+                                + " doesn't deliver to your area (" + detectedPin + ").\nThey serve: " + pincodeList,
+                                Toast.LENGTH_LONG).show();
+                        // Optionally dim the cart bar to hint unavailability
+                        if (barViewCart != null) {
+                            barViewCart.setAlpha(0.5f);
+                        }
+                    } else {
+                        if (barViewCart != null) barViewCart.setAlpha(1.0f);
+                    }
+                    logBreadcrumb("Pincode availability: " + detectedPin + " canDeliver=" + deliverable);
+                });
+            } catch (Exception e) {
+                logBreadcrumb("GPS pincode check failed: " + e.getMessage());
+            }
+        });
     }
 
     @Override
@@ -178,6 +242,10 @@ public class RestaurantDetailActivity extends BaseActivity {
         btnFilterAll.setOnClickListener(v -> updateVegFilter("all"));
         btnFilterVeg.setOnClickListener(v -> updateVegFilter("veg"));
         btnFilterNonVeg.setOnClickListener(v -> updateVegFilter("non-veg"));
+
+        if (com.ssr.hunger.utils.SettingsHelper.isVegOnly(this)) {
+            updateVegFilter("veg");
+        }
     }
 
     private void updateVegFilter(String filter) {
@@ -228,6 +296,8 @@ public class RestaurantDetailActivity extends BaseActivity {
                     analyticsHelper.logSelectContent("restaurant", restaurantId, restaurantName);
 
                     populateHeader(restaurant);
+                    // GPS-based pincode delivery availability check (non-blocking)
+                    checkRestaurantAvailabilityByGps(restaurant);
                     loadMenuItems(restaurant.getName());
                 })
                 .addOnFailureListener(e -> {

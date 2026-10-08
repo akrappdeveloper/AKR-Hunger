@@ -43,6 +43,14 @@ public class Order {
     private String deliveryAddressStreet;
     private String deliveryAddressCity;
     private String deliveryAddressPincode;
+    private double deliveryLatitude;
+    private double deliveryLongitude;
+
+    // Restaurant details and coordinates
+    private String restaurantPhone;
+    private String restaurantAddress;
+    private double restaurantLatitude;
+    private double restaurantLongitude;
 
     public Order() {}
 
@@ -154,6 +162,24 @@ public class Order {
 
     public double getBalanceDue() { return balanceDue; }
     public void setBalanceDue(double balanceDue) { this.balanceDue = balanceDue; }
+
+    public double getDeliveryLatitude() { return deliveryLatitude; }
+    public void setDeliveryLatitude(double deliveryLatitude) { this.deliveryLatitude = deliveryLatitude; }
+
+    public double getDeliveryLongitude() { return deliveryLongitude; }
+    public void setDeliveryLongitude(double deliveryLongitude) { this.deliveryLongitude = deliveryLongitude; }
+
+    public String getRestaurantPhone() { return restaurantPhone; }
+    public void setRestaurantPhone(String restaurantPhone) { this.restaurantPhone = restaurantPhone; }
+
+    public String getRestaurantAddress() { return restaurantAddress; }
+    public void setRestaurantAddress(String restaurantAddress) { this.restaurantAddress = restaurantAddress; }
+
+    public double getRestaurantLatitude() { return restaurantLatitude; }
+    public void setRestaurantLatitude(double restaurantLatitude) { this.restaurantLatitude = restaurantLatitude; }
+
+    public double getRestaurantLongitude() { return restaurantLongitude; }
+    public void setRestaurantLongitude(double restaurantLongitude) { this.restaurantLongitude = restaurantLongitude; }
 
     public String getStatusDisplay() {
         if (status == null) return "Pending";

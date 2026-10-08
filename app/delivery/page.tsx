@@ -614,42 +614,37 @@ export default function DeliveryDashboard() {
         }
 
         const orderData = orderDoc.data() as Order;
+        const orderTotal = Number(orderData.total || 0);
+        const tipAmount = Number(orderData.tip || (orderData as any).tipAmount || 0);
         // Delivery Charge calculation: ₹40 standard or ₹60 multi-items
         const totalItemsQty = orderData.items?.reduce((s, it) => s + (it.quantity || 1), 0) || 1;
         const rawDeliveryCharge = Number(
           orderData.deliveryCharge || (orderData as any).deliveryFee || (totalItemsQty > 1 ? 60 : 40)
         );
-        // Real rider earnings is STRICTLY 80% of delivery charge (NO product amount, NO GST)
+        // Real rider earnings is STRICTLY 80% of delivery charge + 100% of customer tip
         const earnings = Math.round(rawDeliveryCharge * 0.80);
+        const totalRiderEarning = earnings + tipAmount;
         const isCOD = orderData.paymentMethod === 'cod';
 
-        // Product menu item amount (order subtotal)
-        const productAmount = Number(
-          orderData.subtotal ??
-          (orderData.items ? orderData.items.reduce((s: number, it: any) => s + (it.price * it.quantity), 0) : Math.max(0, (orderData.total || 0) - rawDeliveryCharge))
-        );
-        // Platform 20% share of delivery charge
-        const platformShare = Math.round(rawDeliveryCharge * 0.20);
-
-        // For COD: pending amount owed to platform = product menu item amount + 20% delivery charge
-        const codPlatformDue = productAmount + platformShare;
-
-        // Current balance represents pending paid amount as NEGATIVE (e.g. -200)
-        // - COD: driver owes codPlatformDue to platform -> decreases balance by codPlatformDue
-        // - Online: platform collected customer payment online, platform owes driver 80% delivery earnings -> increases balance by earnings
-        let walletChange = 0;
-        if (isCOD) {
-          walletChange = -codPlatformDue;
-        } else {
-          walletChange = +earnings;
+        // Idempotency: avoid double-crediting if already processed
+        if ((orderData as any).earningsProcessed === true) {
+          console.log(`[Delivery] Order ${orderId} already processed. Skipping duplicate earnings.`);
+          return;
         }
 
-        // Update Order with 80% earnings record
+        // Net settlement balance change:
+        // - COD: Rider receives orderTotal in cash, earns totalRiderEarning. Net = totalRiderEarning - orderTotal (e.g. 100 - 500 = -400)
+        // - Online/Prepaid: Rider takes 0 cash from customer. Net = +totalRiderEarning
+        const walletChange = isCOD ? (totalRiderEarning - orderTotal) : totalRiderEarning;
+
+        // Update Order with earnings record & idempotency marker
         transaction.update(orderRef, {
           status: 'delivered',
           deliveryStatus: 'delivered',
           deliveryEarnings: earnings,
           earnings: earnings,
+          earningsProcessed: true,
+          earningsProcessedAt: serverTimestamp(),
           'delivery.stage': 'DELIVERED',
           'delivery.deliveredAt': serverTimestamp(),
           paymentStatus: 'paid',
@@ -658,22 +653,33 @@ export default function DeliveryDashboard() {
         });
 
         // Update Delivery Person Wallet
-        // totalEarnings increases by real delivery earnings only (80% of delivery charge)
         const driverRef = doc(db, 'deliveryPersons', user.uid);
         transaction.update(driverRef, {
           walletBalance: increment(walletChange),
-          totalEarnings: increment(earnings)
+          totalEarnings: increment(totalRiderEarning),
+          availableEarnings: increment(totalRiderEarning),
+          deliveryEarnings: increment(earnings),
+          ...(tipAmount > 0 ? { tips: increment(tipAmount) } : {}),
+          ...(isCOD ? {
+            codCollected: increment(orderTotal),
+            codOutstanding: increment(orderTotal),
+          } : {}),
+          completedOrdersCount: increment(1),
+          updatedAt: serverTimestamp(),
         });
 
-        // Log Transaction
+        // Log Transaction in subcollection
         const walletTxRef = doc(collection(driverRef, 'walletTransactions'));
         transaction.set(walletTxRef, {
-          amount: Math.abs(walletChange),
+          amount: isCOD ? orderTotal : totalRiderEarning,
           type: isCOD ? 'cod_collection' : 'earnings',
           description: isCOD
-            ? `COD Order #${orderId.slice(0, 6)}: Menu Items (₹${productAmount}) + Platform Fee (₹${platformShare})`
-            : `Online Order #${orderId.slice(0, 6)}: 80% Delivery Payout (₹${earnings})`,
+            ? `COD Order #${orderId.slice(0, 6)}: Cash Collected ₹${orderTotal} (Earning: +₹${totalRiderEarning})`
+            : `Online Order #${orderId.slice(0, 6)}: Delivery Earning (+₹${earnings})${tipAmount > 0 ? ` + Tip (+₹${tipAmount})` : ''}`,
           orderId: orderId,
+          codCollected: isCOD ? orderTotal : 0,
+          earningAmount: totalRiderEarning,
+          netChange: walletChange,
           isDebit: isCOD, // true for COD debt
           createdAt: serverTimestamp()
         });

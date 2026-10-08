@@ -29,6 +29,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.ssr.hunger.R;
 import com.ssr.hunger.services.DriverLocationService;
+import com.ssr.hunger.utils.CartManager;
 import com.ssr.hunger.utils.Constants;
 import com.ssr.hunger.utils.PermissionManager;
 import java.text.SimpleDateFormat;
@@ -67,6 +68,7 @@ public class OrderTrackingActivity extends BaseActivity {
 
     // UI refs
     private TextView tvEta, tvOrderStatus, tvRestaurantName, tvOrderId;
+    private TextView tvRestaurantAddress, tvRestaurantPhone;
     private TextView tvDriverName, tvDriverPhone, tvDriverVehicle;
     private TextView tvDeliveryAddress, tvGpsCoords;
     private TextView tvOrderTotal, tvDeliveryChargeInfo;
@@ -74,8 +76,27 @@ public class OrderTrackingActivity extends BaseActivity {
     private LinearLayout stepContainer;
     private ProgressBar progressTrack;
     private CardView cardDriverPartner;
-    private View btnCallDriver, btnBack, btnHelp;
+    private View btnCallDriver, btnCallRestaurant, btnShareTracking, btnBack, btnHelp;
+    private View btnRecenterRider, btnFitRoute;
+    private ProgressBar pbMapLoading;
+    private TextView tvMapRiderStatus;
     private View gpsLiveBadge;
+
+    // Live Map
+    private android.webkit.WebView wvLiveMap;
+    private double mapDriverLat = 0, mapDriverLng = 0;
+    private double mapRestLat = 0, mapRestLng = 0;
+    private double mapCustLat = 0, mapCustLng = 0;
+    private double lastDriverHeading = 0.0;
+    private double lastDriverSpeed = 0.0;
+    private String restaurantNameStr = "Restaurant";
+    private String restaurantPhone = "";
+    private String restaurantAddress = "";
+    private boolean mapLoaded = false;
+    private static final String MAP_STYLE_STREET = "street";
+    private static final String MAP_STYLE_DARK = "dark";
+    private static final String MAP_STYLE_SAT = "satellite";
+    private String currentMapStyle = MAP_STYLE_STREET;
 
     // Step keys matching Firestore status values
     private static final String[] STEPS      = {"pending","confirmed","preparing","ready","out_for_delivery","delivered"};
@@ -109,7 +130,7 @@ public class OrderTrackingActivity extends BaseActivity {
         }
 
         bindViews();
-        startMapAnimation();
+        setupLiveMap();
         listenToOrder();
 
         // If this is a delivery partner's device, start GPS service (with location permission)
@@ -142,6 +163,8 @@ public class OrderTrackingActivity extends BaseActivity {
         tvEta              = findViewById(R.id.tv_eta);
         tvOrderStatus      = findViewById(R.id.tv_order_status);
         tvRestaurantName   = findViewById(R.id.tv_restaurant_name);
+        tvRestaurantAddress= findViewById(R.id.tv_restaurant_address);
+        tvRestaurantPhone  = findViewById(R.id.tv_restaurant_phone);
         tvOrderId          = findViewById(R.id.tv_order_id);
         tvDriverName       = findViewById(R.id.tv_driver_name);
         tvDriverPhone      = findViewById(R.id.tv_driver_phone);
@@ -152,8 +175,14 @@ public class OrderTrackingActivity extends BaseActivity {
         progressTrack      = findViewById(R.id.progress_tier);
         cardDriverPartner  = findViewById(R.id.card_delivery_partner);
         btnCallDriver      = findViewById(R.id.btn_call_driver);
+        btnCallRestaurant  = findViewById(R.id.btn_call_restaurant);
+        btnShareTracking   = findViewById(R.id.btn_share_tracking);
         btnBack            = findViewById(R.id.btn_back);
         btnHelp            = findViewById(R.id.btn_help);
+        btnRecenterRider   = findViewById(R.id.btn_recenter_rider);
+        btnFitRoute        = findViewById(R.id.btn_fit_route);
+        pbMapLoading       = findViewById(R.id.pb_map_loading);
+        tvMapRiderStatus   = findViewById(R.id.tv_map_rider_status);
         gpsLiveBadge       = (View) findViewById(R.id.gps_live_badge);
         tvOrderTotal               = findViewById(R.id.tv_order_total);
         tvDeliveryChargeInfo       = findViewById(R.id.tv_delivery_charge_info);
@@ -161,6 +190,364 @@ public class OrderTrackingActivity extends BaseActivity {
         tvTrackingDeliveryCharge   = findViewById(R.id.tv_tracking_delivery_charge);
         tvTrackingGrandTotal       = findViewById(R.id.tv_tracking_grand_total);
         tvTrackingDeliveryBadge    = findViewById(R.id.tv_tracking_delivery_badge);
+        wvLiveMap          = findViewById(R.id.wv_live_map);
+
+        if (btnShareTracking != null) btnShareTracking.setOnClickListener(v -> shareTrackingInfo());
+        if (btnRecenterRider != null) btnRecenterRider.setOnClickListener(v -> recenterMapOnDriver());
+        if (btnFitRoute != null) btnFitRoute.setOnClickListener(v -> fitMapRoute());
+        if (btnCallRestaurant != null) {
+            btnCallRestaurant.setOnClickListener(v -> callPhoneNumber(restaurantPhone, tvRestaurantName != null ? tvRestaurantName.getText().toString() : "Restaurant"));
+        }
+    }
+
+    // ─── Live Map: Leaflet + OpenStreetMap + Fallback Canvas in WebView ───────
+
+    @android.annotation.SuppressLint("SetJavaScriptEnabled")
+    private void setupLiveMap() {
+        if (wvLiveMap == null) return;
+
+        wvLiveMap.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+        wvLiveMap.setBackgroundColor(0xFF0F172A);
+
+        android.webkit.WebSettings ws = wvLiveMap.getSettings();
+        ws.setJavaScriptEnabled(true);
+        ws.setDomStorageEnabled(true);
+        ws.setDatabaseEnabled(true);
+        ws.setGeolocationEnabled(true);
+        ws.setAllowContentAccess(true);
+        ws.setAllowFileAccess(true);
+        ws.setLoadWithOverviewMode(true);
+        ws.setUseWideViewPort(true);
+        ws.setCacheMode(android.webkit.WebSettings.LOAD_DEFAULT);
+        // Modern Chrome User-Agent prevents any tile server 418/403 blocking
+        ws.setUserAgentString("Mozilla/5.0 (Linux; Android " + android.os.Build.VERSION.RELEASE + "; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36 AKRHunger/1.0");
+        ws.setMixedContentMode(android.webkit.WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
+
+        wvLiveMap.addJavascriptInterface(new Object() {
+            @android.webkit.JavascriptInterface
+            public void onMapReady() {
+                runOnUiThread(() -> {
+                    mapLoaded = true;
+                    if (pbMapLoading != null) pbMapLoading.setVisibility(View.GONE);
+                    pushPendingCoordinatesToMap();
+                });
+            }
+
+            @android.webkit.JavascriptInterface
+            public void onRiderProgress(double progressPct, double distKm, double speedKmh, int etaMinutes) {
+                runOnUiThread(() -> updateRiderProgressFromMap(progressPct, distKm, speedKmh, etaMinutes));
+            }
+        }, "AndroidMapBridge");
+
+        wvLiveMap.setWebViewClient(new android.webkit.WebViewClient() {
+            @Override
+            public void onPageFinished(android.webkit.WebView view, String url) {
+                super.onPageFinished(view, url);
+                mapLoaded = true;
+                if (pbMapLoading != null) pbMapLoading.setVisibility(View.GONE);
+                view.evaluateJavascript("if (typeof map !== 'undefined' && map) { map.invalidateSize(); }", null);
+                pushPendingCoordinatesToMap();
+            }
+
+            @Override
+            public void onReceivedError(android.webkit.WebView view, int errorCode, String description, String failingUrl) {
+                super.onReceivedError(view, errorCode, description, failingUrl);
+                view.evaluateJavascript("if (typeof startCanvasFallback === 'function') { startCanvasFallback(); }", null);
+            }
+        });
+
+        wvLiveMap.setWebChromeClient(new android.webkit.WebChromeClient() {
+            @Override
+            public void onGeolocationPermissionsShowPrompt(String origin, android.webkit.GeolocationPermissions.Callback callback) {
+                callback.invoke(origin, true, false);
+            }
+        });
+
+        String html = buildLeafletHtml(28.6139, 77.2090, 14);
+        wvLiveMap.loadDataWithBaseURL("https://akrhunger.app", html, "text/html", "UTF-8", null);
+
+        // Theme switcher buttons
+        View btnStreet = findViewById(R.id.btn_map_theme_street);
+        View btnDark   = findViewById(R.id.btn_map_theme_dark);
+        View btnSat    = findViewById(R.id.btn_map_theme_sat);
+        if (btnStreet != null) btnStreet.setOnClickListener(v -> switchMapStyle(MAP_STYLE_STREET));
+        if (btnDark != null)   btnDark.setOnClickListener(v -> switchMapStyle(MAP_STYLE_DARK));
+        if (btnSat != null)    btnSat.setOnClickListener(v -> switchMapStyle(MAP_STYLE_SAT));
+    }
+
+    private String buildLeafletHtml(double lat, double lng, int zoom) {
+        return "<!DOCTYPE html>"
+            + "<html><head>"
+            + "<meta charset='utf-8'/>"
+            + "<meta name='viewport' content='width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no'/>"
+            + "<link rel='stylesheet' href='https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'/>"
+            + "<script src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'></script>"
+            + "<style>"
+            + "* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }"
+            + "html, body, #map { margin: 0; padding: 0; width: 100%; height: 100%; background: #0f172a; overflow: hidden; font-family: sans-serif; }"
+            + "#fallbackCanvas { display: none; width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 999; }"
+            + "@keyframes radarPulse { 0% { transform: scale(0.6); opacity: 0.9; } 100% { transform: scale(2.6); opacity: 0; } }"
+            + "@keyframes riderBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }"
+            + ".rider-container { position: relative; width: 52px; height: 52px; display: flex; align-items: center; justify-content: center; }"
+            + ".rider-pulse { position: absolute; width: 44px; height: 44px; border-radius: 50%; background: rgba(255,87,34,0.45); animation: radarPulse 1.8s infinite cubic-bezier(0.2,0.6,0.3,1); pointer-events: none; }"
+            + ".rider-pulse.p2 { animation-delay: 0.9s; }"
+            + ".rider-icon-box { width: 44px; height: 44px; border-radius: 50%; background: #FF5722; border: 3px solid #FFFFFF; box-shadow: 0 4px 14px rgba(255,87,34,0.6); display: flex; align-items: center; justify-content: center; transition: transform 0.4s ease-out; animation: riderBob 0.6s infinite ease-in-out; }"
+            + ".rider-label { position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); background: #1E293B; color: #FFFFFF; font-size: 9px; font-weight: bold; padding: 2px 6px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.3); white-space: nowrap; }"
+            + ".pin-box { position: relative; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; }"
+            + ".pin-circle { width: 38px; height: 38px; border-radius: 50%; border: 3px solid #FFF; display: flex; align-items: center; justify-content: center; font-size: 19px; box-shadow: 0 4px 12px rgba(0,0,0,0.4); }"
+            + ".pin-rest { background: #F59E0B; }"
+            + ".pin-cust { background: #10B981; }"
+            + ".pin-tag { position: absolute; top: -14px; left: 50%; transform: translateX(-50%); background: rgba(15,23,42,0.9); color: #FFF; font-size: 10px; font-weight: bold; padding: 2px 7px; border-radius: 8px; white-space: nowrap; border: 1px solid rgba(255,255,255,0.2); }"
+            + "</style>"
+            + "</head><body>"
+            + "<div id='map'></div>"
+            + "<canvas id='fallbackCanvas'></canvas>"
+            + "<script>"
+            + "var map = null;"
+            + "var streetLayer = null, darkLayer = null, satLayer = null;"
+            + "var driverMarker = null, restMarker = null, custMarker = null;"
+            + "var routeGlow = null, routeDashed = null, routeCompleted = null;"
+            + "var waypoints = [];"
+            + "var simInterval = null;"
+            + "var simIndex = 0;"
+            + "var isSimulating = false;"
+            + "var curLat = " + lat + ", curLng = " + lng + ";"
+            + "function initMap() {"
+            + "  try {"
+            + "    if (typeof L === 'undefined') { startCanvasFallback(); return; }"
+            + "    map = L.map('map', { zoomControl: false, attributionControl: false }).setView([curLat, curLng], " + zoom + ");"
+            + "    streetLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { subdomains: 'abcd', maxZoom: 19 });"
+            + "    darkLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { subdomains: 'abcd', maxZoom: 19 });"
+            + "    satLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 });"
+            + "    streetLayer.addTo(map);"
+            + "    setTimeout(function() { if(map) map.invalidateSize(); }, 300);"
+            + "    setTimeout(function() { if(map) map.invalidateSize(); }, 800);"
+            + "    setTimeout(function() { if(map) map.invalidateSize(); }, 1600);"
+            + "    if (window.AndroidMapBridge) { window.AndroidMapBridge.onMapReady(); }"
+            + "  } catch(e) {"
+            + "    startCanvasFallback();"
+            + "  }"
+            + "}"
+            + "function generateRoute(rLat, rLng, cLat, cLng) {"
+            + "  var pts = []; var steps = 14; var dLat = cLat - rLat; var dLng = cLng - rLng;"
+            + "  var pLat = -dLng * 0.16; var pLng = dLat * 0.16;"
+            + "  for (var i = 0; i <= steps; i++) {"
+            + "    var t = i / steps; var curve = 4 * t * (1 - t);"
+            + "    pts.push([rLat + dLat * t + curve * pLat, rLng + dLng * t + curve * pLng]);"
+            + "  }"
+            + "  return pts;"
+            + "}"
+            + "function setOrderRoute(rLat, rLng, rName, cLat, cLng, status) {"
+            + "  if (!map) return;"
+            + "  if (restMarker) map.removeLayer(restMarker);"
+            + "  if (custMarker) map.removeLayer(custMarker);"
+            + "  if (routeGlow) map.removeLayer(routeGlow);"
+            + "  if (routeDashed) map.removeLayer(routeDashed);"
+            + "  if (routeCompleted) map.removeLayer(routeCompleted);"
+            + "  var restEl = '<div class=\"pin-box\"><div class=\"pin-tag\">' + (rName || 'Restaurant') + '</div><div class=\"pin-circle pin-rest\">🍔</div></div>';"
+            + "  restMarker = L.marker([rLat, rLng], { icon: L.divIcon({ html: restEl, className: '', iconSize: [44,44], iconAnchor: [22,22] }) }).addTo(map);"
+            + "  var custEl = '<div class=\"pin-box\"><div class=\"pin-tag\">Your Home</div><div class=\"pin-circle pin-cust\">🏠</div></div>';"
+            + "  custMarker = L.marker([cLat, cLng], { icon: L.divIcon({ html: custEl, className: '', iconSize: [44,44], iconAnchor: [22,22] }) }).addTo(map);"
+            + "  waypoints = generateRoute(rLat, rLng, cLat, cLng);"
+            + "  routeGlow = L.polyline(waypoints, { color: '#FF5722', weight: 8, opacity: 0.35, lineCap: 'round', lineJoin: 'round' }).addTo(map);"
+            + "  routeDashed = L.polyline(waypoints, { color: '#FF9800', weight: 4, dashArray: '6, 10', opacity: 0.95 }).addTo(map);"
+            + "  routeCompleted = L.polyline([], { color: '#10B981', weight: 5, opacity: 0.95 }).addTo(map);"
+            + "  map.fitBounds(L.latLngBounds([[rLat, rLng], [cLat, cLng]]), { padding: [50, 50], maxZoom: 16 });"
+            + "  if (status === 'out_for_delivery') {"
+            + "    startSimulation();"
+            + "  } else if (status === 'delivered') {"
+            + "    updateDriver(cLat, cLng, 0, 0);"
+            + "  } else {"
+            + "    updateDriver(rLat, rLng, 0, 0);"
+            + "  }"
+            + "}"
+            + "function calcHeading(lat1, lng1, lat2, lng2) {"
+            + "  var dLng = (lng2 - lng1) * Math.PI / 180;"
+            + "  var y = Math.sin(dLng) * Math.cos(lat2 * Math.PI / 180);"
+            + "  var x = Math.cos(lat1 * Math.PI / 180) * Math.sin(lat2 * Math.PI / 180) - Math.sin(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.cos(dLng);"
+            + "  var brng = Math.atan2(y, x) * 180 / Math.PI;"
+            + "  return (brng + 360) % 360;"
+            + "}"
+            + "function calcDistKm(lat1, lon1, lat2, lon2) {"
+            + "  var R = 6371;"
+            + "  var dLat = (lat2 - lat1) * Math.PI / 180;"
+            + "  var dLon = (lon2 - lon1) * Math.PI / 180;"
+            + "  var a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);"
+            + "  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));"
+            + "}"
+            + "function makeRiderHtml(heading, speed) {"
+            + "  var spdText = (speed > 0 ? Math.round(speed) + ' km/h' : 'Valet');"
+            + "  return '<div class=\"rider-container\">' +"
+            + "         '<div class=\"rider-pulse\"></div>' +"
+            + "         '<div class=\"rider-pulse p2\"></div>' +"
+            + "         '<div class=\"rider-icon-box\" style=\"transform: rotate(' + Math.round(heading) + 'deg);\"><span style=\"font-size:24px;line-height:1;\">🛵</span></div>' +"
+            + "         '<div class=\"rider-label\">' + spdText + '</div>' +"
+            + "         '</div>';"
+            + "}"
+            + "function updateDriver(lat, lng, heading, speed) {"
+            + "  if (!map) return;"
+            + "  if (isSimulating) { clearInterval(simInterval); isSimulating = false; }"
+            + "  var h = heading || 0; var s = speed || 24;"
+            + "  if (!driverMarker) {"
+            + "    driverMarker = L.marker([lat, lng], {"
+            + "      icon: L.divIcon({ html: makeRiderHtml(h, s), className: '', iconSize: [52, 52], iconAnchor: [26, 26] }),"
+            + "      zIndexOffset: 1000"
+            + "    }).addTo(map);"
+            + "  } else {"
+            + "    driverMarker.setLatLng([lat, lng]);"
+            + "    driverMarker.setIcon(L.divIcon({ html: makeRiderHtml(h, s), className: '', iconSize: [52, 52], iconAnchor: [26, 26] }));"
+            + "  }"
+            + "  if (custMarker) {"
+            + "    var cPos = custMarker.getLatLng();"
+            + "    var dist = calcDistKm(lat, lng, cPos.lat, cPos.lng);"
+            + "    var mins = Math.max(1, Math.round((dist / Math.max(15, s)) * 60));"
+            + "    if (window.AndroidMapBridge) { window.AndroidMapBridge.onRiderProgress(50, dist, s, mins); }"
+            + "  }"
+            + "}"
+            + "function startSimulation() {"
+            + "  if (isSimulating || waypoints.length < 2) return;"
+            + "  isSimulating = true; simIndex = 0; var total = waypoints.length;"
+            + "  simInterval = setInterval(function() {"
+            + "    if (!isSimulating) return;"
+            + "    simIndex++;"
+            + "    if (simIndex >= total) {"
+            + "      simIndex = total - 1; clearInterval(simInterval); isSimulating = false;"
+            + "      if (window.AndroidMapBridge) { window.AndroidMapBridge.onRiderProgress(100, 0, 0, 0); }"
+            + "      return;"
+            + "    }"
+            + "    var cur = waypoints[simIndex]; var prev = waypoints[Math.max(0, simIndex - 1)];"
+            + "    var h = calcHeading(prev[0], prev[1], cur[0], cur[1]); var speed = 28;"
+            + "    if (!driverMarker) {"
+            + "      driverMarker = L.marker(cur, {"
+            + "        icon: L.divIcon({ html: makeRiderHtml(h, speed), className: '', iconSize: [52, 52], iconAnchor: [26, 26] }),"
+            + "        zIndexOffset: 1000"
+            + "      }).addTo(map);"
+            + "    } else {"
+            + "      driverMarker.setLatLng(cur);"
+            + "      driverMarker.setIcon(L.divIcon({ html: makeRiderHtml(h, speed), className: '', iconSize: [52, 52], iconAnchor: [26, 26] }));"
+            + "    }"
+            + "    if (routeCompleted) { routeCompleted.setLatLngs(waypoints.slice(0, simIndex + 1)); }"
+            + "    var dest = waypoints[total - 1];"
+            + "    var remDist = calcDistKm(cur[0], cur[1], dest[0], dest[1]);"
+            + "    var remMins = Math.max(1, Math.round((remDist / 25) * 60));"
+            + "    var progress = (simIndex / (total - 1)) * 100;"
+            + "    if (window.AndroidMapBridge) { window.AndroidMapBridge.onRiderProgress(progress, remDist, speed, remMins); }"
+            + "  }, 750);"
+            + "}"
+            + "function recenterOnDriver() {"
+            + "  if (!map) return;"
+            + "  if (driverMarker) map.setView(driverMarker.getLatLng(), 16, { animate: true, duration: 0.6 });"
+            + "  else if (restMarker) map.setView(restMarker.getLatLng(), 15, { animate: true });"
+            + "}"
+            + "function fitRoute() {"
+            + "  if (!map) return;"
+            + "  var grp = [];"
+            + "  if (driverMarker) grp.push(driverMarker.getLatLng());"
+            + "  if (restMarker) grp.push(restMarker.getLatLng());"
+            + "  if (custMarker) grp.push(custMarker.getLatLng());"
+            + "  if (grp.length > 0) map.fitBounds(L.latLngBounds(grp), { padding: [50, 50], maxZoom: 16 });"
+            + "}"
+            + "function switchStyle(style) {"
+            + "  if (!map) return;"
+            + "  map.removeLayer(streetLayer); map.removeLayer(darkLayer); map.removeLayer(satLayer);"
+            + "  if (style === 'dark') darkLayer.addTo(map);"
+            + "  else if (style === 'satellite') satLayer.addTo(map);"
+            + "  else streetLayer.addTo(map);"
+            + "}"
+            + "function startCanvasFallback() {"
+            + "  var cv = document.getElementById('fallbackCanvas');"
+            + "  var mapDiv = document.getElementById('map');"
+            + "  if (!cv) return;"
+            + "  if (mapDiv) mapDiv.style.display = 'none';"
+            + "  cv.style.display = 'block';"
+            + "  var ctx = cv.getContext('2d');"
+            + "  var w = cv.width = window.innerWidth || 360;"
+            + "  var h = cv.height = window.innerHeight || 320;"
+            + "  var t = 0;"
+            + "  function drawFrame() {"
+            + "    t = (t + 0.005) % 1;"
+            + "    ctx.fillStyle = '#0f172a'; ctx.fillRect(0, 0, w, h);"
+            + "    ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 1;"
+            + "    for (var x = 0; x < w; x += 40) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke(); }"
+            + "    for (var y = 0; y < h; y += 40) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke(); }"
+            + "    var p0 = { x: 70, y: 70 }, p1 = { x: w * 0.7, y: 90 }, p2 = { x: w - 70, y: h - 70 };"
+            + "    ctx.beginPath(); ctx.moveTo(p0.x, p0.y); ctx.quadraticCurveTo(p1.x, p1.y, p2.x, p2.y);"
+            + "    ctx.strokeStyle = 'rgba(255,87,34,0.4)'; ctx.lineWidth = 8; ctx.stroke();"
+            + "    ctx.strokeStyle = '#FF9800'; ctx.lineWidth = 3; ctx.setLineDash([8, 8]); ctx.stroke(); ctx.setLineDash([]);"
+            + "    var rt = (1 - t) * (1 - t) * p0.x + 2 * (1 - t) * t * p1.x + t * t * p2.x;"
+            + "    var ry = (1 - t) * (1 - t) * p0.y + 2 * (1 - t) * t * p1.y + t * t * p2.y;"
+            + "    ctx.fillStyle = '#FF5722'; ctx.beginPath(); ctx.arc(rt, ry, 16, 0, Math.PI * 2); ctx.fill();"
+            + "    ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = 3; ctx.stroke();"
+            + "    ctx.fillStyle = '#F59E0B'; ctx.beginPath(); ctx.arc(p0.x, p0.y, 14, 0, Math.PI * 2); ctx.fill();"
+            + "    ctx.fillStyle = '#10B981'; ctx.beginPath(); ctx.arc(p2.x, p2.y, 14, 0, Math.PI * 2); ctx.fill();"
+            + "    requestAnimationFrame(drawFrame);"
+            + "  }"
+            + "  requestAnimationFrame(drawFrame);"
+            + "  if (window.AndroidMapBridge) { window.AndroidMapBridge.onMapReady(); }"
+            + "}"
+            + "window.addEventListener('load', initMap);"
+            + "setTimeout(function() { if (!map && typeof L === 'undefined') startCanvasFallback(); }, 1800);"
+            + "</script></body></html>";
+    }
+
+    private void pushPendingCoordinatesToMap() {
+        if (!mapLoaded || wvLiveMap == null) return;
+        if (mapRestLat != 0 && mapRestLng != 0 && mapCustLat != 0 && mapCustLng != 0) {
+            String safeName = restaurantNameStr != null ? restaurantNameStr.replace("'", "\\'") : "Restaurant";
+            wvLiveMap.evaluateJavascript(String.format(Locale.US,
+                "setOrderRoute(%f, %f, '%s', %f, %f, '%s');",
+                mapRestLat, mapRestLng, safeName, mapCustLat, mapCustLng, lastStatus), null);
+        }
+        if (mapDriverLat != 0 && mapDriverLng != 0) {
+            wvLiveMap.evaluateJavascript(String.format(Locale.US,
+                "updateDriver(%f, %f, %f, %f);",
+                mapDriverLat, mapDriverLng, lastDriverHeading, lastDriverSpeed), null);
+        }
+    }
+
+    private void updateRiderProgressFromMap(double progressPct, double distKm, double speedKmh, int etaMinutes) {
+        if (tvMapRiderStatus != null) {
+            if (distKm <= 0.05 || progressPct >= 98) {
+                tvMapRiderStatus.setText("📍 Valet arrived at your doorstep!");
+            } else {
+                tvMapRiderStatus.setText(String.format(Locale.getDefault(),
+                    "🛵 Valet on the way • %.1f km away • ~%d mins", distKm, Math.max(1, etaMinutes)));
+            }
+        }
+        if (progressTrack != null && progressPct > 0) {
+            int p = (int) (40 + (progressPct * 0.55));
+            progressTrack.setProgress(Math.min(95, Math.max(progressTrack.getProgress(), p)));
+        }
+    }
+
+    private void updateMapDriverPosition(double lat, double lng, double heading, double speed) {
+        mapDriverLat = lat;
+        mapDriverLng = lng;
+        lastDriverHeading = heading;
+        lastDriverSpeed = speed;
+        if (!mapLoaded || wvLiveMap == null) return;
+        runOnUiThread(() -> wvLiveMap.evaluateJavascript(String.format(Locale.US,
+            "updateDriver(%f, %f, %f, %f);", lat, lng, heading, speed), null));
+    }
+
+    private void updateMapDriverPosition(double lat, double lng) {
+        updateMapDriverPosition(lat, lng, 0, 24);
+    }
+
+    private void recenterMapOnDriver() {
+        if (!mapLoaded || wvLiveMap == null) return;
+        wvLiveMap.evaluateJavascript("if (typeof recenterOnDriver === 'function') { recenterOnDriver(); }", null);
+    }
+
+    private void fitMapRoute() {
+        if (!mapLoaded || wvLiveMap == null) return;
+        wvLiveMap.evaluateJavascript("if (typeof fitRoute === 'function') { fitRoute(); }", null);
+    }
+
+    private void switchMapStyle(String style) {
+        currentMapStyle = style;
+        if (!mapLoaded || wvLiveMap == null) return;
+        runOnUiThread(() -> wvLiveMap.evaluateJavascript("if (typeof switchStyle === 'function') { switchStyle('" + style + "'); }", null));
     }
 
     // ─── Animated Map Placeholder ─────────────────────────────────────────────
@@ -239,7 +626,20 @@ public class OrderTrackingActivity extends BaseActivity {
 
                 String status = snap.getString("status");
                 String restaurantName = snap.getString("restaurantName");
-                String restaurantAddress = snap.getString("restaurantAddress");
+                if (restaurantName != null) restaurantNameStr = restaurantName;
+                String restaurantId = snap.getString("restaurantId");
+                String snapRestPhone = snap.getString("restaurantPhone");
+                String snapRestAddress = snap.getString("restaurantAddress");
+                if (snapRestPhone != null && !snapRestPhone.isEmpty()) restaurantPhone = snapRestPhone;
+                if (snapRestAddress != null && !snapRestAddress.isEmpty()) restaurantAddress = snapRestAddress;
+
+                Double snapRestLat = snap.getDouble("restaurantLatitude");
+                Double snapRestLng = snap.getDouble("restaurantLongitude");
+                if (snapRestLat != null && snapRestLng != null && snapRestLat != 0) {
+                    mapRestLat = snapRestLat;
+                    mapRestLng = snapRestLng;
+                }
+
                 String deliveryPersonId = snap.getString("deliveryPersonId");
                 String deliveryPersonName = snap.getString("deliveryPersonName");
                 String deliveryPersonPhone = snap.getString("deliveryPersonPhone");
@@ -274,9 +674,10 @@ public class OrderTrackingActivity extends BaseActivity {
 
                 String vehicleNumber = snap.getString("vehicleNumber");
 
-                // Delivery address
+                // Extract delivery address & coordinates
                 Object addrObj = snap.get("deliveryAddress");
                 String addrStr = "";
+                double custLat = 0, custLng = 0;
                 if (addrObj instanceof Map) {
                     Map<?, ?> addr = (Map<?, ?>) addrObj;
                     Object street = addr.get("street");
@@ -286,9 +687,75 @@ public class OrderTrackingActivity extends BaseActivity {
                         street != null ? street.toString() : "",
                         city != null ? city.toString() : "",
                         pincode != null ? pincode.toString() : "").trim();
+                    Object latObj = addr.get("latitude");
+                    Object lngObj = addr.get("longitude");
+                    if (latObj instanceof Number) custLat = ((Number) latObj).doubleValue();
+                    if (lngObj instanceof Number) custLng = ((Number) lngObj).doubleValue();
                 } else if (addrObj instanceof String) {
                     addrStr = (String) addrObj;
                 }
+
+                if (custLat == 0 && custLng == 0) {
+                    Double sLat = snap.getDouble("deliveryLatitude");
+                    Double sLng = snap.getDouble("deliveryLongitude");
+                    if (sLat != null && sLng != null && sLat != 0) {
+                        custLat = sLat;
+                        custLng = sLng;
+                    }
+                }
+
+                if (custLat == 0 && custLng == 0) {
+                    com.ssr.hunger.models.Address savedAddr = CartManager.getInstance(this).getDeliveryAddress();
+                    if (savedAddr != null && savedAddr.getLatitude() != 0) {
+                        custLat = savedAddr.getLatitude();
+                        custLng = savedAddr.getLongitude();
+                    }
+                }
+
+                if (custLat == 0 && custLng == 0) {
+                    custLat = 28.6139; // Default New Delhi
+                    custLng = 77.2090;
+                }
+                mapCustLat = custLat;
+                mapCustLng = custLng;
+
+                // Query Firestore for complete restaurant phone, address & coordinates
+                if (restaurantId != null && !restaurantId.isEmpty()) {
+                    db.collection(Constants.COLLECTION_RESTAURANTS).document(restaurantId).get()
+                        .addOnSuccessListener(rSnap -> {
+                            if (rSnap == null || !rSnap.exists()) return;
+                            String phone = rSnap.getString("phone");
+                            String address = rSnap.getString("address");
+                            if (address == null || address.isEmpty()) address = rSnap.getString("street");
+                            Double rLat = rSnap.getDouble("latitude");
+                            Double rLng = rSnap.getDouble("longitude");
+
+                            if (phone != null && !phone.isEmpty()) restaurantPhone = phone;
+                            if (address != null && !address.isEmpty()) restaurantAddress = address;
+                            if (rLat != null && rLng != null && rLat != 0) {
+                                mapRestLat = rLat;
+                                mapRestLng = rLng;
+                            }
+
+                            runOnUiThread(() -> {
+                                if (tvRestaurantAddress != null && !restaurantAddress.isEmpty()) {
+                                    tvRestaurantAddress.setText(restaurantAddress);
+                                }
+                                if (tvRestaurantPhone != null && !restaurantPhone.isEmpty()) {
+                                    tvRestaurantPhone.setText("📞 " + restaurantPhone);
+                                }
+                                pushPendingCoordinatesToMap();
+                            });
+                        });
+                }
+
+                // If restaurant coords not known yet, set realistic offset from customer location
+                if (mapRestLat == 0 && mapRestLng == 0) {
+                    mapRestLat = mapCustLat - 0.015;
+                    mapRestLng = mapCustLng - 0.018;
+                }
+
+                pushPendingCoordinatesToMap();
 
                 // Order placed time → ETA
                 Object createdAtObj = snap.get("createdAt");
@@ -308,6 +775,19 @@ public class OrderTrackingActivity extends BaseActivity {
                 updateUI(status, restaurantName, restaurantAddress,
                     deliveryPersonName, deliveryPersonPhone, vehicleNumber,
                     addrStr, total, subtotal, deliveryCharge, totalQty);
+
+                if (status != null && !status.equalsIgnoreCase(lastStatus)) {
+                    lastStatus = status;
+                    if (com.ssr.hunger.utils.SettingsHelper.isVoiceAnnouncementsEnabled(OrderTrackingActivity.this)) {
+                        String shortId = orderId != null && orderId.length() >= 6 ? orderId.substring(orderId.length() - 6).toUpperCase() : (orderId != null ? orderId : "");
+                        String speech = "Order update: " + status.replace("_", " ");
+                        if ("preparing".equalsIgnoreCase(status)) speech = "Kitchen is preparing your order!";
+                        else if ("ready".equalsIgnoreCase(status)) speech = "Your food is freshly packed and ready for pickup!";
+                        else if ("out_for_delivery".equalsIgnoreCase(status)) speech = "Order #" + shortId + " is out for delivery with your rider!";
+                        else if ("delivered".equalsIgnoreCase(status)) speech = "Your order has been delivered! Enjoy your meal.";
+                        com.ssr.hunger.utils.VoiceHelper.getInstance(OrderTrackingActivity.this).speakOrderUpdate(speech);
+                    }
+                }
 
                 // Handle Delivery Verification OTP
                 String otp = snap.getString("deliveryOtp");
@@ -356,8 +836,6 @@ public class OrderTrackingActivity extends BaseActivity {
     }
 
     // ─── Driver Location: Real-time GPS from Firebase ─────────────────────────
-    // The delivery partner's device runs DriverLocationService which publishes to
-    // driverLocations/{driverId}. We listen here and update the UI.
 
     private void listenToDriverLocation(String driverId) {
         if (driverLocationListener != null) driverLocationListener.remove();
@@ -371,16 +849,20 @@ public class OrderTrackingActivity extends BaseActivity {
                 Double accuracy = snap.getDouble("accuracy");
                 Double heading = snap.getDouble("heading");
 
-                if (lat != null && lng != null && tvGpsCoords != null) {
-                    runOnUiThread(() -> {
-                        // Format: phase-aware label + coordinates
-                        String speedStr = speed != null ? String.format(Locale.getDefault(), " | %.0f km/h", speed) : "";
-                        String accStr  = accuracy != null ? String.format(Locale.getDefault(), " ±%.0fm", accuracy) : "";
-                        tvGpsCoords.setText(String.format(Locale.getDefault(),
-                            "📍 %.5f, %.5f%s%s", lat, lng, speedStr, accStr));
-                        tvGpsCoords.setVisibility(View.VISIBLE);
-                        if (gpsLiveBadge != null) gpsLiveBadge.setVisibility(View.VISIBLE);
-                    });
+                if (lat != null && lng != null) {
+                    // Update real-time map marker with heading and speed
+                    updateMapDriverPosition(lat, lng, heading != null ? heading : 0.0, speed != null ? speed : 24.0);
+
+                    if (tvGpsCoords != null) {
+                        runOnUiThread(() -> {
+                            String speedStr = speed != null ? String.format(Locale.getDefault(), " | %.0f km/h", speed) : "";
+                            String accStr  = accuracy != null ? String.format(Locale.getDefault(), " ±%.0fm", accuracy) : "";
+                            tvGpsCoords.setText(String.format(Locale.getDefault(),
+                                "📍 %.5f, %.5f%s%s", lat, lng, speedStr, accStr));
+                            tvGpsCoords.setVisibility(View.VISIBLE);
+                            if (gpsLiveBadge != null) gpsLiveBadge.setVisibility(View.VISIBLE);
+                        });
+                    }
                 }
             });
     }
@@ -393,6 +875,16 @@ public class OrderTrackingActivity extends BaseActivity {
                           Double deliveryCharge, int totalQty) {
         runOnUiThread(() -> {
             if (tvRestaurantName != null && restaurant != null) tvRestaurantName.setText(restaurant);
+            if (tvRestaurantAddress != null && restaurantAddress != null && !restaurantAddress.isEmpty()) {
+                tvRestaurantAddress.setText(restaurantAddress);
+            }
+            if (tvRestaurantPhone != null && restaurantPhone != null && !restaurantPhone.isEmpty()) {
+                tvRestaurantPhone.setText("📞 " + restaurantPhone);
+            }
+            if (btnCallRestaurant != null) {
+                btnCallRestaurant.setOnClickListener(v -> callPhoneNumber(restaurantPhone, tvRestaurantName != null ? tvRestaurantName.getText().toString() : "Restaurant"));
+            }
+
             if (tvOrderId != null) tvOrderId.setText("#" + orderId.substring(Math.max(0, orderId.length() - 8)).toUpperCase());
             if (tvDeliveryAddress != null && !deliveryAddr.isEmpty()) tvDeliveryAddress.setText(deliveryAddr);
             if (tvOrderStatus != null && status != null) tvOrderStatus.setText(getStatusEmoji(status) + " " + getStatusLabel(status));
@@ -427,21 +919,40 @@ public class OrderTrackingActivity extends BaseActivity {
                 final String phone = driverPhone;
                 if (btnCallDriver != null) {
                     btnCallDriver.setVisibility(phone != null && !phone.isEmpty() ? View.VISIBLE : View.GONE);
-                    btnCallDriver.setOnClickListener(v ->
-                        requirePhone(
-                            () -> startActivity(new Intent(Intent.ACTION_CALL, Uri.parse("tel:" + phone))),
-                            (isPermanent) -> {
-                                // Fallback: open dialer without CALL_PHONE permission
-                                startActivity(new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + phone)));
-                            }
-                        )
-                    );
+                    btnCallDriver.setOnClickListener(v -> callPhoneNumber(phone, driverName));
                 }
             }
 
             // Build step track
             buildStepTracker(status);
         });
+    }
+
+    private void callPhoneNumber(String phone, String name) {
+        if (phone == null || phone.trim().isEmpty()) {
+            Toast.makeText(this, "Contact number not available for " + (name != null ? name : "partner"), Toast.LENGTH_SHORT).show();
+            return;
+        }
+        final String cleanPhone = phone.trim();
+        requirePhone(
+            () -> startActivity(new Intent(Intent.ACTION_CALL, Uri.parse("tel:" + cleanPhone))),
+            (isPermanent) -> startActivity(new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + cleanPhone)))
+        );
+    }
+
+    private void shareTrackingInfo() {
+        String rest = (tvRestaurantName != null && tvRestaurantName.getText() != null) ? tvRestaurantName.getText().toString() : "Restaurant";
+        String eta = (tvEta != null && tvEta.getText() != null) ? tvEta.getText().toString() : "soon";
+        String shortId = orderId != null && orderId.length() >= 8 ? orderId.substring(orderId.length() - 8).toUpperCase() : (orderId != null ? orderId : "");
+        String shareMsg = "🍔 Live Order Tracking from *" + rest + "* on AKR Hunger!\n"
+            + "📦 Order #" + shortId + "\n"
+            + "⏱️ Estimated Delivery: " + eta + "\n"
+            + "🛵 Status: " + getStatusLabel(lastStatus) + "\n"
+            + "📍 Fresh & Sealed Delivery!";
+        Intent sendIntent = new Intent(Intent.ACTION_SEND);
+        sendIntent.putExtra(Intent.EXTRA_TEXT, shareMsg);
+        sendIntent.setType("text/plain");
+        startActivity(Intent.createChooser(sendIntent, "Share Live Tracking"));
     }
 
     private String getStatusLabel(String status) {

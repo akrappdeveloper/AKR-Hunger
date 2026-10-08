@@ -186,6 +186,9 @@ public class NotificationHelper {
         // 2. Display high priority local system notification
         if (context != null) {
             showLocalNotification(context, title, message, orderId, "order");
+            if (SettingsHelper.isVoiceAnnouncementsEnabled(context)) {
+                VoiceHelper.getInstance(context).speakOrderUpdate(message);
+            }
         }
     }
 
@@ -232,9 +235,20 @@ public class NotificationHelper {
     ) {
         if (context == null) return;
 
+        boolean isOrder = "order".equalsIgnoreCase(type);
+        boolean isPromo = "promo".equalsIgnoreCase(type) || "promotions".equalsIgnoreCase(type);
+        if (isOrder && !SettingsHelper.isOrderNotifEnabled(context)) {
+            Log.d(TAG, "Order notification suppressed per user settings");
+            return;
+        }
+        if (isPromo && !SettingsHelper.isPromoNotifEnabled(context)) {
+            Log.d(TAG, "Promo notification suppressed per user settings");
+            return;
+        }
+
         // Choose appropriate channel
         String channelId = AKRHungerApp.CHANNEL_ORDERS;
-        if ("promo".equalsIgnoreCase(type) || "promotions".equalsIgnoreCase(type)) {
+        if (isPromo) {
             channelId = AKRHungerApp.CHANNEL_PROMOTIONS;
         } else if ("system".equalsIgnoreCase(type) || "general".equalsIgnoreCase(type)) {
             channelId = AKRHungerApp.CHANNEL_GENERAL;
@@ -279,16 +293,23 @@ public class NotificationHelper {
         int uniqueRequestCode = (orderId != null ? orderId.hashCode() : (int) System.currentTimeMillis());
         PendingIntent pendingIntent = PendingIntent.getActivity(context, uniqueRequestCode, intent, pendingIntentFlags);
 
+        boolean soundEnabled = SettingsHelper.isSoundNotifEnabled(context);
+
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, channelId)
                 .setSmallIcon(R.drawable.ic_notification)
                 .setContentTitle(title)
                 .setContentText(body)
                 .setStyle(new NotificationCompat.BigTextStyle().bigText(body))
                 .setAutoCancel(true)
-                .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setCategory(NotificationCompat.CATEGORY_EVENT)
                 .setContentIntent(pendingIntent);
+
+        if (soundEnabled) {
+            builder.setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION));
+        } else {
+            builder.setSilent(true);
+        }
 
         int notificationId = (orderId != null && !orderId.isEmpty()) ?
                 Math.abs(orderId.hashCode()) : (int) (System.currentTimeMillis() % Integer.MAX_VALUE);

@@ -13,6 +13,8 @@ import { useCart } from '@/context/CartContext';
 import { Search, ShoppingCart, Star, Flame, Clock, Filter, MapPin, ChevronRight, TrendingUp, Plus, Store } from 'lucide-react';
 import Link from 'next/link';
 import SafeImage from '@/components/ui/safe-image';
+import SmartMealFinder from '@/components/customer/SmartMealFinder';
+import { MealIntent } from '@/lib/hunger-types-client';
 
 // Curated Food Categories with Rich Vibrant Color Palettes
 const CATEGORIES = [
@@ -352,6 +354,73 @@ export default function CustomerHomePage() {
                 </div>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* ── HUNGER SMART MEAL AI ── */}
+        {!searchQuery && categoryFilter === 'all' && (
+          <div className="rounded-2xl border border-orange-500/25 bg-gradient-to-br from-orange-500/8 to-amber-500/5 p-5">
+            <div className="flex items-center gap-2 mb-4">
+              <span className="text-xl">✨</span>
+              <div>
+                <h2 className="font-bold text-base">Hunger Smart Meal</h2>
+                <p className="text-xs text-muted-foreground">Tell us what you want in plain language</p>
+              </div>
+            </div>
+            <SmartMealFinder
+              onResults={(intent: MealIntent, q: string) => {
+                if (q) setSearchQuery(q);
+                else if (intent.query) setSearchQuery(intent.query);
+              }}
+            />
+          </div>
+        )}
+
+        {/* ── HUNGER FEATURE SHORTCUTS ── */}
+        {!searchQuery && categoryFilter === 'all' && (
+          <div className="grid grid-cols-2 gap-3">
+            {[
+              {
+                href: '/customer/student',
+                emoji: '🎓',
+                label: 'Student Mode',
+                sub: 'Deals from ₹99',
+                gradient: 'from-blue-500/20 to-indigo-500/10',
+                border: 'border-blue-500/25',
+              },
+              {
+                href: '/customer/group',
+                emoji: '👥',
+                label: 'Group Order',
+                sub: 'Order & split bill',
+                gradient: 'from-violet-500/20 to-purple-500/10',
+                border: 'border-violet-500/25',
+              },
+              {
+                href: '/customer/subscriptions',
+                emoji: '📅',
+                label: 'Meal Plans',
+                sub: 'Subscribe & save',
+                gradient: 'from-emerald-500/20 to-teal-500/10',
+                border: 'border-emerald-500/25',
+              },
+              {
+                href: '/customer/circle',
+                emoji: '❤️',
+                label: 'Hunger Circle',
+                sub: 'Order for family',
+                gradient: 'from-rose-500/20 to-pink-500/10',
+                border: 'border-rose-500/25',
+              },
+            ].map(feat => (
+              <Link key={feat.href} href={feat.href}>
+                <div className={`p-4 rounded-2xl border bg-gradient-to-br ${feat.gradient} ${feat.border} hover:scale-[1.02] transition-all active:scale-[0.98] cursor-pointer`}>
+                  <div className="text-2xl mb-2">{feat.emoji}</div>
+                  <div className="font-semibold text-sm">{feat.label}</div>
+                  <div className="text-xs text-muted-foreground mt-0.5">{feat.sub}</div>
+                </div>
+              </Link>
+            ))}
           </div>
         )}
 

@@ -6,134 +6,66 @@
     android:background="@color/background"
     android:orientation="vertical">
 
-    <!-- Live Map Radar Simulation Hero Header -->
+
+    <!-- LIVE MAP HERO: Real Leaflet/OSM WebView with animated running delivery partner -->
     <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="270dp"
-        android:background="@drawable/bg_tracking_hero_header">
+        android:layout_height="320dp">
 
-        <!-- Ambient Concentric Radar Rings & Simulated Transit Route -->
+        <!-- Real OpenStreetMap / Leaflet WebView map with running delivery boy -->
+        <WebView
+            android:id="@+id/wv_live_map"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="#0f172a" />
+
+        <!-- Map Loading Indicator -->
+        <ProgressBar
+            android:id="@+id/pb_map_loading"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_gravity="center"
+            android:indeterminate="true"
+            android:indeterminateTint="@color/primary"
+            android:visibility="visible" />
+
+        <!-- Bottom fade gradient for card overlap effect -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:layout_gravity="bottom"
+            android:background="@drawable/bg_tracking_map_fade" />
+
+        <!-- Radar rings: transparent subtle background -->
         <View
             android:id="@+id/view_radar_ring_outer"
             android:layout_width="220dp"
             android:layout_height="220dp"
             android:layout_gravity="center"
-            android:alpha="0.12"
+            android:alpha="0.0"
             android:background="@drawable/circle_white_20" />
-
         <View
             android:id="@+id/view_radar_ring_mid"
             android:layout_width="150dp"
             android:layout_height="150dp"
             android:layout_gravity="center"
-            android:alpha="0.22"
+            android:alpha="0.0"
             android:background="@drawable/circle_white_20" />
-
         <View
             android:id="@+id/view_radar_ring_inner"
             android:layout_width="90dp"
             android:layout_height="90dp"
             android:layout_gravity="center"
-            android:alpha="0.32"
+            android:alpha="0.0"
             android:background="@drawable/circle_white_20" />
 
-        <!-- Route Path Line Simulation (Restaurant to Destination) -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:layout_marginHorizontal="36dp"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
-
-            <!-- Restaurant Origin Marker -->
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:orientation="vertical">
-
-                <FrameLayout
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
-                    android:background="@drawable/circle_white_20">
-
-                    <ImageView
-                        android:layout_width="16dp"
-                        android:layout_height="16dp"
-                        android:layout_gravity="center"
-                        android:src="@drawable/ic_restaurant_modern"
-                        app:tint="@color/white" />
-                </FrameLayout>
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="3dp"
-                    android:fontFamily="sans-serif-bold"
-                    android:text="Kitchen"
-                    android:textColor="#B3FFFFFF"
-                    android:textSize="9.5sp" />
-            </LinearLayout>
-
-            <!-- Connecting Route Dashed Track -->
-            <View
-                android:layout_width="0dp"
-                android:layout_height="2dp"
-                android:layout_marginHorizontal="12dp"
-                android:layout_weight="1"
-                android:alpha="0.35"
-                android:background="@drawable/bg_coupon_dashed" />
-
-            <!-- Customer Destination Marker -->
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:orientation="vertical">
-
-                <FrameLayout
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
-                    android:background="@drawable/circle_white_20">
-
-                    <ImageView
-                        android:layout_width="16dp"
-                        android:layout_height="16dp"
-                        android:layout_gravity="center"
-                        android:src="@drawable/ic_location"
-                        app:tint="@color/white" />
-                </FrameLayout>
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="3dp"
-                    android:fontFamily="sans-serif-bold"
-                    android:text="You"
-                    android:textColor="#B3FFFFFF"
-                    android:textSize="9.5sp" />
-            </LinearLayout>
-        </LinearLayout>
-
-        <!-- Center Delivery Rider Marker with Glow -->
         <FrameLayout
             android:id="@+id/frame_rider_avatar"
-            android:layout_width="68dp"
-            android:layout_height="68dp"
-            android:layout_gravity="center"
-            android:background="@drawable/circle_orange_56"
-            android:elevation="8dp">
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:visibility="gone" />
 
-            <ImageView
-                android:layout_width="34dp"
-                android:layout_height="34dp"
-                android:layout_gravity="center"
-                android:src="@drawable/ic_scooter_fast"
-                app:tint="@color/white" />
-        </FrameLayout>
-
-        <!-- Top Header Navigation Bar -->
+        <!-- Overlay: top navigation & action bar -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -150,7 +82,7 @@
                 android:clickable="true"
                 android:focusable="true"
                 android:foreground="?attr/selectableItemBackground"
-                app:cardBackgroundColor="#33000000"
+                app:cardBackgroundColor="#66000000"
                 app:cardCornerRadius="21dp"
                 app:cardElevation="0dp"
                 app:strokeColor="#33FFFFFF"
@@ -168,7 +100,7 @@
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="14dp"
+                android:layout_marginStart="12dp"
                 android:layout_weight="1"
                 android:orientation="vertical">
 
@@ -179,14 +111,19 @@
                     android:letterSpacing="-0.01"
                     android:text="Live Order Tracking"
                     android:textColor="@color/white"
-                    android:textSize="18sp" />
+                    android:textSize="17sp"
+                    android:shadowColor="#AA000000"
+                    android:shadowRadius="4"
+                    android:shadowDx="0"
+                    android:shadowDy="1" />
 
                 <TextView
+                    android:id="@+id/tv_map_sub_header"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:fontFamily="sans-serif-medium"
-                    android:text="Real-time courier telemetry"
-                    android:textColor="#B3FFFFFF"
+                    android:text="Real-time GPS • Moving Valet"
+                    android:textColor="#CCFFFFFF"
                     android:textSize="11sp" />
             </LinearLayout>
 
@@ -199,12 +136,13 @@
                 android:elevation="2dp"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
-                android:paddingHorizontal="12dp">
+                android:paddingHorizontal="10dp"
+                android:visibility="gone">
 
                 <View
-                    android:layout_width="8dp"
-                    android:layout_height="8dp"
-                    android:layout_marginEnd="6dp"
+                    android:layout_width="7dp"
+                    android:layout_height="7dp"
+                    android:layout_marginEnd="5dp"
                     android:background="@drawable/bg_tracking_active_dot" />
 
                 <TextView
@@ -217,12 +155,159 @@
                     android:maxLines="1"
                     android:text="GPS Live"
                     android:textColor="@color/primary"
-                    android:textSize="11sp" />
+                    android:textSize="10.5sp" />
             </LinearLayout>
+
+            <!-- Share Tracking Button -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/btn_share_tracking"
+                android:layout_width="38dp"
+                android:layout_height="38dp"
+                android:layout_marginStart="8dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground"
+                app:cardBackgroundColor="#66000000"
+                app:cardCornerRadius="19dp"
+                app:cardElevation="0dp"
+                app:strokeColor="#33FFFFFF"
+                app:strokeWidth="1dp">
+
+                <ImageView
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:layout_gravity="center"
+                    android:contentDescription="Share"
+                    android:src="@drawable/ic_share_2"
+                    app:tint="@color/white" />
+            </com.google.android.material.card.MaterialCardView>
 
         </LinearLayout>
 
+        <!-- Live Rider Telemetry Floating Pill Banner (bottom of map) -->
+        <LinearLayout
+            android:id="@+id/layout_rider_live_banner"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|center_horizontal"
+            android:layout_marginBottom="44dp"
+            android:background="@drawable/bg_pill_dark"
+            android:elevation="6dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="14dp"
+            android:paddingVertical="7dp">
+
+            <View
+                android:layout_width="7dp"
+                android:layout_height="7dp"
+                android:layout_marginEnd="7dp"
+                android:background="@drawable/bg_tracking_active_dot" />
+
+            <TextView
+                android:id="@+id/tv_map_rider_status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-bold"
+                android:letterSpacing="0.01"
+                android:text="🛵 Valet on the way • Live GPS"
+                android:textColor="@color/white"
+                android:textSize="11.5sp" />
+        </LinearLayout>
+
+        <!-- Floating Map Camera Quick Controls (bottom-left overlay) -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|start"
+            android:layout_marginStart="14dp"
+            android:layout_marginBottom="8dp"
+            android:elevation="6dp"
+            android:orientation="horizontal">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_recenter_rider"
+                style="@style/Widget.AKR.Button.PillSoft"
+                android:layout_width="wrap_content"
+                android:layout_height="34dp"
+                android:fontFamily="sans-serif-bold"
+                android:paddingHorizontal="10dp"
+                android:text="Rider 🛵"
+                android:textColor="@color/white"
+                android:textSize="11sp"
+                app:backgroundTint="#AA0F172A"
+                app:cornerRadius="17dp"
+                app:strokeColor="#44FFFFFF"
+                app:strokeWidth="1dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_fit_route"
+                style="@style/Widget.AKR.Button.PillSoft"
+                android:layout_width="wrap_content"
+                android:layout_height="34dp"
+                android:layout_marginStart="6dp"
+                android:fontFamily="sans-serif-bold"
+                android:paddingHorizontal="10dp"
+                android:text="Route 🗺️"
+                android:textColor="@color/white"
+                android:textSize="11sp"
+                app:backgroundTint="#AA0F172A"
+                app:cornerRadius="17dp"
+                app:strokeColor="#44FFFFFF"
+                app:strokeWidth="1dp" />
+        </LinearLayout>
+
+        <!-- Map Style Switcher (bottom-right overlay) -->
+        <LinearLayout
+            android:id="@+id/ll_map_theme_switcher"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|end"
+            android:layout_marginEnd="14dp"
+            android:layout_marginBottom="8dp"
+            android:background="@drawable/bg_pill_dark"
+            android:elevation="6dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="8dp"
+            android:paddingVertical="5dp">
+
+            <TextView
+                android:id="@+id/btn_map_theme_street"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-bold"
+                android:text="🗺️"
+                android:textSize="14sp"
+                android:paddingHorizontal="5dp"
+                android:clickable="true"
+                android:focusable="true" />
+
+            <TextView
+                android:id="@+id/btn_map_theme_dark"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-bold"
+                android:text="🌙"
+                android:textSize="14sp"
+                android:paddingHorizontal="5dp"
+                android:clickable="true"
+                android:focusable="true" />
+
+            <TextView
+                android:id="@+id/btn_map_theme_sat"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-bold"
+                android:text="🛰️"
+                android:textSize="14sp"
+                android:paddingHorizontal="5dp"
+                android:clickable="true"
+                android:focusable="true" />
+        </LinearLayout>
+
     </FrameLayout>
+
 
     <!-- Scrollable Tracking Content -->
     <androidx.core.widget.NestedScrollView
@@ -495,8 +580,9 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Order / Restaurant Header Card -->
+            <!-- Order / Restaurant Contact Card -->
             <com.google.android.material.card.MaterialCardView
+                android:id="@+id/card_restaurant_info"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="14dp"
@@ -509,70 +595,177 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal"
+                    android:orientation="vertical"
                     android:padding="16dp">
 
-                    <!-- Restaurant Avatar Frame -->
-                    <FrameLayout
-                        android:layout_width="48dp"
-                        android:layout_height="48dp"
-                        android:background="@drawable/bg_icon_circle_soft">
-
-                        <ImageView
-                            android:layout_width="24dp"
-                            android:layout_height="24dp"
-                            android:layout_gravity="center"
-                            android:src="@drawable/ic_restaurant_modern"
-                            app:tint="@color/primary" />
-                    </FrameLayout>
-
                     <LinearLayout
-                        android:layout_width="0dp"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="14dp"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:layout_marginBottom="10dp">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:fontFamily="sans-serif-bold"
+                            android:letterSpacing="0.06"
+                            android:text="RESTAURANT KITCHEN"
+                            android:textColor="@color/text_hint"
+                            android:textSize="11sp" />
 
                         <LinearLayout
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:background="@drawable/bg_pill_emerald_soft"
                             android:gravity="center_vertical"
-                            android:orientation="horizontal">
+                            android:orientation="horizontal"
+                            android:paddingHorizontal="8dp"
+                            android:paddingVertical="3dp">
+
+                            <View
+                                android:layout_width="6dp"
+                                android:layout_height="6dp"
+                                android:layout_marginEnd="5dp"
+                                android:background="@drawable/bg_tracking_active_dot" />
 
                             <TextView
-                                android:id="@+id/tv_restaurant_name"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:fontFamily="sans-serif-black"
-                                android:text="Restaurant"
-                                android:textColor="@color/text_primary"
-                                android:textSize="16sp" />
+                                android:fontFamily="sans-serif-bold"
+                                android:text="KITCHEN READY"
+                                android:textColor="@color/success"
+                                android:textSize="10.5sp" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <!-- Restaurant Avatar Frame -->
+                        <FrameLayout
+                            android:layout_width="48dp"
+                            android:layout_height="48dp"
+                            android:background="@drawable/bg_icon_circle_soft">
 
                             <ImageView
-                                android:layout_width="14dp"
-                                android:layout_height="14dp"
-                                android:layout_marginStart="4dp"
-                                android:src="@drawable/ic_check_circle_filled"
+                                android:layout_width="24dp"
+                                android:layout_height="24dp"
+                                android:layout_gravity="center"
+                                android:src="@drawable/ic_restaurant_modern"
                                 app:tint="@color/primary" />
+                        </FrameLayout>
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="14dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <LinearLayout
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:gravity="center_vertical"
+                                android:orientation="horizontal">
+
+                                <TextView
+                                    android:id="@+id/tv_restaurant_name"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:fontFamily="sans-serif-black"
+                                    android:text="Restaurant"
+                                    android:textColor="@color/text_primary"
+                                    android:textSize="16sp" />
+
+                                <ImageView
+                                    android:layout_width="14dp"
+                                    android:layout_height="14dp"
+                                    android:layout_marginStart="4dp"
+                                    android:src="@drawable/ic_check_circle_filled"
+                                    app:tint="@color/primary" />
+                            </LinearLayout>
+
+                            <TextView
+                                android:id="@+id/tv_restaurant_address"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:ellipsize="end"
+                                android:fontFamily="sans-serif-medium"
+                                android:maxLines="1"
+                                android:text="Restaurant Kitchen"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="11.5sp" />
+
+                            <TextView
+                                android:id="@+id/tv_restaurant_phone"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:fontFamily="sans-serif-bold"
+                                android:text=""
+                                android:textColor="@color/primary"
+                                android:textSize="11.5sp" />
                         </LinearLayout>
+
+                        <!-- Direct Call Restaurant Button -->
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btn_call_restaurant"
+                            android:layout_width="46dp"
+                            android:layout_height="46dp"
+                            android:backgroundTint="@color/success"
+                            android:insetLeft="0dp"
+                            android:insetTop="0dp"
+                            android:insetRight="0dp"
+                            android:insetBottom="0dp"
+                            android:padding="0dp"
+                            app:cornerRadius="23dp"
+                            app:elevation="4dp"
+                            app:icon="@drawable/ic_phone"
+                            app:iconGravity="textStart"
+                            app:iconPadding="0dp"
+                            app:iconSize="18dp"
+                            app:iconTint="@color/white" />
+
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_marginTop="12dp"
+                        android:layout_marginBottom="10dp"
+                        android:background="@color/divider" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
 
                         <TextView
                             android:id="@+id/tv_order_id"
-                            android:layout_width="wrap_content"
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="2dp"
+                            android:layout_weight="1"
                             android:fontFamily="sans-serif-bold"
                             android:text="#ORDER123"
                             android:textColor="@color/text_secondary"
                             android:textSize="12sp" />
-                    </LinearLayout>
 
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:gravity="end"
-                        android:orientation="vertical">
+                        <TextView
+                            android:id="@+id/tv_delivery_charge_info"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="12dp"
+                            android:fontFamily="sans-serif-medium"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="11sp"
+                            android:text="Delivery: ₹40.00" />
 
                         <TextView
                             android:id="@+id/tv_order_total"
@@ -582,16 +775,6 @@
                             android:textColor="@color/primary"
                             android:textSize="16sp"
                             android:visibility="visible" />
-
-                        <TextView
-                            android:id="@+id/tv_delivery_charge_info"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="2dp"
-                            android:fontFamily="sans-serif-medium"
-                            android:textColor="@color/text_secondary"
-                            android:textSize="11sp"
-                            android:text="Delivery: ₹40.00" />
                     </LinearLayout>
 
                 </LinearLayout>

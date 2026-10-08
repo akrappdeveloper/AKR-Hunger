@@ -11,12 +11,12 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@color/surface"
-        android:elevation="2dp"
+        android:elevation="3dp"
         android:gravity="center_vertical"
         android:orientation="horizontal"
         android:paddingHorizontal="16dp"
-        android:paddingTop="48dp"
-        android:paddingBottom="14dp">
+        android:paddingTop="36dp"
+        android:paddingBottom="12dp">
 
         <FrameLayout
             android:id="@+id/btn_back"
@@ -47,23 +47,24 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:fontFamily="sans-serif-bold"
+                android:letterSpacing="-0.02"
                 android:text="Settings &amp; Preferences"
                 android:textColor="@color/text_primary"
-                android:textSize="18sp"
-                android:letterSpacing="-0.01" />
+                android:textSize="18sp" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
+                android:layout_marginTop="1dp"
                 android:fontFamily="sans-serif"
-                android:text="Personalize food ordering, security &amp; system"
+                android:text="Personalize food, security, sounds &amp; system"
                 android:textColor="@color/text_secondary"
                 android:textSize="11.5sp" />
         </LinearLayout>
 
         <!-- Quick Status Pill -->
         <LinearLayout
+            android:id="@+id/layout_status_pill"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="@drawable/bg_pill_emerald_soft"
@@ -73,12 +74,13 @@
             android:paddingVertical="5dp">
 
             <ImageView
-                android:layout_width="12dp"
-                android:layout_height="12dp"
+                android:layout_width="13dp"
+                android:layout_height="13dp"
                 android:src="@drawable/ic_shield_check"
                 app:tint="@color/veg_green" />
 
             <TextView
+                android:id="@+id/tv_status_pill"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="4dp"
@@ -86,7 +88,7 @@
                 android:letterSpacing="0.04"
                 android:text="PROTECTED"
                 android:textColor="@color/veg_green"
-                android:textSize="10sp" />
+                android:textSize="10.5sp" />
         </LinearLayout>
 
     </LinearLayout>
@@ -105,13 +107,13 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:paddingHorizontal="16dp"
-            android:paddingTop="16dp">
+            android:paddingTop="14dp">
 
             <!-- Search Settings Bar -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="44dp"
-                android:layout_marginBottom="18dp"
+                android:layout_marginBottom="14dp"
                 android:background="@drawable/bg_search_input_modern"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
@@ -132,21 +134,178 @@
                     android:layout_weight="1"
                     android:background="@null"
                     android:hint="Search settings, preferences, security..."
+                    android:inputType="text"
+                    android:maxLines="1"
                     android:textColor="@color/text_primary"
                     android:textColorHint="@color/text_hint"
-                    android:textSize="13sp"
-                    android:maxLines="1"
-                    android:inputType="text" />
+                    android:textSize="13sp" />
 
                 <ImageView
                     android:id="@+id/iv_clear_search_settings"
-                    android:layout_width="16dp"
-                    android:layout_height="16dp"
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
                     android:contentDescription="Clear search"
                     android:src="@drawable/ic_close"
                     android:visibility="gone"
                     app:tint="@color/text_hint" />
             </LinearLayout>
+
+            <!-- Empty Search State -->
+            <LinearLayout
+                android:id="@+id/layout_search_empty"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginVertical="36dp"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <FrameLayout
+                    android:layout_width="64dp"
+                    android:layout_height="64dp"
+                    android:background="@drawable/bg_icon_circle_soft">
+
+                    <ImageView
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/ic_search"
+                        app:tint="@color/text_hint" />
+                </FrameLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:fontFamily="sans-serif-bold"
+                    android:text="No Settings Found"
+                    android:textColor="@color/text_primary"
+                    android:textSize="16sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:fontFamily="sans-serif"
+                    android:text="No matching configuration or preference found."
+                    android:textColor="@color/text_secondary"
+                    android:textSize="12sp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_reset_search"
+                    android:layout_width="wrap_content"
+                    android:layout_height="40dp"
+                    android:layout_marginTop="14dp"
+                    android:backgroundTint="@color/primary"
+                    android:fontFamily="sans-serif-bold"
+                    android:text="Clear Search Filter"
+                    android:textColor="@color/on_primary"
+                    android:textSize="12sp"
+                    app:cornerRadius="20dp" />
+            </LinearLayout>
+
+            <!-- ================= USER PROFILE HERO CARD ================= -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/card_section_profile"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                app:cardBackgroundColor="@color/surface"
+                app:cardCornerRadius="18dp"
+                app:cardElevation="1dp"
+                app:strokeColor="@color/card_border"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="14dp">
+
+                    <de.hdodenhof.circleimageview.CircleImageView
+                        android:id="@+id/iv_user_avatar"
+                        android:layout_width="52dp"
+                        android:layout_height="52dp"
+                        android:src="@drawable/ic_profile"
+                        app:civ_border_color="@color/primary"
+                        app:civ_border_width="2dp" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="14dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/tv_user_name"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:ellipsize="end"
+                            android:fontFamily="sans-serif-bold"
+                            android:maxLines="1"
+                            android:text="AKR Foodie"
+                            android:textColor="@color/text_primary"
+                            android:textSize="15.5sp" />
+
+                        <TextView
+                            android:id="@+id/tv_user_contact"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="1dp"
+                            android:ellipsize="end"
+                            android:fontFamily="sans-serif"
+                            android:maxLines="1"
+                            android:text="foodie@hungerapp.com"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="11.5sp" />
+
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:background="@drawable/bg_pill_amber_soft"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:paddingHorizontal="8dp"
+                            android:paddingVertical="3dp">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="👑 "
+                                android:textSize="10sp" />
+
+                            <TextView
+                                android:id="@+id/tv_user_membership_badge"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="sans-serif-bold"
+                                android:text="Hunger One Member"
+                                android:textColor="@color/secondary_dark"
+                                android:textSize="10sp" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <FrameLayout
+                        android:id="@+id/btn_edit_profile_quick"
+                        android:layout_width="38dp"
+                        android:layout_height="38dp"
+                        android:background="@drawable/bg_icon_circle_soft"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:foreground="?attr/selectableItemBackgroundBorderless">
+
+                        <ImageView
+                            android:layout_width="18dp"
+                            android:layout_height="18dp"
+                            android:layout_gravity="center"
+                            android:src="@drawable/ic_edit"
+                            app:tint="@color/primary" />
+                    </FrameLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
 
             <!-- ================= SECTION 1: APPEARANCE & THEME ================= -->
             <TextView
@@ -156,7 +315,7 @@
                 android:layout_marginBottom="8dp"
                 android:fontFamily="sans-serif-bold"
                 android:letterSpacing="0.06"
-                android:text="APPEARANCE &amp; THEME"
+                android:text="APPEARANCE &amp; DISPLAY"
                 android:textColor="@color/text_tertiary"
                 android:textSize="11sp" />
 
@@ -164,9 +323,9 @@
                 android:id="@+id/card_section_theme"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="20dp"
+                android:layout_marginBottom="18dp"
                 app:cardBackgroundColor="@color/surface"
-                app:cardCornerRadius="22dp"
+                app:cardCornerRadius="18dp"
                 app:cardElevation="1dp"
                 app:strokeColor="@color/card_border"
                 app:strokeWidth="1dp">
@@ -175,7 +334,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="14dp">
+                    android:padding="12dp">
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -194,17 +353,17 @@
                             android:foreground="?attr/selectableItemBackground"
                             android:gravity="center"
                             android:orientation="vertical"
-                            android:paddingHorizontal="6dp"
-                            android:paddingVertical="14dp">
+                            android:paddingHorizontal="4dp"
+                            android:paddingVertical="12dp">
 
                             <FrameLayout
-                                android:layout_width="44dp"
-                                android:layout_height="44dp"
+                                android:layout_width="40dp"
+                                android:layout_height="40dp"
                                 android:background="@drawable/bg_icon_circle_soft">
 
                                 <ImageView
-                                    android:layout_width="22dp"
-                                    android:layout_height="22dp"
+                                    android:layout_width="20dp"
+                                    android:layout_height="20dp"
                                     android:layout_gravity="center"
                                     android:src="@drawable/ic_sun"
                                     app:tint="@color/warning" />
@@ -213,11 +372,11 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="8dp"
+                                android:layout_marginTop="6dp"
                                 android:fontFamily="sans-serif-bold"
                                 android:text="Light"
                                 android:textColor="@color/text_primary"
-                                android:textSize="13sp" />
+                                android:textSize="12.5sp" />
 
                             <TextView
                                 android:layout_width="wrap_content"
@@ -226,13 +385,13 @@
                                 android:fontFamily="sans-serif"
                                 android:text="Crisp White"
                                 android:textColor="@color/text_secondary"
-                                android:textSize="10.5sp" />
+                                android:textSize="10sp" />
 
                             <ImageView
                                 android:id="@+id/check_theme_light"
-                                android:layout_width="18dp"
-                                android:layout_height="18dp"
-                                android:layout_marginTop="8dp"
+                                android:layout_width="16dp"
+                                android:layout_height="16dp"
+                                android:layout_marginTop="6dp"
                                 android:src="@drawable/ic_check_circle_filled"
                                 android:visibility="invisible" />
                         </LinearLayout>
@@ -242,7 +401,7 @@
                             android:id="@+id/theme_option_dark"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_marginHorizontal="8dp"
+                            android:layout_marginHorizontal="6dp"
                             android:layout_weight="1"
                             android:background="@drawable/bg_theme_option_unselected"
                             android:clickable="true"
@@ -250,17 +409,17 @@
                             android:foreground="?attr/selectableItemBackground"
                             android:gravity="center"
                             android:orientation="vertical"
-                            android:paddingHorizontal="6dp"
-                            android:paddingVertical="14dp">
+                            android:paddingHorizontal="4dp"
+                            android:paddingVertical="12dp">
 
                             <FrameLayout
-                                android:layout_width="44dp"
-                                android:layout_height="44dp"
+                                android:layout_width="40dp"
+                                android:layout_height="40dp"
                                 android:background="@drawable/bg_icon_circle_soft">
 
                                 <ImageView
-                                    android:layout_width="22dp"
-                                    android:layout_height="22dp"
+                                    android:layout_width="20dp"
+                                    android:layout_height="20dp"
                                     android:layout_gravity="center"
                                     android:src="@drawable/ic_moon"
                                     app:tint="@color/primary" />
@@ -269,26 +428,26 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="8dp"
+                                android:layout_marginTop="6dp"
                                 android:fontFamily="sans-serif-bold"
                                 android:text="Dark"
                                 android:textColor="@color/text_primary"
-                                android:textSize="13sp" />
+                                android:textSize="12.5sp" />
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="1dp"
                                 android:fontFamily="sans-serif"
-                                android:text="AMOLED Black"
+                                android:text="AMOLED Dark"
                                 android:textColor="@color/text_secondary"
-                                android:textSize="10.5sp" />
+                                android:textSize="10sp" />
 
                             <ImageView
                                 android:id="@+id/check_theme_dark"
-                                android:layout_width="18dp"
-                                android:layout_height="18dp"
-                                android:layout_marginTop="8dp"
+                                android:layout_width="16dp"
+                                android:layout_height="16dp"
+                                android:layout_marginTop="6dp"
                                 android:src="@drawable/ic_check_circle_filled"
                                 android:visibility="invisible" />
                         </LinearLayout>
@@ -305,17 +464,17 @@
                             android:foreground="?attr/selectableItemBackground"
                             android:gravity="center"
                             android:orientation="vertical"
-                            android:paddingHorizontal="6dp"
-                            android:paddingVertical="14dp">
+                            android:paddingHorizontal="4dp"
+                            android:paddingVertical="12dp">
 
                             <FrameLayout
-                                android:layout_width="44dp"
-                                android:layout_height="44dp"
+                                android:layout_width="40dp"
+                                android:layout_height="40dp"
                                 android:background="@drawable/bg_icon_circle_soft">
 
                                 <ImageView
-                                    android:layout_width="22dp"
-                                    android:layout_height="22dp"
+                                    android:layout_width="20dp"
+                                    android:layout_height="20dp"
                                     android:layout_gravity="center"
                                     android:src="@drawable/ic_device_phone"
                                     app:tint="@color/info" />
@@ -324,29 +483,76 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="8dp"
+                                android:layout_marginTop="6dp"
                                 android:fontFamily="sans-serif-bold"
                                 android:text="Auto"
                                 android:textColor="@color/text_primary"
-                                android:textSize="13sp" />
+                                android:textSize="12.5sp" />
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="1dp"
                                 android:fontFamily="sans-serif"
-                                android:text="Match OS"
+                                android:text="System OS"
                                 android:textColor="@color/text_secondary"
-                                android:textSize="10.5sp" />
+                                android:textSize="10sp" />
 
                             <ImageView
                                 android:id="@+id/check_theme_system"
-                                android:layout_width="18dp"
-                                android:layout_height="18dp"
-                                android:layout_marginTop="8dp"
+                                android:layout_width="16dp"
+                                android:layout_height="16dp"
+                                android:layout_marginTop="6dp"
                                 android:src="@drawable/ic_check_circle_filled"
                                 android:visibility="invisible" />
                         </LinearLayout>
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_marginVertical="10dp"
+                        android:background="@color/divider" />
+
+                    <!-- Reduce Motion -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingHorizontal="4dp"
+                        android:paddingVertical="4dp">
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="sans-serif-bold"
+                                android:text="Reduce Motion &amp; Animations"
+                                android:textColor="@color/text_primary"
+                                android:textSize="13.5sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="1dp"
+                                android:fontFamily="sans-serif"
+                                android:text="Minimize transitions to maximize battery &amp; speed"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="11sp" />
+                        </LinearLayout>
+
+                        <com.google.android.material.materialswitch.MaterialSwitch
+                            android:id="@+id/switch_reduce_animations"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            app:thumbTint="@color/on_primary"
+                            app:trackTint="@color/primary" />
                     </LinearLayout>
 
                 </LinearLayout>
@@ -368,9 +574,9 @@
                 android:id="@+id/card_section_food"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="20dp"
+                android:layout_marginBottom="18dp"
                 app:cardBackgroundColor="@color/surface"
-                app:cardCornerRadius="22dp"
+                app:cardCornerRadius="18dp"
                 app:cardElevation="1dp"
                 app:strokeColor="@color/card_border"
                 app:strokeWidth="1dp">
@@ -379,7 +585,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:paddingHorizontal="16dp"
+                    android:paddingHorizontal="14dp"
                     android:paddingVertical="4dp">
 
                     <!-- Pure Veg Mode -->
@@ -388,7 +594,7 @@
                         android:layout_height="wrap_content"
                         android:gravity="center_vertical"
                         android:orientation="horizontal"
-                        android:paddingVertical="12dp">
+                        android:paddingVertical="10dp">
 
                         <FrameLayout
                             android:layout_width="38dp"
@@ -406,7 +612,7 @@
                         <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="14dp"
+                            android:layout_marginStart="12dp"
                             android:layout_weight="1"
                             android:orientation="vertical">
 
@@ -416,16 +622,16 @@
                                 android:fontFamily="sans-serif-bold"
                                 android:text="Pure Veg Mode"
                                 android:textColor="@color/text_primary"
-                                android:textSize="14.5sp" />
+                                android:textSize="14sp" />
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="2dp"
+                                android:layout_marginTop="1dp"
                                 android:fontFamily="sans-serif"
-                                android:text="Show only 100% vegetarian food and restaurants"
+                                android:text="Strictly filter search &amp; restaurant menus to 100% vegetarian"
                                 android:textColor="@color/text_secondary"
-                                android:textSize="11.5sp" />
+                                android:textSize="11sp" />
                         </LinearLayout>
 
                         <com.google.android.material.materialswitch.MaterialSwitch
@@ -444,7 +650,7 @@
                         android:layout_height="wrap_content"
                         android:gravity="center_vertical"
                         android:orientation="horizontal"
-                        android:paddingVertical="12dp">
+                        android:paddingVertical="10dp">
 
                         <FrameLayout
                             android:layout_width="38dp"
@@ -462,7 +668,7 @@
                         <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="14dp"
+                            android:layout_marginStart="12dp"
                             android:layout_weight="1"
                             android:orientation="vertical">
 
@@ -470,18 +676,18 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:fontFamily="sans-serif-bold"
-                                android:text="Skip Plastic Cutlery"
+                                android:text="Skip Disposable Plastic Cutlery"
                                 android:textColor="@color/text_primary"
-                                android:textSize="14.5sp" />
+                                android:textSize="14sp" />
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="2dp"
+                                android:layout_marginTop="1dp"
                                 android:fontFamily="sans-serif"
-                                android:text="Help environment by opting out of disposable cutlery"
+                                android:text="Help nature by automatically opting out of plastic spoons"
                                 android:textColor="@color/text_secondary"
-                                android:textSize="11.5sp" />
+                                android:textSize="11sp" />
                         </LinearLayout>
 
                         <com.google.android.material.materialswitch.MaterialSwitch
@@ -501,25 +707,25 @@
                         android:layout_height="wrap_content"
                         android:gravity="center_vertical"
                         android:orientation="horizontal"
-                        android:paddingVertical="12dp">
+                        android:paddingVertical="10dp">
 
                         <FrameLayout
                             android:layout_width="38dp"
                             android:layout_height="38dp"
                             android:background="@drawable/bg_amber_soft">
 
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
+                            <ImageView
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
                                 android:layout_gravity="center"
-                                android:text="⚡"
-                                android:textSize="18sp" />
+                                android:src="@drawable/ic_zap"
+                                app:tint="@color/secondary_dark" />
                         </FrameLayout>
 
                         <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="14dp"
+                            android:layout_marginStart="12dp"
                             android:layout_weight="1"
                             android:orientation="vertical">
 
@@ -529,16 +735,16 @@
                                 android:fontFamily="sans-serif-bold"
                                 android:text="Auto-Apply Best Promo Deals"
                                 android:textColor="@color/text_primary"
-                                android:textSize="14.5sp" />
+                                android:textSize="14sp" />
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="2dp"
+                                android:layout_marginTop="1dp"
                                 android:fontFamily="sans-serif"
-                                android:text="Automatically apply highest saving coupon at checkout"
+                                android:text="Instantly attach highest saving coupon code at checkout"
                                 android:textColor="@color/text_secondary"
-                                android:textSize="11.5sp" />
+                                android:textSize="11sp" />
                         </LinearLayout>
 
                         <com.google.android.material.materialswitch.MaterialSwitch
@@ -562,7 +768,7 @@
                         android:foreground="?attr/selectableItemBackground"
                         android:gravity="center_vertical"
                         android:orientation="horizontal"
-                        android:paddingVertical="12dp">
+                        android:paddingVertical="10dp">
 
                         <FrameLayout
                             android:layout_width="38dp"
@@ -580,7 +786,7 @@
                         <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="14dp"
+                            android:layout_marginStart="12dp"
                             android:layout_weight="1"
                             android:orientation="vertical">
 
@@ -590,17 +796,17 @@
                                 android:fontFamily="sans-serif-bold"
                                 android:text="Default Delivery Drop Preset"
                                 android:textColor="@color/text_primary"
-                                android:textSize="14.5sp" />
+                                android:textSize="14sp" />
 
                             <TextView
                                 android:id="@+id/tv_delivery_instructions_val"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="2dp"
-                                android:fontFamily="sans-serif"
+                                android:layout_marginTop="1dp"
+                                android:fontFamily="sans-serif-medium"
                                 android:text="Leave at the door / Ring bell"
                                 android:textColor="@color/primary"
-                                android:textSize="11.5sp" />
+                                android:textSize="11sp" />
                         </LinearLayout>
 
                         <ImageView
@@ -622,7 +828,7 @@
                         android:foreground="?attr/selectableItemBackground"
                         android:gravity="center_vertical"
                         android:orientation="horizontal"
-                        android:paddingVertical="12dp">
+                        android:paddingVertical="10dp">
 
                         <FrameLayout
                             android:layout_width="38dp"
@@ -640,7 +846,7 @@
                         <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="14dp"
+                            android:layout_marginStart="12dp"
                             android:layout_weight="1"
                             android:orientation="vertical">
 
@@ -650,17 +856,77 @@
                                 android:fontFamily="sans-serif-bold"
                                 android:text="Default Spice Level"
                                 android:textColor="@color/text_primary"
-                                android:textSize="14.5sp" />
+                                android:textSize="14sp" />
 
                             <TextView
                                 android:id="@+id/tv_spice_level_val"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="2dp"
-                                android:fontFamily="sans-serif"
+                                android:layout_marginTop="1dp"
+                                android:fontFamily="sans-serif-medium"
                                 android:text="Medium Balanced 🔥"
                                 android:textColor="@color/primary"
-                                android:textSize="11.5sp" />
+                                android:textSize="11sp" />
+                        </LinearLayout>
+
+                        <ImageView
+                            android:layout_width="16dp"
+                            android:layout_height="16dp"
+                            android:src="@drawable/ic_chevron_right"
+                            app:tint="@color/text_hint" />
+                    </LinearLayout>
+
+                    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/divider" />
+
+                    <!-- Cooking & Allergy Instructions -->
+                    <LinearLayout
+                        android:id="@+id/row_cooking_instructions"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:foreground="?attr/selectableItemBackground"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingVertical="10dp">
+
+                        <FrameLayout
+                            android:layout_width="38dp"
+                            android:layout_height="38dp"
+                            android:background="@drawable/bg_icon_circle_soft">
+
+                            <ImageView
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:layout_gravity="center"
+                                android:src="@drawable/ic_chef"
+                                app:tint="@color/primary" />
+                        </FrameLayout>
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="sans-serif-bold"
+                                android:text="Kitchen Prep &amp; Allergy Notes"
+                                android:textColor="@color/text_primary"
+                                android:textSize="14sp" />
+
+                            <TextView
+                                android:id="@+id/tv_cooking_instructions_val"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="1dp"
+                                android:fontFamily="sans-serif-medium"
+                                android:text="Standard (Kitchen defaults)"
+                                android:textColor="@color/primary"
+                                android:textSize="11sp" />
                         </LinearLayout>
 
                         <ImageView
@@ -689,9 +955,9 @@
                 android:id="@+id/card_section_automation"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="20dp"
+                android:layout_marginBottom="18dp"
                 app:cardBackgroundColor="@color/surface"
-                app:cardCornerRadius="22dp"
+                app:cardCornerRadius="18dp"
                 app:cardElevation="1dp"
                 app:strokeColor="@color/card_border"
                 app:strokeWidth="1dp">
@@ -700,7 +966,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:paddingHorizontal="16dp"
+                    android:paddingHorizontal="14dp"
                     android:paddingVertical="4dp">
 
                     <!-- Auto-Redeem Points on Checkout -->
@@ -709,7 +975,7 @@
                         android:layout_height="wrap_content"
                         android:gravity="center_vertical"
                         android:orientation="horizontal"
-                        android:paddingVertical="12dp">
+                        android:paddingVertical="10dp">
 
                         <FrameLayout
                             android:layout_width="38dp"
@@ -727,7 +993,7 @@
                         <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="14dp"
+                            android:layout_marginStart="12dp"
                             android:layout_weight="1"
                             android:orientation="vertical">
 
@@ -735,18 +1001,18 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:fontFamily="sans-serif-bold"
-                                android:text="Auto-Apply Reward Points"
+                                android:text="Auto-Apply Reward Coins"
                                 android:textColor="@color/text_primary"
-                                android:textSize="14.5sp" />
+                                android:textSize="14sp" />
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="2dp"
+                                android:layout_marginTop="1dp"
                                 android:fontFamily="sans-serif"
-                                android:text="Automatically redeem loyalty coins for instant bill deduction"
+                                android:text="Redeem coins automatically for instant discount at checkout"
                                 android:textColor="@color/text_secondary"
-                                android:textSize="11.5sp" />
+                                android:textSize="11sp" />
                         </LinearLayout>
 
                         <com.google.android.material.materialswitch.MaterialSwitch
@@ -766,7 +1032,7 @@
                         android:layout_height="wrap_content"
                         android:gravity="center_vertical"
                         android:orientation="horizontal"
-                        android:paddingVertical="12dp">
+                        android:paddingVertical="10dp">
 
                         <FrameLayout
                             android:layout_width="38dp"
@@ -784,7 +1050,7 @@
                         <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="14dp"
+                            android:layout_marginStart="12dp"
                             android:layout_weight="1"
                             android:orientation="vertical">
 
@@ -792,18 +1058,18 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:fontFamily="sans-serif-bold"
-                                android:text="1-Tap Instant Reorder"
+                                android:text="1-Tap Quick Reorder"
                                 android:textColor="@color/text_primary"
-                                android:textSize="14.5sp" />
+                                android:textSize="14sp" />
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="2dp"
+                                android:layout_marginTop="1dp"
                                 android:fontFamily="sans-serif"
-                                android:text="Fast checkout button directly from past order history"
+                                android:text="Enable fast checkout directly from past order history"
                                 android:textColor="@color/text_secondary"
-                                android:textSize="11.5sp" />
+                                android:textSize="11sp" />
                         </LinearLayout>
 
                         <com.google.android.material.materialswitch.MaterialSwitch
@@ -823,7 +1089,7 @@
                         android:layout_height="wrap_content"
                         android:gravity="center_vertical"
                         android:orientation="horizontal"
-                        android:paddingVertical="12dp">
+                        android:paddingVertical="10dp">
 
                         <FrameLayout
                             android:layout_width="38dp"
@@ -835,13 +1101,13 @@
                                 android:layout_height="20dp"
                                 android:layout_gravity="center"
                                 android:src="@drawable/ic_mic"
-                                app:tint="@color/secondary" />
+                                app:tint="@color/secondary_dark" />
                         </FrameLayout>
 
                         <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="14dp"
+                            android:layout_marginStart="12dp"
                             android:layout_weight="1"
                             android:orientation="vertical">
 
@@ -849,19 +1115,34 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:fontFamily="sans-serif-bold"
-                                android:text="Voice Order Updates"
+                                android:text="Voice Order Announcements"
                                 android:textColor="@color/text_primary"
-                                android:textSize="14.5sp" />
+                                android:textSize="14sp" />
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="2dp"
+                                android:layout_marginTop="1dp"
                                 android:fontFamily="sans-serif"
-                                android:text="Speak order milestones like kitchen cooking &amp; rider nearby"
+                                android:text="Speak order milestones like kitchen cooking &amp; rider ETA"
                                 android:textColor="@color/text_secondary"
-                                android:textSize="11.5sp" />
+                                android:textSize="11sp" />
                         </LinearLayout>
+
+                        <TextView
+                            android:id="@+id/btn_test_voice"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="6dp"
+                            android:background="@drawable/bg_pill_soft"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:fontFamily="sans-serif-bold"
+                            android:paddingHorizontal="8dp"
+                            android:paddingVertical="4dp"
+                            android:text="Test 🔊"
+                            android:textColor="@color/primary"
+                            android:textSize="11sp" />
 
                         <com.google.android.material.materialswitch.MaterialSwitch
                             android:id="@+id/switch_voice_announcements"
@@ -870,6 +1151,123 @@
                             android:checked="false"
                             app:thumbTint="@color/on_primary"
                             app:trackTint="@color/primary" />
+                    </LinearLayout>
+
+                    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/divider" />
+
+                    <!-- In-App Haptic Feedback -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingVertical="10dp">
+
+                        <FrameLayout
+                            android:layout_width="38dp"
+                            android:layout_height="38dp"
+                            android:background="@drawable/bg_icon_circle_soft">
+
+                            <ImageView
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:layout_gravity="center"
+                                android:src="@drawable/ic_vibrate"
+                                app:tint="@color/primary" />
+                        </FrameLayout>
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="sans-serif-bold"
+                                android:text="In-App Haptic Feedback"
+                                android:textColor="@color/text_primary"
+                                android:textSize="14sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="1dp"
+                                android:fontFamily="sans-serif"
+                                android:text="Tactile touch vibrations on cart add and payment actions"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="11sp" />
+                        </LinearLayout>
+
+                        <com.google.android.material.materialswitch.MaterialSwitch
+                            android:id="@+id/switch_haptic_feedback"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:checked="true"
+                            app:thumbTint="@color/on_primary"
+                            app:trackTint="@color/primary" />
+                    </LinearLayout>
+
+                    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/divider" />
+
+                    <!-- Default Payment Method -->
+                    <LinearLayout
+                        android:id="@+id/row_default_payment"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:foreground="?attr/selectableItemBackground"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingVertical="10dp">
+
+                        <FrameLayout
+                            android:layout_width="38dp"
+                            android:layout_height="38dp"
+                            android:background="@drawable/bg_icon_circle_soft">
+
+                            <ImageView
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:layout_gravity="center"
+                                android:src="@drawable/ic_wallet"
+                                app:tint="@color/primary" />
+                        </FrameLayout>
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="sans-serif-bold"
+                                android:text="Preferred Payment Method"
+                                android:textColor="@color/text_primary"
+                                android:textSize="14sp" />
+
+                            <TextView
+                                android:id="@+id/tv_default_payment_val"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="1dp"
+                                android:fontFamily="sans-serif-medium"
+                                android:text="UPI / Google Pay / PhonePe"
+                                android:textColor="@color/primary"
+                                android:textSize="11sp" />
+                        </LinearLayout>
+
+                        <ImageView
+                            android:layout_width="16dp"
+                            android:layout_height="16dp"
+                            android:src="@drawable/ic_chevron_right"
+                            app:tint="@color/text_hint" />
                     </LinearLayout>
 
                 </LinearLayout>
@@ -883,7 +1281,7 @@
                 android:layout_marginBottom="8dp"
                 android:fontFamily="sans-serif-bold"
                 android:letterSpacing="0.06"
-                android:text="NOTIFICATIONS &amp; ALERTS"
+                android:text="NOTIFICATIONS &amp; CHANNELS"
                 android:textColor="@color/text_tertiary"
                 android:textSize="11sp" />
 
@@ -891,9 +1289,9 @@
                 android:id="@+id/card_section_notif"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="20dp"
+                android:layout_marginBottom="18dp"
                 app:cardBackgroundColor="@color/surface"
-                app:cardCornerRadius="22dp"
+                app:cardCornerRadius="18dp"
                 app:cardElevation="1dp"
                 app:strokeColor="@color/card_border"
                 app:strokeWidth="1dp">
@@ -902,7 +1300,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:paddingHorizontal="16dp"
+                    android:paddingHorizontal="14dp"
                     android:paddingVertical="4dp">
 
                     <!-- Order Tracking Updates -->
@@ -911,7 +1309,7 @@
                         android:layout_height="wrap_content"
                         android:gravity="center_vertical"
                         android:orientation="horizontal"
-                        android:paddingVertical="12dp">
+                        android:paddingVertical="10dp">
 
                         <FrameLayout
                             android:layout_width="38dp"
@@ -929,7 +1327,7 @@
                         <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="14dp"
+                            android:layout_marginStart="12dp"
                             android:layout_weight="1"
                             android:orientation="vertical">
 
@@ -939,16 +1337,16 @@
                                 android:fontFamily="sans-serif-bold"
                                 android:text="Live Order Tracking Alerts"
                                 android:textColor="@color/text_primary"
-                                android:textSize="14.5sp" />
+                                android:textSize="14sp" />
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="2dp"
+                                android:layout_marginTop="1dp"
                                 android:fontFamily="sans-serif"
-                                android:text="Real-time cooking, pickup, and rider ETA alerts"
+                                android:text="Cooking progress, driver assigned, and live ETA pings"
                                 android:textColor="@color/text_secondary"
-                                android:textSize="11.5sp" />
+                                android:textSize="11sp" />
                         </LinearLayout>
 
                         <com.google.android.material.materialswitch.MaterialSwitch
@@ -968,7 +1366,7 @@
                         android:layout_height="wrap_content"
                         android:gravity="center_vertical"
                         android:orientation="horizontal"
-                        android:paddingVertical="12dp">
+                        android:paddingVertical="10dp">
 
                         <FrameLayout
                             android:layout_width="38dp"
@@ -986,7 +1384,7 @@
                         <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="14dp"
+                            android:layout_marginStart="12dp"
                             android:layout_weight="1"
                             android:orientation="vertical">
 
@@ -996,16 +1394,16 @@
                                 android:fontFamily="sans-serif-bold"
                                 android:text="Flash Deals &amp; Discounts"
                                 android:textColor="@color/text_primary"
-                                android:textSize="14.5sp" />
+                                android:textSize="14sp" />
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="2dp"
+                                android:layout_marginTop="1dp"
                                 android:fontFamily="sans-serif"
-                                android:text="Festive coupons, free delivery &amp; food drops"
+                                android:text="Festive coupons, free delivery &amp; weekly food discounts"
                                 android:textColor="@color/text_secondary"
-                                android:textSize="11.5sp" />
+                                android:textSize="11sp" />
                         </LinearLayout>
 
                         <com.google.android.material.materialswitch.MaterialSwitch
@@ -1025,7 +1423,7 @@
                         android:layout_height="wrap_content"
                         android:gravity="center_vertical"
                         android:orientation="horizontal"
-                        android:paddingVertical="12dp">
+                        android:paddingVertical="10dp">
 
                         <FrameLayout
                             android:layout_width="38dp"
@@ -1043,7 +1441,7 @@
                         <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="14dp"
+                            android:layout_marginStart="12dp"
                             android:layout_weight="1"
                             android:orientation="vertical">
 
@@ -1053,16 +1451,16 @@
                                 android:fontFamily="sans-serif-bold"
                                 android:text="WhatsApp Order Updates"
                                 android:textColor="@color/text_primary"
-                                android:textSize="14.5sp" />
+                                android:textSize="14sp" />
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="2dp"
+                                android:layout_marginTop="1dp"
                                 android:fontFamily="sans-serif"
-                                android:text="Get live order invoice &amp; delivery link on WhatsApp"
+                                android:text="Receive itemized receipt &amp; rider tracking link on WhatsApp"
                                 android:textColor="@color/text_secondary"
-                                android:textSize="11.5sp" />
+                                android:textSize="11sp" />
                         </LinearLayout>
 
                         <com.google.android.material.materialswitch.MaterialSwitch
@@ -1076,13 +1474,13 @@
 
                     <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/divider" />
 
-                    <!-- Sound & Haptics -->
+                    <!-- Sound Chimes -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:gravity="center_vertical"
                         android:orientation="horizontal"
-                        android:paddingVertical="12dp">
+                        android:paddingVertical="10dp">
 
                         <FrameLayout
                             android:layout_width="38dp"
@@ -1100,7 +1498,7 @@
                         <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="14dp"
+                            android:layout_marginStart="12dp"
                             android:layout_weight="1"
                             android:orientation="vertical">
 
@@ -1108,18 +1506,18 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:fontFamily="sans-serif-bold"
-                                android:text="Sound Chimes &amp; Haptics"
+                                android:text="Audible Notification Chimes"
                                 android:textColor="@color/text_primary"
-                                android:textSize="14.5sp" />
+                                android:textSize="14sp" />
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="2dp"
+                                android:layout_marginTop="1dp"
                                 android:fontFamily="sans-serif"
-                                android:text="Play audible chime and vibration on delivery progress"
+                                android:text="Play audible chime on milestone delivery updates"
                                 android:textColor="@color/text_secondary"
-                                android:textSize="11.5sp" />
+                                android:textSize="11sp" />
                         </LinearLayout>
 
                         <com.google.android.material.materialswitch.MaterialSwitch
@@ -1139,7 +1537,7 @@
                         android:layout_height="wrap_content"
                         android:gravity="center_vertical"
                         android:orientation="horizontal"
-                        android:paddingVertical="12dp">
+                        android:paddingVertical="10dp">
 
                         <FrameLayout
                             android:layout_width="38dp"
@@ -1157,7 +1555,7 @@
                         <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="14dp"
+                            android:layout_marginStart="12dp"
                             android:layout_weight="1"
                             android:orientation="vertical">
 
@@ -1167,16 +1565,16 @@
                                 android:fontFamily="sans-serif-bold"
                                 android:text="Email GST Tax Receipts"
                                 android:textColor="@color/text_primary"
-                                android:textSize="14.5sp" />
+                                android:textSize="14sp" />
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="2dp"
+                                android:layout_marginTop="1dp"
                                 android:fontFamily="sans-serif"
-                                android:text="Automatically send itemized PDF invoice to email"
+                                android:text="Automatically send itemized tax invoice to registered email"
                                 android:textColor="@color/text_secondary"
-                                android:textSize="11.5sp" />
+                                android:textSize="11sp" />
                         </LinearLayout>
 
                         <com.google.android.material.materialswitch.MaterialSwitch
@@ -1186,6 +1584,65 @@
                             android:checked="true"
                             app:thumbTint="@color/on_primary"
                             app:trackTint="@color/primary" />
+                    </LinearLayout>
+
+                    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/divider" />
+
+                    <!-- System Notification Channels (Android OS) -->
+                    <LinearLayout
+                        android:id="@+id/row_system_notification_channels"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:foreground="?attr/selectableItemBackground"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingVertical="10dp">
+
+                        <FrameLayout
+                            android:layout_width="38dp"
+                            android:layout_height="38dp"
+                            android:background="@drawable/bg_icon_circle_soft">
+
+                            <ImageView
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:layout_gravity="center"
+                                android:src="@drawable/ic_settings"
+                                app:tint="@color/text_secondary" />
+                        </FrameLayout>
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="sans-serif-bold"
+                                android:text="System Notification Channels"
+                                android:textColor="@color/text_primary"
+                                android:textSize="14sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="1dp"
+                                android:fontFamily="sans-serif"
+                                android:text="Configure lock-screen badges &amp; system channel sounds in OS"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="11sp" />
+                        </LinearLayout>
+
+                        <ImageView
+                            android:layout_width="16dp"
+                            android:layout_height="16dp"
+                            android:src="@drawable/ic_chevron_right"
+                            app:tint="@color/text_hint" />
                     </LinearLayout>
 
                 </LinearLayout>
@@ -1199,7 +1656,7 @@
                 android:layout_marginBottom="8dp"
                 android:fontFamily="sans-serif-bold"
                 android:letterSpacing="0.06"
-                android:text="SECURITY &amp; PRIVACY"
+                android:text="SECURITY, BIOMETRICS &amp; PRIVACY"
                 android:textColor="@color/text_tertiary"
                 android:textSize="11sp" />
 
@@ -1207,9 +1664,9 @@
                 android:id="@+id/card_section_security"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="20dp"
+                android:layout_marginBottom="18dp"
                 app:cardBackgroundColor="@color/surface"
-                app:cardCornerRadius="22dp"
+                app:cardCornerRadius="18dp"
                 app:cardElevation="1dp"
                 app:strokeColor="@color/card_border"
                 app:strokeWidth="1dp">
@@ -1218,7 +1675,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:paddingHorizontal="16dp"
+                    android:paddingHorizontal="14dp"
                     android:paddingVertical="4dp">
 
                     <!-- Biometric Lock -->
@@ -1227,7 +1684,7 @@
                         android:layout_height="wrap_content"
                         android:gravity="center_vertical"
                         android:orientation="horizontal"
-                        android:paddingVertical="12dp">
+                        android:paddingVertical="10dp">
 
                         <FrameLayout
                             android:layout_width="38dp"
@@ -1245,7 +1702,7 @@
                         <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="14dp"
+                            android:layout_marginStart="12dp"
                             android:layout_weight="1"
                             android:orientation="vertical">
 
@@ -1255,17 +1712,32 @@
                                 android:fontFamily="sans-serif-bold"
                                 android:text="Biometric Wallet &amp; Order Lock"
                                 android:textColor="@color/text_primary"
-                                android:textSize="14.5sp" />
+                                android:textSize="14sp" />
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="2dp"
+                                android:layout_marginTop="1dp"
                                 android:fontFamily="sans-serif"
-                                android:text="Require fingerprint or PIN before order payment"
+                                android:text="Require fingerprint, face, or screen lock before payments"
                                 android:textColor="@color/text_secondary"
-                                android:textSize="11.5sp" />
+                                android:textSize="11sp" />
                         </LinearLayout>
+
+                        <TextView
+                            android:id="@+id/btn_test_biometric"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="6dp"
+                            android:background="@drawable/bg_pill_soft"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:fontFamily="sans-serif-bold"
+                            android:paddingHorizontal="8dp"
+                            android:paddingVertical="4dp"
+                            android:text="Verify 🔒"
+                            android:textColor="@color/primary"
+                            android:textSize="11sp" />
 
                         <com.google.android.material.materialswitch.MaterialSwitch
                             android:id="@+id/switch_biometric"
@@ -1287,7 +1759,7 @@
                         android:foreground="?attr/selectableItemBackground"
                         android:gravity="center_vertical"
                         android:orientation="horizontal"
-                        android:paddingVertical="12dp">
+                        android:paddingVertical="10dp">
 
                         <FrameLayout
                             android:layout_width="38dp"
@@ -1305,7 +1777,7 @@
                         <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="14dp"
+                            android:layout_marginStart="12dp"
                             android:layout_weight="1"
                             android:orientation="vertical">
 
@@ -1315,16 +1787,16 @@
                                 android:fontFamily="sans-serif-bold"
                                 android:text="App Permissions Manager"
                                 android:textColor="@color/text_primary"
-                                android:textSize="14.5sp" />
+                                android:textSize="14sp" />
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="2dp"
+                                android:layout_marginTop="1dp"
                                 android:fontFamily="sans-serif"
-                                android:text="GPS Location, camera, photo library &amp; alerts"
+                                android:text="GPS Location, Camera, Photo Library &amp; Notification status"
                                 android:textColor="@color/text_secondary"
-                                android:textSize="11.5sp" />
+                                android:textSize="11sp" />
                         </LinearLayout>
 
                         <ImageView
@@ -1346,7 +1818,7 @@
                         android:foreground="?attr/selectableItemBackground"
                         android:gravity="center_vertical"
                         android:orientation="horizontal"
-                        android:paddingVertical="12dp">
+                        android:paddingVertical="10dp">
 
                         <FrameLayout
                             android:layout_width="38dp"
@@ -1364,7 +1836,7 @@
                         <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="14dp"
+                            android:layout_marginStart="12dp"
                             android:layout_weight="1"
                             android:orientation="vertical">
 
@@ -1372,18 +1844,18 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:fontFamily="sans-serif-bold"
-                                android:text="Device Login Sessions"
+                                android:text="Active Device Login Sessions"
                                 android:textColor="@color/text_primary"
-                                android:textSize="14.5sp" />
+                                android:textSize="14sp" />
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="2dp"
+                                android:layout_marginTop="1dp"
                                 android:fontFamily="sans-serif"
-                                android:text="Review active logins &amp; revoke unauthorized devices"
+                                android:text="Review active logins &amp; revoke other device sessions"
                                 android:textColor="@color/text_secondary"
-                                android:textSize="11.5sp" />
+                                android:textSize="11sp" />
                         </LinearLayout>
 
                         <ImageView
@@ -1405,7 +1877,7 @@
                         android:foreground="?attr/selectableItemBackground"
                         android:gravity="center_vertical"
                         android:orientation="horizontal"
-                        android:paddingVertical="12dp">
+                        android:paddingVertical="10dp">
 
                         <FrameLayout
                             android:layout_width="38dp"
@@ -1423,7 +1895,7 @@
                         <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="14dp"
+                            android:layout_marginStart="12dp"
                             android:layout_weight="1"
                             android:orientation="vertical">
 
@@ -1431,18 +1903,18 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:fontFamily="sans-serif-bold"
-                                android:text="Change Password &amp; PIN"
+                                android:text="Change Password &amp; Credentials"
                                 android:textColor="@color/text_primary"
-                                android:textSize="14.5sp" />
+                                android:textSize="14sp" />
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="2dp"
+                                android:layout_marginTop="1dp"
                                 android:fontFamily="sans-serif"
-                                android:text="Update your login password or wallet transaction PIN"
+                                android:text="Update your login password or request recovery reset link"
                                 android:textColor="@color/text_secondary"
-                                android:textSize="11.5sp" />
+                                android:textSize="11sp" />
                         </LinearLayout>
 
                         <ImageView
@@ -1450,6 +1922,49 @@
                             android:layout_height="16dp"
                             android:src="@drawable/ic_chevron_right"
                             app:tint="@color/text_hint" />
+                    </LinearLayout>
+
+                    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/divider" />
+
+                    <!-- Diagnostics Telemetry -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingVertical="10dp">
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="sans-serif-bold"
+                                android:text="Anonymous Diagnostics &amp; Crash Reports"
+                                android:textColor="@color/text_primary"
+                                android:textSize="14sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="1dp"
+                                android:fontFamily="sans-serif"
+                                android:text="Help us resolve bugs and improve food delivery stability"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="11sp" />
+                        </LinearLayout>
+
+                        <com.google.android.material.materialswitch.MaterialSwitch
+                            android:id="@+id/switch_analytics_opt_in"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:checked="true"
+                            app:thumbTint="@color/on_primary"
+                            app:trackTint="@color/primary" />
                     </LinearLayout>
 
                 </LinearLayout>
@@ -1471,9 +1986,9 @@
                 android:id="@+id/card_section_language"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="20dp"
+                android:layout_marginBottom="18dp"
                 app:cardBackgroundColor="@color/surface"
-                app:cardCornerRadius="22dp"
+                app:cardCornerRadius="18dp"
                 app:cardElevation="1dp"
                 app:strokeColor="@color/card_border"
                 app:strokeWidth="1dp">
@@ -1482,7 +1997,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:paddingHorizontal="16dp"
+                    android:paddingHorizontal="14dp"
                     android:paddingVertical="4dp">
 
                     <!-- Language Option -->
@@ -1495,7 +2010,7 @@
                         android:foreground="?attr/selectableItemBackground"
                         android:gravity="center_vertical"
                         android:orientation="horizontal"
-                        android:paddingVertical="12dp">
+                        android:paddingVertical="10dp">
 
                         <FrameLayout
                             android:layout_width="38dp"
@@ -1513,7 +2028,7 @@
                         <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="14dp"
+                            android:layout_marginStart="12dp"
                             android:layout_weight="1"
                             android:orientation="vertical">
 
@@ -1523,17 +2038,17 @@
                                 android:fontFamily="sans-serif-bold"
                                 android:text="App Display Language"
                                 android:textColor="@color/text_primary"
-                                android:textSize="14.5sp" />
+                                android:textSize="14sp" />
 
                             <TextView
                                 android:id="@+id/tv_language_val"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="2dp"
-                                android:fontFamily="sans-serif"
+                                android:layout_marginTop="1dp"
+                                android:fontFamily="sans-serif-medium"
                                 android:text="English (India)"
                                 android:textColor="@color/primary"
-                                android:textSize="11.5sp" />
+                                android:textSize="11sp" />
                         </LinearLayout>
 
                         <ImageView
@@ -1555,7 +2070,7 @@
                         android:foreground="?attr/selectableItemBackground"
                         android:gravity="center_vertical"
                         android:orientation="horizontal"
-                        android:paddingVertical="12dp">
+                        android:paddingVertical="10dp">
 
                         <FrameLayout
                             android:layout_width="38dp"
@@ -1566,16 +2081,16 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_gravity="center"
+                                android:fontFamily="sans-serif-bold"
                                 android:text="₹"
                                 android:textColor="@color/primary"
-                                android:textSize="20sp"
-                                android:textStyle="bold" />
+                                android:textSize="20sp" />
                         </FrameLayout>
 
                         <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="14dp"
+                            android:layout_marginStart="12dp"
                             android:layout_weight="1"
                             android:orientation="vertical">
 
@@ -1585,17 +2100,17 @@
                                 android:fontFamily="sans-serif-bold"
                                 android:text="Currency &amp; Country Format"
                                 android:textColor="@color/text_primary"
-                                android:textSize="14.5sp" />
+                                android:textSize="14sp" />
 
                             <TextView
                                 android:id="@+id/tv_currency_val"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="2dp"
-                                android:fontFamily="sans-serif"
+                                android:layout_marginTop="1dp"
+                                android:fontFamily="sans-serif-medium"
                                 android:text="Indian Rupee (₹ INR)"
                                 android:textColor="@color/text_secondary"
-                                android:textSize="11.5sp" />
+                                android:textSize="11sp" />
                         </LinearLayout>
 
                         <ImageView
@@ -1616,7 +2131,7 @@
                 android:layout_marginBottom="8dp"
                 android:fontFamily="sans-serif-bold"
                 android:letterSpacing="0.06"
-                android:text="STORAGE &amp; DATA OPTIMIZATION"
+                android:text="STORAGE &amp; PERFORMANCE"
                 android:textColor="@color/text_tertiary"
                 android:textSize="11sp" />
 
@@ -1624,9 +2139,9 @@
                 android:id="@+id/card_section_storage"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="20dp"
+                android:layout_marginBottom="18dp"
                 app:cardBackgroundColor="@color/surface"
-                app:cardCornerRadius="22dp"
+                app:cardCornerRadius="18dp"
                 app:cardElevation="1dp"
                 app:strokeColor="@color/card_border"
                 app:strokeWidth="1dp">
@@ -1635,7 +2150,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:paddingHorizontal="16dp"
+                    android:paddingHorizontal="14dp"
                     android:paddingVertical="4dp">
 
                     <!-- Cache Size & Clear -->
@@ -1644,7 +2159,7 @@
                         android:layout_height="wrap_content"
                         android:gravity="center_vertical"
                         android:orientation="horizontal"
-                        android:paddingVertical="12dp">
+                        android:paddingVertical="10dp">
 
                         <FrameLayout
                             android:layout_width="38dp"
@@ -1662,7 +2177,7 @@
                         <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="14dp"
+                            android:layout_marginStart="12dp"
                             android:layout_weight="1"
                             android:orientation="vertical">
 
@@ -1672,29 +2187,38 @@
                                 android:fontFamily="sans-serif-bold"
                                 android:text="App Storage &amp; Cache"
                                 android:textColor="@color/text_primary"
-                                android:textSize="14.5sp" />
+                                android:textSize="14sp" />
 
                             <TextView
                                 android:id="@+id/tv_cache_size"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="2dp"
-                                android:fontFamily="sans-serif"
+                                android:layout_marginTop="1dp"
+                                android:fontFamily="sans-serif-bold"
                                 android:text="Calculating size..."
-                                android:textColor="@color/text_secondary"
+                                android:textColor="@color/primary"
                                 android:textSize="11.5sp" />
+
+                            <TextView
+                                android:id="@+id/tv_cache_breakdown"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="sans-serif"
+                                android:text="Temporary menus, image bitmaps and network files"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="10.5sp" />
                         </LinearLayout>
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btn_clear_cache"
                             android:layout_width="wrap_content"
                             android:layout_height="36dp"
-                            android:text="Clear Cache"
-                            android:textSize="11.5sp"
-                            android:textStyle="bold"
-                            app:cornerRadius="18dp"
                             android:backgroundTint="@color/surface_variant"
+                            android:fontFamily="sans-serif-bold"
+                            android:text="Clear Cache"
                             android:textColor="@color/text_primary"
+                            android:textSize="11sp"
+                            app:cornerRadius="18dp"
                             app:strokeColor="@color/card_border"
                             app:strokeWidth="1dp" />
                     </LinearLayout>
@@ -1707,7 +2231,7 @@
                         android:layout_height="wrap_content"
                         android:gravity="center_vertical"
                         android:orientation="horizontal"
-                        android:paddingVertical="12dp">
+                        android:paddingVertical="10dp">
 
                         <FrameLayout
                             android:layout_width="38dp"
@@ -1725,7 +2249,7 @@
                         <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="14dp"
+                            android:layout_marginStart="12dp"
                             android:layout_weight="1"
                             android:orientation="vertical">
 
@@ -1735,16 +2259,16 @@
                                 android:fontFamily="sans-serif-bold"
                                 android:text="Cellular Data Saver"
                                 android:textColor="@color/text_primary"
-                                android:textSize="14.5sp" />
+                                android:textSize="14sp" />
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="2dp"
+                                android:layout_marginTop="1dp"
                                 android:fontFamily="sans-serif"
                                 android:text="Load compressed image thumbnails on mobile networks"
                                 android:textColor="@color/text_secondary"
-                                android:textSize="11.5sp" />
+                                android:textSize="11sp" />
                         </LinearLayout>
 
                         <com.google.android.material.materialswitch.MaterialSwitch
@@ -1774,9 +2298,9 @@
                 android:id="@+id/card_section_account"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="20dp"
+                android:layout_marginBottom="18dp"
                 app:cardBackgroundColor="@color/surface"
-                app:cardCornerRadius="22dp"
+                app:cardCornerRadius="18dp"
                 app:cardElevation="1dp"
                 app:strokeColor="@color/card_border"
                 app:strokeWidth="1dp">
@@ -1785,7 +2309,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:paddingHorizontal="16dp"
+                    android:paddingHorizontal="14dp"
                     android:paddingVertical="4dp">
 
                     <!-- Saved Addresses -->
@@ -1798,7 +2322,7 @@
                         android:foreground="?attr/selectableItemBackground"
                         android:gravity="center_vertical"
                         android:orientation="horizontal"
-                        android:paddingVertical="12dp">
+                        android:paddingVertical="10dp">
 
                         <FrameLayout
                             android:layout_width="38dp"
@@ -1816,7 +2340,7 @@
                         <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="14dp"
+                            android:layout_marginStart="12dp"
                             android:layout_weight="1"
                             android:orientation="vertical">
 
@@ -1826,16 +2350,16 @@
                                 android:fontFamily="sans-serif-bold"
                                 android:text="Saved Delivery Addresses"
                                 android:textColor="@color/text_primary"
-                                android:textSize="14.5sp" />
+                                android:textSize="14sp" />
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="2dp"
+                                android:layout_marginTop="1dp"
                                 android:fontFamily="sans-serif"
                                 android:text="Manage Home, Work, and other pin locations"
                                 android:textColor="@color/text_secondary"
-                                android:textSize="11.5sp" />
+                                android:textSize="11sp" />
                         </LinearLayout>
 
                         <ImageView
@@ -1857,7 +2381,7 @@
                         android:foreground="?attr/selectableItemBackground"
                         android:gravity="center_vertical"
                         android:orientation="horizontal"
-                        android:paddingVertical="12dp">
+                        android:paddingVertical="10dp">
 
                         <FrameLayout
                             android:layout_width="38dp"
@@ -1875,7 +2399,7 @@
                         <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="14dp"
+                            android:layout_marginStart="12dp"
                             android:layout_weight="1"
                             android:orientation="vertical">
 
@@ -1885,16 +2409,134 @@
                                 android:fontFamily="sans-serif-bold"
                                 android:text="Hunger Wallet &amp; Payment Options"
                                 android:textColor="@color/text_primary"
-                                android:textSize="14.5sp" />
+                                android:textSize="14sp" />
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="2dp"
+                                android:layout_marginTop="1dp"
                                 android:fontFamily="sans-serif"
                                 android:text="UPI apps, saved cards, cashback balance &amp; COD"
                                 android:textColor="@color/text_secondary"
-                                android:textSize="11.5sp" />
+                                android:textSize="11sp" />
+                        </LinearLayout>
+
+                        <ImageView
+                            android:layout_width="16dp"
+                            android:layout_height="16dp"
+                            android:src="@drawable/ic_chevron_right"
+                            app:tint="@color/text_hint" />
+                    </LinearLayout>
+
+                    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/divider" />
+
+                    <!-- Hunger One Membership -->
+                    <LinearLayout
+                        android:id="@+id/row_manage_membership"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:foreground="?attr/selectableItemBackground"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingVertical="10dp">
+
+                        <FrameLayout
+                            android:layout_width="38dp"
+                            android:layout_height="38dp"
+                            android:background="@drawable/bg_amber_soft">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="center"
+                                android:text="👑"
+                                android:textSize="18sp" />
+                        </FrameLayout>
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="sans-serif-bold"
+                                android:text="Hunger One VIP Membership"
+                                android:textColor="@color/text_primary"
+                                android:textSize="14sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="1dp"
+                                android:fontFamily="sans-serif"
+                                android:text="Unlimited free delivery &amp; up to 30% extra member savings"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="11sp" />
+                        </LinearLayout>
+
+                        <ImageView
+                            android:layout_width="16dp"
+                            android:layout_height="16dp"
+                            android:src="@drawable/ic_chevron_right"
+                            app:tint="@color/text_hint" />
+                    </LinearLayout>
+
+                    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/divider" />
+
+                    <!-- Rewards & Coins -->
+                    <LinearLayout
+                        android:id="@+id/row_manage_rewards"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:foreground="?attr/selectableItemBackground"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingVertical="10dp">
+
+                        <FrameLayout
+                            android:layout_width="38dp"
+                            android:layout_height="38dp"
+                            android:background="@drawable/bg_amber_soft">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="center"
+                                android:text="🎁"
+                                android:textSize="18sp" />
+                        </FrameLayout>
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="sans-serif-bold"
+                                android:text="Hunger Coins &amp; Scratch Cards"
+                                android:textColor="@color/text_primary"
+                                android:textSize="14sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="1dp"
+                                android:fontFamily="sans-serif"
+                                android:text="View loyalty points balance &amp; unbox reward scratch cards"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="11sp" />
                         </LinearLayout>
 
                         <ImageView
@@ -1916,7 +2558,7 @@
                         android:foreground="?attr/selectableItemBackground"
                         android:gravity="center_vertical"
                         android:orientation="horizontal"
-                        android:paddingVertical="12dp">
+                        android:paddingVertical="10dp">
 
                         <FrameLayout
                             android:layout_width="38dp"
@@ -1934,7 +2576,7 @@
                         <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="14dp"
+                            android:layout_marginStart="12dp"
                             android:layout_weight="1"
                             android:orientation="vertical">
 
@@ -1944,16 +2586,16 @@
                                 android:fontFamily="sans-serif-bold"
                                 android:text="Download Personal Data Archive"
                                 android:textColor="@color/text_primary"
-                                android:textSize="14.5sp" />
+                                android:textSize="14sp" />
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="2dp"
+                                android:layout_marginTop="1dp"
                                 android:fontFamily="sans-serif"
-                                android:text="Get an encrypted copy of your orders &amp; profile"
+                                android:text="Export an encrypted JSON archive of profile &amp; order history"
                                 android:textColor="@color/text_secondary"
-                                android:textSize="11.5sp" />
+                                android:textSize="11sp" />
                         </LinearLayout>
 
                         <ImageView
@@ -1975,7 +2617,7 @@
                         android:foreground="?attr/selectableItemBackground"
                         android:gravity="center_vertical"
                         android:orientation="horizontal"
-                        android:paddingVertical="12dp">
+                        android:paddingVertical="10dp">
 
                         <FrameLayout
                             android:layout_width="38dp"
@@ -1993,7 +2635,7 @@
                         <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="14dp"
+                            android:layout_marginStart="12dp"
                             android:layout_weight="1"
                             android:orientation="vertical">
 
@@ -2003,16 +2645,16 @@
                                 android:fontFamily="sans-serif-bold"
                                 android:text="Reset Settings to Defaults"
                                 android:textColor="@color/text_primary"
-                                android:textSize="14.5sp" />
+                                android:textSize="14sp" />
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="2dp"
+                                android:layout_marginTop="1dp"
                                 android:fontFamily="sans-serif"
                                 android:text="Restore default theme, notifications and food presets"
                                 android:textColor="@color/text_secondary"
-                                android:textSize="11.5sp" />
+                                android:textSize="11sp" />
                         </LinearLayout>
 
                         <ImageView
@@ -2025,7 +2667,7 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- ================= SECTION 9: SUPPORT & LEGAL ================= -->
+            <!-- ================= SECTION 9: SUPPORT, COMMUNITY & LEGAL ================= -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -2041,9 +2683,9 @@
                 android:id="@+id/card_section_support"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="20dp"
+                android:layout_marginBottom="18dp"
                 app:cardBackgroundColor="@color/surface"
-                app:cardCornerRadius="22dp"
+                app:cardCornerRadius="18dp"
                 app:cardElevation="1dp"
                 app:strokeColor="@color/card_border"
                 app:strokeWidth="1dp">
@@ -2052,7 +2694,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:paddingHorizontal="16dp"
+                    android:paddingHorizontal="14dp"
                     android:paddingVertical="4dp">
 
                     <!-- 24x7 Support -->
@@ -2065,7 +2707,7 @@
                         android:foreground="?attr/selectableItemBackground"
                         android:gravity="center_vertical"
                         android:orientation="horizontal"
-                        android:paddingVertical="12dp">
+                        android:paddingVertical="10dp">
 
                         <FrameLayout
                             android:layout_width="38dp"
@@ -2083,7 +2725,7 @@
                         <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="14dp"
+                            android:layout_marginStart="12dp"
                             android:layout_weight="1"
                             android:orientation="vertical">
 
@@ -2093,16 +2735,134 @@
                                 android:fontFamily="sans-serif-bold"
                                 android:text="24x7 Customer Helpdesk"
                                 android:textColor="@color/text_primary"
-                                android:textSize="14.5sp" />
+                                android:textSize="14sp" />
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="2dp"
+                                android:layout_marginTop="1dp"
                                 android:fontFamily="sans-serif"
-                                android:text="WhatsApp chat, toll-free call &amp; ticket desk"
+                                android:text="Submit ticket, WhatsApp live chat, toll-free call &amp; FAQ"
                                 android:textColor="@color/text_secondary"
-                                android:textSize="11.5sp" />
+                                android:textSize="11sp" />
+                        </LinearLayout>
+
+                        <ImageView
+                            android:layout_width="16dp"
+                            android:layout_height="16dp"
+                            android:src="@drawable/ic_chevron_right"
+                            app:tint="@color/text_hint" />
+                    </LinearLayout>
+
+                    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/divider" />
+
+                    <!-- Rate App -->
+                    <LinearLayout
+                        android:id="@+id/row_rate_app"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:foreground="?attr/selectableItemBackground"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingVertical="10dp">
+
+                        <FrameLayout
+                            android:layout_width="38dp"
+                            android:layout_height="38dp"
+                            android:background="@drawable/bg_amber_soft">
+
+                            <ImageView
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:layout_gravity="center"
+                                android:src="@drawable/ic_star"
+                                app:tint="@color/secondary" />
+                        </FrameLayout>
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="sans-serif-bold"
+                                android:text="Rate Us on Google Play"
+                                android:textColor="@color/text_primary"
+                                android:textSize="14sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="1dp"
+                                android:fontFamily="sans-serif"
+                                android:text="Loving the app? Give us 5 stars on Play Store"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="11sp" />
+                        </LinearLayout>
+
+                        <ImageView
+                            android:layout_width="16dp"
+                            android:layout_height="16dp"
+                            android:src="@drawable/ic_chevron_right"
+                            app:tint="@color/text_hint" />
+                    </LinearLayout>
+
+                    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/divider" />
+
+                    <!-- Share App -->
+                    <LinearLayout
+                        android:id="@+id/row_share_app"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:foreground="?attr/selectableItemBackground"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingVertical="10dp">
+
+                        <FrameLayout
+                            android:layout_width="38dp"
+                            android:layout_height="38dp"
+                            android:background="@drawable/bg_icon_circle_soft">
+
+                            <ImageView
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:layout_gravity="center"
+                                android:src="@drawable/ic_share_2"
+                                app:tint="@color/primary" />
+                        </FrameLayout>
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="sans-serif-bold"
+                                android:text="Share AKR Hunger with Friends"
+                                android:textColor="@color/text_primary"
+                                android:textSize="14sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="1dp"
+                                android:fontFamily="sans-serif"
+                                android:text="Spread the love for tasty food &amp; fast deliveries"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="11sp" />
                         </LinearLayout>
 
                         <ImageView
@@ -2124,7 +2884,7 @@
                         android:foreground="?attr/selectableItemBackground"
                         android:gravity="center_vertical"
                         android:orientation="horizontal"
-                        android:paddingVertical="12dp">
+                        android:paddingVertical="10dp">
 
                         <FrameLayout
                             android:layout_width="38dp"
@@ -2142,7 +2902,7 @@
                         <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="14dp"
+                            android:layout_marginStart="12dp"
                             android:layout_weight="1"
                             android:orientation="vertical">
 
@@ -2152,16 +2912,16 @@
                                 android:fontFamily="sans-serif-bold"
                                 android:text="Terms &amp; Conditions"
                                 android:textColor="@color/text_primary"
-                                android:textSize="14.5sp" />
+                                android:textSize="14sp" />
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="2dp"
+                                android:layout_marginTop="1dp"
                                 android:fontFamily="sans-serif"
                                 android:text="Cancellation rules, refunds &amp; fair usage commitments"
                                 android:textColor="@color/text_secondary"
-                                android:textSize="11.5sp" />
+                                android:textSize="11sp" />
                         </LinearLayout>
 
                         <ImageView
@@ -2183,7 +2943,7 @@
                         android:foreground="?attr/selectableItemBackground"
                         android:gravity="center_vertical"
                         android:orientation="horizontal"
-                        android:paddingVertical="12dp">
+                        android:paddingVertical="10dp">
 
                         <FrameLayout
                             android:layout_width="38dp"
@@ -2201,7 +2961,7 @@
                         <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="14dp"
+                            android:layout_marginStart="12dp"
                             android:layout_weight="1"
                             android:orientation="vertical">
 
@@ -2211,16 +2971,16 @@
                                 android:fontFamily="sans-serif-bold"
                                 android:text="Privacy Policy &amp; Security"
                                 android:textColor="@color/text_primary"
-                                android:textSize="14.5sp" />
+                                android:textSize="14sp" />
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="2dp"
+                                android:layout_marginTop="1dp"
                                 android:fontFamily="sans-serif"
                                 android:text="How your GPS location, addresses &amp; data are safeguarded"
                                 android:textColor="@color/text_secondary"
-                                android:textSize="11.5sp" />
+                                android:textSize="11sp" />
                         </LinearLayout>
 
                         <ImageView
@@ -2242,7 +3002,7 @@
                         android:foreground="?attr/selectableItemBackground"
                         android:gravity="center_vertical"
                         android:orientation="horizontal"
-                        android:paddingVertical="12dp">
+                        android:paddingVertical="10dp">
 
                         <FrameLayout
                             android:layout_width="38dp"
@@ -2260,7 +3020,7 @@
                         <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="14dp"
+                            android:layout_marginStart="12dp"
                             android:layout_weight="1"
                             android:orientation="vertical">
 
@@ -2268,18 +3028,18 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:fontFamily="sans-serif-bold"
-                                android:text="Open Source Licenses"
+                                android:text="Open Source Software Licenses"
                                 android:textColor="@color/text_primary"
-                                android:textSize="14.5sp" />
+                                android:textSize="14sp" />
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="2dp"
+                                android:layout_marginTop="1dp"
                                 android:fontFamily="sans-serif"
                                 android:text="Google AndroidX, Material, Firebase &amp; community software"
                                 android:textColor="@color/text_secondary"
-                                android:textSize="11.5sp" />
+                                android:textSize="11sp" />
                         </LinearLayout>
 
                         <ImageView
@@ -2292,73 +3052,141 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- ================= DANGER ZONE: DELETE ACCOUNT ================= -->
+            <!-- ================= DANGER ZONE: LOGOUT & DELETE ACCOUNT ================= -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/card_section_danger"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="24dp"
                 app:cardBackgroundColor="@color/surface"
-                app:cardCornerRadius="22dp"
+                app:cardCornerRadius="18dp"
                 app:cardElevation="1dp"
                 app:strokeColor="@color/card_border"
                 app:strokeWidth="1dp">
 
                 <LinearLayout
-                    android:id="@+id/row_delete_account"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:foreground="?attr/selectableItemBackground"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal"
-                    android:paddingHorizontal="16dp"
-                    android:paddingVertical="14dp">
+                    android:orientation="vertical"
+                    android:paddingHorizontal="14dp"
+                    android:paddingVertical="4dp">
 
-                    <FrameLayout
-                        android:layout_width="38dp"
-                        android:layout_height="38dp"
-                        android:background="@drawable/bg_pill_error_soft">
+                    <!-- Sign Out -->
+                    <LinearLayout
+                        android:id="@+id/row_sign_out"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:foreground="?attr/selectableItemBackground"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingVertical="10dp">
+
+                        <FrameLayout
+                            android:layout_width="38dp"
+                            android:layout_height="38dp"
+                            android:background="@drawable/bg_icon_circle_soft">
+
+                            <ImageView
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:layout_gravity="center"
+                                android:src="@drawable/ic_logout"
+                                app:tint="@color/text_secondary" />
+                        </FrameLayout>
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="sans-serif-bold"
+                                android:text="Sign Out"
+                                android:textColor="@color/text_primary"
+                                android:textSize="14sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="1dp"
+                                android:fontFamily="sans-serif"
+                                android:text="Log out of this device safely"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="11sp" />
+                        </LinearLayout>
 
                         <ImageView
-                            android:layout_width="20dp"
-                            android:layout_height="20dp"
-                            android:layout_gravity="center"
-                            android:src="@drawable/ic_delete"
-                            app:tint="@color/error" />
-                    </FrameLayout>
-
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="14dp"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:fontFamily="sans-serif-bold"
-                            android:text="Delete Hunger Account"
-                            android:textColor="@color/error"
-                            android:textSize="14.5sp" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="2dp"
-                            android:fontFamily="sans-serif"
-                            android:text="Permanently delete profile, reward points &amp; order history"
-                            android:textColor="@color/text_secondary"
-                            android:textSize="11.5sp" />
+                            android:layout_width="16dp"
+                            android:layout_height="16dp"
+                            android:src="@drawable/ic_chevron_right"
+                            app:tint="@color/text_hint" />
                     </LinearLayout>
 
-                    <ImageView
-                        android:layout_width="16dp"
-                        android:layout_height="16dp"
-                        android:src="@drawable/ic_chevron_right"
-                        app:tint="@color/error" />
+                    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/divider" />
+
+                    <!-- Delete Account -->
+                    <LinearLayout
+                        android:id="@+id/row_delete_account"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:foreground="?attr/selectableItemBackground"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingVertical="10dp">
+
+                        <FrameLayout
+                            android:layout_width="38dp"
+                            android:layout_height="38dp"
+                            android:background="@drawable/bg_pill_error_soft">
+
+                            <ImageView
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:layout_gravity="center"
+                                android:src="@drawable/ic_delete"
+                                app:tint="@color/error" />
+                        </FrameLayout>
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="sans-serif-bold"
+                                android:text="Delete Hunger Account"
+                                android:textColor="@color/error"
+                                android:textSize="14sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="1dp"
+                                android:fontFamily="sans-serif"
+                                android:text="Permanently delete profile, reward points &amp; order history"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="11sp" />
+                        </LinearLayout>
+
+                        <ImageView
+                            android:layout_width="16dp"
+                            android:layout_height="16dp"
+                            android:src="@drawable/ic_chevron_right"
+                            app:tint="@color/error" />
+                    </LinearLayout>
+
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -2383,7 +3211,7 @@
                     android:id="@+id/tv_app_version"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="3dp"
+                    android:layout_marginTop="2dp"
                     android:fontFamily="sans-serif"
                     android:text="v1.0.0 (Build 1)"
                     android:textColor="@color/text_hint"

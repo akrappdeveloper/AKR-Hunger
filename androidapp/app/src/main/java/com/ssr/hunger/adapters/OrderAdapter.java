@@ -93,11 +93,10 @@ public class OrderAdapter extends RecyclerView.Adapter<OrderAdapter.ViewHolder> 
         holder.tvStatus.setBackground(statusBg);
         holder.tvStatus.setTextColor(statusColor);
 
-        // Reorder button visibility
-        holder.btnReorder.setVisibility(
-                "delivered".equals(order.getStatus()) || "cancelled".equals(order.getStatus())
-                        ? View.VISIBLE : View.GONE
-        );
+        // Reorder button visibility (respects user settings preference)
+        boolean showReorder = com.ssr.hunger.utils.SettingsHelper.isQuickReorderEnabled(holder.itemView.getContext())
+                && ("delivered".equals(order.getStatus()) || "cancelled".equals(order.getStatus()));
+        holder.btnReorder.setVisibility(showReorder ? View.VISIBLE : View.GONE);
 
         // Click listeners
         holder.itemView.setOnClickListener(v -> clickListener.onOrderClick(order));

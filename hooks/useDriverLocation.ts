@@ -8,6 +8,8 @@ import { GPSTracker, GPSPosition, speedToKmh } from '@/lib/gps-tracking';
 interface UseDriverLocationOptions {
   /** Driver's user ID */
   driverId: string | null;
+  /** Driver's display name */
+  driverName?: string;
   /** Whether the driver is currently online */
   isOnline: boolean;
   /** Whether the driver has an active delivery */
@@ -40,6 +42,7 @@ interface UseDriverLocationReturn {
  */
 export function useDriverLocation({
   driverId,
+  driverName,
   isOnline,
   hasActiveDelivery,
   activeOrderId,
@@ -50,10 +53,12 @@ export function useDriverLocation({
   const [error, setError] = useState<string | null>(null);
   const trackerRef = useRef<GPSTracker | null>(null);
   const driverIdRef = useRef(driverId);
+  const driverNameRef = useRef(driverName);
   const activeOrderIdRef = useRef(activeOrderId);
 
   // Keep refs in sync
   driverIdRef.current = driverId;
+  driverNameRef.current = driverName;
   activeOrderIdRef.current = activeOrderId;
 
   // Check permission on mount
@@ -69,6 +74,7 @@ export function useDriverLocation({
     try {
       await setDoc(doc(db, 'driverLocations', currentDriverId), {
         driverId: currentDriverId,
+        ...(driverNameRef.current ? { driverName: driverNameRef.current } : {}),
         latitude: pos.latitude,
         longitude: pos.longitude,
         accuracy: Math.round(pos.accuracy),
@@ -77,7 +83,7 @@ export function useDriverLocation({
         isOnline: true,
         activeOrderId: activeOrderIdRef.current || null,
         updatedAt: serverTimestamp(),
-      });
+      }, { merge: true });
     } catch (err) {
       console.error('[GPS] Failed to write location to Firestore:', err);
     }

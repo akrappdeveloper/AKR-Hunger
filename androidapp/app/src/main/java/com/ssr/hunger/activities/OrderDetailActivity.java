@@ -1,6 +1,7 @@
 package com.ssr.hunger.activities;
 
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.TextView;
@@ -289,10 +290,103 @@ public class OrderDetailActivity extends BaseActivity {
         TextView tvDue = findViewById(R.id.tv_balance_due);
         if (tvDue != null) tvDue.setText(String.format(Locale.getDefault(), "₹%.2f", balanceDue));
 
-        // Delivery person info
-        if (order.getDeliveryPersonName() != null) {
-            ((TextView) findViewById(R.id.tv_delivery_person)).setText(order.getDeliveryPersonName());
+        // Setup Restaurant Contact & Calling Card
+        setupRestaurantCallCard(order);
+
+        // Setup Delivery Partner / Valet Calling Card
+        setupDeliveryPartnerCard(order);
+    }
+
+    private void setupRestaurantCallCard(Order order) {
+        TextView tvName = findViewById(R.id.tv_detail_restaurant_name);
+        TextView tvAddr = findViewById(R.id.tv_detail_restaurant_address);
+        TextView tvPhone = findViewById(R.id.tv_detail_restaurant_phone);
+        View btnCall = findViewById(R.id.btn_call_restaurant);
+
+        final String restName = order.getRestaurantName() != null ? order.getRestaurantName() : "Restaurant";
+        if (tvName != null) tvName.setText(restName);
+
+        String existingPhone = order.getRestaurantPhone();
+        String existingAddr = order.getRestaurantAddress();
+
+        if (existingPhone != null && !existingPhone.isEmpty()) {
+            if (tvPhone != null) tvPhone.setText("📞 " + existingPhone);
+            if (btnCall != null) {
+                btnCall.setOnClickListener(v -> callPhoneNumber(existingPhone, restName));
+            }
         }
+        if (existingAddr != null && !existingAddr.isEmpty()) {
+            if (tvAddr != null) tvAddr.setText(existingAddr);
+        }
+
+        // Fetch up-to-date phone and address from Firestore restaurants collection
+        if (order.getRestaurantId() != null && !order.getRestaurantId().isEmpty()) {
+            db.collection(Constants.COLLECTION_RESTAURANTS).document(order.getRestaurantId())
+                    .get()
+                    .addOnSuccessListener(snap -> {
+                        if (snap == null || !snap.exists()) return;
+                        String phone = snap.getString("phone");
+                        String address = snap.getString("address");
+                        if (address == null || address.isEmpty()) address = snap.getString("street");
+                        if (address == null || address.isEmpty()) address = snap.getString("city");
+
+                        final String finalPhone = (phone != null && !phone.isEmpty()) ? phone : existingPhone;
+                        final String finalAddr = (address != null && !address.isEmpty()) ? address : existingAddr;
+
+                        if (tvPhone != null && finalPhone != null && !finalPhone.isEmpty()) {
+                            tvPhone.setText("📞 " + finalPhone);
+                        }
+                        if (tvAddr != null && finalAddr != null && !finalAddr.isEmpty()) {
+                            tvAddr.setText(finalAddr);
+                        }
+                        if (btnCall != null && finalPhone != null && !finalPhone.isEmpty()) {
+                            btnCall.setOnClickListener(v -> callPhoneNumber(finalPhone, restName));
+                        }
+                    });
+        }
+    }
+
+    private void setupDeliveryPartnerCard(Order order) {
+        TextView tvDriverName = findViewById(R.id.tv_delivery_person);
+        TextView tvVehicle = findViewById(R.id.tv_detail_driver_vehicle);
+        TextView tvPhone = findViewById(R.id.tv_detail_driver_phone);
+        View btnCallDriver = findViewById(R.id.btn_call_driver);
+
+        String driverName = order.getDeliveryPersonName();
+        String driverPhone = order.getDeliveryPersonPhone();
+
+        if (driverName != null && !driverName.trim().isEmpty()) {
+            if (tvDriverName != null) tvDriverName.setText(driverName);
+            if (driverPhone != null && !driverPhone.trim().isEmpty()) {
+                if (tvPhone != null) {
+                    tvPhone.setVisibility(View.VISIBLE);
+                    tvPhone.setText("📞 " + driverPhone);
+                }
+                if (btnCallDriver != null) {
+                    btnCallDriver.setVisibility(View.VISIBLE);
+                    btnCallDriver.setOnClickListener(v -> callPhoneNumber(driverPhone, driverName));
+                }
+            } else {
+                if (tvPhone != null) tvPhone.setVisibility(View.GONE);
+                if (btnCallDriver != null) btnCallDriver.setVisibility(View.GONE);
+            }
+        } else {
+            if (tvDriverName != null) tvDriverName.setText("Assigning nearest valet...");
+            if (tvPhone != null) tvPhone.setVisibility(View.GONE);
+            if (btnCallDriver != null) btnCallDriver.setVisibility(View.GONE);
+        }
+    }
+
+    private void callPhoneNumber(String phone, String name) {
+        if (phone == null || phone.trim().isEmpty()) {
+            Toast.makeText(this, "Contact number not available for " + (name != null ? name : "partner"), Toast.LENGTH_SHORT).show();
+            return;
+        }
+        final String cleanPhone = phone.trim();
+        requirePhone(
+                () -> startActivity(new Intent(Intent.ACTION_CALL, Uri.parse("tel:" + cleanPhone))),
+                (isPermanent) -> startActivity(new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + cleanPhone)))
+        );
     }
 
     @Override

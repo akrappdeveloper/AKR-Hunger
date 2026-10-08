@@ -33,6 +33,9 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.razorpay.Checkout;
 import com.razorpay.PaymentResultListener;
 import org.json.JSONObject;
+import android.location.Geocoder;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -57,6 +60,8 @@ public class CartActivity extends BaseActivity implements CartManager.CartChange
     private CartManager cartManager;
     private FirebaseFirestore db;
     private String paymentMethod = "cod";
+    private static final int REQ_BIOMETRIC_CHECKOUT = 5001;
+    private boolean isBiometricUnlockedForSession = false;
 
     // Delivery Address Views
     private View cardDeliveryAddress, layoutSelectedAddress, layoutNoAddress;
@@ -89,6 +94,36 @@ public class CartActivity extends BaseActivity implements CartManager.CartChange
             double taxRate = 0.05; // 5% GST (2.5% CGST + 2.5% SGST)
             double total = subtotal + fee + (subtotal * taxRate);
             analyticsHelper.logBeginCheckout(cartManager.getTotalItemCount(), total, paymentMethod);
+        }
+
+        // If delivery address has no pincode, try to auto-detect via GPS
+        tryAutoFillPincodeFromGps();
+
+        // Apply defaults from user settings
+        applyUserSettingsDefaults();
+    }
+
+    private void applyUserSettingsDefaults() {
+        if (etSpecialInstructions != null && TextUtils.isEmpty(etSpecialInstructions.getText())) {
+            StringBuilder sb = new StringBuilder();
+            String deliveryPreset = com.ssr.hunger.utils.SettingsHelper.getDeliveryPreset(this);
+            if (!TextUtils.isEmpty(deliveryPreset)) {
+                sb.append(deliveryPreset);
+            }
+            String cookingInstruction = com.ssr.hunger.utils.SettingsHelper.getCookingInstruction(this);
+            if (!TextUtils.isEmpty(cookingInstruction) && !cookingInstruction.contains("Standard")) {
+                if (sb.length() > 0) sb.append(" • ");
+                sb.append(cookingInstruction);
+            }
+            if (com.ssr.hunger.utils.SettingsHelper.isEcoCutlery(this)) {
+                if (sb.length() > 0) sb.append(" • ");
+                sb.append("Skip plastic cutlery 🌿");
+            }
+            etSpecialInstructions.setText(sb.toString());
+        }
+
+        if (com.ssr.hunger.utils.SettingsHelper.isAutoCouponEnabled(this) && etCoupon != null && TextUtils.isEmpty(etCoupon.getText())) {
+            etCoupon.setText("HUNGER50");
         }
     }
 
@@ -360,6 +395,18 @@ public class CartActivity extends BaseActivity implements CartManager.CartChange
         List<CartItem> items = cartManager.getItems();
         if (items.isEmpty()) return;
 
+        // Biometric / Screen Lock verification if enabled in Settings
+        if (com.ssr.hunger.utils.SettingsHelper.isBiometricLockEnabled(this) && !isBiometricUnlockedForSession) {
+            android.app.KeyguardManager km = (android.app.KeyguardManager) getSystemService(android.content.Context.KEYGUARD_SERVICE);
+            if (km != null && km.isDeviceSecure() && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+                android.content.Intent confirmIntent = km.createConfirmDeviceCredentialIntent("AKR Hunger Checkout 🔒", "Confirm screen lock to authorize food order");
+                if (confirmIntent != null) {
+                    startActivityForResult(confirmIntent, REQ_BIOMETRIC_CHECKOUT);
+                    return;
+                }
+            }
+        }
+
         // Strict Delivery Address Validation: Order CANNOT be placed without delivery address!
         Address deliveryAddress = cartManager.getDeliveryAddress();
         if (deliveryAddress == null || (TextUtils.isEmpty(deliveryAddress.getStreet()) && TextUtils.isEmpty(deliveryAddress.getCity()))) {
@@ -367,6 +414,144 @@ public class CartActivity extends BaseActivity implements CartManager.CartChange
             openAddressSelector();
             return;
         }
+
+        // GPS Pincode Validation: Check if restaurant delivers to this pincode
+        String deliveryPincode = deliveryAddress.getPincode();
+        String restaurantId = cartManager.getRestaurantId();
+        if (!TextUtils.isEmpty(restaurantId) && !TextUtils.isEmpty(deliveryPincode)) {
+            // Block order until pincode check completes
+            findViewById(R.id.btn_place_order).setEnabled(false);
+            final String finalDeliveryPincode = deliveryPincode.trim();
+            db.collection(Constants.COLLECTION_RESTAURANTS).document(restaurantId).get()
+                    .addOnSuccessListener(restaurantDoc -> {
+                        List<String> servicePincodes = null;
+                        if (restaurantDoc != null && restaurantDoc.exists()) {
+                            Object spObj = restaurantDoc.get("servicePincodes");
+                            if (spObj instanceof List) {
+                                servicePincodes = new ArrayList<>();
+                                for (Object p : (List<?>) spObj) {
+                                    if (p != null) servicePincodes.add(p.toString().trim());
+                                }
+                            }
+                        }
+                        // If restaurant has no pincode list, allow order (no restriction set)
+                        if (servicePincodes == null || servicePincodes.isEmpty()) {
+                            findViewById(R.id.btn_place_order).setEnabled(true);
+                            proceedToPlaceOrder(deliveryAddress);
+                            return;
+                        }
+                        // Check if delivery pincode is in service area
+                        boolean canDeliver = false;
+                        for (String sp : servicePincodes) {
+                            if (sp.equalsIgnoreCase(finalDeliveryPincode)) {
+                                canDeliver = true;
+                                break;
+                            }
+                        }
+                        if (!canDeliver) {
+                            // BLOCK ORDER: Restaurant doesn't deliver to this pincode
+                            String restaurantName2 = restaurantDoc.getString("name");
+                            String pincodeList = String.join(", ", servicePincodes);
+                            runOnUiThread(() -> {
+                                findViewById(R.id.btn_place_order).setEnabled(true);
+                                new MaterialAlertDialogBuilder(CartActivity.this)
+                                        .setTitle("\uD83D\uDEAB Delivery Not Available")
+                                        .setMessage("Sorry, "
+                                                + (restaurantName2 != null ? restaurantName2 : "this restaurant")
+                                                + " does not deliver to PIN code "
+                                                + finalDeliveryPincode
+                                                + ".\n\nThey currently serve: "
+                                                + pincodeList
+                                                + "\n\nPlease select a different delivery address or choose another restaurant.")
+                                        .setPositiveButton("Change Address", (d, w) -> openAddressSelector())
+                                        .setNegativeButton("Cancel", null)
+                                        .show();
+                            });
+                        } else {
+                            runOnUiThread(() -> {
+                                findViewById(R.id.btn_place_order).setEnabled(true);
+                                proceedToPlaceOrder(deliveryAddress);
+                            });
+                        }
+                    })
+                    .addOnFailureListener(e -> {
+                        // On failure, allow order to proceed (don't block on network issues)
+                        logBreadcrumb("servicePincode check failed, proceeding: " + e.getMessage());
+                        runOnUiThread(() -> {
+                            findViewById(R.id.btn_place_order).setEnabled(true);
+                            proceedToPlaceOrder(deliveryAddress);
+                        });
+                    });
+            return; // Wait for the async check above
+        }
+
+        // No pincode restriction or pincode unavailable, proceed directly
+        proceedToPlaceOrder(deliveryAddress);
+    } // end placeOrder()
+
+    /**
+     * Reverse-geocode GPS coords to get pincode and auto-fill it in the delivery address
+     * if the address is already selected but has no pincode.
+     */
+    @android.annotation.SuppressLint("MissingPermission")
+    private void tryAutoFillPincodeFromGps() {
+        // Only run if permission is already granted
+        if (checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION)
+                != android.content.pm.PackageManager.PERMISSION_GRANTED
+                && checkSelfPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION)
+                != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+        FusedLocationProviderClient fusedLocation = LocationServices.getFusedLocationProviderClient(this);
+        fusedLocation.getLastLocation().addOnSuccessListener(location -> {
+            if (location == null) return;
+            Address current = cartManager.getDeliveryAddress();
+            // Only auto-fill pincode if address exists but has no pincode
+            if (current != null && TextUtils.isEmpty(current.getPincode())) {
+                try {
+                    Geocoder geocoder = new Geocoder(this, Locale.getDefault());
+                    List<android.location.Address> addresses = geocoder.getFromLocation(
+                            location.getLatitude(), location.getLongitude(), 1);
+                    if (addresses != null && !addresses.isEmpty()) {
+                        android.location.Address geoAddr = addresses.get(0);
+                        String postalCode = geoAddr.getPostalCode();
+                        if (!TextUtils.isEmpty(postalCode)) {
+                            current.setPincode(postalCode);
+                            if (TextUtils.isEmpty(current.getCity()) && geoAddr.getLocality() != null) {
+                                current.setCity(geoAddr.getLocality());
+                            }
+                            if (TextUtils.isEmpty(current.getState()) && geoAddr.getAdminArea() != null) {
+                                current.setState(geoAddr.getAdminArea());
+                            }
+                            current.setLatitude(location.getLatitude());
+                            current.setLongitude(location.getLongitude());
+                            cartManager.setDeliveryAddress(current);
+                            runOnUiThread(() -> {
+                                updateAddressUI();
+                                logBreadcrumb("GPS auto-filled pincode: " + postalCode);
+                            });
+                        }
+                    }
+                } catch (Exception e) {
+                    logBreadcrumb("GPS geocoder failed: " + e.getMessage());
+                }
+            }
+        });
+    }
+
+    /**
+     * The actual order submission logic, called after pincode validation passes.
+     * Extracted from placeOrder() to allow async pincode check flow.
+     */
+    private void proceedToPlaceOrder(Address deliveryAddress) {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) {
+            Toast.makeText(this, "Please login first", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        List<CartItem> items = cartManager.getItems();
+        if (items.isEmpty()) return;
 
         // Firebase Performance - Profile the checkout order submission
         Trace checkoutTrace = startTrace(PerformanceHelper.TRACE_CHECKOUT_PROCESS);
@@ -506,36 +691,64 @@ public class CartActivity extends BaseActivity implements CartManager.CartChange
                         orderData.put("amountPaid", total);
                         orderData.put("balanceDue", 0.0);
 
-                        WriteBatch batch = db.batch();
-                        DocumentReference orderRef = db.collection(Constants.COLLECTION_ORDERS).document(orderId);
-                        batch.set(orderRef, orderData);
-
-                        DocumentReference custRef = db.collection(Constants.COLLECTION_CUSTOMERS).document(user.getUid());
-                        batch.update(custRef, "walletBalance", FieldValue.increment(-total));
-
-                        // Record debit wallet transaction
+                        // Record debit wallet transaction metadata
                         Map<String, Object> tx = new HashMap<>();
                         tx.put("customerId", user.getUid());
+                        tx.put("userId", user.getUid());
                         tx.put("type", "debit");
                         tx.put("amount", total);
                         tx.put("status", "completed");
                         tx.put("description", "Food Order #" + orderId + " at " + (restaurantName != null ? restaurantName : "Restaurant"));
                         tx.put("orderId", orderId);
+                        tx.put("referenceId", orderId);
                         tx.put("createdAt", Timestamp.now());
 
-                        DocumentReference subTxRef = custRef.collection(Constants.COLLECTION_WALLET_TRANSACTIONS).document();
-                        batch.set(subTxRef, tx);
+                        DocumentReference orderRef = db.collection(Constants.COLLECTION_ORDERS).document(orderId);
+                        DocumentReference custRef = db.collection(Constants.COLLECTION_CUSTOMERS).document(user.getUid());
 
-                        DocumentReference rootTxRef = db.collection(Constants.COLLECTION_WALLET_TRANSACTIONS).document();
-                        batch.set(rootTxRef, tx);
+                        // Atomic batch: order creation + customer wallet balance decrement
+                        WriteBatch batch = db.batch();
+                        batch.set(orderRef, orderData);
+                        batch.update(custRef, "walletBalance", FieldValue.increment(-total));
 
                         batch.commit()
-                                .addOnSuccessListener(aVoid -> onOrderPlacedSuccessfully(orderId, items, subtotal, deliveryFee, taxes, total, "wallet", restaurantName, checkoutTrace, user))
+                                .addOnSuccessListener(aVoid -> {
+                                    // Log wallet transaction to customer subcollection & root ledger non-blockingly
+                                    custRef.collection(Constants.COLLECTION_WALLET_TRANSACTIONS).add(tx)
+                                            .addOnFailureListener(txErr -> logBreadcrumb("Customer wallet subcollection log skipped: " + txErr.getMessage()));
+                                    db.collection(Constants.COLLECTION_WALLET_TRANSACTIONS).add(tx)
+                                            .addOnFailureListener(rootErr -> logBreadcrumb("Root wallet ledger mirror skipped: " + rootErr.getMessage()));
+
+                                    onOrderPlacedSuccessfully(orderId, items, subtotal, deliveryFee, taxes, total, "wallet", restaurantName, checkoutTrace, user);
+                                })
                                 .addOnFailureListener(e -> {
-                                    if (checkoutTrace != null) stopTrace(checkoutTrace);
-                                    recordException("wallet_order_batch_failed", e);
-                                    findViewById(R.id.btn_place_order).setEnabled(true);
-                                    Toast.makeText(this, "Failed to deduct wallet: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                                    logBreadcrumb("Wallet batch commit failed: " + e.getMessage() + ". Attempting sequential fallback.");
+                                    // Robust sequential fallback: deduct wallet then place order
+                                    custRef.update("walletBalance", FieldValue.increment(-total))
+                                            .addOnSuccessListener(aVoid2 -> {
+                                                orderRef.set(orderData)
+                                                        .addOnSuccessListener(aVoid3 -> {
+                                                            custRef.collection(Constants.COLLECTION_WALLET_TRANSACTIONS).add(tx)
+                                                                    .addOnFailureListener(ignored -> {});
+                                                            db.collection(Constants.COLLECTION_WALLET_TRANSACTIONS).add(tx)
+                                                                    .addOnFailureListener(ignored -> {});
+                                                            onOrderPlacedSuccessfully(orderId, items, subtotal, deliveryFee, taxes, total, "wallet", restaurantName, checkoutTrace, user);
+                                                        })
+                                                        .addOnFailureListener(orderErr -> {
+                                                            // Roll back deducted wallet balance if order creation failed
+                                                            custRef.update("walletBalance", FieldValue.increment(total));
+                                                            if (checkoutTrace != null) stopTrace(checkoutTrace);
+                                                            recordException("wallet_order_fallback_order_failed", orderErr);
+                                                            findViewById(R.id.btn_place_order).setEnabled(true);
+                                                            Toast.makeText(this, "Failed to place order: " + orderErr.getMessage(), Toast.LENGTH_LONG).show();
+                                                        });
+                                            })
+                                            .addOnFailureListener(deductErr -> {
+                                                if (checkoutTrace != null) stopTrace(checkoutTrace);
+                                                recordException("wallet_order_batch_failed", deductErr);
+                                                findViewById(R.id.btn_place_order).setEnabled(true);
+                                                Toast.makeText(this, "Failed to deduct wallet: " + deductErr.getMessage(), Toast.LENGTH_LONG).show();
+                                            });
                                 });
                     })
                     .addOnFailureListener(e -> {
@@ -601,7 +814,7 @@ public class CartActivity extends BaseActivity implements CartManager.CartChange
                     Toast.makeText(this, "Failed to place order: " + e.getMessage(), Toast.LENGTH_LONG).show();
                     findViewById(R.id.btn_place_order).setEnabled(true);
                 });
-    }
+    } // end proceedToPlaceOrder
 
     @Override
     public void onPaymentSuccess(String razorpayPaymentId) {
@@ -676,6 +889,7 @@ public class CartActivity extends BaseActivity implements CartManager.CartChange
         }
 
         cartManager.clearCart();
+        isBiometricUnlockedForSession = false;
         Toast.makeText(this, "Order #" + orderId + " placed successfully! 🎉", Toast.LENGTH_LONG).show();
 
         android.content.Intent intent = new android.content.Intent(CartActivity.this, OrderDetailActivity.class);
@@ -687,6 +901,19 @@ public class CartActivity extends BaseActivity implements CartManager.CartChange
     @Override
     public void onCartChanged(List<CartItem> items, int totalCount, double subtotal) {
         runOnUiThread(this::updateUI);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, android.content.Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQ_BIOMETRIC_CHECKOUT) {
+            if (resultCode == RESULT_OK) {
+                isBiometricUnlockedForSession = true;
+                placeOrder();
+            } else {
+                Toast.makeText(this, "Order placement cancelled. Biometric verification required.", Toast.LENGTH_SHORT).show();
+            }
+        }
     }
 
     @Override

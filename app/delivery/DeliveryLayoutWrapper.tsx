@@ -37,8 +37,13 @@ function DeliveryLayoutContent({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         if (!loading && deliveryPartner && !isAuthPage) {
             const balance = Number(deliveryPartner.walletBalance || 0);
-            // Account is locked if cash-in-hand debt exceeds ₹2,000 (represented as balance < -2000, or legacy balance > 2000)
-            const locked = balance < -2000 || balance > 2000;
+            const cashLimit = Number((deliveryPartner as any)?.cashLimit || 3000);
+            const codCollected = Number((deliveryPartner as any)?.codCollected || 0);
+            const codDeposited = Number((deliveryPartner as any)?.codDeposited || 0);
+            const remainingCod = Math.max(0, codCollected - codDeposited);
+
+            // Account is locked if cash-in-hand COD exceeds limit (₹3,000) or net debt exceeds limit
+            const locked = remainingCod > cashLimit || balance < -cashLimit;
             setIsLocked(locked);
 
             // If account is locked, redirect to wallet page if not already there
@@ -68,16 +73,16 @@ function DeliveryLayoutContent({ children }: { children: React.ReactNode }) {
                         <div className="w-20 h-20 bg-red-500/10 rounded-full flex items-center justify-center mb-6 animate-pulse">
                             <Lock className="w-10 h-10 text-red-500" />
                         </div>
-                        <h1 className="text-3xl font-black text-white mb-2">Account Temporarily Locked</h1>
+                        <h1 className="text-3xl font-black text-white mb-2">Cash Limit Exceeded</h1>
                         <p className="text-gray-400 max-w-md mb-8">
-                            Your cash-in-hand limit (₹2,000) has been exceeded ({deliveryPartner?.walletBalance?.toFixed(2)}).
-                            Please clear your dues to continue receiving orders.
+                            Your cash-in-hand limit (₹{((deliveryPartner as any)?.cashLimit || 3000).toLocaleString('en-IN')}) has been reached.
+                            Please deposit collected COD cash to continue receiving orders.
                         </p>
                         <Button
                             onClick={() => router.push('/delivery/wallet')}
                             className="bg-red-600 hover:bg-red-700 text-white font-bold h-12 px-8 rounded-xl shadow-lg shadow-red-900/30"
                         >
-                            Pay Now & Unlock
+                            Deposit Cash & Unlock
                         </Button>
                     </div>
                 ) : (

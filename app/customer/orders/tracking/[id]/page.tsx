@@ -844,7 +844,7 @@ export default function CustomerOrderTrackingPage() {
 
         {/* ── LIVE MAP SECTION ────────────────────────────────────────────── */}
         <div className="relative w-full rounded-3xl overflow-hidden border border-white/10 shadow-2xl"
-          style={{ height: '380px', background: '#0f172a' }}>
+          style={{ height: 'clamp(420px, 55vh, 620px)', minHeight: '420px', background: '#0f172a' }}>
 
           {/* Map */}
           {isActive ? (

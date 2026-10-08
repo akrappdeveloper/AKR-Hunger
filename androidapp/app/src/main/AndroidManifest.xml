@@ -193,6 +193,37 @@
             android:name=".activities.MembershipActivity"
             android:exported="false" />
 
+        <!-- 🆕 Group Order Activity — with deep link for invite links -->
+        <activity
+            android:name=".activities.GroupOrderActivity"
+            android:exported="true"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:scheme="https"
+                    android:host="akrhunger.vercel.app"
+                    android:pathPrefix="/customer/group" />
+            </intent-filter>
+        </activity>
+
+        <!-- 🆕 Student Mode Activity -->
+        <activity
+            android:name=".activities.StudentModeActivity"
+            android:exported="false" />
+
+        <!-- 🆕 Meal Subscription Activity -->
+        <activity
+            android:name=".activities.SubscriptionActivity"
+            android:exported="false" />
+
+        <!-- 🆕 Delivery Partner Dashboard Activity -->
+        <activity
+            android:name=".activities.DeliveryPartnerDashboardActivity"
+            android:exported="false" />
+
         <!-- Live Order Tracking Activity -->
         <activity
             android:name=".activities.OrderTrackingActivity"

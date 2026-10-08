@@ -20,9 +20,20 @@ public class Constants {
     public static final String COLLECTION_REFERRAL_CODES = "referralCodes";
     public static final String COLLECTION_DRIVER_LOCATIONS = "driverLocations";      // GPS tracking data
     public static final String COLLECTION_DELIVERY_PERSONS = "deliveryPersons";      // Delivery partner profiles
+    // New feature collections
+    public static final String COLLECTION_GROUP_ORDERS = "groupOrders";
+    public static final String COLLECTION_SUBSCRIPTIONS = "subscriptions";
+    public static final String COLLECTION_MEAL_PLANS = "mealPlans";
+    public static final String COLLECTION_STUDENT_PROFILES = "studentProfiles";
+    public static final String COLLECTION_HUNGER_CIRCLES = "hungerCircles";
+    public static final String COLLECTION_FOOD_PROOFS = "foodProofs";
+    public static final String COLLECTION_PARTNER_STATS = "partnerStats";
+    public static final String COLLECTION_AI_REQUESTS = "aiRequests";
+    public static final String COLLECTION_REWARD_ACCOUNTS = "rewardAccounts";
 
-    // Backend API Base URL
+    // Backend & App Base URLs
     public static final String API_BASE_URL = "https://akrhunger.vercel.app";
+    public static final String APP_BASE_URL = "https://akrhunger.vercel.app"; // Used for group order invite links
 
     // Razorpay
     public static final String RAZORPAY_KEY_ID = "rzp_live_RbvSxxE0Qca3fp";

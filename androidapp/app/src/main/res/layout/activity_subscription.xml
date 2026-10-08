@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/surface"
+        app:elevation="0dp">
+
+        <androidx.appcompat.widget.Toolbar
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:paddingStart="4dp"
+            android:paddingEnd="16dp">
+
+            <ImageButton
+                android:id="@+id/btn_back"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Back"
+                android:src="@drawable/ic_back"
+                app:tint="@color/text_primary" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:fontFamily="sans-serif-black"
+                android:text="Meal Subscriptions 🍱"
+                android:textColor="@color/text_primary"
+                android:textSize="20sp" />
+        </androidx.appcompat.widget.Toolbar>
+
+        <com.google.android.material.tabs.TabLayout
+            android:id="@+id/tab_layout"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:background="@color/surface"
+            app:tabIndicatorColor="@color/primary"
+            app:tabIndicatorHeight="3dp"
+            app:tabSelectedTextColor="@color/primary"
+            app:tabTextColor="@color/text_secondary" />
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+        <ProgressBar
+            android:id="@+id/progress_bar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:visibility="gone" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <!-- Active Subscription Card (shown in My Subscriptions tab) -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/card_active_subscription"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:visibility="gone"
+                app:cardBackgroundColor="@color/surface"
+                app:cardCornerRadius="18dp"
+                app:cardElevation="2dp"
+                app:strokeColor="@color/card_border"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:id="@+id/tv_plan_title"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="sans-serif-black"
+                        android:text="Daily Campus Lunch Plan"
+                        android:textColor="@color/text_primary"
+                        android:textSize="17sp" />
+
+                    <TextView
+                        android:id="@+id/tv_meals_remaining"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:fontFamily="sans-serif-bold"
+                        android:text="18 / 26 meals remaining"
+                        android:textColor="@color/primary"
+                        android:textSize="13sp" />
+
+                    <ProgressBar
+                        android:id="@+id/progress_meals"
+                        style="?android:attr/progressBarStyleHorizontal"
+                        android:layout_width="match_parent"
+                        android:layout_height="8dp"
+                        android:layout_marginTop="8dp"
+                        android:max="100"
+                        android:progress="70"
+                        android:progressTint="@color/primary" />
+
+                    <TextView
+                        android:id="@+id/tv_next_meal"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:fontFamily="sans-serif"
+                        android:text="Next delivery: Tomorrow 1:00 PM"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="12sp" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="14dp"
+                        android:orientation="horizontal">
+
+                        <Button
+                            android:id="@+id/btn_pause"
+                            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                            android:layout_width="0dp"
+                            android:layout_height="40dp"
+                            android:layout_marginEnd="4dp"
+                            android:layout_weight="1"
+                            android:text="Pause"
+                            android:textSize="11sp"
+                            app:cornerRadius="10dp" />
+
+                        <Button
+                            android:id="@+id/btn_skip_day"
+                            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                            android:layout_width="0dp"
+                            android:layout_height="40dp"
+                            android:layout_marginHorizontal="4dp"
+                            android:layout_weight="1"
+                            android:text="Skip Day"
+                            android:textSize="11sp"
+                            app:cornerRadius="10dp" />
+
+                        <Button
+                            android:id="@+id/btn_cancel"
+                            style="@style/Widget.MaterialComponents.Button.TextButton"
+                            android:layout_width="0dp"
+                            android:layout_height="40dp"
+                            android:layout_marginStart="4dp"
+                            android:layout_weight="1"
+                            android:text="Cancel"
+                            android:textColor="@color/error"
+                            android:textSize="11sp" />
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Browse Plans RecyclerView -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rv_plans"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:clipToPadding="false"
+                android:overScrollMode="never"
+                android:visibility="visible" />
+
+            <!-- My Subscriptions RecyclerView -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rv_my_subscriptions"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:clipToPadding="false"
+                android:overScrollMode="never"
+                android:visibility="gone" />
+
+            <!-- Empty State for My Subscriptions -->
+            <LinearLayout
+                android:id="@+id/layout_no_subscriptions"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🍱"
+                    android:textSize="48sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:fontFamily="sans-serif-bold"
+                    android:text="No active meal subscriptions"
+                    android:textColor="@color/text_primary"
+                    android:textSize="16sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:fontFamily="sans-serif"
+                    android:gravity="center"
+                    android:text="Subscribe to daily student meals with flexible pause and skips."
+                    android:textColor="@color/text_secondary"
+                    android:textSize="13sp" />
+
+                <Button
+                    android:id="@+id/btn_browse_plans"
+                    style="@style/Widget.MaterialComponents.Button"
+                    android:layout_width="wrap_content"
+                    android:layout_height="44dp"
+                    android:layout_marginTop="16dp"
+                    android:backgroundTint="@color/primary"
+                    android:text="Browse Plans"
+                    android:textColor="@android:color/white"
+                    app:cornerRadius="14dp" />
+            </LinearLayout>
+        </LinearLayout>
+    </FrameLayout>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

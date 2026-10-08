@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Loader } from '@/components/ui/spinner';
-import { MapPin, Clock, ArrowRight, DollarSign, Bike, RefreshCw, ShoppingBag, Navigation, ShieldCheck } from 'lucide-react';
+import { MapPin, Clock, ArrowRight, DollarSign, Bike, RefreshCw, ShoppingBag, Navigation, ShieldCheck, AlertTriangle, AlertCircle } from 'lucide-react';
 import { Order } from '@/lib/types';
 import { db } from '@/lib/firebase';
 import { collection, query, where, onSnapshot, orderBy, updateDoc, doc, serverTimestamp, getDoc } from 'firebase/firestore';
@@ -112,6 +112,15 @@ export default function AvailableOrdersPage() {
         return () => unsubscribe();
     }, [user]);
 
+    const codLimit = Number((deliveryPartner as any)?.codLimit || 3000);
+    const codCollected = Number((deliveryPartner as any)?.codCollected || 0);
+    const codDeposited = Number((deliveryPartner as any)?.codDeposited || 0);
+    const codOutstanding = Math.max(0, codCollected - codDeposited);
+    const isCodBlocked = (deliveryPartner as any)?.codBlocked === true || codOutstanding >= codLimit;
+    const codRatio = codLimit > 0 ? (codOutstanding / codLimit) : 0;
+    const is80Percent = codRatio >= 0.8 && codRatio < 0.9;
+    const is90Percent = codRatio >= 0.9 && codRatio < 1.0;
+
     const acceptOrder = async (orderId: string) => {
         if (!user) {
             toast.error("You must be logged in to accept orders");
@@ -124,12 +133,35 @@ export default function AvailableOrdersPage() {
             return;
         }
 
+        const targetOrder = orders.find(o => o.id === orderId);
+        if (!targetOrder) {
+            toast.error("Order not found or already assigned");
+            return;
+        }
+
+        const isCodOrder = targetOrder.paymentMethod === 'cod';
+        const orderTotal = Number(targetOrder.total || 0);
+        const projectedExposure = codOutstanding + orderTotal;
+
+        // Rule 9, 10, 13: COD Limit & Projected Exposure Enforcement
+        if (isCodOrder) {
+            if (isCodBlocked) {
+                toast.error(`🔴 COD Limit Full! Settle your cash in Wallet to receive COD orders.`);
+                router.push('/delivery/wallet');
+                return;
+            }
+            if (projectedExposure > codLimit) {
+                toast.error(`❌ Projected COD cash (₹${projectedExposure}) exceeds limit (₹${codLimit}). Settle cash in Wallet.`);
+                router.push('/delivery/wallet');
+                return;
+            }
+        }
+
         try {
             let currentRestaurantAddress = '';
             let restaurantPhone = '';
             let restaurantLat = 0;
             let restaurantLng = 0;
-            const targetOrder = orders.find(o => o.id === orderId);
 
             if (targetOrder) {
                 currentRestaurantAddress = targetOrder.restaurantAddress || '';
@@ -228,6 +260,63 @@ export default function AvailableOrdersPage() {
                 </motion.div>
             )}
 
+            {/* COD Cash Limit Warning Banners (Sections 7, 8, 9, 10, 11) */}
+            {isCodBlocked ? (
+                <motion.div
+                    variants={itemVariants}
+                    className="p-5 rounded-3xl bg-red-500/15 border-2 border-red-500/40 backdrop-blur-xl shadow-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+                >
+                    <div className="flex items-center gap-3.5">
+                        <div className="w-12 h-12 rounded-2xl bg-red-500/20 border border-red-500/40 flex items-center justify-center text-red-400 font-bold shrink-0">
+                            <AlertTriangle className="w-6 h-6 text-red-400 animate-bounce" />
+                        </div>
+                        <div>
+                            <div className="flex items-center gap-2">
+                                <h3 className="font-bold text-white text-base">🔴 COD LIMIT FULL</h3>
+                                <Badge className="bg-red-500/20 text-red-300 border-red-500/40 text-[10px] font-mono">
+                                    ₹{codOutstanding} / ₹{codLimit}
+                                </Badge>
+                            </div>
+                            <p className="text-gray-300 text-xs mt-0.5 max-w-xl">
+                                Your COD cash limit has been reached. Please settle your outstanding COD amount in Wallet to receive COD orders again. <strong className="text-emerald-400">Prepaid orders remain active!</strong>
+                            </p>
+                        </div>
+                    </div>
+                    <Button
+                        onClick={() => router.push('/delivery/wallet')}
+                        className="w-full sm:w-auto h-11 px-5 rounded-2xl bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-bold text-xs gap-2 shadow-lg shadow-red-900/40 shrink-0"
+                    >
+                        Settle COD Cash <ArrowRight className="w-4 h-4" />
+                    </Button>
+                </motion.div>
+            ) : is90Percent ? (
+                <motion.div
+                    variants={itemVariants}
+                    className="p-4 rounded-2xl bg-amber-500/15 border border-amber-500/40 backdrop-blur-xl flex items-center justify-between gap-3 text-xs text-amber-200"
+                >
+                    <div className="flex items-center gap-2.5">
+                        <AlertCircle className="w-5 h-5 text-amber-400 shrink-0" />
+                        <span><strong>🔶 COD Limit Almost Full (90% Used):</strong> ₹{codOutstanding} / ₹{codLimit}. Settle cash soon to prevent COD order pausing.</span>
+                    </div>
+                    <Button onClick={() => router.push('/delivery/wallet')} size="sm" variant="outline" className="border-amber-500/40 text-amber-300 text-xs font-bold shrink-0">
+                        Settle COD
+                    </Button>
+                </motion.div>
+            ) : is80Percent ? (
+                <motion.div
+                    variants={itemVariants}
+                    className="p-4 rounded-2xl bg-yellow-500/15 border border-yellow-500/40 backdrop-blur-xl flex items-center justify-between gap-3 text-xs text-yellow-200"
+                >
+                    <div className="flex items-center gap-2.5">
+                        <AlertCircle className="w-4 h-4 text-yellow-400 shrink-0" />
+                        <span><strong>🟡 COD Limit 80% Used:</strong> ₹{codOutstanding} / ₹{codLimit}. Please settle your COD cash soon.</span>
+                    </div>
+                    <Button onClick={() => router.push('/delivery/wallet')} size="sm" variant="outline" className="border-yellow-500/40 text-yellow-300 text-xs font-bold shrink-0">
+                        Settle COD
+                    </Button>
+                </motion.div>
+            ) : null}
+
             {/* Header */}
             <motion.div variants={itemVariants} className="relative overflow-hidden p-8 rounded-3xl bg-white/5 backdrop-blur-2xl border border-white/10 shadow-2xl">
                 <div className="absolute inset-0 bg-gradient-to-tr from-orange-500/10 via-red-500/10 to-purple-500/10 animate-pulse" />
@@ -279,63 +368,90 @@ export default function AvailableOrdersPage() {
                     </motion.div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {orders.map((order, index) => (
-                            <motion.div
-                                key={order.id}
-                                variants={itemVariants}
-                                whileHover={{ y: -8, scale: 1.02 }}
-                                className="group flex flex-col h-full bg-black/40 backdrop-blur-xl border border-white/10 rounded-3xl overflow-hidden shadow-xl hover:shadow-orange-900/20 hover:border-orange-500/30 transition-all duration-300 relative"
-                            >
-                                {/* Gradient Overlay */}
-                                <div className="absolute inset-0 bg-gradient-to-b from-white/[0.03] to-transparent pointer-events-none" />
-                                <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/20 rounded-full blur-[60px] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                        {orders.map((order, index) => {
+                            const isCod = order.paymentMethod === 'cod';
+                            const orderTotal = Number(order.total || 0);
+                            const projectedExposure = codOutstanding + orderTotal;
+                            const isOrderBlockedByCod = isCod && (isCodBlocked || projectedExposure > codLimit);
 
-                                <div className="p-6 flex-1 space-y-6 relative z-10">
-                                    <div className="flex justify-between items-start">
-                                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-500/20 to-red-500/20 border border-orange-500/30 flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform duration-500">
-                                            <MapPin className="w-6 h-6 text-orange-400 drop-shadow-md" />
-                                        </div>
-                                        <Badge className="bg-green-500/20 text-green-300 border-green-500/30 backdrop-blur-md px-3 py-1 text-sm font-bold shadow-lg">
-                                            +₹{(((order.deliveryCharge || (order as any).deliveryFee || 40) * 0.80)).toFixed(0)} Earnings (80%)
-                                        </Badge>
-                                    </div>
+                            return (
+                                <motion.div
+                                    key={order.id}
+                                    variants={itemVariants}
+                                    whileHover={{ y: -8, scale: 1.02 }}
+                                    className={`group flex flex-col h-full bg-black/40 backdrop-blur-xl border rounded-3xl overflow-hidden shadow-xl transition-all duration-300 relative ${
+                                        isOrderBlockedByCod ? 'border-red-500/30 opacity-75' : 'border-white/10 hover:shadow-orange-900/20 hover:border-orange-500/30'
+                                    }`}
+                                >
+                                    {/* Gradient Overlay */}
+                                    <div className="absolute inset-0 bg-gradient-to-b from-white/[0.03] to-transparent pointer-events-none" />
+                                    <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/20 rounded-full blur-[60px] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
-                                    <div>
-                                        <h3 className="text-xl font-black text-white leading-tight group-hover:text-orange-300 transition-colors line-clamp-1">{order.restaurantName}</h3>
-                                        <div className="flex items-center gap-2 mt-2">
-                                            <span className="flex items-center gap-1.5 text-xs font-semibold text-gray-400 bg-white/5 px-2.5 py-1 rounded-lg border border-white/5">
-                                                <Clock className="w-3 h-3 text-blue-400" /> ~25 min
-                                            </span>
-                                            <span className="flex items-center gap-1.5 text-xs font-semibold text-gray-400 bg-white/5 px-2.5 py-1 rounded-lg border border-white/5">
-                                                <DollarSign className="w-3 h-3 text-green-400" /> COD
-                                            </span>
-                                        </div>
-                                    </div>
-
-                                    <div className="space-y-4 pt-4 border-t border-white/10">
-                                        <div className="relative pl-4 space-y-3 before:absolute before:left-0 before:top-2 before:bottom-2 before:w-0.5 before:bg-gradient-to-b from-orange-500/50 to-blue-500/50">
-                                            <div>
-                                                <p className="text-[10px] text-gray-500 uppercase font-bold tracking-wider mb-0.5">Pickup</p>
-                                                <p className="text-sm text-gray-300 truncate">{order.restaurantAddress || 'Restaurant'}</p>
+                                    <div className="p-6 flex-1 space-y-6 relative z-10">
+                                        <div className="flex justify-between items-start">
+                                            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-500/20 to-red-500/20 border border-orange-500/30 flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform duration-500">
+                                                <MapPin className="w-6 h-6 text-orange-400 drop-shadow-md" />
                                             </div>
-                                            <div>
-                                                <p className="text-[10px] text-gray-500 uppercase font-bold tracking-wider mb-0.5">Dropoff</p>
-                                                <p className="text-sm text-gray-300 truncate">{String(order.deliveryAddress)}</p>
+                                            <div className="flex flex-col items-end gap-1">
+                                                <Badge className="bg-green-500/20 text-green-300 border-green-500/30 backdrop-blur-md px-3 py-1 text-sm font-bold shadow-lg">
+                                                    +₹{(((order.deliveryCharge || (order as any).deliveryFee || 40) * 0.80)).toFixed(0)} Earnings (80%)
+                                                </Badge>
+                                                {isOrderBlockedByCod && (
+                                                    <Badge className="bg-red-500/20 text-red-300 border-red-500/40 text-[10px] font-bold">
+                                                        🔴 COD Limit Full
+                                                    </Badge>
+                                                )}
                                             </div>
                                         </div>
-                                    </div>
-                                </div>
 
-                                <div className="p-4 relative z-10 bg-white/[0.02] border-t border-white/5">
-                                    <Button
-                                        onClick={() => acceptOrder(order.id!)}
-                                        className="w-full bg-white text-black hover:bg-gray-200 font-bold h-12 shadow-lg shadow-white/5 group-hover:shadow-white/20 transition-all scale-100 active:scale-95"
-                                    >
-                                        Accept Request <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
-                                    </Button>
-                                </div>
-                            </motion.div>
-                        ))}
+                                        <div>
+                                            <h3 className="text-xl font-black text-white leading-tight group-hover:text-orange-300 transition-colors line-clamp-1">{order.restaurantName}</h3>
+                                            <div className="flex items-center gap-2 mt-2">
+                                                <span className="flex items-center gap-1.5 text-xs font-semibold text-gray-400 bg-white/5 px-2.5 py-1 rounded-lg border border-white/5">
+                                                    <Clock className="w-3 h-3 text-blue-400" /> ~25 min
+                                                </span>
+                                                <span className={`flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-lg border ${
+                                                    isCod ? 'bg-orange-500/10 text-orange-300 border-orange-500/20' : 'bg-green-500/10 text-green-300 border-green-500/20'
+                                                }`}>
+                                                    <DollarSign className="w-3 h-3" /> {isCod ? `COD (₹${orderTotal})` : 'Prepaid Order'}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-4 pt-4 border-t border-white/10">
+                                            <div className="relative pl-4 space-y-3 before:absolute before:left-0 before:top-2 before:bottom-2 before:w-0.5 before:bg-gradient-to-b from-orange-500/50 to-blue-500/50">
+                                                <div>
+                                                    <p className="text-[10px] text-gray-500 uppercase font-bold tracking-wider mb-0.5">Pickup</p>
+                                                    <p className="text-sm text-gray-300 truncate">{order.restaurantAddress || 'Restaurant'}</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-[10px] text-gray-500 uppercase font-bold tracking-wider mb-0.5">Dropoff</p>
+                                                    <p className="text-sm text-gray-300 truncate">{String(order.deliveryAddress)}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="p-4 relative z-10 bg-white/[0.02] border-t border-white/5">
+                                        <Button
+                                            disabled={isOrderBlockedByCod}
+                                            onClick={() => acceptOrder(order.id!)}
+                                            className={`w-full font-bold h-12 transition-all ${
+                                                isOrderBlockedByCod
+                                                    ? 'bg-red-500/20 text-red-300 border border-red-500/30 cursor-not-allowed'
+                                                    : 'bg-white text-black hover:bg-gray-200 shadow-lg shadow-white/5 group-hover:shadow-white/20 scale-100 active:scale-95'
+                                            }`}
+                                        >
+                                            {isOrderBlockedByCod ? (
+                                                'COD Limit Full (Settle to Accept)'
+                                            ) : (
+                                                <>Accept Request <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" /></>
+                                            )}
+                                        </Button>
+                                    </div>
+                                </motion.div>
+                            );
+                        })}
                     </div>
                 )}
             </AnimatePresence>

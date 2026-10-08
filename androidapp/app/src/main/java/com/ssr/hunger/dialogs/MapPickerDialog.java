@@ -363,18 +363,18 @@ public class MapPickerDialog extends BottomSheetDialogFragment {
                 "        var isRetina = (window.devicePixelRatio && window.devicePixelRatio > 1.2);\n" +
                 "        var retinaParam = isRetina ? '@2x' : '';\n" +
                 "\n" +
-                "        // Primary Tile Layer: CartoDB Voyager (Never blocked, free, high performance food delivery map)\n" +
-                "        var voyagerLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}' + retinaParam + '.png', {\n" +
-                "            subdomains: 'abcd',\n" +
-                "            maxZoom: 20,\n" +
-                "            attribution: '&copy; <a href=\"https://www.openstreetmap.org/copyright\">OSM</a> &copy; <a href=\"https://carto.com/\">CARTO</a>'\n" +
+                "        // Primary Tile Layer: OpenStreetMap (free, zero API key, no watermarks)\n" +
+                "        var voyagerLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {\n" +
+                "            subdomains: 'abc',\n" +
+                "            maxZoom: 19,\n" +
+                "            attribution: '&copy; OpenStreetMap contributors'\n" +
                 "        });\n" +
                 "\n" +
-                "        // Reliable Fallback Tile Layer in case of network constraint\n" +
-                "        var fallbackLayer = L.tileLayer('https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png', {\n" +
+                "        // Reliable Fallback Tile Layer\n" +
+                "        var fallbackLayer = L.tileLayer('https://tile.openstreetmap.de/{z}/{x}/{y}.png', {\n" +
                 "            subdomains: 'abc',\n" +
-                "            maxZoom: 20,\n" +
-                "            attribution: '&copy; OpenStreetMap France'\n" +
+                "            maxZoom: 18,\n" +
+                "            attribution: '&copy; OpenStreetMap contributors'\n" +
                 "        });\n" +
                 "\n" +
                 "        voyagerLayer.addTo(map);\n" +

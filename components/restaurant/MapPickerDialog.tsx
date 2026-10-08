@@ -50,28 +50,28 @@ interface MapPickerDialogProps {
   title?: string;
 }
 
-// Free CartoCDN tiles (smooth, fast, high-res)
+// 100% Free OpenStreetMap tiles — zero API key, no watermarks
 const TILE_STYLE: maplibregl.StyleSpecification = {
   version: 8,
-  name: 'CartoVoyager',
+  name: 'OpenStreetMap',
   sources: {
-    carto: {
+    osm: {
       type: 'raster',
       tiles: [
-        'https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png',
-        'https://b.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png',
-        'https://c.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png',
+        'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png',
+        'https://b.tile.openstreetmap.org/{z}/{x}/{y}.png',
+        'https://c.tile.openstreetmap.org/{z}/{x}/{y}.png',
       ],
       tileSize: 256,
-      attribution: '&copy; OpenStreetMap &copy; CARTO',
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
       maxzoom: 19,
     },
   },
   layers: [
     {
-      id: 'carto-tiles',
+      id: 'osm-tiles',
       type: 'raster',
-      source: 'carto',
+      source: 'osm',
       minzoom: 0,
       maxzoom: 19,
     },
