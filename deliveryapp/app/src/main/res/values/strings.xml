@@ -1,0 +1,77 @@
+<resources>
+    <string name="app_name">Hunger Delivery</string>
+    <string name="app_tagline">Rider Partner App • Fast &amp; Reliable</string>
+
+    <!-- Authentication -->
+    <string name="login_title">Partner Login</string>
+    <string name="login_subtitle">Sign in to start delivering &amp; earning</string>
+    <string name="register_title">Become a Delivery Partner</string>
+    <string name="register_subtitle">Join the Hunger delivery fleet</string>
+    <string name="email_hint">Email address</string>
+    <string name="password_hint">Password</string>
+    <string name="name_hint">Full Name</string>
+    <string name="phone_hint">Phone Number (10 digits)</string>
+    <string name="vehicle_type_hint">Vehicle Type</string>
+    <string name="vehicle_number_hint">Vehicle Reg Number (e.g. MH12AB1234)</string>
+    <string name="driving_license_hint">Driving License Number</string>
+    <string name="emergency_phone_hint">Emergency Contact Phone</string>
+    <string name="service_pincode_hint">Primary Service Pincode (e.g. 411001)</string>
+    <string name="btn_login">Sign In as Partner</string>
+    <string name="btn_register">Submit Partner Application</string>
+    <string name="prompt_no_account">New driver? Apply to join</string>
+    <string name="prompt_have_account">Already registered? Log in</string>
+    <string name="logout">Sign Out</string>
+
+    <!-- Bottom Navigation -->
+    <string name="nav_dashboard">Orders</string>
+    <string name="nav_earnings">Earnings</string>
+    <string name="nav_history">History</string>
+    <string name="nav_profile">Profile</string>
+
+    <!-- Dashboard & Status -->
+    <string name="status_online">ONLINE</string>
+    <string name="status_offline">OFFLINE</string>
+    <string name="online_hint">You are online and ready to receive delivery requests</string>
+    <string name="offline_hint">You are currently offline. Turn toggle on to get orders</string>
+    <string name="tab_available">Available Orders</string>
+    <string name="tab_active">Active Deliveries</string>
+    <string name="no_available_orders">No orders waiting right now. Stay online, new requests update live!</string>
+    <string name="no_active_orders">No active deliveries currently in progress.</string>
+
+    <!-- Order Actions -->
+    <string name="accept_order">Accept Order</string>
+    <string name="reject_order">Decline</string>
+    <string name="pickup_order">Confirm Food Picked Up</string>
+    <string name="deliver_order">Verify OTP &amp; Complete Delivery</string>
+    <string name="navigate_restaurant">Navigate to Restaurant</string>
+    <string name="navigate_customer">Navigate to Customer</string>
+    <string name="call_restaurant">Call Restaurant</string>
+    <string name="call_customer">Call Customer</string>
+    <string name="order_otp_hint">Enter 4-digit Delivery OTP</string>
+    <string name="return_otp_hint">Enter Restaurant Return OTP</string>
+
+    <!-- Pincode Filter -->
+    <string name="pincodes_title">Service Areas</string>
+    <string name="pincodes_desc">Select pincodes where you deliver</string>
+    <string name="add_pincode">Add Pincode</string>
+    <string name="pincode_filter_active">Pincode Filtering Active</string>
+
+    <!-- Earnings & Wallet -->
+    <string name="today_earnings">Today\'s Earnings</string>
+    <string name="total_earnings">Total Earnings</string>
+    <string name="wallet_balance">Available Balance</string>
+    <string name="base_pay">Base Pay</string>
+    <string name="distance_pay">Distance Bonus</string>
+    <string name="tips_earnings">Customer Tips</string>
+    <string name="fair_score">Fair Route Score</string>
+    <string name="withdraw_funds">Request Payout</string>
+
+    <!-- Profile & KYC -->
+    <string name="profile_title">Partner Profile</string>
+    <string name="kyc_status">KYC Status</string>
+    <string name="kyc_approved">Verified Partner</string>
+    <string name="kyc_pending">Verification Pending</string>
+    <string name="vehicle_info">Vehicle Details</string>
+    <string name="emergency_info">Emergency Contact</string>
+    <string name="support_help">Driver Support &amp; Helpdesk</string>
+</resources>

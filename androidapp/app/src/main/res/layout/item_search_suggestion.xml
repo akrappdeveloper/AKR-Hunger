@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="?attr/selectableItemBackground"
+    android:clickable="true"
+    android:focusable="true"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingHorizontal="16dp"
+    android:paddingVertical="10dp">
+
+    <!-- Icon Pill -->
+    <FrameLayout
+        android:layout_width="34dp"
+        android:layout_height="34dp"
+        android:background="@drawable/bg_icon_circle_soft">
+
+        <ImageView
+            android:id="@+id/iv_suggestion_icon"
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:layout_gravity="center"
+            android:src="@drawable/ic_search"
+            app:tint="@color/primary" />
+    </FrameLayout>
+
+    <!-- Details Column -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tv_suggestion_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:fontFamily="sans-serif-bold"
+            android:maxLines="1"
+            android:textColor="@color/text_primary"
+            android:textSize="14sp" />
+
+        <TextView
+            android:id="@+id/tv_suggestion_desc"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="1dp"
+            android:ellipsize="end"
+            android:fontFamily="sans-serif"
+            android:maxLines="1"
+            android:textColor="@color/text_hint"
+            android:textSize="11sp" />
+    </LinearLayout>
+
+    <!-- Price Pill -->
+    <TextView
+        android:id="@+id/tv_suggestion_price"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:background="@drawable/bg_pill_soft"
+        android:fontFamily="sans-serif-bold"
+        android:paddingHorizontal="8dp"
+        android:paddingVertical="3dp"
+        android:textColor="@color/primary"
+        android:textSize="11sp" />
+
+    <!-- Fill Arrow Button -->
+    <ImageView
+        android:id="@+id/btn_fill_query"
+        android:layout_width="28dp"
+        android:layout_height="28dp"
+        android:layout_marginStart="6dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:clickable="true"
+        android:contentDescription="Insert into search"
+        android:focusable="true"
+        android:padding="6dp"
+        android:src="@drawable/ic_chevron_right"
+        app:tint="@color/text_hint" />
+</LinearLayout>

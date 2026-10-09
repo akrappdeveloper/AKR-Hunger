@@ -88,10 +88,10 @@ export async function approveMembership(requestId: string, adminName: string = '
             const customerRef = doc(db, 'customers', requestData.customerId);
 
             // Generate Membership ID
-            // Format: AKR-ABCDE-1234 (AKR - First 5 chars of Name/UID - timestamp suffix)
+            // Format: HNG-ABCDE-1234 (HNG - First 5 chars of Name/UID - timestamp suffix)
             const namePart = requestData.customerName.replace(/[^a-zA-Z]/g, '').slice(0, 5).toUpperCase() || 'USERX';
             const uniqueSuffix = Date.now().toString().slice(-4);
-            const newMembershipId = `AKR-${namePart}-${uniqueSuffix}`;
+            const newMembershipId = `HNG-${namePart}-${uniqueSuffix}`;
 
             // Update Request
             transaction.update(requestRef, {

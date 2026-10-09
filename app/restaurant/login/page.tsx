@@ -404,7 +404,7 @@ export default function RestaurantLoginPage() {
               <Store className="w-full h-full text-amber-500" />
             </div>
             <span className="font-extrabold text-base sm:text-lg tracking-tight">
-              AKR<span className="text-amber-500 font-black">Merchant</span>
+              Hunger<span className="text-amber-500 font-black">Merchant</span>
             </span>
           </Link>
         </div>

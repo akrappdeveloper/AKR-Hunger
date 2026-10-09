@@ -268,7 +268,7 @@ export default function EditIssuedCardDialog({
             <div className="relative z-10 flex justify-between items-start">
               <div>
                 <h4 className="font-black text-sm tracking-wider text-white">
-                  AKR<span className="text-blue-400">PREMIUM</span>
+                  HUNGER<span className="text-blue-400">PREMIUM</span>
                 </h4>
                 <span className="text-[9px] text-zinc-400 uppercase tracking-widest font-semibold">
                   {tier} {cardType} Card

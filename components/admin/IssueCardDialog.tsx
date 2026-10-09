@@ -166,7 +166,7 @@ export default function IssueCardDialog({
       const custSnap = await getDoc(customerRef);
       const existingCust = custSnap.data();
       const namePart = customerName.replace(/[^a-zA-Z]/g, '').slice(0, 5).toUpperCase() || 'USERX';
-      const membershipId = existingCust?.membershipId || `AKR-${namePart}-${Date.now().toString().slice(-4)}`;
+      const membershipId = existingCust?.membershipId || `HNG-${namePart}-${Date.now().toString().slice(-4)}`;
 
       await updateDoc(customerRef, {
         membershipStatus: 'approved',
@@ -180,7 +180,7 @@ export default function IssueCardDialog({
         userType: 'customer',
         type: 'system',
         title: '🎉 Premium Membership Card Issued!',
-        message: `Congratulations! Your AKR Hunger ${tier} Virtual Card (${rawDigits.slice(0, 4)} **** **** ${rawDigits.slice(-4)}) has been issued successfully. Access it anytime in your Wallet!`,
+        message: `Congratulations! Your Hunger ${tier} Virtual Card (${rawDigits.slice(0, 4)} **** **** ${rawDigits.slice(-4)}) has been issued successfully. Access it anytime in your Wallet!`,
         isRead: false,
         createdAt: serverTimestamp(),
       });
@@ -215,7 +215,7 @@ export default function IssueCardDialog({
                 </Badge>
               </DialogTitle>
               <DialogDescription className="text-gray-400 text-xs mt-0.5">
-                Generate and issue a virtual AKR Hunger card for {request.customerName}
+                Generate and issue a virtual Hunger card for {request.customerName}
               </DialogDescription>
             </div>
           </div>
@@ -230,7 +230,7 @@ export default function IssueCardDialog({
             <div className="relative z-10 flex justify-between items-start">
               <div>
                 <h3 className="font-black text-base tracking-wider text-white flex items-center gap-1.5">
-                  AKR<span className="text-blue-400 font-extrabold">PREMIUM</span>
+                  HUNGER<span className="text-blue-400 font-extrabold">PREMIUM</span>
                 </h3>
                 <span className="text-[10px] text-zinc-300 font-semibold uppercase tracking-widest">
                   {tier} Membership Card

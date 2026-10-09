@@ -339,7 +339,7 @@ export default function QualityAnalyticsPage() {
               });
             }
           }
-        } catch {}
+        } catch { }
       }
       const rawAudits = Array.from(auditsMap.values());
       rawAudits.sort((a, b) => {
@@ -411,7 +411,7 @@ export default function QualityAnalyticsPage() {
               });
             }
           }
-        } catch {}
+        } catch { }
       }
       const rawTemps = Array.from(tempMap.values());
       rawTemps.sort((a, b) => b.loggedAt.getTime() - a.loggedAt.getTime());
@@ -458,7 +458,7 @@ export default function QualityAnalyticsPage() {
               });
             }
           }
-        } catch {}
+        } catch { }
       }
 
       // Automatically convert real low reviews (<= 3 stars) into real quality complaints
@@ -642,7 +642,7 @@ export default function QualityAnalyticsPage() {
       const list = existing ? JSON.parse(existing) : [];
       list.unshift({ ...newAuditItem, timestamp: now.toISOString(), checkpoints });
       localStorage.setItem(`quality_audits_${user.uid}`, JSON.stringify(list.slice(0, 30)));
-    } catch {}
+    } catch { }
 
     // Persist on restaurant document if permitted
     try {
@@ -654,7 +654,7 @@ export default function QualityAnalyticsPage() {
           timestamp: serverTimestamp(),
         }
       });
-    } catch {}
+    } catch { }
 
     toast.success(`Kitchen Hygiene Audit Saved! Score: ${auditScore}% (${auditGrade.grade})`);
     setSubmittingAudit(false);
@@ -733,7 +733,7 @@ export default function QualityAnalyticsPage() {
         const list = existing ? JSON.parse(existing) : [];
         list.unshift({ ...newLog, loggedAt: now.toISOString() });
         localStorage.setItem(`quality_temps_${user.uid}`, JSON.stringify(list.slice(0, 50)));
-      } catch {}
+      } catch { }
     }
 
     toast.success(`Temperature reading recorded for ${newEquipment}`);
@@ -793,7 +793,7 @@ export default function QualityAnalyticsPage() {
         const list = existing ? JSON.parse(existing) : [];
         list.unshift({ ...item, reportedAt: now.toISOString() });
         localStorage.setItem(`quality_incidents_${user.uid}`, JSON.stringify(list.slice(0, 50)));
-      } catch {}
+      } catch { }
     }
 
     toast.success('Quality incident & CAPA logged!');
@@ -835,7 +835,7 @@ export default function QualityAnalyticsPage() {
       <div className="p-8 flex items-center justify-center min-h-screen bg-background">
         <div className="flex flex-col items-center gap-4 text-center">
           <div className="w-12 h-12 border-4 border-t-emerald-500 border-r-teal-500 border-b-cyan-500 border-l-muted rounded-full animate-spin" />
-          <p className="text-muted-foreground animate-pulse text-sm font-semibold">Loading Live Firebase Quality & Hygiene Data...</p>
+          <p className="text-muted-foreground animate-pulse text-sm font-semibold">Loading Live Quality & Hygiene Data...</p>
         </div>
       </div>
     );
@@ -1067,13 +1067,12 @@ export default function QualityAnalyticsPage() {
                   return (
                     <div
                       key={cp.id}
-                      className={`p-4 rounded-2xl border transition-all ${
-                        cp.status === 'pass'
-                          ? 'bg-emerald-500/5 border-emerald-500/20 hover:border-emerald-500/40'
-                          : cp.status === 'warning'
+                      className={`p-4 rounded-2xl border transition-all ${cp.status === 'pass'
+                        ? 'bg-emerald-500/5 border-emerald-500/20 hover:border-emerald-500/40'
+                        : cp.status === 'warning'
                           ? 'bg-amber-500/5 border-amber-500/25 hover:border-amber-500/40'
                           : 'bg-destructive/5 border-destructive/25 hover:border-destructive/40'
-                      }`}
+                        }`}
                     >
                       <div className="flex items-start justify-between gap-2 mb-2">
                         <div>
@@ -1086,13 +1085,12 @@ export default function QualityAnalyticsPage() {
                         </div>
                         <Badge
                           variant="outline"
-                          className={`text-[10px] font-bold ${
-                            cp.status === 'pass'
-                              ? 'text-emerald-600 dark:text-emerald-400 border-emerald-500/30'
-                              : cp.status === 'warning'
+                          className={`text-[10px] font-bold ${cp.status === 'pass'
+                            ? 'text-emerald-600 dark:text-emerald-400 border-emerald-500/30'
+                            : cp.status === 'warning'
                               ? 'text-amber-600 dark:text-amber-400 border-amber-500/30'
                               : 'text-destructive border-destructive/30'
-                          }`}
+                            }`}
                         >
                           {cp.status.toUpperCase()}
                         </Badge>
@@ -1106,31 +1104,28 @@ export default function QualityAnalyticsPage() {
                       <div className="flex items-center gap-1.5 pt-2 border-t border-border/40">
                         <button
                           onClick={() => toggleCheckpointStatus(cp.id, 'pass')}
-                          className={`flex-1 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1 ${
-                            cp.status === 'pass'
-                              ? 'bg-emerald-600 text-white shadow-sm'
-                              : 'bg-muted/60 text-muted-foreground hover:bg-emerald-500/10 hover:text-emerald-600'
-                          }`}
+                          className={`flex-1 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1 ${cp.status === 'pass'
+                            ? 'bg-emerald-600 text-white shadow-sm'
+                            : 'bg-muted/60 text-muted-foreground hover:bg-emerald-500/10 hover:text-emerald-600'
+                            }`}
                         >
                           <Check className="w-3.5 h-3.5" /> Pass
                         </button>
                         <button
                           onClick={() => toggleCheckpointStatus(cp.id, 'warning')}
-                          className={`flex-1 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1 ${
-                            cp.status === 'warning'
-                              ? 'bg-amber-600 text-white shadow-sm'
-                              : 'bg-muted/60 text-muted-foreground hover:bg-amber-500/10 hover:text-amber-600'
-                          }`}
+                          className={`flex-1 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1 ${cp.status === 'warning'
+                            ? 'bg-amber-600 text-white shadow-sm'
+                            : 'bg-muted/60 text-muted-foreground hover:bg-amber-500/10 hover:text-amber-600'
+                            }`}
                         >
                           <AlertTriangle className="w-3.5 h-3.5" /> Warning
                         </button>
                         <button
                           onClick={() => toggleCheckpointStatus(cp.id, 'fail')}
-                          className={`flex-1 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1 ${
-                            cp.status === 'fail'
-                              ? 'bg-destructive text-white shadow-sm'
-                              : 'bg-muted/60 text-muted-foreground hover:bg-destructive/10 hover:text-destructive'
-                          }`}
+                          className={`flex-1 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1 ${cp.status === 'fail'
+                            ? 'bg-destructive text-white shadow-sm'
+                            : 'bg-muted/60 text-muted-foreground hover:bg-destructive/10 hover:text-destructive'
+                            }`}
                         >
                           <X className="w-3.5 h-3.5" /> Fail
                         </button>
@@ -1267,13 +1262,12 @@ export default function QualityAnalyticsPage() {
                             Target: {reading.targetTemp}
                           </span>
                           <Badge
-                            className={`text-[10px] font-bold ${
-                              reading.status === 'safe'
-                                ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30'
-                                : reading.status === 'warning'
+                            className={`text-[10px] font-bold ${reading.status === 'safe'
+                              ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30'
+                              : reading.status === 'warning'
                                 ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30'
                                 : 'bg-destructive/15 text-destructive border-destructive/30'
-                            }`}
+                              }`}
                           >
                             {reading.status.toUpperCase()}
                           </Badge>
@@ -1326,13 +1320,12 @@ export default function QualityAnalyticsPage() {
                               <td className="py-2.5 px-4 font-mono text-muted-foreground">{r.targetTemp}</td>
                               <td className="py-2.5 px-4">
                                 <span
-                                  className={`inline-flex items-center gap-1 font-bold text-[11px] ${
-                                    r.status === 'safe'
-                                      ? 'text-emerald-600 dark:text-emerald-400'
-                                      : r.status === 'warning'
+                                  className={`inline-flex items-center gap-1 font-bold text-[11px] ${r.status === 'safe'
+                                    ? 'text-emerald-600 dark:text-emerald-400'
+                                    : r.status === 'warning'
                                       ? 'text-amber-600 dark:text-amber-400'
                                       : 'text-destructive'
-                                  }`}
+                                    }`}
                                 >
                                   {r.status === 'safe' ? <Check className="w-3 h-3" /> : <AlertTriangle className="w-3 h-3" />}
                                   {r.status.toUpperCase()}
@@ -1405,13 +1398,12 @@ export default function QualityAnalyticsPage() {
                       <div className="flex items-center gap-2.5">
                         <Badge
                           variant="outline"
-                          className={`text-[10px] font-bold ${
-                            inc.severity === 'high'
-                              ? 'text-destructive border-destructive/30'
-                              : inc.severity === 'medium'
+                          className={`text-[10px] font-bold ${inc.severity === 'high'
+                            ? 'text-destructive border-destructive/30'
+                            : inc.severity === 'medium'
                               ? 'text-amber-600 dark:text-amber-400 border-amber-500/30'
                               : 'text-blue-600 dark:text-blue-400 border-blue-500/30'
-                          }`}
+                            }`}
                         >
                           {inc.severity.toUpperCase()} SEVERITY
                         </Badge>
@@ -1421,11 +1413,10 @@ export default function QualityAnalyticsPage() {
 
                       <div className="flex items-center gap-2">
                         <Badge
-                          className={`text-[10px] font-bold ${
-                            inc.status === 'resolved'
-                              ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30'
-                              : 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30'
-                          }`}
+                          className={`text-[10px] font-bold ${inc.status === 'resolved'
+                            ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30'
+                            : 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30'
+                            }`}
                         >
                           {inc.status === 'resolved' ? 'RESOLVED' : 'ACTION TAKEN'}
                         </Badge>

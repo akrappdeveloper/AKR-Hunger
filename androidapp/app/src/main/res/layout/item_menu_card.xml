@@ -9,8 +9,8 @@
     android:focusable="true"
     android:foreground="?attr/selectableItemBackground"
     app:cardBackgroundColor="@color/surface"
-    app:cardCornerRadius="22dp"
-    app:cardElevation="1dp"
+    app:cardCornerRadius="18dp"
+    app:cardElevation="3dp"
     app:strokeColor="@color/card_border"
     app:strokeWidth="1dp">
 
@@ -22,7 +22,7 @@
         <!-- Product Image Section -->
         <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="150dp">
+            android:layout_height="136dp">
 
             <ImageView
                 android:id="@+id/iv_item_image"
@@ -72,22 +72,26 @@
                 android:textSize="9sp"
                 android:visibility="gone" />
 
-            <!-- Quick Add Button (Bottom End Floating Pill) -->
-            <ImageView
+            <!-- Quick Add Button (Bottom End Floating Circle) -->
+            <FrameLayout
                 android:id="@+id/btn_quick_add"
-                android:layout_width="34dp"
-                android:layout_height="34dp"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
                 android:layout_gravity="end|bottom"
                 android:layout_margin="10dp"
-                android:background="@drawable/bg_pill_primary"
+                android:background="@drawable/bg_circle_primary"
                 android:clickable="true"
                 android:contentDescription="Quick Add"
-                android:elevation="3dp"
+                android:elevation="4dp"
                 android:focusable="true"
-                android:foreground="?attr/selectableItemBackgroundBorderless"
-                android:padding="8dp"
-                android:scaleType="centerInside"
-                android:src="@drawable/ic_add_white" />
+                android:foreground="?attr/selectableItemBackgroundBorderless">
+
+                <ImageView
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_add_white" />
+            </FrameLayout>
         </FrameLayout>
 
         <!-- Product Info Body -->
@@ -95,25 +99,15 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="12dp">
+            android:paddingHorizontal="12dp"
+            android:paddingTop="10dp"
+            android:paddingBottom="12dp">
 
-            <!-- Title -->
-            <TextView
-                android:id="@+id/tv_item_name"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:ellipsize="end"
-                android:fontFamily="sans-serif-bold"
-                android:maxLines="1"
-                android:textColor="@color/text_primary"
-                android:textSize="15sp" />
-
-            <!-- Restaurant Subtitle -->
+            <!-- Restaurant / Kitchen Subtitle Tag -->
             <TextView
                 android:id="@+id/tv_restaurant_name"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
                 android:drawableStart="@drawable/ic_home"
                 android:drawablePadding="4dp"
                 android:drawableTint="@color/text_hint"
@@ -121,20 +115,31 @@
                 android:fontFamily="sans-serif"
                 android:maxLines="1"
                 android:textColor="@color/text_hint"
-                android:textSize="11sp" />
+                android:textSize="10sp" />
+
+            <!-- Title -->
+            <TextView
+                android:id="@+id/tv_item_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:ellipsize="end"
+                android:fontFamily="sans-serif-bold"
+                android:maxLines="1"
+                android:textColor="@color/text_primary"
+                android:textSize="14sp" />
 
             <!-- Description -->
             <TextView
                 android:id="@+id/tv_description"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
+                android:layout_marginTop="2dp"
                 android:ellipsize="end"
                 android:fontFamily="sans-serif"
-                android:lineSpacingExtra="1dp"
-                android:maxLines="2"
+                android:maxLines="1"
                 android:textColor="@color/text_secondary"
-                android:textSize="12sp" />
+                android:textSize="11sp" />
 
             <!-- Price & Meta Row -->
             <LinearLayout
@@ -151,7 +156,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:fontFamily="sans-serif-black"
-                    android:textColor="@color/text_primary"
+                    android:textColor="@color/primary"
                     android:textSize="16sp" />
 
                 <!-- Prep Time Pill -->
@@ -160,12 +165,12 @@
                     android:layout_height="wrap_content"
                     android:background="@drawable/bg_pill_soft"
                     android:gravity="center_vertical"
-                    android:paddingHorizontal="7dp"
+                    android:paddingHorizontal="6dp"
                     android:paddingVertical="3dp">
 
                     <ImageView
-                        android:layout_width="11dp"
-                        android:layout_height="11dp"
+                        android:layout_width="10dp"
+                        android:layout_height="10dp"
                         android:src="@drawable/ic_clock"
                         app:tint="@color/primary" />
 
@@ -184,12 +189,15 @@
                 <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="6dp"
-                    android:gravity="center_vertical">
+                    android:layout_marginStart="5dp"
+                    android:background="@drawable/bg_pill_soft"
+                    android:gravity="center_vertical"
+                    android:paddingHorizontal="6dp"
+                    android:paddingVertical="3dp">
 
                     <ImageView
-                        android:layout_width="12dp"
-                        android:layout_height="12dp"
+                        android:layout_width="10dp"
+                        android:layout_height="10dp"
                         android:src="@drawable/ic_star"
                         app:tint="@color/rating_star" />
 
@@ -201,7 +209,7 @@
                         android:fontFamily="sans-serif-bold"
                         android:text="4.5"
                         android:textColor="@color/text_primary"
-                        android:textSize="11sp" />
+                        android:textSize="10sp" />
                 </LinearLayout>
             </LinearLayout>
         </LinearLayout>

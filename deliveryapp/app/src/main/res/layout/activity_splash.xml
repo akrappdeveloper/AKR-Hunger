@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/surface"
+    android:gravity="center">
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center">
+
+        <ImageView
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:src="@drawable/ic_scooter_fast"
+            app:tint="@color/primary"
+            android:background="@drawable/bg_pill_primary"
+            android:backgroundTint="@color/primary_tint"
+            android:padding="20dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="Hunger Delivery"
+            android:textColor="@color/text_primary"
+            android:textSize="26sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="Partner &amp; Rider Fleet"
+            android:textColor="@color/text_secondary"
+            android:textSize="14sp" />
+
+        <ProgressBar
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_marginTop="32dp"
+            android:indeterminateTint="@color/primary" />
+    </LinearLayout>
+</RelativeLayout>

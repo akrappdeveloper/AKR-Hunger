@@ -132,54 +132,167 @@
             android:orientation="vertical"
             android:paddingBottom="36dp">
 
-            <!-- 1. Trending Searches Section -->
+            <!-- 0. Recent Searches Section (Local History) -->
+            <LinearLayout
+                android:id="@+id/recent_section"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="16dp">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:drawableStart="@drawable/ic_clock"
+                        android:drawablePadding="6dp"
+                        android:drawableTint="@color/primary"
+                        android:fontFamily="sans-serif-black"
+                        android:text="Recent Searches"
+                        android:textColor="@color/text_primary"
+                        android:textSize="16sp" />
+
+                    <TextView
+                        android:id="@+id/btn_clear_recent"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:fontFamily="sans-serif-bold"
+                        android:padding="6dp"
+                        android:text="Clear History"
+                        android:textColor="@color/primary"
+                        android:textSize="12sp" />
+                </LinearLayout>
+
+                <HorizontalScrollView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:clipToPadding="false"
+                    android:overScrollMode="never"
+                    android:paddingHorizontal="16dp"
+                    android:scrollbars="none">
+
+                    <com.google.android.material.chip.ChipGroup
+                        android:id="@+id/chip_group_recent"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        app:chipSpacingHorizontal="8dp"
+                        app:singleLine="true" />
+                </HorizontalScrollView>
+            </LinearLayout>
+
+            <!-- 1. Trending Searches Section (Horizontal & Scrollable) -->
             <LinearLayout
                 android:id="@+id/trending_section"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:orientation="vertical"
-                android:paddingHorizontal="16dp">
+                android:layout_marginTop="18dp"
+                android:orientation="vertical">
 
-                <!-- Hot Pill Tag -->
-                <TextView
-                    android:layout_width="wrap_content"
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:background="@drawable/bg_pill_amber_soft"
-                    android:fontFamily="sans-serif-bold"
-                    android:letterSpacing="0.04"
-                    android:paddingHorizontal="10dp"
-                    android:paddingVertical="3dp"
-                    android:text="🔥 POPULAR NOW"
-                    android:textColor="#D97706"
-                    android:textSize="10sp" />
+                    android:orientation="vertical"
+                    android:paddingHorizontal="16dp">
 
-                <!-- Section Title -->
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="6dp"
-                    android:fontFamily="sans-serif-black"
-                    android:text="Trending Searches"
-                    android:textColor="@color/text_primary"
-                    android:textSize="18sp" />
+                    <!-- Hot Pill Tag -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/bg_pill_amber_soft"
+                        android:fontFamily="sans-serif-bold"
+                        android:letterSpacing="0.04"
+                        android:paddingHorizontal="10dp"
+                        android:paddingVertical="3dp"
+                        android:text="🔥 POPULAR NOW"
+                        android:textColor="#D97706"
+                        android:textSize="10sp" />
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
-                    android:fontFamily="sans-serif"
-                    android:text="Dishes food lovers around you are ordering right now"
-                    android:textColor="@color/text_hint"
-                    android:textSize="12sp" />
+                    <!-- Section Title -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:fontFamily="sans-serif-black"
+                        android:text="Trending Searches"
+                        android:textColor="@color/text_primary"
+                        android:textSize="18sp" />
 
-                <com.google.android.material.chip.ChipGroup
-                    android:id="@+id/chip_group_trending"
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:fontFamily="sans-serif"
+                        android:text="Dishes food lovers around you are ordering right now"
+                        android:textColor="@color/text_hint"
+                        android:textSize="12sp" />
+                </LinearLayout>
+
+                <HorizontalScrollView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="12dp"
-                    app:chipSpacingHorizontal="8dp"
-                    app:chipSpacingVertical="8dp" />
+                    android:clipToPadding="false"
+                    android:overScrollMode="never"
+                    android:paddingHorizontal="16dp"
+                    android:scrollbars="none">
+
+                    <com.google.android.material.chip.ChipGroup
+                        android:id="@+id/chip_group_trending"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        app:chipSpacingHorizontal="8dp"
+                        app:singleLine="true" />
+                </HorizontalScrollView>
+            </LinearLayout>
+
+            <!-- 1.5 Live Search Suggestions Section -->
+            <LinearLayout
+                android:id="@+id/suggestions_section"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="16dp"
+                    android:paddingTop="12dp"
+                    android:paddingBottom="4dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/bg_pill_soft"
+                        android:fontFamily="sans-serif-bold"
+                        android:letterSpacing="0.04"
+                        android:paddingHorizontal="10dp"
+                        android:paddingVertical="3dp"
+                        android:text="⚡ INSTANT SUGGESTIONS"
+                        android:textColor="@color/primary"
+                        android:textSize="10sp" />
+                </LinearLayout>
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rv_suggestions"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:clipToPadding="false"
+                    android:nestedScrollingEnabled="false" />
             </LinearLayout>
 
             <!-- 2. Explore Cuisines Section -->

@@ -1,0 +1,20 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- Modern user avatar head -->
+    <path
+        android:strokeColor="#FF000000"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M12.0,12.0 C14.21,12.0 16.0,10.21 16.0,8.0 C16.0,5.79 14.21,4.0 12.0,4.0 C9.79,4.0 8.0,5.79 8.0,8.0 C8.0,10.21 9.79,12.0 12.0,12.0 Z" />
+    <!-- Modern ergonomic curved shoulders -->
+    <path
+        android:strokeColor="#FF000000"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M4.5,20.5 C4.5,17.0 7.5,15.0 12.0,15.0 C16.5,15.0 19.5,17.0 19.5,20.5" />
+</vector>

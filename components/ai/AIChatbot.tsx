@@ -261,7 +261,7 @@ export default function AIChatbot({
                 return {
                     id: docSnap.id,
                     orderNumber: data.orderNumber || docSnap.id.slice(-6).toUpperCase(),
-                    restaurantName: data.restaurantName || 'AKR Kitchen',
+                    restaurantName: data.restaurantName || 'Hunger Kitchen',
                     status: (data.status || 'pending').toLowerCase(),
                     itemsSummary: itemsList,
                     itemsCount: Array.isArray(data.items) ? data.items.length : 1,
@@ -825,7 +825,7 @@ export default function AIChatbot({
                     <div>
                         <div className="flex items-center gap-1.5">
                             <h3 className="font-bold text-sm sm:text-base text-foreground">
-                                AKR Order & Support AI
+                                Hunger Order & Support AI
                             </h3>
                             <Badge
                                 variant="secondary"
@@ -1226,7 +1226,7 @@ export default function AIChatbot({
                                     <div className="mt-3 pt-2">
                                         <Link href="/auth/login">
                                             <Button className="w-full rounded-xl font-bold bg-primary text-primary-foreground text-xs">
-                                                Log In to AKR Hunger
+                                                Log In to Hunger
                                             </Button>
                                         </Link>
                                     </div>

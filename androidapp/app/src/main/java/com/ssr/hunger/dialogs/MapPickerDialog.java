@@ -22,6 +22,7 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.OvershootInterpolator;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebSettings;
@@ -49,9 +50,11 @@ import com.ssr.hunger.utils.CartManager;
 import com.ssr.hunger.utils.Constants;
 import org.json.JSONObject;
 import java.io.BufferedReader;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -102,6 +105,53 @@ public class MapPickerDialog extends BottomSheetDialogFragment {
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private final ExecutorService geocodeExecutor = Executors.newSingleThreadExecutor();
     private boolean isPinElevated = false;
+
+    private static class CachedAddress {
+        final double lat;
+        final double lon;
+        final String street;
+        final String area;
+        final String landmark;
+        final String city;
+        final String state;
+        final String pincode;
+        final String formatted;
+
+        CachedAddress(double lat, double lon, String street, String area, String landmark, String city, String state, String pincode, String formatted) {
+            this.lat = lat;
+            this.lon = lon;
+            this.street = street;
+            this.area = area;
+            this.landmark = landmark;
+            this.city = city;
+            this.state = state;
+            this.pincode = pincode;
+            this.formatted = formatted;
+        }
+    }
+
+    private static String cachedLeafletJs = null;
+    private static String cachedLeafletCss = null;
+
+    private final Map<String, CachedAddress> addressCache = new HashMap<>();
+    private double lastResolvedLat = 0;
+    private double lastResolvedLon = 0;
+    private boolean hasResolvedBefore = false;
+
+    private String loadAssetString(String filename) {
+        if (getContext() == null) return null;
+        try (InputStream is = requireContext().getAssets().open(filename);
+             BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {
+            StringBuilder sb = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                sb.append(line).append('\n');
+            }
+            return sb.toString();
+        } catch (Exception e) {
+            return null;
+        }
+    }
 
     // 350ms debounce runnable to eliminate UI freeze/hang while panning
     private final Runnable geocodeDebounceRunnable = new Runnable() {
@@ -251,7 +301,7 @@ public class MapPickerDialog extends BottomSheetDialogFragment {
     private void setupWebView() {
         // Pure solid background prevents white screen flickering
         webView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
-        webView.setBackgroundColor(Color.WHITE);
+        webView.setBackgroundColor(Color.parseColor("#F8F9FA"));
 
         WebSettings settings = webView.getSettings();
         settings.setJavaScriptEnabled(true);
@@ -259,31 +309,34 @@ public class MapPickerDialog extends BottomSheetDialogFragment {
         settings.setGeolocationEnabled(true);
         settings.setDatabaseEnabled(true);
         settings.setCacheMode(WebSettings.LOAD_DEFAULT);
-        // Modern Android browser User-Agent prevents any tile CDN 418 / policy blocking
         settings.setUserAgentString("Mozilla/5.0 (Linux; Android " + android.os.Build.VERSION.RELEASE + "; " + android.os.Build.MODEL + ") AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36 Hunger/1.0");
         settings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
 
         webView.addJavascriptInterface(new Object() {
             @JavascriptInterface
-            public void onLocationMoved(double lat, double lon) {
+            public void onDragStarted() {
                 mainHandler.post(() -> {
-                    currentLat = lat;
-                    currentLon = lon;
-
-                    // Elevate pin smoothly while moving
                     if (!isPinElevated) {
                         animatePinFloating(true);
                     }
-
-                    // Debounce reverse geocoding to prevent lag and hang!
-                    mainHandler.removeCallbacks(geocodeDebounceRunnable);
-                    mainHandler.postDelayed(geocodeDebounceRunnable, 300);
                 });
             }
 
             @JavascriptInterface
-            public void onDragStarted() {
-                mainHandler.post(() -> animatePinFloating(true));
+            public void onMovementSettled(double lat, double lon) {
+                mainHandler.post(() -> {
+                    currentLat = lat;
+                    currentLon = lon;
+
+                    // Pin drops down cleanly ONCE on movement settle!
+                    if (isPinElevated) {
+                        animatePinFloating(false);
+                    }
+
+                    // Debounce reverse geocoding to prevent lag and hang
+                    mainHandler.removeCallbacks(geocodeDebounceRunnable);
+                    mainHandler.postDelayed(geocodeDebounceRunnable, 350);
+                });
             }
         }, "AndroidBridge");
 
@@ -317,100 +370,102 @@ public class MapPickerDialog extends BottomSheetDialogFragment {
         isPinElevated = moving;
         if (ivCenterPin != null) {
             if (moving) {
-                ivCenterPin.animate().translationY(-14f).setDuration(120).start();
+                ivCenterPin.animate()
+                        .translationY(-18f)
+                        .setInterpolator(new AccelerateDecelerateInterpolator())
+                        .setDuration(150)
+                        .start();
                 if (viewPinShadow != null) {
-                    viewPinShadow.animate().scaleX(0.65f).scaleY(0.65f).alpha(0.35f).setDuration(120).start();
+                    viewPinShadow.animate()
+                            .scaleX(0.55f)
+                            .scaleY(0.55f)
+                            .alpha(0.3f)
+                            .setDuration(150)
+                            .start();
                 }
             } else {
-                ivCenterPin.animate().translationY(0f).setInterpolator(new OvershootInterpolator(1.3f)).setDuration(220).start();
+                ivCenterPin.animate()
+                        .translationY(0f)
+                        .setInterpolator(new OvershootInterpolator(1.4f))
+                        .setDuration(240)
+                        .start();
                 if (viewPinShadow != null) {
-                    viewPinShadow.animate().scaleX(1.0f).scaleY(1.0f).alpha(1.0f).setDuration(180).start();
+                    viewPinShadow.animate()
+                            .scaleX(1.0f)
+                            .scaleY(1.0f)
+                            .alpha(1.0f)
+                            .setDuration(200)
+                            .start();
                 }
             }
         }
     }
 
     private void loadOpenStreetMapHtml() {
-        String html = "<!DOCTYPE html>\n" +
-                "<html>\n" +
-                "<head>\n" +
-                "    <meta charset='utf-8' />\n" +
-                "    <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no' />\n" +
-                "    <link rel='stylesheet' href='https://unpkg.com/leaflet@1.9.4/dist/leaflet.css' />\n" +
-                "    <script src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'></script>\n" +
-                "    <style>\n" +
-                "        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }\n" +
-                "        body, html, #map { margin: 0; padding: 0; width: 100%; height: 100%; background: #F8F9FA; overflow: hidden; }\n" +
-                "        .leaflet-control-attribution { font-size: 8px !important; opacity: 0.55; background: rgba(255,255,255,0.7) !important; }\n" +
-                "        .leaflet-bar { border: none !important; box-shadow: 0 2px 10px rgba(0,0,0,0.18) !important; border-radius: 12px !important; overflow: hidden; }\n" +
-                "        .leaflet-bar a { background: #FFFFFF !important; color: #0F172A !important; width: 38px !important; height: 38px !important; line-height: 38px !important; border-bottom: 1px solid #E2E8F0 !important; font-weight: bold; font-size: 16px !important; }\n" +
-                "        .leaflet-bar a:hover { background: #F8FAFC !important; }\n" +
-                "    </style>\n" +
-                "</head>\n" +
-                "<body>\n" +
-                "    <div id='map'></div>\n" +
-                "    <script>\n" +
-                "        var map = L.map('map', {\n" +
-                "            zoomControl: false,\n" +
-                "            preferCanvas: true,\n" +
-                "            fadeAnimation: true,\n" +
-                "            zoomAnimation: true,\n" +
-                "            inertia: true\n" +
-                "        }).setView([" + currentLat + ", " + currentLon + "], 16);\n" +
-                "\n" +
-                "        L.control.zoom({ position: 'topright' }).addTo(map);\n" +
-                "\n" +
-                "        var isRetina = (window.devicePixelRatio && window.devicePixelRatio > 1.2);\n" +
-                "        var retinaParam = isRetina ? '@2x' : '';\n" +
-                "\n" +
-                "        // Primary Tile Layer: OpenStreetMap (free, zero API key, no watermarks)\n" +
-                "        var voyagerLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {\n" +
-                "            subdomains: 'abc',\n" +
-                "            maxZoom: 19,\n" +
-                "            attribution: '&copy; OpenStreetMap contributors'\n" +
-                "        });\n" +
-                "\n" +
-                "        // Reliable Fallback Tile Layer\n" +
-                "        var fallbackLayer = L.tileLayer('https://tile.openstreetmap.de/{z}/{x}/{y}.png', {\n" +
-                "            subdomains: 'abc',\n" +
-                "            maxZoom: 18,\n" +
-                "            attribution: '&copy; OpenStreetMap contributors'\n" +
-                "        });\n" +
-                "\n" +
-                "        voyagerLayer.addTo(map);\n" +
-                "\n" +
-                "        voyagerLayer.on('tileerror', function() {\n" +
-                "            if (!map.hasLayer(fallbackLayer)) {\n" +
-                "                map.removeLayer(voyagerLayer);\n" +
-                "                fallbackLayer.addTo(map);\n" +
-                "            }\n" +
-                "        });\n" +
-                "\n" +
-                "        map.on('movestart dragstart', function() {\n" +
-                "            if (window.AndroidBridge && window.AndroidBridge.onDragStarted) {\n" +
-                "                window.AndroidBridge.onDragStarted();\n" +
-                "            }\n" +
-                "        });\n" +
-                "\n" +
-                "        map.on('moveend', function() {\n" +
-                "            var c = map.getCenter();\n" +
-                "            if (window.AndroidBridge && window.AndroidBridge.onLocationMoved) {\n" +
-                "                window.AndroidBridge.onLocationMoved(c.lat, c.lng);\n" +
-                "            }\n" +
-                "        });\n" +
-                "\n" +
-                "        function setMapCenter(lat, lon) {\n" +
-                "            map.setView([lat, lon], 17, { animate: true, duration: 0.5 });\n" +
-                "        }\n" +
-                "\n" +
-                "        window.addEventListener('resize', function() {\n" +
-                "            setTimeout(function() { map.invalidateSize(); }, 60);\n" +
-                "        });\n" +
-                "    </script>\n" +
-                "</body>\n" +
-                "</html>";
+        if (cachedLeafletCss == null) cachedLeafletCss = loadAssetString("leaflet/leaflet.css");
+        if (cachedLeafletJs == null)  cachedLeafletJs  = loadAssetString("leaflet/leaflet.js");
 
-        webView.loadDataWithBaseURL("https://shungher.vercel.app", html, "text/html", "UTF-8", null);
+        StringBuilder sb = new StringBuilder();
+        sb.append("<!DOCTYPE html><html><head>");
+        sb.append("<meta charset='utf-8' />");
+        sb.append("<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no' />");
+
+        if (cachedLeafletCss != null && !cachedLeafletCss.isEmpty()) {
+            sb.append("<style>").append(cachedLeafletCss).append("</style>");
+        } else {
+            sb.append("<link rel='stylesheet' href='https://unpkg.com/leaflet@1.9.4/dist/leaflet.css' />");
+        }
+
+        sb.append("<style>");
+        sb.append("* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }");
+        sb.append("body, html, #map { margin: 0; padding: 0; width: 100%; height: 100%; background: #F8F9FA; overflow: hidden; }");
+        sb.append(".leaflet-control-attribution { font-size: 8px !important; opacity: 0.55; background: rgba(255,255,255,0.7) !important; }");
+        sb.append(".leaflet-bar { border: none !important; box-shadow: 0 2px 10px rgba(0,0,0,0.18) !important; border-radius: 12px !important; overflow: hidden; }");
+        sb.append(".leaflet-bar a { background: #FFFFFF !important; color: #0F172A !important; width: 38px !important; height: 38px !important; line-height: 38px !important; border-bottom: 1px solid #E2E8F0 !important; font-weight: bold; font-size: 16px !important; }");
+        sb.append(".leaflet-bar a:hover { background: #F8FAFC !important; }");
+        sb.append("</style></head><body>");
+
+        sb.append("<div id='map'></div>");
+
+        if (cachedLeafletJs != null && !cachedLeafletJs.isEmpty()) {
+            sb.append("<script>").append(cachedLeafletJs).append("</script>");
+        } else {
+            sb.append("<script src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'></script>");
+        }
+
+        sb.append("<script>");
+        sb.append("var map = L.map('map', { zoomControl: false, preferCanvas: true, fadeAnimation: true, zoomAnimation: true, inertia: true }).setView([")
+                .append(currentLat).append(", ").append(currentLon).append("], 16);\n");
+        sb.append("L.control.zoom({ position: 'topright' }).addTo(map);\n");
+
+        sb.append("var voyagerLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { subdomains: 'abc', maxZoom: 19, attribution: '&copy; OpenStreetMap' });\n");
+        sb.append("var fallbackLayer = L.tileLayer('https://tile.openstreetmap.de/{z}/{x}/{y}.png', { subdomains: 'abc', maxZoom: 18, attribution: '&copy; OpenStreetMap' });\n");
+        sb.append("voyagerLayer.addTo(map);\n");
+        sb.append("voyagerLayer.on('tileerror', function() { if (!map.hasLayer(fallbackLayer)) { map.removeLayer(voyagerLayer); fallbackLayer.addTo(map); } });\n");
+
+        sb.append("map.on('movestart dragstart', function() {\n");
+        sb.append("    if (window.AndroidBridge && window.AndroidBridge.onDragStarted) {\n");
+        sb.append("        window.AndroidBridge.onDragStarted();\n");
+        sb.append("    }\n");
+        sb.append("});\n");
+
+        sb.append("map.on('moveend', function() {\n");
+        sb.append("    var c = map.getCenter();\n");
+        sb.append("    if (window.AndroidBridge && window.AndroidBridge.onMovementSettled) {\n");
+        sb.append("        window.AndroidBridge.onMovementSettled(c.lat, c.lng);\n");
+        sb.append("    }\n");
+        sb.append("});\n");
+
+        sb.append("function setMapCenter(lat, lon) {\n");
+        sb.append("    map.setView([lat, lon], 17, { animate: true, duration: 0.5 });\n");
+        sb.append("}\n");
+
+        sb.append("window.addEventListener('resize', function() {\n");
+        sb.append("    setTimeout(function() { map.invalidateSize(); }, 60);\n");
+        sb.append("});\n");
+        sb.append("</script></body></html>");
+
+        webView.loadDataWithBaseURL("https://tile.openstreetmap.org/", sb.toString(), "text/html", "UTF-8", null);
     }
 
     private void detectCurrentLocationAndCenter() {
@@ -522,10 +577,28 @@ public class MapPickerDialog extends BottomSheetDialogFragment {
     /**
      * Non-blocking, pooled thread reverse geocoding extracting complete location data:
      * Street, Area/Sublocality, Landmark, City, State, Pincode, Latitude & Longitude.
+     * Prevents text blinking/clearing and caches results.
      */
     private void executeReverseGeocode(double lat, double lon) {
+        // Distance check: ignore sub-15-meter micro-movements if already resolved
+        if (hasResolvedBefore) {
+            float[] dist = new float[1];
+            Location.distanceBetween(lat, lon, lastResolvedLat, lastResolvedLon, dist);
+            if (dist[0] < 15.0f) {
+                return;
+            }
+        }
+
+        // Fast cache check to eliminate network latency and screen flicker
+        String cacheKey = String.format(Locale.US, "%.4f,%.4f", lat, lon);
+        CachedAddress cached = addressCache.get(cacheKey);
+        if (cached != null) {
+            applyResolvedAddress(cached);
+            return;
+        }
+
+        // Subtle non-intrusive spinner - DO NOT WIPE OR CLEAR tvAddressDesc!
         if (pbGeocoding != null) pbGeocoding.setVisibility(View.VISIBLE);
-        if (tvAddressDesc != null) tvAddressDesc.setText("Pinpointing exact address details...");
 
         geocodeExecutor.execute(() -> {
             String street = "";
@@ -630,32 +703,40 @@ public class MapPickerDialog extends BottomSheetDialogFragment {
             final String fPincode = pincode;
             final String fFormatted = formatted;
 
+            final CachedAddress result = new CachedAddress(lat, lon, fStreet, fArea, fLandmark, fCity, fState, fPincode, fFormatted);
+
             mainHandler.post(() -> {
                 if (pbGeocoding != null) pbGeocoding.setVisibility(View.GONE);
-                animatePinFloating(false);
-
-                resolvedStreet = fStreet;
-                resolvedArea = fArea;
-                resolvedLandmark = fLandmark;
-                resolvedCity = fCity;
-                resolvedState = fState;
-                resolvedPincode = fPincode;
-                resolvedFormattedAddress = fFormatted;
-
-                if (tvAddressTitle != null) {
-                    tvAddressTitle.setText("📍 " + fCity + (fState.isEmpty() ? "" : ", " + fState));
-                }
-
-                if (tvAddressDesc != null) {
-                    StringBuilder descBuilder = new StringBuilder();
-                    if (!fStreet.isEmpty()) descBuilder.append(fStreet).append("\n");
-                    if (!fLandmark.isEmpty()) descBuilder.append("Near ").append(fLandmark).append(" • ");
-                    if (!fPincode.isEmpty()) descBuilder.append("PIN: ").append(fPincode).append(" • ");
-                    descBuilder.append(String.format(Locale.getDefault(), "GPS: %.4f, %.4f", lat, lon));
-                    tvAddressDesc.setText(descBuilder.toString());
-                }
+                addressCache.put(cacheKey, result);
+                applyResolvedAddress(result);
             });
         });
+    }
+
+    private void applyResolvedAddress(CachedAddress item) {
+        resolvedStreet = item.street;
+        resolvedArea = item.area;
+        resolvedLandmark = item.landmark;
+        resolvedCity = item.city;
+        resolvedState = item.state;
+        resolvedPincode = item.pincode;
+        resolvedFormattedAddress = item.formatted;
+        lastResolvedLat = item.lat;
+        lastResolvedLon = item.lon;
+        hasResolvedBefore = true;
+
+        if (tvAddressTitle != null) {
+            tvAddressTitle.setText("📍 " + resolvedCity + (resolvedState.isEmpty() ? "" : ", " + resolvedState));
+        }
+
+        if (tvAddressDesc != null) {
+            StringBuilder descBuilder = new StringBuilder();
+            if (!resolvedStreet.isEmpty()) descBuilder.append(resolvedStreet).append("\n");
+            if (!resolvedLandmark.isEmpty()) descBuilder.append("Near ").append(resolvedLandmark).append(" • ");
+            if (!resolvedPincode.isEmpty()) descBuilder.append("PIN: ").append(resolvedPincode).append(" • ");
+            descBuilder.append(String.format(Locale.getDefault(), "GPS: %.4f, %.4f", item.lat, item.lon));
+            tvAddressDesc.setText(descBuilder.toString());
+        }
     }
 
     /**

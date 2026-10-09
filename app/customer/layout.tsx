@@ -50,9 +50,6 @@ export const metadata: Metadata = {
     description: 'Order delicious food online from your favorite restaurants',
     images: ['https://akrhunger.vercel.app/hunger.png'],
   },
-  verification: {
-    google: "K8s0MzX1Az9Dc3Mh9SeLVJFVcqQH_LsLdlXgWLhbvHw",
-  },
 };
 
 export default function CustomerLayout({

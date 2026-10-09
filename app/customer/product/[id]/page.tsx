@@ -59,7 +59,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
     if (!data || !data.product) {
         return {
-            title: 'Item Not Found | AKR Hunger',
+            title: 'Item Not Found | Hunger',
             description: 'The requested menu item could not be found.',
         };
     }
@@ -70,7 +70,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     const description = `Order ${product.name}${restaurantText} for ${priceText}. ${product.description?.slice(0, 100) || 'Fresh and delicious'}.`;
 
     return {
-        title: `${product.name} - Order Online | AKR Hunger`,
+        title: `${product.name} - Order Online | Hunger`,
         description: description,
         openGraph: {
             title: `${product.name} - Order Online`,
@@ -90,7 +90,7 @@ export default async function ProductPage({ params }: PageProps) {
     }
 
     const { product, restaurant, recommendations } = data;
-    const jsonLd = generateMenuItemSchema(product, restaurant?.name || 'AKR Hunger');
+    const jsonLd = generateMenuItemSchema(product, restaurant?.name || 'Hunger');
 
     return (
         <>

@@ -5,7 +5,7 @@ import { Metadata } from 'next';
 import { generateRestaurantPortalSchema, generateOrganizationSchema, generateFAQSchema } from '@/lib/seo/schemas';
 
 export const metadata: Metadata = {
-  title: 'AKR Hunger Restaurant Partner - Grow Your Business | Restaurant Management',
+  title: 'Hunger Restaurant Partner - Grow Your Business | Restaurant Management',
   applicationName: 'Hunger Restaurant Portal',
   icons: {
     icon: '/hunger.png',
@@ -46,9 +46,6 @@ export const metadata: Metadata = {
     title: 'Hunger Restaurant Partner - Grow Your Business',
     description: 'Join Hunger as a restaurant partner and manage your business',
     images: ['https://akrhunger.vercel.app/hunger.png'],
-  },
-  verification: {
-    google: "K8s0MzX1Az9Dc3Mh9SeLVJFVcqQH_LsLdlXgWLhbvHw",
   },
 };
 

@@ -82,7 +82,7 @@ export function checkSecurityThreat(query: string): { isThreat: boolean; respons
                 isThreat: true,
                 response: {
                     id: `sec-${Date.now()}`,
-                    text: `🛡️ **Security & Privacy Shield Active**\n\nFor privacy and security compliance, internal system architecture, source code, database schemas, and private infrastructure details are strictly confidential and protected.\n\nI am happy to assist you with:\n• 📦 **Live Order Tracking & Status Updates**\n• 🍕 **Delicious Food & Dish Recommendations**\n• 🎫 **Instant Support Ticket Generation**\n• 💰 **Cancellation, Refunds & AKR Wallet Inquiries**\n• 🛵 **Delivery & Restaurant Operational Guidance**\n\nHow may I help with your food or delivery needs today?`,
+                    text: `🛡️ **Security & Privacy Shield Active**\n\nFor privacy and security compliance, internal system architecture, source code, database schemas, and private infrastructure details are strictly confidential and protected.\n\nI am happy to assist you with:\n• 📦 **Live Order Tracking & Status Updates**\n• 🍕 **Delicious Food & Dish Recommendations**\n• 🎫 **Instant Support Ticket Generation**\n• 💰 **Cancellation, Refunds & Hunger Wallet Inquiries**\n• 🛵 **Delivery & Restaurant Operational Guidance**\n\nHow may I help with your food or delivery needs today?`,
                     confidence: 1.0,
                     role: 'all',
                     suggestedFollowUps: [
@@ -253,7 +253,7 @@ export function queryChatbot(
     const isGreeting = greetingWords.includes(normalized) || (normalized.split(' ').length <= 2 && greetingWords.some(w => normalized.startsWith(w)));
 
     if (isGreeting) {
-        let greetingText = "Hello! 👋 I am your **AKR Platform AI Assistant**.";
+        let greetingText = "Hello! 👋 I am your **Hunger Platform AI Assistant**.";
         let followUps = [
             "How do I track my active order?",
             "When do orders appear in Delivery Marketplace?",
@@ -262,11 +262,11 @@ export function queryChatbot(
         ];
 
         if (currentRole === 'customer') {
-            greetingText = "Hello! 👋 I am your **Customer Support AI Assistant**. I can help with order tracking, 5-minute cancellations, refunds, payment options, and AKR Wallet!";
+            greetingText = "Hello! 👋 I am your **Customer Support AI Assistant**. I can help with order tracking, 5-minute cancellations, refunds, payment options, and Hunger Wallet!";
             followUps = [
                 "Where is my food order?",
                 "What is the order cancellation and refund policy?",
-                "How do AKR Wallet and loyalty points work?",
+                "How do Hunger Wallet and loyalty points work?",
                 "What payment methods are supported?"
             ];
         } else if (currentRole === 'delivery') {
@@ -395,7 +395,7 @@ export function queryChatbot(
     return {
         id: Date.now().toString(),
         text: `I couldn't find an exact match for **"${raw}"**.\n\nHere are the most relevant topics you can ask me about, or feel free to rephrase your query:\n\n` +
-            `• **Customer:** Orders, live tracking, 5-minute cancellation, refund timeline, AKR Wallet.\n` +
+            `• **Customer:** Orders, live tracking, 5-minute cancellation, refund timeline, Hunger Wallet.\n` +
             `• **Delivery:** Marketplace rules, order lifecycle, Monday earnings payouts, vehicle RC.\n` +
             `• **Restaurant:** Menu management (out-of-stock), Quality Score formula, Ad campaigns.\n\n` +
             `If your issue requires direct human intervention, you can also submit a **Support Ticket** below.`,

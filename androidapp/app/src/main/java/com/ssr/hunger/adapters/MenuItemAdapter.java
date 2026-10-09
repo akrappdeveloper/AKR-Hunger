@@ -29,11 +29,21 @@ public class MenuItemAdapter extends RecyclerView.Adapter<MenuItemAdapter.ViewHo
     private List<MenuItem> items;
     private final OnItemClickListener clickListener;
     private final OnQuickAddListener addListener;
+    private boolean isRestaurantOpen = true;
 
     public MenuItemAdapter(List<MenuItem> items, OnItemClickListener clickListener, OnQuickAddListener addListener) {
         this.items = items;
         this.clickListener = clickListener;
         this.addListener = addListener;
+    }
+
+    public void setRestaurantOpen(boolean open) {
+        this.isRestaurantOpen = open;
+        notifyDataSetChanged();
+    }
+
+    public boolean isRestaurantOpen() {
+        return this.isRestaurantOpen;
     }
 
     public void updateData(List<MenuItem> newData) {
@@ -97,7 +107,17 @@ public class MenuItemAdapter extends RecyclerView.Adapter<MenuItemAdapter.ViewHo
 
         // Click listeners
         holder.itemView.setOnClickListener(v -> clickListener.onItemClick(item));
-        holder.btnQuickAdd.setOnClickListener(v -> addListener.onQuickAdd(item));
+        if (!isRestaurantOpen) {
+            holder.btnQuickAdd.setAlpha(0.4f);
+            holder.btnQuickAdd.setOnClickListener(v -> {
+                android.widget.Toast.makeText(holder.itemView.getContext(),
+                        "🔴 Restaurant is closed. You can view dish or add to wishlist.",
+                        android.widget.Toast.LENGTH_SHORT).show();
+            });
+        } else {
+            holder.btnQuickAdd.setAlpha(1.0f);
+            holder.btnQuickAdd.setOnClickListener(v -> addListener.onQuickAdd(item));
+        }
     }
 
     @Override

@@ -320,7 +320,7 @@ export default function NotificationsPage() {
           </div>
           <Link href="/customer/login" className="block">
             <Button className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-2xl shadow-lg shadow-primary/20 gap-2">
-              <LogIn className="w-4 h-4" /> Login to AKR Hunger
+              <LogIn className="w-4 h-4" /> Login to Hunger
             </Button>
           </Link>
         </div>

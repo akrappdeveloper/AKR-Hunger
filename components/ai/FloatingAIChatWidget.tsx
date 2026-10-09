@@ -57,7 +57,7 @@ export default function FloatingAIChatWidget({
             {/* Modal Dialog */}
             <Dialog open={open} onOpenChange={setOpen}>
                 <DialogContent className="max-w-2xl w-[95vw] p-0 border-0 bg-transparent shadow-none overflow-hidden rounded-2xl">
-                    <DialogTitle className="sr-only">AKR Platform AI Assistant</DialogTitle>
+                    <DialogTitle className="sr-only">Hunger Platform AI Assistant</DialogTitle>
                     <DialogDescription className="sr-only">
                         Ask questions about Customer, Delivery, and Restaurant panel operations, policies, and workflows.
                     </DialogDescription>

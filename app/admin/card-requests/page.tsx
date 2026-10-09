@@ -490,7 +490,7 @@ export default function CardRequestsPage() {
                                     <div className="relative z-10 flex justify-between items-start">
                                         <div>
                                             <h3 className="font-bold text-sm tracking-wider text-white flex items-center gap-1.5">
-                                                AKR<span className="text-blue-500">PREMIUM</span>
+                                                HUNGER<span className="text-blue-500">PREMIUM</span>
                                             </h3>
                                             <span className="text-[10px] text-gray-400 uppercase tracking-widest">
                                                 {card.tier || 'VIP'} Membership Card

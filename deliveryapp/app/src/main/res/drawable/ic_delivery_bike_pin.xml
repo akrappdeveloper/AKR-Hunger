@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Outer Glow Circle -->
+    <item>
+        <shape android:shape="oval">
+            <size android:width="48dp" android:height="48dp"/>
+            <solid android:color="#33FF6B00"/>
+        </shape>
+    </item>
+    <!-- Solid Inner Circle -->
+    <item android:top="4dp" android:bottom="4dp" android:left="4dp" android:right="4dp">
+        <shape android:shape="oval">
+            <solid android:color="#FF6B00"/>
+            <stroke android:width="2.5dp" android:color="#FFFFFF"/>
+        </shape>
+    </item>
+    <!-- Centered Scooter Vector -->
+    <item android:top="10dp" android:bottom="10dp" android:left="10dp" android:right="10dp">
+        <vector
+            android:width="24dp"
+            android:height="24dp"
+            android:viewportWidth="24"
+            android:viewportHeight="24">
+            <path
+                android:fillColor="#FFFFFF"
+                android:pathData="M19,7c0,-1.1 -0.9,-2 -2,-2h-3v2h3v2.65L13.52,14H10V9H6c-2.21,0 -4,1.79 -4,4v3h2c0,1.66 1.34,3 3,3s3,-1.34 3,-3h4.18l3.62,-4.53c0.13,-0.16 0.2,-0.36 0.2,-0.57V7zM7,17c-0.55,0 -1,-0.45 -1,-1h2c0,0.55 -0.45,1 -1,1zm12,-1c-1.66,0 -3,1.34 -3,3s1.34,3 3,3s3,-1.34 3,-3s-1.34,-3 -3,-3zm0,4c-0.55,0 -1,-0.45 -1,-1s0.45,-1 1,-1s1,0.45 1,1s-0.45,1 -1,1z"/>
+        </vector>
+    </item>
+</layer-list>

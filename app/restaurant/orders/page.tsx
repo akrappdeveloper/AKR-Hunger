@@ -16,8 +16,9 @@ import {
   Clock, CheckCircle, Truck, AlertCircle, ShoppingCart,
   Search, Package,
   ChefHat, ArrowRight, Timer, Users, Radio, Filter, MapPin,
-  Ban, IndianRupee, X, RotateCcw, ExternalLink
+  Ban, IndianRupee, X, RotateCcw, ExternalLink, MessageSquare
 } from 'lucide-react';
+import { getDeterministicChatId } from '@/lib/chat-service';
 import {
   Dialog,
   DialogContent,
@@ -564,6 +565,13 @@ export default function RestaurantOrdersPage() {
                                   className="text-xs font-bold text-primary hover:underline inline-flex items-center gap-1"
                                 >
                                   Open Order Page <ArrowRight className="w-3.5 h-3.5" />
+                                </Link>
+                                <Link
+                                  href={`/restaurant/chat/${getDeterministicChatId(order.id!, 'customer_restaurant')}`}
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="text-xs font-bold text-amber-500 hover:underline inline-flex items-center gap-1"
+                                >
+                                  <MessageSquare className="w-3.5 h-3.5" /> Order Chat
                                 </Link>
                               </div>
                             </div>

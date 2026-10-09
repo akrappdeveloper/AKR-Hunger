@@ -5,7 +5,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useRestaurantAuth } from '@/context/RestaurantAuthContext';
 import { db } from '@/lib/firebase';
 import {
-  doc, onSnapshot, updateDoc, getDoc, serverTimestamp,
+  doc, onSnapshot, updateDoc, setDoc, getDoc, serverTimestamp,
   collection, query, where, getDocs
 } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -30,6 +30,7 @@ import { toast } from 'sonner';
 import SafeImage from '@/components/ui/safe-image';
 import MapPickerDialog, { PickedLocation } from '@/components/restaurant/MapPickerDialog';
 import { uploadImage } from '@/lib/imageUpload';
+import { uploadToCloudinary } from '@/lib/cloudinary';
 
 const CUISINE_OPTIONS = [
   'North Indian', 'South Indian', 'Biryani', 'Chinese', 'Mughlai',
@@ -134,7 +135,9 @@ export default function RestaurantProfilePage() {
 
   // Image upload states
   const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [logoProgress, setLogoProgress] = useState(0);
   const [uploadingBanner, setUploadingBanner] = useState(false);
+  const [bannerProgress, setBannerProgress] = useState(0);
   const logoInputRef = useRef<HTMLInputElement>(null);
   const bannerInputRef = useRef<HTMLInputElement>(null);
 
@@ -460,7 +463,7 @@ export default function RestaurantProfilePage() {
         try {
           const res = await fetch(
             `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&addressdetails=1`,
-            { headers: { 'User-Agent': 'AKR-Hunger-Restaurant-Profile/2.0' } }
+            { headers: { 'User-Agent': 'Hunger-Restaurant-Profile/2.0' } }
           );
           if (res.ok) {
             const data = await res.json();
@@ -530,7 +533,7 @@ export default function RestaurantProfilePage() {
     }
   };
 
-  // Direct Image Upload (Logo)
+  // Direct Image Upload (Logo) via Cloudinary with Real-time Progress & Direct Firebase Save
   const handleLogoFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -539,18 +542,41 @@ export default function RestaurantProfilePage() {
       return;
     }
     setUploadingLogo(true);
+    setLogoProgress(0);
     try {
-      const downloadUrl = await uploadImage(file, 'restaurant-logos', restaurantId || 'profile');
+      let downloadUrl = '';
+      try {
+        downloadUrl = await uploadToCloudinary(file, (pct) => setLogoProgress(pct));
+      } catch (cloudErr) {
+        // Multi-tier failover
+        downloadUrl = await uploadImage(file, 'restaurant-logos', restaurantId || 'profile', (pct) => setLogoProgress(pct));
+      }
+
+      // 1. Update local form state immediately
       setForm(prev => ({ ...prev, imageUrl: downloadUrl }));
-      toast.success('Restaurant Logo uploaded successfully!');
+
+      // 2. Immediately save to Firebase Firestore so it's permanently stored!
+      const targetRid = restaurantId || (authRestaurant as any)?.id || (activeUser as any)?.restaurantId || activeUser?.uid;
+      if (targetRid) {
+        await setDoc(doc(db, 'restaurants', targetRid), {
+          imageUrl: downloadUrl,
+          image: downloadUrl,
+          updatedAt: serverTimestamp(),
+        }, { merge: true });
+        console.log('[Profile] Logo successfully saved to Firebase doc:', targetRid, downloadUrl);
+      }
+
+      toast.success('Restaurant Logo uploaded and saved to Firebase!');
     } catch (err: any) {
+      console.error('[Profile] Failed to upload or save logo:', err);
       toast.error(err?.message || 'Failed to upload logo image');
     } finally {
       setUploadingLogo(false);
+      setLogoProgress(0);
     }
   };
 
-  // Direct Image Upload (Banner)
+  // Direct Image Upload (Banner) via Cloudinary with Real-time Progress & Direct Firebase Save
   const handleBannerFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -559,14 +585,36 @@ export default function RestaurantProfilePage() {
       return;
     }
     setUploadingBanner(true);
+    setBannerProgress(0);
     try {
-      const downloadUrl = await uploadImage(file, 'restaurant-banners', restaurantId || 'profile');
+      let downloadUrl = '';
+      try {
+        downloadUrl = await uploadToCloudinary(file, (pct) => setBannerProgress(pct));
+      } catch (cloudErr) {
+        // Multi-tier failover
+        downloadUrl = await uploadImage(file, 'restaurant-banners', restaurantId || 'profile', (pct) => setBannerProgress(pct));
+      }
+
+      // 1. Update local form state immediately
       setForm(prev => ({ ...prev, bannerUrl: downloadUrl }));
-      toast.success('Cover Banner uploaded successfully!');
+
+      // 2. Immediately save to Firebase Firestore so it's permanently stored!
+      const targetRid = restaurantId || (authRestaurant as any)?.id || (activeUser as any)?.restaurantId || activeUser?.uid;
+      if (targetRid) {
+        await setDoc(doc(db, 'restaurants', targetRid), {
+          bannerUrl: downloadUrl,
+          updatedAt: serverTimestamp(),
+        }, { merge: true });
+        console.log('[Profile] Banner successfully saved to Firebase doc:', targetRid, downloadUrl);
+      }
+
+      toast.success('Cover Banner uploaded and saved to Firebase!');
     } catch (err: any) {
+      console.error('[Profile] Failed to upload or save banner:', err);
       toast.error(err?.message || 'Failed to upload cover banner');
     } finally {
       setUploadingBanner(false);
+      setBannerProgress(0);
     }
   };
 
@@ -652,7 +700,7 @@ export default function RestaurantProfilePage() {
         updatedAt: serverTimestamp(),
       };
 
-      await updateDoc(doc(db, 'restaurants', restaurantId), updatePayload);
+      await setDoc(doc(db, 'restaurants', restaurantId), updatePayload, { merge: true });
       setInitialFormSnapshot(JSON.stringify(form));
       toast.success('Restaurant Profile saved and published successfully!');
     } catch (err: any) {
@@ -753,14 +801,25 @@ export default function RestaurantProfilePage() {
               size="sm"
               onClick={() => bannerInputRef.current?.click()}
               disabled={uploadingBanner}
-              className="rounded-2xl bg-black/60 hover:bg-black/80 backdrop-blur-md text-white border border-white/20 text-xs font-bold gap-1.5 shadow-md"
+              className="rounded-2xl bg-black/60 hover:bg-black/80 backdrop-blur-md text-white border border-white/20 text-xs font-bold gap-2 shadow-md transition-all"
             >
               {uploadingBanner ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                <div className="flex items-center gap-2">
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-orange-400" />
+                  <div className="w-16 h-1.5 bg-white/20 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-orange-400 to-amber-400 rounded-full transition-all duration-150"
+                      style={{ width: `${bannerProgress}%` }}
+                    />
+                  </div>
+                  <span className="font-mono text-[11px] font-bold">{bannerProgress}%</span>
+                </div>
               ) : (
-                <Camera className="w-3.5 h-3.5" />
+                <>
+                  <Camera className="w-3.5 h-3.5" />
+                  <span>Change Cover Banner</span>
+                </>
               )}
-              <span>{uploadingBanner ? 'Uploading...' : 'Change Cover Banner'}</span>
             </Button>
           </div>
 
@@ -799,14 +858,32 @@ export default function RestaurantProfilePage() {
                   type="button"
                   onClick={() => logoInputRef.current?.click()}
                   disabled={uploadingLogo}
-                  className="absolute inset-0 bg-black/60 backdrop-blur-xs flex flex-col items-center justify-center text-white opacity-0 group-hover/logo:opacity-100 transition-opacity text-xs font-bold gap-1"
+                  className={`absolute inset-0 bg-black/60 backdrop-blur-xs flex flex-col items-center justify-center text-white transition-all duration-300 text-xs font-bold gap-1.5 cursor-pointer ${
+                    uploadingLogo ? 'opacity-100 bg-black/80 z-20' : 'opacity-0 group-hover/logo:opacity-100'
+                  }`}
                 >
                   {uploadingLogo ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <div className="flex flex-col items-center justify-center w-full px-3 space-y-1.5">
+                      <div className="relative w-8 h-8 flex items-center justify-center">
+                        <Loader2 className="w-8 h-8 animate-spin text-orange-400" />
+                        <span className="text-[10px] font-mono font-black text-white absolute">{logoProgress}%</span>
+                      </div>
+                      <div className="w-16 h-1.5 bg-white/20 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-gradient-to-r from-orange-400 to-amber-400 rounded-full transition-all duration-150"
+                          style={{ width: `${logoProgress}%` }}
+                        />
+                      </div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-orange-200">
+                        {logoProgress === 100 ? 'Finalizing...' : 'Uploading'}
+                      </span>
+                    </div>
                   ) : (
-                    <Camera className="w-5 h-5" />
+                    <>
+                      <Camera className="w-5 h-5" />
+                      <span>Change Logo</span>
+                    </>
                   )}
-                  <span>{uploadingLogo ? 'Uploading' : 'Change Logo'}</span>
                 </button>
               </div>
 

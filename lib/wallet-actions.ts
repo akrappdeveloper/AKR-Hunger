@@ -85,7 +85,7 @@ export async function verifyAndAddFunds(
                 type: 'wallet',
                 subType: 'wallet-credit',
                 title: 'Wallet Top-up Successful 💰',
-                message: `₹${amount.toFixed(2)} was successfully added to your AKR Wallet balance!`,
+                message: `₹${amount.toFixed(2)} was successfully added to your Hunger Wallet balance!`,
                 read: false,
                 isRead: false,
                 deleted: false,

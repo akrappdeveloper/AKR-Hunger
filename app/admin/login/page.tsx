@@ -120,7 +120,7 @@ export default function AdminLoginPage() {
 
       {/* Footer / Copyright */}
       <div className="absolute bottom-6 text-center w-full">
-        <p className="text-white/20 text-xs">© 2026 AKR Hunger. Secure Admin Environment.</p>
+        <p className="text-white/20 text-xs">© 2026 Hunger. Secure Admin Environment.</p>
       </div>
     </div>
   );

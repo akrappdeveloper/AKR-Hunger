@@ -19,7 +19,8 @@ import {
   Star,
   ChevronRight,
   Wallet,
-  User
+  User,
+  MessageSquare
 } from 'lucide-react';
 import NotificationBell from '@/components/notifications/NotificationBell';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
@@ -47,6 +48,7 @@ export default function DeliverySidebar({ isMobile = false, onClose }: DeliveryS
   const menuItems = [
     { href: '/delivery', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/delivery/tracking', label: 'Live Map', icon: MapPin },
+    { href: '/delivery/chat', label: 'Order Chat Hub', icon: MessageSquare },
     { href: '/delivery/available', label: 'Marketplace', icon: ShoppingBag },
     { href: '/delivery/history', label: 'History', icon: Clock },
     { href: '/delivery/earnings', label: 'Earnings', icon: TrendingUp },
@@ -111,7 +113,7 @@ export default function DeliverySidebar({ isMobile = false, onClose }: DeliveryS
               </div>
             </div>
             <div>
-              <h1 className="text-xl font-black text-white tracking-tight leading-non">AKR<span className="text-blue-500">Hunger</span></h1>
+              <h1 className="text-xl font-black text-white tracking-tight leading-none"><span className="text-blue-500">Hunger</span></h1>
               <p className="text-[10px] uppercase tracking-[0.2em] text-blue-200/60 font-bold ml-0.5">Delivery</p>
             </div>
           </motion.div>

@@ -50,6 +50,7 @@ public class HomeFragment extends Fragment {
 
     private FirebaseFirestore db;
     private ListenerRegistration menuListener;
+    private ListenerRegistration restaurantListener;
 
     private final List<MenuItem> allMenuItems = new ArrayList<>();
     private final List<Restaurant> allRestaurants = new ArrayList<>();
@@ -201,6 +202,23 @@ public class HomeFragment extends Fragment {
                     startActivity(intent);
                 },
                 item -> {
+                    // Check if restaurant is operating right now
+                    Restaurant parentRest = null;
+                    if (item.getRestaurantId() != null) {
+                        for (Restaurant r : allRestaurants) {
+                            if (item.getRestaurantId().equals(r.getId())) {
+                                parentRest = r;
+                                break;
+                            }
+                        }
+                    }
+                    if (parentRest != null && !parentRest.isOperatingNow()) {
+                        Toast.makeText(getContext(),
+                                "🔴 " + (parentRest.getName() != null ? parentRest.getName() : "Restaurant") + " is currently closed. Click dish to view & add to wishlist ❤️",
+                                Toast.LENGTH_LONG).show();
+                        return;
+                    }
+
                     // Quick add to cart
                     CartManager.getInstance(requireContext()).addItem(
                             new CartItem(item.getId(), item.getRestaurantId(), item.getName(),
@@ -279,8 +297,12 @@ public class HomeFragment extends Fragment {
     }
 
     private void loadRestaurants() {
-        db.collection(Constants.COLLECTION_RESTAURANTS).get()
-                .addOnSuccessListener(querySnapshot -> {
+        if (restaurantListener != null) {
+            restaurantListener.remove();
+        }
+        restaurantListener = db.collection(Constants.COLLECTION_RESTAURANTS)
+                .addSnapshotListener((querySnapshot, error) -> {
+                    if (error != null || querySnapshot == null) return;
                     allRestaurants.clear();
                     restaurantNameMap.clear();
                     for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
@@ -310,9 +332,6 @@ public class HomeFragment extends Fragment {
                     if (allMenuItems.isEmpty()) {
                         fetchFromRestaurantSubcollections();
                     }
-                })
-                .addOnFailureListener(e -> {
-                    // Ignore, menu items listener will still work
                 });
     }
 
@@ -475,6 +494,9 @@ public class HomeFragment extends Fragment {
         super.onDestroyView();
         if (menuListener != null) {
             menuListener.remove();
+        }
+        if (restaurantListener != null) {
+            restaurantListener.remove();
         }
     }
 }

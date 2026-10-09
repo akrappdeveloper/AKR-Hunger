@@ -201,7 +201,7 @@ export default function ReferralLandingPage() {
 
       {/* Footer */}
       <footer className="relative z-10 max-w-4xl mx-auto w-full px-6 py-6 text-center text-xs text-slate-500">
-        © 2026 Hunger Delivery Platform • Powered by AKR
+        © 2026 Hunger Delivery Platform
       </footer>
     </div>
   );

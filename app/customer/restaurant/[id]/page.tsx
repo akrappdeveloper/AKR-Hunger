@@ -42,16 +42,16 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   if (!data) {
     return {
-      title: 'Restaurant Not Found | AKR Hunger',
+      title: 'Restaurant Not Found | Hunger',
       description: 'The requested restaurant could not be found.',
     };
   }
 
   const { restaurant } = data;
-  const description = `Order online from ${restaurant.name} on AKR Hunger. ${restaurant.description?.slice(0, 100) || 'Best food delivery near you'}.`;
+  const description = `Order online from ${restaurant.name} on Hunger. ${restaurant.description?.slice(0, 100) || 'Best food delivery near you'}.`;
 
   return {
-    title: `${restaurant.name} - Order Online | AKR Hunger`,
+    title: `${restaurant.name} - Order Online | Hunger`,
     description: description,
     openGraph: {
       title: `${restaurant.name} - Order Online`,

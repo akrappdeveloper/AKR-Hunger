@@ -99,11 +99,6 @@ export const metadata: Metadata = {
     images: ['https://akrhunger.vercel.app/hunger.png'],
   },
 
-  // Verification
-  verification: {
-    google: 'K8s0MzX1Az9Dc3Mh9SeLVJFVcqQH_LsLdlXgWLhbvHw',
-  },
-
   // Icons
   icons: {
     icon: [

@@ -1118,7 +1118,7 @@ export default function CustomerOrderTrackingPage() {
                   <div className="flex-1 min-w-0">
                     <h3 className="font-black text-base text-foreground truncate">{order.deliveryPersonName}</h3>
                     <p className="text-xs text-muted-foreground">
-                      {deliveryPerson?.vehicleNumber ? `${deliveryPerson.vehicle ?? ''} • ${deliveryPerson.vehicleNumber}` : 'Verified AKR Rider'}
+                      {deliveryPerson?.vehicleNumber ? `${deliveryPerson.vehicle ?? ''} • ${deliveryPerson.vehicleNumber}` : 'Verified Hunger Rider'}
                     </p>
                     {deliveryPerson?.averageRating && (
                       <p className="text-xs font-bold text-amber-500 flex items-center gap-1 mt-0.5">

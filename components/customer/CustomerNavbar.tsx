@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import {
   Search, Bell, ShoppingCart, User, Menu, X, LogOut,
   Heart, Package, MapPin, LifeBuoy, Settings, ChevronDown, ChevronRight, Home, Briefcase, Wallet,
-  Tag, Gift, Crown, Star, HelpCircle
+  Tag, Gift, Crown, Star, HelpCircle, Sparkles
 } from 'lucide-react';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
@@ -146,6 +146,55 @@ export default function CustomerNavbar() {
             {/* Fullscreen Toggle */}
             <FullscreenToggle className="hidden sm:flex" />
 
+            {/* More Features Dropdown Menu */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="hidden sm:flex items-center gap-1.5 rounded-full px-3 h-9 text-xs font-bold text-foreground hover:text-primary hover:bg-primary/10 border border-border/60 transition-colors">
+                  <Sparkles className="w-3.5 h-3.5 text-primary" />
+                  <span>More</span>
+                  <ChevronDown className="w-3 h-3 text-muted-foreground" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-64 bg-card border-border p-2 shadow-2xl rounded-2xl">
+                <DropdownMenuLabel className="text-xs font-bold text-muted-foreground px-2 py-1">
+                  Hunger Specials
+                </DropdownMenuLabel>
+                <DropdownMenuItem onClick={() => router.push('/customer/more')} className="cursor-pointer rounded-xl p-2 bg-primary/10 text-primary font-bold mb-1 hover:bg-primary/20">
+                  <Sparkles className="w-4 h-4 mr-2 text-primary" />
+                  Open More Features Hub →
+                </DropdownMenuItem>
+                <DropdownMenuSeparator className="bg-border/60" />
+                <DropdownMenuItem onClick={() => router.push('/customer/more?feature=student')} className="cursor-pointer rounded-xl p-2">
+                  <span className="text-base mr-2.5">🎓</span>
+                  <div>
+                    <p className="text-xs font-bold text-foreground">Student Mode</p>
+                    <p className="text-[10px] text-muted-foreground">Deals from ₹99 & hostel perks</p>
+                  </div>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => router.push('/customer/more?feature=group')} className="cursor-pointer rounded-xl p-2">
+                  <span className="text-base mr-2.5">👥</span>
+                  <div>
+                    <p className="text-xs font-bold text-foreground">Group Order</p>
+                    <p className="text-[10px] text-muted-foreground">Order & split bill with friends</p>
+                  </div>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => router.push('/customer/more?feature=subscriptions')} className="cursor-pointer rounded-xl p-2">
+                  <span className="text-base mr-2.5">📅</span>
+                  <div>
+                    <p className="text-xs font-bold text-foreground">Meal Plans</p>
+                    <p className="text-[10px] text-muted-foreground">Subscribe & save on daily meals</p>
+                  </div>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => router.push('/customer/more?feature=circle')} className="cursor-pointer rounded-xl p-2">
+                  <span className="text-base mr-2.5">❤️</span>
+                  <div>
+                    <p className="text-xs font-bold text-foreground">Hunger Circle</p>
+                    <p className="text-[10px] text-muted-foreground">Order for family & shared addresses</p>
+                  </div>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
             {/* Notification Bell - Logged in customer */}
             {user && (
               <Link href="/customer/notifications">
@@ -199,6 +248,10 @@ export default function CustomerNavbar() {
                       <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
                     </div>
                   </DropdownMenuLabel>
+                  <DropdownMenuItem onClick={() => router.push('/customer/more')} className="cursor-pointer rounded-xl my-0.5 bg-primary/10 text-primary font-bold">
+                    <Sparkles className="w-4 h-4 mr-2 text-primary" />
+                    More Features Hub
+                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => router.push('/customer/profile')} className="cursor-pointer rounded-xl my-0.5">
                     <User className="w-4 h-4 mr-2 text-muted-foreground" />
                     Profile
@@ -325,6 +378,15 @@ export default function CustomerNavbar() {
                     <Link href="/customer" className="flex items-center gap-3 p-3 rounded-2xl hover:bg-muted/60 text-foreground transition-colors">
                       <div className="w-8 h-8 rounded-xl bg-orange-500/10 text-orange-500 flex items-center justify-center"><Home className="w-4 h-4" /></div>
                       <span className="font-semibold text-sm">Home</span>
+                    </Link>
+                    <Link href="/customer/more" className="flex items-center gap-3 p-3 rounded-2xl bg-primary/10 hover:bg-primary/20 text-primary transition-colors border border-primary/20">
+                      <div className="w-8 h-8 rounded-xl bg-primary/20 text-primary flex items-center justify-center font-bold">
+                        <Sparkles className="w-4 h-4" />
+                      </div>
+                      <div className="flex-1">
+                        <span className="font-bold text-sm block">More Features Hub</span>
+                        <span className="text-[10px] text-muted-foreground block">Student, Group, Meal Plans, Circle</span>
+                      </div>
                     </Link>
                     <Link href="/customer/orders" className="flex items-center gap-3 p-3 rounded-2xl hover:bg-muted/60 text-foreground transition-colors">
                       <div className="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center"><Package className="w-4 h-4" /></div>

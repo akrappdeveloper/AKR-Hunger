@@ -42,7 +42,8 @@ import {
   Gift,
   Percent,
   ShieldCheck,
-  Headset
+  Headset,
+  MessageSquare
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -139,6 +140,7 @@ const AdminSidebar = ({ isMobile = false, onClose }: AdminSidebarProps) => {
     {
       title: 'System',
       items: [
+        { href: '/admin/messages', label: 'Admin Messaging Center', icon: MessageSquare },
         { href: '/admin/reviews', label: 'Reviews', icon: Star },
         { href: '/admin/notifications', label: 'Notifications', icon: Bell },
         { href: '/admin/reports', label: 'Reports', icon: FileText },
@@ -154,10 +156,10 @@ const AdminSidebar = ({ isMobile = false, onClose }: AdminSidebarProps) => {
       <div className="p-6 border-b border-white/5 flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
-            <span className="font-bold text-lg text-white">AK</span>
+            <span className="font-bold text-lg text-white">H</span>
           </div>
           <div>
-            <h1 className="text-xl font-bold text-white tracking-tight leading-none">AKR Hunger</h1>
+            <h1 className="text-xl font-bold text-white tracking-tight leading-none">Hunger</h1>
             <p className="text-[10px] text-blue-400 font-medium uppercase tracking-widest mt-1">Admin Portal</p>
           </div>
         </div>

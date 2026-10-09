@@ -686,7 +686,7 @@ export default function CustomerSupportPage() {
                   <Bot className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-black text-foreground">AKR Hunger AI Support Assistant</h3>
+                  <h3 className="text-lg font-black text-foreground">Hunger AI Support Assistant</h3>
                   <p className="text-xs text-muted-foreground">
                     Instant 24/7 automated resolution for refunds, order progress, and menu suggestions
                   </p>

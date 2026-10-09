@@ -8,19 +8,33 @@ import { Button } from '@/components/ui/button';
 import { LayoutDashboard, ShoppingBag, UtensilsCrossed, MoreVertical } from 'lucide-react';
 import RestaurantSidebar from './RestaurantSidebar';
 
+import { useRestaurantAuth } from '@/context/RestaurantAuthContext';
+
 export default function RestaurantBottomNav() {
     const pathname = usePathname();
     const [open, setOpen] = useState(false);
+    const { isStaff, hasPermission } = useRestaurantAuth();
 
-    if (pathname === '/restaurant/login' || pathname.startsWith('/restaurant/login')) {
+    if (
+        pathname === '/restaurant/login' ||
+        pathname.startsWith('/restaurant/login') ||
+        pathname.includes('/staff/login') ||
+        pathname.includes('/staff/dashboard/login')
+    ) {
         return null;
     }
 
-    const mainLinks = [
-        { href: '/restaurant', label: 'Dashboard', icon: LayoutDashboard },
-        { href: '/restaurant/orders', label: 'Orders', icon: ShoppingBag },
-        { href: '/restaurant/menu', label: 'Menu', icon: UtensilsCrossed },
+    const allLinks = [
+        { href: isStaff ? '/restaurant/staff/dashboard' : '/restaurant', label: isStaff ? 'Staff Hub' : 'Dashboard', icon: LayoutDashboard, perm: null },
+        { href: '/restaurant/orders', label: 'Orders', icon: ShoppingBag, perm: 'orders' },
+        { href: '/restaurant/menu', label: 'Menu', icon: UtensilsCrossed, perm: 'menu' },
     ];
+
+    const mainLinks = allLinks.filter((link) => {
+        if (!isStaff) return true;
+        if (!link.perm) return true;
+        return hasPermission(link.perm);
+    });
 
     return (
         <div className="md:hidden fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-xl border-t border-border flex justify-around items-center h-16 z-50 px-2 pb-safe shadow-lg transition-colors duration-300">

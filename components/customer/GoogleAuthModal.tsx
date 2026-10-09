@@ -62,7 +62,7 @@ export default function GoogleAuthModal({
       }
     }}>
       <DialogContent className="max-w-md w-[92vw] sm:w-full rounded-3xl p-0 overflow-hidden bg-card/95 backdrop-blur-2xl border border-border/80 shadow-2xl">
-        {/* Top Glowing Color Accent Bar (Google Brand Spectrum + AKR Orange) */}
+        {/* Top Glowing Color Accent Bar (Google Brand Spectrum + Hunger Orange) */}
         <div className="h-1.5 w-full bg-gradient-to-r from-blue-500 via-red-500 via-amber-400 via-green-500 to-primary" />
 
         <div className="p-6 sm:p-7 space-y-5">

@@ -55,6 +55,23 @@
                 android:textColor="@color/on_primary"
                 android:textSize="9sp" />
 
+            <!-- Closed Status Pill -->
+            <TextView
+                android:id="@+id/tv_closed_badge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:background="@drawable/bg_pill_danger"
+                android:elevation="2dp"
+                android:fontFamily="sans-serif-bold"
+                android:letterSpacing="0.04"
+                android:paddingHorizontal="10dp"
+                android:paddingVertical="4dp"
+                android:text="CLOSED"
+                android:textColor="#FFFFFF"
+                android:textSize="9sp"
+                android:visibility="gone" />
+
             <View
                 android:layout_width="0dp"
                 android:layout_height="1dp"

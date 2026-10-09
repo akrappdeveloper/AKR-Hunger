@@ -41,6 +41,7 @@ public class ProductDetailActivity extends BaseActivity {
     private String passedRestaurantId;
     private int quantity = 1;
     private boolean isFavorite = false;
+    private boolean isRestaurantOpen = true;
 
     // Image carousel
     private ViewPager2 vpProductImages;
@@ -126,20 +127,8 @@ public class ProductDetailActivity extends BaseActivity {
         this.menuItem = item;
 
         String rId = item.getRestaurantId() != null ? item.getRestaurantId() : passedRestaurantId;
-        if (item.getRestaurantName() == null || item.getRestaurantName().isEmpty() || "Unknown Restaurant".equalsIgnoreCase(item.getRestaurantName())) {
-            if (rId != null && !rId.isEmpty()) {
-                db.collection(Constants.COLLECTION_RESTAURANTS).document(rId)
-                        .get()
-                        .addOnSuccessListener(rDoc -> {
-                            if (rDoc.exists()) {
-                                menuItem.setRestaurantName(rDoc.getString("name"));
-                                TextView tvRestaurant = findViewById(R.id.tv_product_restaurant);
-                                if (tvRestaurant != null && menuItem.getRestaurantName() != null) {
-                                    tvRestaurant.setText(menuItem.getRestaurantName());
-                                }
-                            }
-                        });
-            }
+        if (rId != null && !rId.isEmpty()) {
+            listenToRestaurantOperatingStatus(rId);
         }
 
         populateUI();
@@ -147,6 +136,54 @@ public class ProductDetailActivity extends BaseActivity {
         logBreadcrumb("Product loaded: " + menuItem.getName() + " (₹" + menuItem.getPrice() + ")");
         updateFavoriteIcon();
         checkFavoriteStatus();
+    }
+
+    private void listenToRestaurantOperatingStatus(String rId) {
+        db.collection(Constants.COLLECTION_RESTAURANTS).document(rId)
+                .addSnapshotListener((rDoc, error) -> {
+                    if (error != null || rDoc == null || !rDoc.exists()) return;
+                    com.ssr.hunger.models.Restaurant rest = rDoc.toObject(com.ssr.hunger.models.Restaurant.class);
+                    if (rest != null) {
+                        if (menuItem != null && (menuItem.getRestaurantName() == null || menuItem.getRestaurantName().isEmpty())) {
+                            menuItem.setRestaurantName(rest.getName());
+                            TextView tvRestaurant = findViewById(R.id.tv_product_restaurant);
+                            if (tvRestaurant != null) {
+                                tvRestaurant.setText(rest.getName());
+                            }
+                        }
+
+                        isRestaurantOpen = rest.isOperatingNow();
+                        updateOperatingStatusUI(isRestaurantOpen, rest.getName());
+                    }
+                });
+    }
+
+    private void updateOperatingStatusUI(boolean isOpen, String rName) {
+        TextView btnAdd = findViewById(R.id.btn_add_to_cart);
+        View btnBuyNow = findViewById(R.id.btn_buy_now);
+        TextView tvSpiceSummary = findViewById(R.id.tv_bottom_spice_summary);
+
+        if (!isOpen) {
+            if (btnAdd != null) {
+                btnAdd.setText("Closed");
+                btnAdd.setAlpha(0.6f);
+            }
+            if (btnBuyNow != null) {
+                btnBuyNow.setVisibility(View.GONE);
+            }
+            if (tvSpiceSummary != null) {
+                tvSpiceSummary.setText("🔴 Restaurant is currently closed (Wishlist only)");
+            }
+        } else {
+            if (btnAdd != null) {
+                btnAdd.setText("Add to Cart");
+                btnAdd.setAlpha(1.0f);
+            }
+            if (btnBuyNow != null) {
+                btnBuyNow.setVisibility(View.VISIBLE);
+            }
+            updateSpiceSummaryDisplay();
+        }
     }
 
     private void populateUI() {
@@ -416,6 +453,11 @@ public class ProductDetailActivity extends BaseActivity {
 
     private void performAddToCart(boolean isBuyNow) {
         if (menuItem == null) return;
+
+        if (!isRestaurantOpen) {
+            Toast.makeText(this, "🔴 Restaurant is currently closed! Ordering is paused, but you can add this item to your wishlist ❤️", Toast.LENGTH_LONG).show();
+            return;
+        }
 
         double currentUnitPrice = menuItem.getPrice() + portionExtraPrice;
 

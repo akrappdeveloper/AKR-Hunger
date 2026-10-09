@@ -38,6 +38,7 @@ import {
   Zap,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { copyToClipboard } from '@/lib/utils';
 
 interface ReferralTrackItem {
   id: string;
@@ -184,24 +185,24 @@ export default function CustomerReferralPage() {
 
   const copyCode = async () => {
     if (!referralCode) return;
-    try {
-      await navigator.clipboard.writeText(referralCode);
+    const ok = await copyToClipboard(referralCode);
+    if (ok) {
       setCopiedCode(true);
       toast.success('Referral code copied to clipboard!');
       setTimeout(() => setCopiedCode(false), 2000);
-    } catch {
+    } else {
       toast.error('Failed to copy code');
     }
   };
 
   const copyLink = async () => {
     if (!platformLink) return;
-    try {
-      await navigator.clipboard.writeText(platformLink);
+    const ok = await copyToClipboard(platformLink);
+    if (ok) {
       setCopiedLink(true);
       toast.success('Referral link copied to clipboard!');
       setTimeout(() => setCopiedLink(false), 2000);
-    } catch {
+    } else {
       toast.error('Failed to copy link');
     }
   };

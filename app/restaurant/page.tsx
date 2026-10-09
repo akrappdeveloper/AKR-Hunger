@@ -25,7 +25,7 @@ import { Order } from '@/lib/types';
 
 export default function RestaurantDashboard() {
   const router = useRouter();
-  const { user, restaurant, loading: authLoading } = useRestaurantAuth();
+  const { user, restaurant, isStaff, loading: authLoading } = useRestaurantAuth();
 
   const [todayOrders, setTodayOrders] = useState(0);
   const [activeOrders, setActiveOrders] = useState(0);
@@ -42,12 +42,20 @@ export default function RestaurantDashboard() {
       return;
     }
 
+    if (isStaff) {
+      router.replace('/restaurant/staff/dashboard');
+      return;
+    }
+
     fetchDashboardData();
-  }, [user, authLoading, router]);
+  }, [user, authLoading, isStaff, router]);
 
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
+
+      const targetRestaurantId = restaurant?.id || user?.restaurantId || user?.uid;
+      if (!targetRestaurantId) return;
 
       // Get today's date
       const today = new Date();
@@ -58,7 +66,7 @@ export default function RestaurantDashboard() {
       // Today's orders
       const todayQuery = query(
         ordersRef,
-        where('restaurantId', '==', user!.uid),
+        where('restaurantId', '==', targetRestaurantId),
         where('createdAt', '>=', today),
         orderBy('createdAt', 'desc')
       );
@@ -68,7 +76,7 @@ export default function RestaurantDashboard() {
       // Active orders
       const activeQuery = query(
         ordersRef,
-        where('restaurantId', '==', user!.uid),
+        where('restaurantId', '==', targetRestaurantId),
         where('status', 'in', ['confirmed', 'preparing', 'ready', 'out_for_delivery']),
         orderBy('createdAt', 'desc')
       );
@@ -88,7 +96,7 @@ export default function RestaurantDashboard() {
       // Recent orders
       const recentQuery = query(
         ordersRef,
-        where('restaurantId', '==', user!.uid),
+        where('restaurantId', '==', targetRestaurantId),
         orderBy('createdAt', 'desc'),
         limit(5)
       );
@@ -104,7 +112,7 @@ export default function RestaurantDashboard() {
       const menuItemsRef = collection(db, 'menuItems');
       const pendingItemsQuery = query(
         menuItemsRef,
-        where('restaurantId', '==', user!.uid),
+        where('restaurantId', '==', targetRestaurantId),
         where('approvalStatus', '==', 'pending')
       );
       const pendingSnapshot = await getDocs(pendingItemsQuery);

@@ -8,6 +8,7 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.ssr.hunger.R;
@@ -60,7 +61,8 @@ public class FavoritesFragment extends Fragment {
                 }
         );
 
-        rvFavorites.setLayoutManager(new LinearLayoutManager(getContext()));
+        int spanCount = getResources().getConfiguration().screenWidthDp >= 600 ? 3 : 2;
+        rvFavorites.setLayoutManager(new GridLayoutManager(getContext(), spanCount));
         rvFavorites.setAdapter(adapter);
 
         loadFavorites();

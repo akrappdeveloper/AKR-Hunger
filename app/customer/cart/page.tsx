@@ -57,6 +57,8 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 
+import { checkRestaurantOperatingStatus } from '@/lib/restaurant-schedule';
+
 declare global {
   interface Window {
     Razorpay: any;
@@ -70,6 +72,13 @@ export default function CartPage() {
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
   const [loading, setLoading] = useState(false);
   const [specialInstructions, setSpecialInstructions] = useState('');
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  // Keep clock tick every 30s
+  useEffect(() => {
+    const interval = setInterval(() => setCurrentTime(new Date()), 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Checkout State
   const [paymentMethod, setPaymentMethod] = useState<'cod' | 'online' | 'wallet'>('cod');
@@ -141,27 +150,32 @@ export default function CartPage() {
     fetchPromos();
   }, [restaurantId]);
 
-  // Fetch restaurant details
+  // Fetch payment config and listen in realtime to restaurant
   useEffect(() => {
     if (restaurantId) {
-      const fetchRestaurant = async () => {
+      const fetchConfig = async () => {
         try {
           const configRes = await fetch('/api/payment/config');
           const config = await configRes.json();
           setRazorpayKeyId(config.razorpayKeyId);
-
-          const restaurantDoc = await getDoc(doc(db, 'restaurants', restaurantId));
-          if (restaurantDoc.exists()) {
-            setRestaurant({ ...restaurantDoc.data(), id: restaurantDoc.id } as Restaurant);
-          }
         } catch (error) {
-          console.error('Error fetching data:', error);
+          console.error('Error fetching payment config:', error);
         }
       };
-      fetchRestaurant();
+      fetchConfig();
       loadRazorpayScript();
+
+      // Realtime listener for restaurant status & schedule
+      const unsub = onSnapshot(doc(db, 'restaurants', restaurantId), (docSnap) => {
+        if (docSnap.exists()) {
+          setRestaurant({ ...docSnap.data(), id: docSnap.id } as Restaurant);
+        }
+      });
+      return () => unsub();
     }
   }, [restaurantId]);
+
+  const operatingStatus = checkRestaurantOperatingStatus(restaurant, currentTime);
 
   // Real-time Customer Sync
   useEffect(() => {
@@ -312,6 +326,12 @@ export default function CartPage() {
       }
     }
 
+    // Operating Status Validation
+    if (!operatingStatus.isOpen) {
+      toast.error(`Cannot place order: This restaurant is currently closed (${operatingStatus.reason}). Please try again later!`);
+      return;
+    }
+
     // Service Area Validation
     if (restaurant?.servicePincodes && restaurant.servicePincodes.length > 0) {
       if (!restaurant.servicePincodes.includes(deliveryAddress.pincode)) {
@@ -426,7 +446,7 @@ export default function CartPage() {
           type: 'payment',
           status: 'completed',
           referenceId: orderId,
-          description: `Paid for Order #${orderId} at ${restaurant?.name || 'AKR Hunger'}`,
+          description: `Paid for Order #${orderId} at ${restaurant?.name || 'Hunger'}`,
           createdAt: serverTimestamp(),
         });
 
@@ -445,7 +465,7 @@ export default function CartPage() {
           paymentMethod: 'wallet',
         }).catch((e) => console.error('Error sending wallet notification:', e));
 
-        toast.success(`₹${total} paid securely from your AKR Wallet! Order #${orderId} confirmed.`);
+        toast.success(`₹${total} paid securely from your Hunger Wallet! Order #${orderId} confirmed.`);
         clearCart();
         router.push(`/customer/orders/tracking/${orderId}`);
         return;
@@ -556,7 +576,7 @@ export default function CartPage() {
         order_id: razorpayOrderId,
         amount: Math.round(amount * 100),
         currency: 'INR',
-        name: 'AKR Hunger',
+        name: 'Hunger',
         description: `Order #${orderId}`,
         handler: async (response: any) => {
           const verifyRes = await fetch('/api/payment/verify-payment', {
@@ -972,7 +992,7 @@ export default function CartPage() {
             </div>
 
             <RadioGroup value={paymentMethod} onValueChange={(v: any) => setPaymentMethod(v)} className="grid grid-cols-1 gap-3 sm:gap-3.5">
-              {/* Option 1: AKR Hunger Wallet */}
+              {/* Option 1: Hunger Wallet */}
               <div
                 onClick={() => setPaymentMethod('wallet')}
                 className={`cursor-pointer p-4 sm:p-5 rounded-2xl border-2 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
@@ -1008,7 +1028,7 @@ export default function CartPage() {
 
                   <div>
                     <div className="flex items-center gap-2 flex-wrap">
-                      <p className="font-bold text-foreground text-sm sm:text-base">AKR Hunger Wallet</p>
+                      <p className="font-bold text-foreground text-sm sm:text-base">Hunger Wallet</p>
                       {isWalletSufficient ? (
                         <Badge
                           variant="outline"
@@ -1366,17 +1386,35 @@ export default function CartPage() {
                 </div>
               </div>
 
+              {!operatingStatus.isOpen && (
+                <div className="mt-4 p-4 rounded-2xl bg-rose-500/10 border-2 border-rose-500/30 text-rose-700 dark:text-rose-300 flex items-start sm:items-center gap-3">
+                  <AlertTriangle className="w-5 h-5 text-rose-500 shrink-0 mt-0.5 sm:mt-0" />
+                  <div>
+                    <p className="font-extrabold text-sm text-foreground">Restaurant is Currently Closed</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {restaurant?.name || 'This restaurant'} is not accepting orders ({operatingStatus.reason}). Please try again later.
+                    </p>
+                  </div>
+                </div>
+              )}
+
               <Button
                 onClick={handlePlaceOrder}
-                disabled={loading || items.length === 0}
+                disabled={loading || items.length === 0 || !operatingStatus.isOpen}
                 className={`w-full mt-5 sm:mt-6 h-13 sm:h-14 rounded-xl sm:rounded-2xl text-base font-bold shadow-lg transition-all active:scale-[0.98] ${
-                  paymentMethod === 'wallet' && !isWalletSufficient
+                  !operatingStatus.isOpen
+                    ? 'bg-muted text-muted-foreground cursor-not-allowed shadow-none'
+                    : paymentMethod === 'wallet' && !isWalletSufficient
                     ? 'bg-amber-600 hover:bg-amber-700 text-white shadow-amber-600/20'
                     : 'bg-primary hover:bg-primary/90 text-primary-foreground shadow-primary/20'
                 }`}
               >
                 {loading ? (
                   <Spinner className="w-5 h-5 text-primary-foreground" />
+                ) : !operatingStatus.isOpen ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <AlertTriangle className="w-5 h-5 text-rose-500" /> Restaurant Closed ({operatingStatus.reason})
+                  </span>
                 ) : !hasSavedPhone && customerPhoneInput.replace(/\D/g, '').length !== 10 ? (
                   <span className="flex items-center justify-center gap-2">
                     <Phone className="w-5 h-5" /> Add Phone Number to Place Order
@@ -1436,7 +1474,7 @@ export default function CartPage() {
               Insufficient Wallet Balance
             </DialogTitle>
             <DialogDescription className="text-sm text-muted-foreground">
-              Your AKR Wallet has <strong className="text-foreground">₹{walletBalance.toFixed(2)}</strong>, but this order requires <strong className="text-foreground">₹{total.toFixed(2)}</strong>. You cannot place the order using wallet until funds are added.
+              Your Hunger Wallet has <strong className="text-foreground">₹{walletBalance.toFixed(2)}</strong>, but this order requires <strong className="text-foreground">₹{total.toFixed(2)}</strong>. You cannot place the order using wallet until funds are added.
             </DialogDescription>
           </DialogHeader>
 

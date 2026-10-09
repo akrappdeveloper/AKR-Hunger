@@ -6,11 +6,11 @@
     android:background="@color/background"
     android:orientation="vertical">
 
-
     <!-- LIVE MAP HERO: Real Leaflet/OSM WebView with animated running delivery partner -->
     <FrameLayout
+        android:id="@+id/frame_map_container"
         android:layout_width="match_parent"
-        android:layout_height="320dp">
+        android:layout_height="330dp">
 
         <!-- Real OpenStreetMap / Leaflet WebView map with running delivery boy -->
         <WebView
@@ -22,17 +22,18 @@
         <!-- Map Loading Indicator -->
         <ProgressBar
             android:id="@+id/pb_map_loading"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
             android:layout_gravity="center"
             android:indeterminate="true"
             android:indeterminateTint="@color/primary"
             android:visibility="visible" />
 
-        <!-- Bottom fade gradient for card overlap effect -->
+        <!-- Bottom fade gradient for card overlap effect (hidden in fullscreen) -->
         <View
+            android:id="@+id/view_map_fade"
             android:layout_width="match_parent"
-            android:layout_height="60dp"
+            android:layout_height="64dp"
             android:layout_gravity="bottom"
             android:background="@drawable/bg_tracking_map_fade" />
 
@@ -67,6 +68,7 @@
 
         <!-- Overlay: top navigation & action bar -->
         <LinearLayout
+            android:id="@+id/layout_top_bar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_gravity="top"
@@ -82,9 +84,9 @@
                 android:clickable="true"
                 android:focusable="true"
                 android:foreground="?attr/selectableItemBackground"
-                app:cardBackgroundColor="#66000000"
+                app:cardBackgroundColor="#88000000"
                 app:cardCornerRadius="21dp"
-                app:cardElevation="0dp"
+                app:cardElevation="2dp"
                 app:strokeColor="#33FFFFFF"
                 app:strokeWidth="1dp">
 
@@ -97,79 +99,80 @@
                     app:tint="@color/white" />
             </com.google.android.material.card.MaterialCardView>
 
+            <!-- Responsive Title Container (never squished) -->
             <LinearLayout
+                android:id="@+id/layout_title_container"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="12dp"
+                android:layout_marginEnd="8dp"
                 android:layout_weight="1"
                 android:orientation="vertical">
 
                 <TextView
+                    android:id="@+id/tv_top_title"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:ellipsize="end"
                     android:fontFamily="sans-serif-black"
                     android:letterSpacing="-0.01"
+                    android:maxLines="1"
+                    android:shadowColor="#AA000000"
+                    android:shadowDx="0"
+                    android:shadowDy="1"
+                    android:shadowRadius="4"
                     android:text="Live Order Tracking"
                     android:textColor="@color/white"
-                    android:textSize="17sp"
-                    android:shadowColor="#AA000000"
-                    android:shadowRadius="4"
-                    android:shadowDx="0"
-                    android:shadowDy="1" />
+                    android:textSize="16sp" />
 
                 <TextView
                     android:id="@+id/tv_map_sub_header"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:ellipsize="end"
                     android:fontFamily="sans-serif-medium"
+                    android:maxLines="1"
                     android:text="Real-time GPS • Moving Valet"
                     android:textColor="#CCFFFFFF"
                     android:textSize="11sp" />
             </LinearLayout>
 
-            <!-- Live GPS Status Badge -->
-            <LinearLayout
-                android:id="@+id/gps_live_badge"
-                android:layout_width="wrap_content"
-                android:layout_height="32dp"
-                android:background="@drawable/bg_pill_white"
-                android:elevation="2dp"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:paddingHorizontal="10dp"
-                android:visibility="gone">
+            <!-- Fullscreen Map Toggle Button -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/btn_fullscreen_toggle"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground"
+                app:cardBackgroundColor="#88000000"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="2dp"
+                app:strokeColor="#33FFFFFF"
+                app:strokeWidth="1dp">
 
-                <View
-                    android:layout_width="7dp"
-                    android:layout_height="7dp"
-                    android:layout_marginEnd="5dp"
-                    android:background="@drawable/bg_tracking_active_dot" />
-
-                <TextView
-                    android:id="@+id/tv_gps_coords"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:ellipsize="end"
-                    android:fontFamily="sans-serif-bold"
-                    android:letterSpacing="0.02"
-                    android:maxLines="1"
-                    android:text="GPS Live"
-                    android:textColor="@color/primary"
-                    android:textSize="10.5sp" />
-            </LinearLayout>
+                <ImageView
+                    android:id="@+id/iv_fullscreen_icon"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_gravity="center"
+                    android:contentDescription="Toggle Fullscreen Map"
+                    android:src="@drawable/ic_fullscreen"
+                    app:tint="@color/white" />
+            </com.google.android.material.card.MaterialCardView>
 
             <!-- Share Tracking Button -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/btn_share_tracking"
-                android:layout_width="38dp"
-                android:layout_height="38dp"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
                 android:layout_marginStart="8dp"
                 android:clickable="true"
                 android:focusable="true"
                 android:foreground="?attr/selectableItemBackground"
-                app:cardBackgroundColor="#66000000"
-                app:cardCornerRadius="19dp"
-                app:cardElevation="0dp"
+                app:cardBackgroundColor="#88000000"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="2dp"
                 app:strokeColor="#33FFFFFF"
                 app:strokeWidth="1dp">
 
@@ -184,13 +187,140 @@
 
         </LinearLayout>
 
+        <!-- Live GPS Status Badge: Placed neatly below top bar as floating telemetry pill -->
+        <LinearLayout
+            android:id="@+id/gps_live_badge"
+            android:layout_width="wrap_content"
+            android:layout_height="28dp"
+            android:layout_gravity="top|start"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="86dp"
+            android:background="@drawable/bg_pill_dark"
+            android:elevation="6dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="10dp"
+            android:visibility="gone">
+
+            <View
+                android:layout_width="7dp"
+                android:layout_height="7dp"
+                android:layout_marginEnd="6dp"
+                android:background="@drawable/bg_tracking_active_dot" />
+
+            <TextView
+                android:id="@+id/tv_gps_coords"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:fontFamily="sans-serif-bold"
+                android:letterSpacing="0.01"
+                android:maxLines="1"
+                android:maxWidth="250dp"
+                android:text="GPS Live"
+                android:textColor="@color/white"
+                android:textSize="10.5sp" />
+        </LinearLayout>
+
+        <!-- Floating Map Camera Quick Controls (bottom-left overlay) -->
+        <LinearLayout
+            android:id="@+id/layout_map_camera_controls"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|start"
+            android:layout_marginStart="14dp"
+            android:layout_marginBottom="46dp"
+            android:elevation="6dp"
+            android:orientation="horizontal">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_recenter_rider"
+                style="@style/Widget.AKR.Button.PillSoft"
+                android:layout_width="wrap_content"
+                android:layout_height="34dp"
+                android:fontFamily="sans-serif-bold"
+                android:paddingHorizontal="10dp"
+                android:text="Rider 🛵"
+                android:textColor="@color/white"
+                android:textSize="11sp"
+                app:backgroundTint="#CC0F172A"
+                app:cornerRadius="17dp"
+                app:strokeColor="#44FFFFFF"
+                app:strokeWidth="1dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_fit_route"
+                style="@style/Widget.AKR.Button.PillSoft"
+                android:layout_width="wrap_content"
+                android:layout_height="34dp"
+                android:layout_marginStart="6dp"
+                android:fontFamily="sans-serif-bold"
+                android:paddingHorizontal="10dp"
+                android:text="Route 🗺️"
+                android:textColor="@color/white"
+                android:textSize="11sp"
+                app:backgroundTint="#CC0F172A"
+                app:cornerRadius="17dp"
+                app:strokeColor="#44FFFFFF"
+                app:strokeWidth="1dp" />
+        </LinearLayout>
+
+        <!-- Map Style Switcher (bottom-right overlay) -->
+        <LinearLayout
+            android:id="@+id/ll_map_theme_switcher"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|end"
+            android:layout_marginEnd="14dp"
+            android:layout_marginBottom="46dp"
+            android:background="@drawable/bg_pill_dark"
+            android:elevation="6dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="8dp"
+            android:paddingVertical="5dp">
+
+            <TextView
+                android:id="@+id/btn_map_theme_street"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:clickable="true"
+                android:focusable="true"
+                android:fontFamily="sans-serif-bold"
+                android:paddingHorizontal="5dp"
+                android:text="🗺️"
+                android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/btn_map_theme_dark"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:clickable="true"
+                android:focusable="true"
+                android:fontFamily="sans-serif-bold"
+                android:paddingHorizontal="5dp"
+                android:text="🌙"
+                android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/btn_map_theme_sat"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:clickable="true"
+                android:focusable="true"
+                android:fontFamily="sans-serif-bold"
+                android:paddingHorizontal="5dp"
+                android:text="🛰️"
+                android:textSize="14sp" />
+        </LinearLayout>
+
         <!-- Live Rider Telemetry Floating Pill Banner (bottom of map) -->
         <LinearLayout
             android:id="@+id/layout_rider_live_banner"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="bottom|center_horizontal"
-            android:layout_marginBottom="44dp"
+            android:layout_marginBottom="12dp"
             android:background="@drawable/bg_pill_dark"
             android:elevation="6dp"
             android:gravity="center_vertical"
@@ -215,96 +345,106 @@
                 android:textSize="11.5sp" />
         </LinearLayout>
 
-        <!-- Floating Map Camera Quick Controls (bottom-left overlay) -->
-        <LinearLayout
-            android:layout_width="wrap_content"
+        <!-- Floating Bottom Card (Shown ONLY in Fullscreen Mode) -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/layout_fullscreen_bottom_card"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="bottom|start"
-            android:layout_marginStart="14dp"
-            android:layout_marginBottom="8dp"
-            android:elevation="6dp"
-            android:orientation="horizontal">
+            android:layout_gravity="bottom"
+            android:layout_margin="16dp"
+            android:visibility="gone"
+            app:cardBackgroundColor="@color/surface"
+            app:cardCornerRadius="24dp"
+            app:cardElevation="10dp"
+            app:strokeColor="@color/card_border"
+            app:strokeWidth="1.2dp">
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btn_recenter_rider"
-                style="@style/Widget.AKR.Button.PillSoft"
-                android:layout_width="wrap_content"
-                android:layout_height="34dp"
-                android:fontFamily="sans-serif-bold"
-                android:paddingHorizontal="10dp"
-                android:text="Rider 🛵"
-                android:textColor="@color/white"
-                android:textSize="11sp"
-                app:backgroundTint="#AA0F172A"
-                app:cornerRadius="17dp"
-                app:strokeColor="#44FFFFFF"
-                app:strokeWidth="1dp" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btn_fit_route"
-                style="@style/Widget.AKR.Button.PillSoft"
-                android:layout_width="wrap_content"
-                android:layout_height="34dp"
-                android:layout_marginStart="6dp"
-                android:fontFamily="sans-serif-bold"
-                android:paddingHorizontal="10dp"
-                android:text="Route 🗺️"
-                android:textColor="@color/white"
-                android:textSize="11sp"
-                app:backgroundTint="#AA0F172A"
-                app:cornerRadius="17dp"
-                app:strokeColor="#44FFFFFF"
-                app:strokeWidth="1dp" />
-        </LinearLayout>
-
-        <!-- Map Style Switcher (bottom-right overlay) -->
-        <LinearLayout
-            android:id="@+id/ll_map_theme_switcher"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="bottom|end"
-            android:layout_marginEnd="14dp"
-            android:layout_marginBottom="8dp"
-            android:background="@drawable/bg_pill_dark"
-            android:elevation="6dp"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:paddingHorizontal="8dp"
-            android:paddingVertical="5dp">
-
-            <TextView
-                android:id="@+id/btn_map_theme_street"
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:fontFamily="sans-serif-bold"
-                android:text="🗺️"
-                android:textSize="14sp"
-                android:paddingHorizontal="5dp"
-                android:clickable="true"
-                android:focusable="true" />
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="16dp">
 
-            <TextView
-                android:id="@+id/btn_map_theme_dark"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:fontFamily="sans-serif-bold"
-                android:text="🌙"
-                android:textSize="14sp"
-                android:paddingHorizontal="5dp"
-                android:clickable="true"
-                android:focusable="true" />
+                <!-- Valet Avatar Frame -->
+                <FrameLayout
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:background="@drawable/bg_icon_circle_soft">
 
-            <TextView
-                android:id="@+id/btn_map_theme_sat"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:fontFamily="sans-serif-bold"
-                android:text="🛰️"
-                android:textSize="14sp"
-                android:paddingHorizontal="5dp"
-                android:clickable="true"
-                android:focusable="true" />
-        </LinearLayout>
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/ic_scooter_fast"
+                        app:tint="@color/primary" />
+                </FrameLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/tv_fs_driver_name"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:ellipsize="end"
+                        android:fontFamily="sans-serif-black"
+                        android:maxLines="1"
+                        android:text="Delivery Valet"
+                        android:textColor="@color/text_primary"
+                        android:textSize="15sp" />
+
+                    <TextView
+                        android:id="@+id/tv_fs_driver_sub"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:ellipsize="end"
+                        android:fontFamily="sans-serif-medium"
+                        android:maxLines="1"
+                        android:text="🛵 Realtime Tracking Active"
+                        android:textColor="@color/primary"
+                        android:textSize="11.5sp" />
+                </LinearLayout>
+
+                <!-- Fullscreen Call Valet Button -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_fs_call_driver"
+                    android:layout_width="42dp"
+                    android:layout_height="42dp"
+                    android:layout_marginEnd="8dp"
+                    android:backgroundTint="@color/success"
+                    android:insetLeft="0dp"
+                    android:insetTop="0dp"
+                    android:insetRight="0dp"
+                    android:insetBottom="0dp"
+                    android:padding="0dp"
+                    app:cornerRadius="21dp"
+                    app:elevation="2dp"
+                    app:icon="@drawable/ic_phone"
+                    app:iconGravity="textStart"
+                    app:iconPadding="0dp"
+                    app:iconSize="18dp"
+                    app:iconTint="@color/white" />
+
+                <!-- Exit Fullscreen Button -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_fs_exit"
+                    style="@style/Widget.AKR.Button.PillSoft"
+                    android:layout_width="wrap_content"
+                    android:layout_height="40dp"
+                    android:fontFamily="sans-serif-bold"
+                    android:paddingHorizontal="14dp"
+                    android:text="Details ⌄"
+                    android:textColor="@color/primary"
+                    android:textSize="12sp"
+                    app:cornerRadius="20dp" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
 
     </FrameLayout>
 
@@ -322,7 +462,7 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="-28dp"
+            android:layout_marginTop="-24dp"
             android:orientation="vertical"
             android:paddingHorizontal="16dp">
 
@@ -344,6 +484,7 @@
                     android:orientation="vertical"
                     android:padding="20dp">
 
+                    <!-- Header Row: Label on left, Status Pill on right with maxWidth to prevent squishing -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -354,56 +495,56 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:orientation="vertical">
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
 
-                            <LinearLayout
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:gravity="center_vertical"
-                                android:orientation="horizontal">
-
-                                <ImageView
-                                    android:layout_width="14dp"
-                                    android:layout_height="14dp"
-                                    android:src="@drawable/ic_clock"
-                                    app:tint="@color/text_hint" />
-
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginStart="5dp"
-                                    android:fontFamily="sans-serif-bold"
-                                    android:letterSpacing="0.08"
-                                    android:text="ESTIMATED ARRIVAL"
-                                    android:textColor="@color/text_hint"
-                                    android:textSize="11sp" />
-                            </LinearLayout>
+                            <ImageView
+                                android:layout_width="15dp"
+                                android:layout_height="15dp"
+                                android:src="@drawable/ic_clock"
+                                app:tint="@color/text_hint" />
 
                             <TextView
-                                android:id="@+id/tv_eta"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="3dp"
-                                android:fontFamily="sans-serif-black"
-                                android:letterSpacing="-0.02"
-                                android:text="~30 mins"
-                                android:textColor="@color/primary"
-                                android:textSize="32sp" />
+                                android:layout_marginStart="6dp"
+                                android:fontFamily="sans-serif-bold"
+                                android:letterSpacing="0.06"
+                                android:text="ESTIMATED ARRIVAL"
+                                android:textColor="@color/text_hint"
+                                android:textSize="11sp" />
                         </LinearLayout>
 
-                        <!-- Dynamic Status Pill Badge -->
+                        <!-- Dynamic Status Pill Badge (with maxWidth to never push ETA) -->
                         <TextView
                             android:id="@+id/tv_order_status"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:background="@drawable/bg_pill_soft"
+                            android:ellipsize="end"
                             android:fontFamily="sans-serif-bold"
-                            android:paddingHorizontal="14dp"
-                            android:paddingVertical="7dp"
+                            android:maxLines="1"
+                            android:maxWidth="190dp"
+                            android:paddingHorizontal="12dp"
+                            android:paddingVertical="6dp"
                             android:text="🛵 Out for Delivery"
                             android:textColor="@color/primary"
-                            android:textSize="12.5sp" />
+                            android:textSize="12sp" />
                     </LinearLayout>
+
+                    <!-- Large ETA Display: Full card width so "Arriving now! 🎉" never wraps into 4 broken lines -->
+                    <TextView
+                        android:id="@+id/tv_eta"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:ellipsize="end"
+                        android:fontFamily="sans-serif-black"
+                        android:letterSpacing="-0.02"
+                        android:maxLines="1"
+                        android:text="~30 mins"
+                        android:textColor="@color/primary"
+                        android:textSize="30sp" />
 
                     <!-- Horizontal Progress Tracker -->
                     <ProgressBar
@@ -411,7 +552,7 @@
                         style="@style/Widget.AppCompat.ProgressBar.Horizontal"
                         android:layout_width="match_parent"
                         android:layout_height="8dp"
-                        android:layout_marginTop="18dp"
+                        android:layout_marginTop="16dp"
                         android:progress="60"
                         android:progressDrawable="@drawable/bg_delivery_progress" />
 
@@ -601,9 +742,9 @@
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:layout_marginBottom="10dp"
                         android:gravity="center_vertical"
-                        android:orientation="horizontal"
-                        android:layout_marginBottom="10dp">
+                        android:orientation="horizontal">
 
                         <TextView
                             android:layout_width="0dp"
@@ -713,6 +854,26 @@
                                 android:textSize="11.5sp" />
                         </LinearLayout>
 
+                        <!-- Direct Chat Restaurant Button -->
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btn_chat_restaurant"
+                            android:layout_width="46dp"
+                            android:layout_height="46dp"
+                            android:layout_marginEnd="6dp"
+                            android:backgroundTint="@color/primary"
+                            android:insetLeft="0dp"
+                            android:insetTop="0dp"
+                            android:insetRight="0dp"
+                            android:insetBottom="0dp"
+                            android:padding="0dp"
+                            app:cornerRadius="23dp"
+                            app:elevation="4dp"
+                            app:icon="@drawable/ic_chat"
+                            app:iconGravity="textStart"
+                            app:iconPadding="0dp"
+                            app:iconSize="18dp"
+                            app:iconTint="@color/white" />
+
                         <!-- Direct Call Restaurant Button -->
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btn_call_restaurant"
@@ -763,9 +924,9 @@
                             android:layout_height="wrap_content"
                             android:layout_marginEnd="12dp"
                             android:fontFamily="sans-serif-medium"
+                            android:text="Delivery: ₹40.00"
                             android:textColor="@color/text_secondary"
-                            android:textSize="11sp"
-                            android:text="Delivery: ₹40.00" />
+                            android:textSize="11sp" />
 
                         <TextView
                             android:id="@+id/tv_order_total"
@@ -902,6 +1063,26 @@
                                 android:textSize="12sp" />
 
                         </LinearLayout>
+
+                        <!-- Direct Chat Valet Button -->
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btn_chat_driver"
+                            android:layout_width="48dp"
+                            android:layout_height="48dp"
+                            android:layout_marginEnd="6dp"
+                            android:backgroundTint="@color/primary"
+                            android:insetLeft="0dp"
+                            android:insetTop="0dp"
+                            android:insetRight="0dp"
+                            android:insetBottom="0dp"
+                            android:padding="0dp"
+                            app:cornerRadius="24dp"
+                            app:elevation="4dp"
+                            app:icon="@drawable/ic_chat"
+                            app:iconGravity="textStart"
+                            app:iconPadding="0dp"
+                            app:iconSize="20dp"
+                            app:iconTint="@color/white" />
 
                         <!-- Direct Call Valet Button -->
                         <com.google.android.material.button.MaterialButton
@@ -1098,9 +1279,9 @@
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:layout_marginBottom="12dp"
                         android:gravity="center_vertical"
-                        android:orientation="horizontal"
-                        android:layout_marginBottom="12dp">
+                        android:orientation="horizontal">
 
                         <TextView
                             android:layout_width="0dp"

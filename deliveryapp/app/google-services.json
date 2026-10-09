@@ -1,0 +1,101 @@
+{
+  "project_info": {
+    "project_number": "670606536695",
+    "firebase_url": "https://akr-hunger-default-rtdb.firebaseio.com",
+    "project_id": "akr-hunger",
+    "storage_bucket": "akr-hunger.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:670606536695:android:c3abd7545d160daa5508f2",
+        "android_client_info": {
+          "package_name": "com.ssr.hunger.delivery"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "670606536695-1eoqfpfa4pb3c0m5mji8o4ukpkq5ssg8.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.ssr.hunger.delivery",
+            "certificate_hash": "b0d955fde7d427ecff90329ede8394e28420135e"
+          }
+        },
+        {
+          "client_id": "670606536695-mmmbqp0eajfi8mqgnt3gdfcf4tiu4e2l.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.ssr.hunger.delivery",
+            "certificate_hash": "2addb17d3bf6a535f6b0138094ca25009851d3e4"
+          }
+        },
+        {
+          "client_id": "670606536695-93so6an04lju2amlng232bhlubvgd19l.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAHx-UZYdZezFUnZ9ntgEdJPGyNh9vndr8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "670606536695-93so6an04lju2amlng232bhlubvgd19l.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:670606536695:android:c3abd7545d160daa5508f2",
+        "android_client_info": {
+          "package_name": "com.ssr.hunger"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "670606536695-1eoqfpfa4pb3c0m5mji8o4ukpkq5ssg8.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.ssr.hunger",
+            "certificate_hash": "b0d955fde7d427ecff90329ede8394e28420135e"
+          }
+        },
+        {
+          "client_id": "670606536695-mmmbqp0eajfi8mqgnt3gdfcf4tiu4e2l.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.ssr.hunger",
+            "certificate_hash": "2addb17d3bf6a535f6b0138094ca25009851d3e4"
+          }
+        },
+        {
+          "client_id": "670606536695-93so6an04lju2amlng232bhlubvgd19l.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAHx-UZYdZezFUnZ9ntgEdJPGyNh9vndr8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "670606536695-93so6an04lju2amlng232bhlubvgd19l.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

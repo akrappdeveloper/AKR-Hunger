@@ -106,7 +106,7 @@ function LoginContent() {
                     Verification in Progress
                   </h1>
                   <p className="text-xs sm:text-sm text-muted-foreground max-w-sm mx-auto">
-                    Thank you for applying to the AKR Hunger Fleet! Our administrative verification team is actively reviewing your submitted documents.
+                    Thank you for applying to the Hunger Fleet! Our administrative verification team is actively reviewing your submitted documents.
                   </p>
                 </div>
 
@@ -178,7 +178,7 @@ function LoginContent() {
         </main>
 
         <footer className="w-full py-4 text-center text-xs text-muted-foreground">
-          © {new Date().getFullYear()} AKR Hunger Logistics Network.
+          © {new Date().getFullYear()} Hunger Logistics Network.
         </footer>
       </div>
     );
@@ -213,7 +213,7 @@ function LoginContent() {
               <Bike className="w-full h-full text-blue-500" />
             </div>
             <span className="font-extrabold text-base sm:text-lg tracking-tight">
-              AKR<span className="text-blue-500 font-black">Fleet</span>
+              Hunger<span className="text-blue-500 font-black">Fleet</span>
             </span>
           </div>
         </Link>
@@ -236,7 +236,7 @@ function LoginContent() {
             <div className="space-y-4">
               <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/25 text-blue-500 text-xs font-bold tracking-wide uppercase">
                 <Zap className="w-3.5 h-3.5 text-blue-500" />
-                <span>AKR Logistics Network</span>
+                <span>Hunger Logistics Network</span>
               </div>
               <h1 className="text-4xl xl:text-5xl font-black tracking-tight leading-[1.15] text-foreground">
                 Deliver Speed,{' '}
@@ -399,7 +399,7 @@ function LoginContent() {
                   {/* Register Callout */}
                   <div className="mt-5 text-center">
                     <p className="text-xs text-muted-foreground">
-                      Want to deliver with AKR Hunger?{' '}
+                      Want to deliver with Hunger?{' '}
                       <Link
                         href="/delivery/register"
                         className="text-blue-500 hover:text-blue-400 font-bold hover:underline transition-colors"
@@ -440,7 +440,7 @@ function LoginContent() {
 
       {/* Footer copyright */}
       <footer className="w-full py-4 text-center text-xs text-muted-foreground z-10">
-        © {new Date().getFullYear()} AKR Hunger Logistics Network. All rights reserved.
+        © {new Date().getFullYear()} Hunger Logistics Network. All rights reserved.
       </footer>
     </div>
   );

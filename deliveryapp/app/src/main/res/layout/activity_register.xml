@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/surface"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Join Delivery Fleet"
+            android:textColor="@color/text_primary"
+            android:textSize="24sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="Register to start delivering food &amp; receiving payouts."
+            android:textColor="@color/text_secondary"
+            android:textSize="14sp" />
+
+        <!-- Name -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/et_reg_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Full Name"
+                android:inputType="textPersonName" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Phone -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/et_reg_phone"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Phone Number (10 digits)"
+                android:inputType="phone"
+                android:maxLength="10" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Email -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/et_reg_email"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Email Address"
+                android:inputType="textEmailAddress" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Password -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            app:passwordToggleEnabled="true"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/et_reg_password"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Password"
+                android:inputType="textPassword" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Vehicle Type Spinner / Input -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/et_reg_vehicle_type"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Vehicle Type (e.g. Bike, Scooter, EV)"
+                android:text="Motorcycle" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Vehicle Number -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/et_reg_vehicle_number"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Vehicle Reg Number (e.g. MH12AB1234)"
+                android:inputType="textCapCharacters" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- License Number -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/et_reg_license"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Driving License Number"
+                android:inputType="textCapCharacters" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Emergency Phone -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/et_reg_emergency"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Emergency Contact Phone"
+                android:inputType="phone" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Service Pincode -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/et_reg_pincode"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Primary Service Pincode (e.g. 411001)"
+                android:inputType="number"
+                android:maxLength="6" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Submit Button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_reg_submit"
+            style="@style/Widget.Material3.Button"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:layout_marginTop="24dp"
+            android:text="Submit Partner Application"
+            android:textColor="@color/on_primary"
+            app:backgroundTint="@color/primary"
+            app:cornerRadius="26dp" />
+
+        <!-- Login Link -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="20dp"
+            android:layout_marginBottom="32dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Already registered? "
+                android:textColor="@color/text_secondary"
+                android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/tv_go_to_login"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Sign In"
+                android:textColor="@color/primary"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <ProgressBar
+            android:id="@+id/progress_reg"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:visibility="gone"
+            android:indeterminateTint="@color/primary" />
+
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>

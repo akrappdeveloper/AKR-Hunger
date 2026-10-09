@@ -192,6 +192,10 @@ public class RestaurantDetailActivity extends BaseActivity {
                     startActivity(intent);
                 },
                 item -> {
+                    if (menuAdapter != null && !menuAdapter.isRestaurantOpen()) {
+                        Toast.makeText(this, "🔴 Restaurant is currently closed. Ordering is disabled, but you can add items to your wishlist!", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
                     CartItem cartItem = new CartItem(item.getId(), item.getRestaurantId(), item.getName(),
                             item.getPrice(), 1, item.getImage(),
                             item.getRestaurantName() != null ? item.getRestaurantName() : restaurantName);
@@ -282,8 +286,17 @@ public class RestaurantDetailActivity extends BaseActivity {
     private void loadRestaurant() {
         logBreadcrumb("Loading restaurant: " + restaurantId);
         db.collection(Constants.COLLECTION_RESTAURANTS).document(restaurantId)
-                .get()
-                .addOnSuccessListener(doc -> {
+                .addSnapshotListener((doc, error) -> {
+                    if (error != null) {
+                        recordException("loadRestaurant_failed", error);
+                        return;
+                    }
+                    if (doc == null || !doc.exists()) {
+                        stopTrace(menuLoadTrace);
+                        finish();
+                        return;
+                    }
+
                     Restaurant restaurant = doc.toObject(Restaurant.class);
                     if (restaurant == null) {
                         stopTrace(menuLoadTrace);
@@ -295,19 +308,38 @@ public class RestaurantDetailActivity extends BaseActivity {
                     crashlyticsHelper.setCustomKey("viewing_restaurant", restaurantName);
                     analyticsHelper.logSelectContent("restaurant", restaurantId, restaurantName);
 
-                    populateHeader(restaurant);
+                    boolean isOperating = restaurant.isOperatingNow();
+                    if (menuAdapter != null) {
+                        menuAdapter.setRestaurantOpen(isOperating);
+                    }
+
+                    populateHeader(restaurant, isOperating);
+
+                    if (!isOperating) {
+                        if (barViewCart != null) {
+                            barViewCart.setVisibility(View.GONE);
+                        }
+                    } else {
+                        updateBottomCartBar();
+                    }
+
                     // GPS-based pincode delivery availability check (non-blocking)
                     checkRestaurantAvailabilityByGps(restaurant);
-                    loadMenuItems(restaurant.getName());
-                })
-                .addOnFailureListener(e -> {
-                    stopTrace(menuLoadTrace);
-                    recordException("loadRestaurant_failed", e);
+
+                    if (allMenuItems.isEmpty()) {
+                        loadMenuItems(restaurant.getName());
+                    }
                 });
     }
 
-    private void populateHeader(Restaurant restaurant) {
-        ((TextView) findViewById(R.id.tv_restaurant_name)).setText(restaurant.getName());
+    private void populateHeader(Restaurant restaurant, boolean isOperating) {
+        TextView tvName = findViewById(R.id.tv_restaurant_name);
+        if (isOperating) {
+            tvName.setText(restaurant.getName());
+        } else {
+            tvName.setText(restaurant.getName() + " (CLOSED)");
+        }
+
         ((TextView) findViewById(R.id.tv_restaurant_cuisine)).setText(restaurant.getCuisineString());
         ((TextView) findViewById(R.id.tv_restaurant_rating)).setText(restaurant.getDisplayRating());
 

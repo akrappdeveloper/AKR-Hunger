@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="8dp"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="1dp"
+    app:strokeColor="@color/card_border"
+    app:strokeWidth="1dp"
+    app:cardBackgroundColor="@color/surface">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="14dp">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentStart="true"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tv_tx_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Delivery Earning"
+                android:textColor="@color/text_primary"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tv_tx_date"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="08 Oct, 08:30 PM"
+                android:textColor="@color/text_hint"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/tv_tx_amount"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:text="+₹65.00"
+            android:textColor="@color/veg_green"
+            android:textSize="15sp"
+            android:textStyle="bold" />
+    </RelativeLayout>
+</com.google.android.material.card.MaterialCardView>

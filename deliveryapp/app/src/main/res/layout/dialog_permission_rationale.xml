@@ -1,0 +1,253 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    app:cardCornerRadius="24dp"
+    app:cardElevation="8dp"
+    app:strokeColor="@color/card_border"
+    app:strokeWidth="1dp"
+    app:cardBackgroundColor="@color/surface">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp">
+
+        <!-- Header with App Logo -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <ImageView
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:src="@drawable/ic_hunger_delivery_partner"
+                android:contentDescription="Hunger Delivery Partner" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="14dp"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Required Permissions"
+                    android:textColor="@color/text_primary"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="To start delivering and earning with Hunger"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="12sp" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginVertical="16dp"
+            android:background="@color/divider" />
+
+        <!-- 1. Location Item -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="14dp">
+
+            <ImageView
+                android:layout_width="38dp"
+                android:layout_height="38dp"
+                android:background="@drawable/bg_pill_primary"
+                android:backgroundTint="@color/primary_tint"
+                android:padding="8dp"
+                android:src="@drawable/ic_location"
+                app:tint="@color/primary"
+                android:contentDescription="Location" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="12dp"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Precise GPS Location"
+                    android:textColor="@color/text_primary"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Live radar tracking, route map &amp; customer ETA"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="12sp" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- 2. Notifications Item -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="14dp">
+
+            <ImageView
+                android:layout_width="38dp"
+                android:layout_height="38dp"
+                android:background="@drawable/bg_pill_primary"
+                android:backgroundTint="@color/primary_tint"
+                android:padding="8dp"
+                android:src="@drawable/ic_bell"
+                app:tint="@color/primary"
+                android:contentDescription="Notifications" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="12dp"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Instant Notifications"
+                    android:textColor="@color/text_primary"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="High-priority new order alerts &amp; cash earnings"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="12sp" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- 3. Camera Item -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="14dp">
+
+            <ImageView
+                android:layout_width="38dp"
+                android:layout_height="38dp"
+                android:background="@drawable/bg_pill_primary"
+                android:backgroundTint="@color/surface_variant"
+                android:padding="8dp"
+                android:src="@drawable/ic_camera"
+                app:tint="@color/text_primary"
+                android:contentDescription="Camera" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="12dp"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Camera &amp; Photos"
+                    android:textColor="@color/text_primary"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Attach delivery photo proof &amp; KYC bag check"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="12sp" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- 4. Phone Calling Item -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="20dp">
+
+            <ImageView
+                android:layout_width="38dp"
+                android:layout_height="38dp"
+                android:background="@drawable/bg_pill_primary"
+                android:backgroundTint="@color/surface_variant"
+                android:padding="8dp"
+                android:src="@drawable/ic_phone"
+                app:tint="@color/text_primary"
+                android:contentDescription="Phone" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="12dp"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Phone Calling"
+                    android:textColor="@color/text_primary"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="1-tap hotline call to customer &amp; restaurant"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="12sp" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Buttons -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_grant_permissions"
+            style="@style/Widget.Material3.Button"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:text="Grant Permissions"
+            android:textColor="@color/on_primary"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            app:backgroundTint="@color/primary"
+            app:cornerRadius="26dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_open_settings"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="Open App Settings"
+            android:textColor="@color/text_secondary"
+            android:textSize="13sp" />
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>

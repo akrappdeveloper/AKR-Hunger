@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/surface"
+        app:elevation="2dp">
+
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/toolbar_support"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            app:navigationIcon="@drawable/ic_back"
+            app:title="Partner Help &amp; Support"
+            app:titleTextColor="@color/text_primary" />
+
+        <com.google.android.material.tabs.TabLayout
+            android:id="@+id/tab_layout_support"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:tabIndicatorColor="@color/primary"
+            app:tabSelectedTextColor="@color/primary"
+            app:tabTextColor="@color/text_secondary">
+
+            <com.google.android.material.tabs.TabItem
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="New Ticket" />
+
+            <com.google.android.material.tabs.TabItem
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="My Tickets" />
+
+            <com.google.android.material.tabs.TabItem
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="FAQs" />
+        </com.google.android.material.tabs.TabLayout>
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <FrameLayout
+        android:id="@+id/support_content_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+        <!-- TAB 1: New Ticket Layout -->
+        <ScrollView
+            android:id="@+id/layout_tab_new_ticket"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:padding="16dp"
+            android:visibility="visible">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Create Support Request"
+                    android:textColor="@color/text_primary"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="Our operations team typically responds within 15 minutes."
+                    android:textColor="@color/text_secondary"
+                    android:textSize="13sp" />
+
+                <!-- Category -->
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/et_ticket_category"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="Category (Order, Wallet, KYC, Technical)"
+                        android:text="Order Issue" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <!-- Subject -->
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/et_ticket_subject"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="Subject (Brief description)" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <!-- Description -->
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/et_ticket_desc"
+                        android:layout_width="match_parent"
+                        android:layout_height="120dp"
+                        android:gravity="top|start"
+                        android:hint="Detailed description of the issue"
+                        android:inputType="textMultiLine" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_submit_ticket"
+                    style="@style/Widget.Material3.Button"
+                    android:layout_width="match_parent"
+                    android:layout_height="52dp"
+                    android:layout_marginTop="20dp"
+                    android:text="Submit Ticket"
+                    android:textColor="@color/on_primary"
+                    app:backgroundTint="@color/primary"
+                    app:cornerRadius="26dp" />
+
+                <!-- Call Hotline Option -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_call_support_hotline"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:layout_marginTop="12dp"
+                    android:layout_marginBottom="24dp"
+                    android:text="Call 24x7 Driver Hotline"
+                    android:textColor="@color/primary"
+                    app:icon="@drawable/ic_phone"
+                    app:strokeColor="@color/primary"
+                    app:cornerRadius="25dp" />
+            </LinearLayout>
+        </ScrollView>
+
+        <!-- TAB 2: My Tickets Layout -->
+        <LinearLayout
+            android:id="@+id/layout_tab_my_tickets"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:padding="16dp"
+            android:visibility="gone">
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rv_support_tickets"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+
+            <TextView
+                android:id="@+id/tv_empty_tickets"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="40dp"
+                android:text="No support tickets opened yet."
+                android:textAlignment="center"
+                android:textColor="@color/text_hint"
+                android:visibility="gone" />
+        </LinearLayout>
+
+        <!-- TAB 3: FAQ Layout -->
+        <ScrollView
+            android:id="@+id/layout_tab_faq"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:padding="16dp"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:id="@+id/ll_faq_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+        </ScrollView>
+
+    </FrameLayout>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

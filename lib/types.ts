@@ -102,8 +102,23 @@ export interface Restaurant {
   isKetoFriendly?: boolean;
   isLateNight?: boolean;
   isEcoPackaging?: boolean;
-  isKidsFriendly?: boolean;
-  isFreshlyPrepared?: boolean;
+  isCurrentlyOpen?: boolean;
+  schedule?: Record<string, {
+    isOpen: boolean;
+    openTime: string;
+    closeTime: string;
+    breakStart?: string;
+    breakEnd?: string;
+  }>;
+  specialDays?: Array<{
+    date: string;
+    reason: string;
+    isClosed: boolean;
+    openTime?: string;
+    closeTime?: string;
+  }>;
+  preparationTime?: number;
+  maxOrdersPerHour?: number;
 }
 
 export interface MenuItem {
@@ -128,6 +143,16 @@ export interface MenuItem {
   tags?: string[];
   isBestSeller?: boolean;
   isNew?: boolean;
+  isChefSpecial?: boolean;
+  isMustTry?: boolean;
+  isTrending?: boolean;
+  isHealthyChoice?: boolean;
+  isSeasonalSpecial?: boolean;
+  isLimitedEdition?: boolean;
+  isHouseSpecialty?: boolean;
+  isKidsFavorite?: boolean;
+  badges?: string[];
+  orderCount?: number;
   // Enhanced for reviews and search
   averageRating?: number;
   totalReviews?: number;

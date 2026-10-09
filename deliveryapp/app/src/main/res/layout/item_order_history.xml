@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="10dp"
+    app:cardCornerRadius="14dp"
+    app:cardElevation="1dp"
+    app:strokeColor="@color/card_border"
+    app:strokeWidth="1dp"
+    app:cardBackgroundColor="@color/surface">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="14dp">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:id="@+id/tv_history_order_id"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentStart="true"
+                android:text="#ORD-7193"
+                android:textColor="@color/text_primary"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tv_history_earning"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:text="+₹62.00"
+                android:textColor="@color/veg_green"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+        </RelativeLayout>
+
+        <TextView
+            android:id="@+id/tv_history_date"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:text="08 Oct, 07:45 PM"
+            android:textColor="@color/text_hint"
+            android:textSize="12sp" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginVertical="8dp"
+            android:background="@color/divider" />
+
+        <TextView
+            android:id="@+id/tv_history_restaurant"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Royal Biryani House"
+            android:textColor="@color/text_primary"
+            android:textSize="13sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tv_history_customer_address"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:text="Delivered to: Kothrud, Pune - 411038"
+            android:textColor="@color/text_secondary"
+            android:textSize="12sp"
+            android:maxLines="1"
+            android:ellipsize="end" />
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp">
+
+            <TextView
+                android:id="@+id/tv_history_status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_pill_primary"
+                android:backgroundTint="@color/veg_bg"
+                android:paddingHorizontal="8dp"
+                android:paddingVertical="3dp"
+                android:text="Delivered"
+                android:textColor="@color/veg_green"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tv_history_payment"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:text="Paid Online"
+                android:textColor="@color/text_tertiary"
+                android:textSize="11sp" />
+        </RelativeLayout>
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>

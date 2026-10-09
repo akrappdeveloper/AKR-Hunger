@@ -18,6 +18,8 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { checkRestaurantOperatingStatus, formatTime12Hr } from '@/lib/restaurant-schedule';
+
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 const SHORT_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
@@ -58,26 +60,80 @@ export default function RestaurantSchedulePage() {
   const [maxOrdersPerHour, setMaxOrdersPerHour] = useState(20);
   const [isCurrentlyOpen, setIsCurrentlyOpen] = useState(true);
   const [temporaryClosure, setTemporaryClosure] = useState('');
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  // Clock tick every minute to re-evaluate real-time operating status
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 30000);
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     if (!user) return;
-    const getRestId = async () => {
-      const snap = await getDoc(doc(db, 'users', user.uid));
-      const rid = snap.data()?.restaurantId;
-      setRestaurantId(rid);
-      if (!rid) { setLoading(false); return; }
+    let unsubscribeRestaurant: (() => void) | null = null;
 
-      onSnapshot(doc(db, 'restaurants', rid), snap => {
-        const data = snap.data();
-        if (data?.schedule) setSchedule({ ...DEFAULT_SCHEDULE, ...data.schedule });
-        if (data?.specialDays) setSpecialDays(data.specialDays);
-        if (data?.preparationTime) setPreparationTime(data.preparationTime);
-        if (data?.maxOrdersPerHour) setMaxOrdersPerHour(data.maxOrdersPerHour);
-        if (typeof data?.isCurrentlyOpen === 'boolean') setIsCurrentlyOpen(data.isCurrentlyOpen);
+    const resolveAndListen = async () => {
+      try {
+        let rid = (user as any)?.restaurantId;
+
+        if (!rid) {
+          const userSnap = await getDoc(doc(db, 'users', user.uid));
+          if (userSnap.exists() && userSnap.data()?.restaurantId) {
+            rid = userSnap.data().restaurantId;
+          }
+        }
+
+        if (!rid) {
+          const directRestDoc = await getDoc(doc(db, 'restaurants', user.uid));
+          if (directRestDoc.exists()) {
+            rid = user.uid;
+          } else {
+            const q = query(collection(db, 'restaurants'), where('ownerId', '==', user.uid));
+            const ownerSnap = await getDocs(q);
+            if (!ownerSnap.empty) {
+              rid = ownerSnap.docs[0].id;
+            }
+          }
+        }
+
+        if (!rid) {
+          setLoading(false);
+          return;
+        }
+
+        setRestaurantId(rid);
+
+        // Realtime listener for restaurant document
+        unsubscribeRestaurant = onSnapshot(doc(db, 'restaurants', rid), snap => {
+          if (!snap.exists()) {
+            setLoading(false);
+            return;
+          }
+          const data = snap.data();
+          if (data?.schedule) setSchedule({ ...DEFAULT_SCHEDULE, ...data.schedule });
+          if (data?.specialDays) setSpecialDays(data.specialDays);
+          if (data?.preparationTime) setPreparationTime(data.preparationTime);
+          if (data?.maxOrdersPerHour) setMaxOrdersPerHour(data.maxOrdersPerHour);
+          
+          // Sync isOpen & isCurrentlyOpen seamlessly
+          const openState = typeof data?.isCurrentlyOpen === 'boolean'
+            ? data.isCurrentlyOpen
+            : (typeof data?.isOpen === 'boolean' ? data.isOpen : true);
+          setIsCurrentlyOpen(openState);
+
+          setLoading(false);
+        });
+      } catch (err) {
+        console.error('Error resolving restaurant for schedule:', err);
         setLoading(false);
-      });
+      }
     };
-    getRestId();
+
+    resolveAndListen();
+
+    return () => {
+      if (unsubscribeRestaurant) unsubscribeRestaurant();
+    };
   }, [user]);
 
   const handleSave = async () => {
@@ -90,9 +146,12 @@ export default function RestaurantSchedulePage() {
         preparationTime,
         maxOrdersPerHour,
         isCurrentlyOpen,
+        isOpen: isCurrentlyOpen,
+        updatedAt: new Date(),
       });
-      toast.success('Schedule saved successfully!');
-    } catch {
+      toast.success('Schedule saved successfully! Real-time status updated across apps.');
+    } catch (e: any) {
+      console.error('Save schedule error:', e);
       toast.error('Failed to save schedule');
     } finally {
       setSaving(false);
@@ -103,9 +162,33 @@ export default function RestaurantSchedulePage() {
     if (!restaurantId) return;
     const newVal = !isCurrentlyOpen;
     setIsCurrentlyOpen(newVal);
-    await updateDoc(doc(db, 'restaurants', restaurantId), { isCurrentlyOpen: newVal }).catch(() => {});
-    toast.success(newVal ? '🟢 Restaurant is now OPEN' : '🔴 Restaurant is now CLOSED');
+    try {
+      await updateDoc(doc(db, 'restaurants', restaurantId), {
+        isCurrentlyOpen: newVal,
+        isOpen: newVal,
+        updatedAt: new Date(),
+      });
+      toast.success(
+        newVal
+          ? '🟢 Restaurant is now OPEN! Customers can order.'
+          : '🔴 Restaurant is now CLOSED! Customers can only view & wishlist.'
+      );
+    } catch (e: any) {
+      console.error('Toggle error:', e);
+      toast.error('Failed to update live status');
+    }
   };
+
+  // Real-time computed operating status
+  const currentComputedStatus = checkRestaurantOperatingStatus(
+    {
+      isOpen: isCurrentlyOpen,
+      isCurrentlyOpen,
+      schedule,
+      specialDays,
+    },
+    currentTime
+  );
 
   const updateDay = (day: string, field: keyof DaySchedule, value: any) => {
     setSchedule(prev => ({ ...prev, [day]: { ...prev[day], [field]: value } }));
@@ -152,7 +235,7 @@ export default function RestaurantSchedulePage() {
       </div>
 
       {/* Live Status Toggle */}
-      <Card className={`rounded-2xl border-2 ${isCurrentlyOpen ? 'border-emerald-500/50 bg-emerald-50/50 dark:bg-emerald-950/10' : 'border-rose-500/50 bg-rose-50/50 dark:bg-rose-950/10'}`}>
+      <Card className={`rounded-2xl border-2 transition-all ${isCurrentlyOpen ? 'border-emerald-500/50 bg-emerald-50/50 dark:bg-emerald-950/10' : 'border-rose-500/50 bg-rose-50/50 dark:bg-rose-950/10'}`}>
         <CardContent className="p-5 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-2xl ${isCurrentlyOpen ? 'bg-emerald-100 dark:bg-emerald-900/30' : 'bg-rose-100 dark:bg-rose-900/30'}`}>
@@ -160,12 +243,36 @@ export default function RestaurantSchedulePage() {
             </div>
             <div>
               <p className="font-bold text-base">{isCurrentlyOpen ? 'Restaurant is OPEN' : 'Restaurant is CLOSED'}</p>
-              <p className="text-sm text-muted-foreground">Override toggle — overrides weekly schedule instantly</p>
+              <p className="text-sm text-muted-foreground">Override toggle — overrides weekly schedule instantly across apps</p>
             </div>
           </div>
           <Switch checked={isCurrentlyOpen} onCheckedChange={toggleCurrentlyOpen} className="data-[state=checked]:bg-emerald-500" />
         </CardContent>
       </Card>
+
+      {/* Real-time Customer View Status Banner */}
+      <div className={`p-4 rounded-2xl border flex items-center justify-between gap-3 ${
+        currentComputedStatus.isOpen
+          ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-800 dark:text-emerald-300'
+          : 'bg-rose-500/10 border-rose-500/30 text-rose-800 dark:text-rose-300'
+      }`}>
+        <div className="flex items-center gap-2.5">
+          <span className="text-xl">{currentComputedStatus.isOpen ? '⚡' : '⏸️'}</span>
+          <div>
+            <p className="text-xs uppercase font-black tracking-wider opacity-80">
+              Customer Live Status Right Now
+            </p>
+            <p className="text-sm font-bold">
+              {currentComputedStatus.isOpen
+                ? '🟢 Active & Accepting Orders in Web & Android App'
+                : `🔴 Closed to Customers (${currentComputedStatus.reason}) — Ordering & Cart adding disabled, Wishlist only`}
+            </p>
+          </div>
+        </div>
+        <Badge variant={currentComputedStatus.isOpen ? 'default' : 'destructive'} className="font-bold shrink-0">
+          {currentComputedStatus.isOpen ? 'Live: Open' : 'Live: Closed'}
+        </Badge>
+      </div>
 
       {/* Quick Stats */}
       <div className="grid grid-cols-3 gap-4">

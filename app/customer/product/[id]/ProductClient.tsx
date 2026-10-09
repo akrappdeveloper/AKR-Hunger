@@ -2,9 +2,10 @@
 
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { doc, getDoc, collection, query, where, getDocs, updateDoc, arrayUnion, arrayRemove, limit } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, getDocs, updateDoc, arrayUnion, arrayRemove, limit, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { MenuItem, Restaurant } from '@/lib/types';
+import { checkRestaurantOperatingStatus } from '@/lib/restaurant-schedule';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -392,8 +393,29 @@ export default function ProductClient({
     const [cookingNote, setCookingNote] = useState<string>('');
     const [activeTab, setActiveTab] = useState<'customize' | 'nutrition' | 'info'>('customize');
     const [shareOpen, setShareOpen] = useState(false);
+    const [currentTime, setCurrentTime] = useState(new Date());
 
     const totalCartCount = items.reduce((sum, item) => sum + item.quantity, 0);
+
+    // Keep clock tick every 30s so time-based schedule changes evaluate live
+    useEffect(() => {
+        const interval = setInterval(() => setCurrentTime(new Date()), 30000);
+        return () => clearInterval(interval);
+    }, []);
+
+    // Real-time restaurant listener
+    useEffect(() => {
+        const rid = product?.restaurantId || initialRestaurant?.id;
+        if (!rid) return;
+        const unsub = onSnapshot(doc(db, 'restaurants', rid), (snap) => {
+            if (snap.exists()) {
+                setRestaurant({ id: snap.id, ...snap.data() } as Restaurant);
+            }
+        });
+        return () => unsub();
+    }, [product?.restaurantId, initialRestaurant?.id]);
+
+    const operatingStatus = checkRestaurantOperatingStatus(restaurant, currentTime);
 
     useEffect(() => {
         if (!initialProduct && productId) loadProductData();
@@ -520,6 +542,10 @@ export default function ProductClient({
 
     const handleAddToCart = (isBuyNow = false) => {
         if (!product || !restaurant) return;
+        if (!operatingStatus.isOpen) {
+            toast.error(`Restaurant is currently closed (${operatingStatus.reason}). Ordering is paused, but you can save this dish to your wishlist!`);
+            return;
+        }
         const parts: string[] = [`Spice: ${selectedSpice}`];
         if (selectedSize.name !== 'Regular') parts.push(`Size: ${selectedSize.name}${selectedSize.price > 0 ? ` (+₹${selectedSize.price})` : ''}`);
         const addonList = Object.values(selectedAddOns);
@@ -599,7 +625,7 @@ export default function ProductClient({
                                 </div>
                             </Link>
                         ) : (
-                            <span className="font-extrabold text-sm text-foreground truncate">AKR Hunger</span>
+                            <span className="font-extrabold text-sm text-foreground truncate">Hunger</span>
                         )}
                     </div>
                     <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
@@ -610,7 +636,7 @@ export default function ProductClient({
                             {shareOpen && (
                                 <div className="absolute right-0 top-12 z-50 bg-card border border-border rounded-2xl shadow-xl p-3 min-w-[180px] space-y-1">
                                     <p className="text-xs font-bold text-muted-foreground px-2 pb-1 border-b border-border/60">Share this dish</p>
-                                    <button onClick={() => { window.open(`https://wa.me/?text=${encodeURIComponent(`Check out ${product.name} on AKR Hunger! ₹${product.price}. ${window.location.href}`)}`, '_blank'); setShareOpen(false); }} className="w-full text-left px-3 py-2 rounded-xl text-sm font-semibold hover:bg-muted flex items-center gap-2.5 transition-colors">💬 WhatsApp</button>
+                                    <button onClick={() => { window.open(`https://wa.me/?text=${encodeURIComponent(`Check out ${product.name} on Hunger! ₹${product.price}. ${window.location.href}`)}`, '_blank'); setShareOpen(false); }} className="w-full text-left px-3 py-2 rounded-xl text-sm font-semibold hover:bg-muted flex items-center gap-2.5 transition-colors">💬 WhatsApp</button>
                                     <button onClick={async () => { setShareOpen(false); const ok = await copyToClipboard(window.location.href); if (ok) toast.success("Link copied!"); }} className="w-full text-left px-3 py-2 rounded-xl text-sm font-semibold hover:bg-muted flex items-center gap-2.5 transition-colors">🔗 Copy Link</button>
                                 </div>
                             )}
@@ -634,6 +660,38 @@ export default function ProductClient({
             {shareOpen && <div className="fixed inset-0 z-40" onClick={() => setShareOpen(false)} />}
 
             <main className="w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 mt-4 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 relative z-10">
+                {/* Real-time Closed Alert Banner */}
+                {!operatingStatus.isOpen && (
+                    <div className="lg:col-span-12 p-4 sm:p-5 rounded-3xl bg-rose-500/10 border-2 border-rose-500/30 text-rose-700 dark:text-rose-300 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-lg shadow-rose-500/5 transition-all">
+                        <div className="flex items-center gap-3.5">
+                            <div className="w-12 h-12 rounded-2xl bg-rose-500 text-white flex items-center justify-center shrink-0 shadow-md">
+                                <AlertCircle className="w-6 h-6" />
+                            </div>
+                            <div>
+                                <div className="flex items-center gap-2 flex-wrap">
+                                    <span className="text-xs font-black uppercase tracking-wider text-rose-600 dark:text-rose-400 flex items-center gap-1.5">
+                                        <span className="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block animate-pulse" />
+                                        Restaurant is Currently Closed
+                                    </span>
+                                    {operatingStatus.nextOpenTime && (
+                                        <Badge variant="outline" className="text-[10px] border-rose-500/40 text-rose-600 dark:text-rose-400 font-bold">
+                                            Opens {operatingStatus.nextOpenTime}
+                                        </Badge>
+                                    )}
+                                </div>
+                                <h4 className="font-extrabold text-sm sm:text-base text-foreground mt-0.5">
+                                    {operatingStatus.reason}
+                                </h4>
+                                <p className="text-xs text-muted-foreground mt-0.5">
+                                    Orders and cart adding are paused. You can still save this dish to your wishlist!
+                                </p>
+                            </div>
+                        </div>
+                        <Badge variant="destructive" className="px-3 py-1 font-black text-xs uppercase tracking-wider shrink-0">
+                            Closed for Orders
+                        </Badge>
+                    </div>
+                )}
 
                 {/* ── LEFT COLUMN ────────────────────────────────────── */}
                 <div className="lg:col-span-6 space-y-5">
@@ -733,8 +791,15 @@ export default function ProductClient({
                                 <Badge variant="outline" className="border-rose-500/30 text-rose-500 bg-rose-500/10 font-semibold flex gap-1"><Flame className="w-3 h-3" /> Non-Vegetarian</Badge>
                             )}
                             {product.isBestSeller && <Badge className="bg-amber-500 text-black border-none font-bold">⭐ Bestseller</Badge>}
-                            {product.isNew && <Badge className="bg-blue-600 text-white border-none font-bold">🆕 New</Badge>}
-                            {(product as any)?.isChefSpecial && <Badge className="bg-rose-500 text-white border-none font-bold">👨‍🍳 Chef Special</Badge>}
+                            {product.isNew && <Badge className="bg-blue-600 text-white border-none font-bold">✨ New Arrival</Badge>}
+                            {(product as any)?.isChefSpecial && <Badge className="bg-rose-500 text-white border-none font-bold">👨‍🍳 Chef's Special</Badge>}
+                            {(product as any)?.isMustTry && <Badge className="bg-orange-500 text-white border-none font-bold">🔥 Must Try</Badge>}
+                            {(product as any)?.isTrending && <Badge className="bg-violet-600 text-white border-none font-bold">⚡ Trending</Badge>}
+                            {(product as any)?.isHealthyChoice && <Badge className="bg-emerald-600 text-white border-none font-bold">🥗 Healthy Choice</Badge>}
+                            {(product as any)?.isSeasonalSpecial && <Badge className="bg-amber-600 text-white border-none font-bold">🌟 Seasonal Special</Badge>}
+                            {(product as any)?.isLimitedEdition && <Badge className="bg-zinc-800 text-amber-300 border border-amber-400/40 font-bold">⏳ Limited Batch</Badge>}
+                            {(product as any)?.isHouseSpecialty && <Badge className="bg-indigo-600 text-white border-none font-bold">👑 House Specialty</Badge>}
+                            {(product as any)?.isKidsFavorite && <Badge className="bg-sky-500 text-white border-none font-bold">👶 Kids' Favorite</Badge>}
                         </div>
 
                         <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-foreground leading-tight tracking-tight mb-2">{product.name}</h1>
@@ -1039,18 +1104,39 @@ export default function ProductClient({
                             </div>
                         </div>
 
-                        <div className="flex gap-3 sm:gap-4">
-                            <Button onClick={() => handleAddToCart(false)} variant="outline"
-                                className="flex-1 h-12 sm:h-14 rounded-xl sm:rounded-2xl border-border bg-card hover:bg-muted text-foreground font-bold text-sm sm:text-base tracking-wide transition-all cursor-pointer shadow-sm"
-                            >
-                                <ShoppingCart className="w-4 h-4 mr-2" /> Add to Cart
-                            </Button>
-                            <Button onClick={() => handleAddToCart(true)}
-                                className="flex-1 h-12 sm:h-14 rounded-xl sm:rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-sm sm:text-base shadow-lg shadow-primary/25 tracking-wide transition-all cursor-pointer"
-                            >
-                                <Zap className="w-4 h-4 sm:w-5 sm:h-5 mr-2 fill-current" /> Buy Now
-                            </Button>
-                        </div>
+                        {!operatingStatus.isOpen ? (
+                            <div className="flex gap-3 sm:gap-4">
+                                <Button
+                                    onClick={handleToggleFavorite}
+                                    variant="outline"
+                                    className={`flex-1 h-12 sm:h-14 rounded-xl sm:rounded-2xl border-border bg-card font-bold text-sm sm:text-base gap-2 cursor-pointer transition-all ${
+                                        isFavorite ? 'border-rose-500 text-rose-500 bg-rose-500/10 hover:bg-rose-500/20' : 'hover:bg-muted text-foreground'
+                                    }`}
+                                >
+                                    <Heart className={`w-4 h-4 sm:w-5 sm:h-5 ${isFavorite ? 'fill-current text-rose-500' : ''}`} />
+                                    {isFavorite ? 'Saved in Wishlist' : 'Add to Wishlist'}
+                                </Button>
+                                <Button
+                                    disabled
+                                    className="flex-1 h-12 sm:h-14 rounded-xl sm:rounded-2xl bg-muted text-muted-foreground font-black text-sm sm:text-base cursor-not-allowed"
+                                >
+                                    Restaurant Closed
+                                </Button>
+                            </div>
+                        ) : (
+                            <div className="flex gap-3 sm:gap-4">
+                                <Button onClick={() => handleAddToCart(false)} variant="outline"
+                                    className="flex-1 h-12 sm:h-14 rounded-xl sm:rounded-2xl border-border bg-card hover:bg-muted text-foreground font-bold text-sm sm:text-base tracking-wide transition-all cursor-pointer shadow-sm"
+                                >
+                                    <ShoppingCart className="w-4 h-4 mr-2" /> Add to Cart
+                                </Button>
+                                <Button onClick={() => handleAddToCart(true)}
+                                    className="flex-1 h-12 sm:h-14 rounded-xl sm:rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-sm sm:text-base shadow-lg shadow-primary/25 tracking-wide transition-all cursor-pointer"
+                                >
+                                    <Zap className="w-4 h-4 sm:w-5 sm:h-5 mr-2 fill-current" /> Buy Now
+                                </Button>
+                            </div>
+                        )}
                     </div>
                 </div>
             </main>
@@ -1096,10 +1182,31 @@ export default function ProductClient({
                     <div className="text-xl font-black text-foreground">₹{totalPrice}</div>
                     <div className="text-[10px] text-primary font-semibold truncate max-w-[120px]">{selectedSpice}</div>
                 </div>
-                <div className="flex items-center gap-2 flex-1 justify-end">
-                    <Button onClick={() => handleAddToCart(false)} variant="outline" className="h-11 px-4 rounded-xl border-border font-bold text-xs cursor-pointer">Cart</Button>
-                    <Button onClick={() => handleAddToCart(true)} className="h-11 px-6 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-xs shadow-md shadow-primary/25 cursor-pointer"><Zap className="w-3.5 h-3.5 mr-1.5 fill-current" /> Buy Now</Button>
-                </div>
+                {!operatingStatus.isOpen ? (
+                    <div className="flex items-center gap-2 flex-1 justify-end">
+                        <Button
+                            onClick={handleToggleFavorite}
+                            variant="outline"
+                            className={`h-11 px-3 rounded-xl border font-bold text-xs gap-1.5 cursor-pointer ${
+                                isFavorite ? 'border-rose-500 text-rose-500 bg-rose-500/10' : ''
+                            }`}
+                        >
+                            <Heart className={`w-3.5 h-3.5 ${isFavorite ? 'fill-current text-rose-500' : ''}`} />
+                            {isFavorite ? 'Saved' : 'Wishlist'}
+                        </Button>
+                        <Button
+                            disabled
+                            className="h-11 px-4 rounded-xl bg-muted text-muted-foreground font-black text-xs cursor-not-allowed"
+                        >
+                            Closed
+                        </Button>
+                    </div>
+                ) : (
+                    <div className="flex items-center gap-2 flex-1 justify-end">
+                        <Button onClick={() => handleAddToCart(false)} variant="outline" className="h-11 px-4 rounded-xl border-border font-bold text-xs cursor-pointer">Cart</Button>
+                        <Button onClick={() => handleAddToCart(true)} className="h-11 px-6 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-xs shadow-md shadow-primary/25 cursor-pointer"><Zap className="w-3.5 h-3.5 mr-1.5 fill-current" /> Buy Now</Button>
+                    </div>
+                )}
             </div>
         </div>
     );

@@ -13,8 +13,8 @@ import { useCart } from '@/context/CartContext';
 import { Search, ShoppingCart, Star, Flame, Clock, Filter, MapPin, ChevronRight, TrendingUp, Plus, Store } from 'lucide-react';
 import Link from 'next/link';
 import SafeImage from '@/components/ui/safe-image';
-import SmartMealFinder from '@/components/customer/SmartMealFinder';
-import { MealIntent } from '@/lib/hunger-types-client';
+import { checkRestaurantOperatingStatus } from '@/lib/restaurant-schedule';
+import { toast } from 'sonner';
 
 // Curated Food Categories with Rich Vibrant Color Palettes
 const CATEGORIES = [
@@ -150,56 +150,73 @@ export default function CustomerHomePage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [activeTab, setActiveTab] = useState('delivery'); // 'delivery' or 'pickup'
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  // Clock tick every 30 seconds for live operating schedule evaluation
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 30000);
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
-    let unsubscribeMenu: () => void;
+    let unsubscribeMenu: (() => void) | null = null;
+    let unsubscribeRestaurants: (() => void) | null = null;
 
-    const initialize = async () => {
-      setLoading(true);
+    setLoading(true);
 
-      // 1. Fetch Restaurants
-      const restaurantMap = new Map<string, string>();
-      try {
-        const restaurantsRef = collection(db, 'restaurants');
-        const rSnapshot = await getDocs(restaurantsRef);
-        rSnapshot.docs.forEach(doc => {
-          restaurantMap.set(doc.id, doc.data().name);
-        });
-        setRestaurants(rSnapshot.docs.map(d => ({ ...d.data(), id: d.id } as Restaurant)));
-      } catch (e) {
-        console.error("Restaurant fetch failed:", e);
-      }
+    const restaurantMap = new Map<string, string>();
 
-      // 2. Listen to Menu Items
-      const menuRef = collection(db, 'menuItems');
-      const q = query(menuRef);
-
-      unsubscribeMenu = onSnapshot(q, (snapshot) => {
-        const list = snapshot.docs.map(doc => {
-          const data = doc.data();
-          return {
-            ...data,
-            id: doc.id,
-            restaurantName: restaurantMap.get(data.restaurantId) || 'Unknown Restaurant',
-            price: Number(data.price) || 0,
-            name: data.name || 'Unnamed',
-            image: data.image || 'https://via.placeholder.com/150',
-            category: data.category || 'General',
-            isLive: data.isLive ?? false,
-            available: data.available ?? true,
-            approvalStatus: data.approvalStatus || 'pending'
-          } as MenuItem & { restaurantName: string };
-        });
-
-        setMenuItems(list);
-        setLoading(false);
+    // 1. Realtime listener for Restaurants
+    const restaurantsRef = collection(db, 'restaurants');
+    unsubscribeRestaurants = onSnapshot(restaurantsRef, (rSnapshot) => {
+      restaurantMap.clear();
+      const list = rSnapshot.docs.map(doc => {
+        const data = doc.data();
+        restaurantMap.set(doc.id, data.name || 'Restaurant');
+        return { ...data, id: doc.id } as Restaurant;
       });
-    };
+      setRestaurants(list);
 
-    initialize();
+      // Re-map restaurant names on menu items if already loaded
+      setMenuItems(prev => prev.map(m => ({
+        ...m,
+        restaurantName: restaurantMap.get(m.restaurantId) || m.restaurantName || 'Restaurant'
+      })));
+    }, (err) => {
+      console.error('[Customer Home] Realtime restaurants listener notice:', err);
+    });
+
+    // 2. Realtime listener for Menu Items
+    const menuRef = collection(db, 'menuItems');
+    const q = query(menuRef);
+
+    unsubscribeMenu = onSnapshot(q, (snapshot) => {
+      const list = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          ...data,
+          id: doc.id,
+          restaurantName: restaurantMap.get(data.restaurantId) || 'Unknown Restaurant',
+          price: Number(data.price) || 0,
+          name: data.name || 'Unnamed',
+          image: data.image || 'https://via.placeholder.com/150',
+          category: data.category || 'General',
+          isLive: data.isLive ?? false,
+          available: data.available ?? true,
+          approvalStatus: data.approvalStatus || 'pending'
+        } as MenuItem & { restaurantName: string };
+      });
+
+      setMenuItems(list);
+      setLoading(false);
+    }, (err) => {
+      console.error('[Customer Home] Realtime menu listener notice:', err);
+      setLoading(false);
+    });
 
     return () => {
       if (unsubscribeMenu) unsubscribeMenu();
+      if (unsubscribeRestaurants) unsubscribeRestaurants();
     };
   }, []);
 
@@ -274,18 +291,16 @@ export default function CustomerHomePage() {
               onClick={() => setCategoryFilter('all')}
               className="snap-start flex flex-col items-center gap-1.5 sm:gap-2 min-w-[66px] sm:min-w-[80px] cursor-pointer group"
             >
-              <div className={`w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center text-2xl sm:text-3xl transition-all duration-300 border ${
-                categoryFilter === 'all'
-                  ? 'bg-gradient-to-tr from-primary via-orange-500 to-amber-500 text-white border-primary scale-110 shadow-lg shadow-primary/35 ring-2 ring-primary/30'
-                  : 'bg-gradient-to-br from-primary/15 via-orange-500/10 to-transparent border-primary/30 text-primary hover:border-primary/60 hover:shadow-md hover:shadow-primary/20 hover:scale-105 hover:-translate-y-0.5'
-              }`}>
+              <div className={`w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center text-2xl sm:text-3xl transition-all duration-300 border ${categoryFilter === 'all'
+                ? 'bg-gradient-to-tr from-primary via-orange-500 to-amber-500 text-white border-primary scale-110 shadow-lg shadow-primary/35 ring-2 ring-primary/30'
+                : 'bg-gradient-to-br from-primary/15 via-orange-500/10 to-transparent border-primary/30 text-primary hover:border-primary/60 hover:shadow-md hover:shadow-primary/20 hover:scale-105 hover:-translate-y-0.5'
+                }`}>
                 <span className="drop-shadow-xs group-hover:scale-115 transition-transform duration-300">
                   🍽️
                 </span>
               </div>
-              <span className={`text-xs font-semibold tracking-tight transition-colors ${
-                categoryFilter === 'all' ? 'text-primary font-bold' : 'text-muted-foreground group-hover:text-foreground'
-              }`}>
+              <span className={`text-xs font-semibold tracking-tight transition-colors ${categoryFilter === 'all' ? 'text-primary font-bold' : 'text-muted-foreground group-hover:text-foreground'
+                }`}>
                 All
               </span>
             </div>
@@ -300,22 +315,20 @@ export default function CustomerHomePage() {
                   className="snap-start flex flex-col items-center gap-1.5 sm:gap-2 min-w-[66px] sm:min-w-[80px] cursor-pointer group"
                 >
                   <div
-                    className={`w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center text-2xl sm:text-3xl transition-all duration-300 border ${
-                      isSelected
-                        ? `${cat.activeBg} scale-110 ring-2 ring-primary/30`
-                        : `${cat.idleBg} hover:scale-105 hover:-translate-y-0.5`
-                    }`}
+                    className={`w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center text-2xl sm:text-3xl transition-all duration-300 border ${isSelected
+                      ? `${cat.activeBg} scale-110 ring-2 ring-primary/30`
+                      : `${cat.idleBg} hover:scale-105 hover:-translate-y-0.5`
+                      }`}
                   >
                     <span className="drop-shadow-xs group-hover:scale-115 transition-transform duration-300">
                       {cat.icon}
                     </span>
                   </div>
                   <span
-                    className={`text-xs font-semibold tracking-tight transition-colors text-center truncate max-w-[76px] ${
-                      isSelected
-                        ? `${cat.activeText} font-bold`
-                        : 'text-muted-foreground group-hover:text-foreground'
-                    }`}
+                    className={`text-xs font-semibold tracking-tight transition-colors text-center truncate max-w-[76px] ${isSelected
+                      ? `${cat.activeText} font-bold`
+                      : 'text-muted-foreground group-hover:text-foreground'
+                      }`}
                   >
                     {cat.name}
                   </span>
@@ -357,72 +370,7 @@ export default function CustomerHomePage() {
           </div>
         )}
 
-        {/* ── HUNGER SMART MEAL AI ── */}
-        {!searchQuery && categoryFilter === 'all' && (
-          <div className="rounded-2xl border border-orange-500/25 bg-gradient-to-br from-orange-500/8 to-amber-500/5 p-5">
-            <div className="flex items-center gap-2 mb-4">
-              <span className="text-xl">✨</span>
-              <div>
-                <h2 className="font-bold text-base">Hunger Smart Meal</h2>
-                <p className="text-xs text-muted-foreground">Tell us what you want in plain language</p>
-              </div>
-            </div>
-            <SmartMealFinder
-              onResults={(intent: MealIntent, q: string) => {
-                if (q) setSearchQuery(q);
-                else if (intent.query) setSearchQuery(intent.query);
-              }}
-            />
-          </div>
-        )}
 
-        {/* ── HUNGER FEATURE SHORTCUTS ── */}
-        {!searchQuery && categoryFilter === 'all' && (
-          <div className="grid grid-cols-2 gap-3">
-            {[
-              {
-                href: '/customer/student',
-                emoji: '🎓',
-                label: 'Student Mode',
-                sub: 'Deals from ₹99',
-                gradient: 'from-blue-500/20 to-indigo-500/10',
-                border: 'border-blue-500/25',
-              },
-              {
-                href: '/customer/group',
-                emoji: '👥',
-                label: 'Group Order',
-                sub: 'Order & split bill',
-                gradient: 'from-violet-500/20 to-purple-500/10',
-                border: 'border-violet-500/25',
-              },
-              {
-                href: '/customer/subscriptions',
-                emoji: '📅',
-                label: 'Meal Plans',
-                sub: 'Subscribe & save',
-                gradient: 'from-emerald-500/20 to-teal-500/10',
-                border: 'border-emerald-500/25',
-              },
-              {
-                href: '/customer/circle',
-                emoji: '❤️',
-                label: 'Hunger Circle',
-                sub: 'Order for family',
-                gradient: 'from-rose-500/20 to-pink-500/10',
-                border: 'border-rose-500/25',
-              },
-            ].map(feat => (
-              <Link key={feat.href} href={feat.href}>
-                <div className={`p-4 rounded-2xl border bg-gradient-to-br ${feat.gradient} ${feat.border} hover:scale-[1.02] transition-all active:scale-[0.98] cursor-pointer`}>
-                  <div className="text-2xl mb-2">{feat.emoji}</div>
-                  <div className="font-semibold text-sm">{feat.label}</div>
-                  <div className="text-xs text-muted-foreground mt-0.5">{feat.sub}</div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        )}
 
         {/* Featured Restaurants Section */}
         {!searchQuery && categoryFilter === 'all' && (
@@ -453,9 +401,16 @@ export default function CustomerHomePage() {
                         <span className="truncate text-zinc-300">{restaurant.cuisineType?.join(', ') || 'Multi-cuisine'}</span>
                       </div>
                     </div>
-                    {/* Promo Badge */}
-                    <div className="absolute top-3 left-3 bg-primary text-primary-foreground text-[10px] font-black px-2.5 py-1 rounded-lg shadow-md uppercase tracking-wider">
-                      Promoted
+                    {/* Badges */}
+                    <div className="absolute top-3 left-3 flex items-center gap-1.5">
+                      <div className="bg-primary text-primary-foreground text-[10px] font-black px-2.5 py-1 rounded-lg shadow-md uppercase tracking-wider">
+                        Promoted
+                      </div>
+                      {!checkRestaurantOperatingStatus(restaurant, currentTime).isOpen && (
+                        <div className="bg-rose-600 text-white text-[10px] font-black px-2.5 py-1 rounded-lg shadow-md uppercase tracking-wider">
+                          Closed
+                        </div>
+                      )}
                     </div>
                   </div>
                 </Link>
@@ -515,12 +470,10 @@ export default function CustomerHomePage() {
                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
 
                     {/* Veg / Non-Veg dot — FSSAI style */}
-                    <div className={`absolute top-3 left-3 w-5 h-5 rounded-sm border-2 flex items-center justify-center bg-white/95 shadow-md ${
-                      item.vegetarian ? 'border-green-600' : 'border-red-600'
-                    }`}>
-                      <div className={`w-2.5 h-2.5 rounded-full ${
-                        item.vegetarian ? 'bg-green-600' : 'bg-red-600'
-                      }`} />
+                    <div className={`absolute top-3 left-3 w-5 h-5 rounded-sm border-2 flex items-center justify-center bg-white/95 shadow-md ${item.vegetarian ? 'border-green-600' : 'border-red-600'
+                      }`}>
+                      <div className={`w-2.5 h-2.5 rounded-full ${item.vegetarian ? 'bg-green-600' : 'bg-red-600'
+                        }`} />
                     </div>
 
                     {/* Bestseller ribbon */}
@@ -540,6 +493,11 @@ export default function CustomerHomePage() {
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
+                        const parentRest = restaurants.find(r => r.id === item.restaurantId);
+                        if (parentRest && !checkRestaurantOperatingStatus(parentRest, currentTime).isOpen) {
+                          toast.error(`"${parentRest.name}" is currently closed. Click to open dish & save to wishlist!`);
+                          return;
+                        }
                         addItem({
                           id: `${item.id}-${Date.now()}`,
                           menuItemId: item.id,
@@ -551,6 +509,7 @@ export default function CustomerHomePage() {
                           restaurantName: item.restaurantName || '',
                           addedAt: new Date(),
                         });
+                        toast.success(`Added "${item.name}" to cart`);
                       }}
                     >
                       <div className="w-9 h-9 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-lg shadow-primary/40 hover:scale-110 active:scale-95 transition-transform cursor-pointer border-2 border-white/20">

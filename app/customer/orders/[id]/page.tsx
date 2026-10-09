@@ -30,7 +30,8 @@ import {
   ShieldCheck,
   RefreshCw,
   Navigation,
-  Satellite
+  Satellite,
+  MessageSquare
 } from 'lucide-react';
 import Link from 'next/link';
 import SafeImage from '@/components/ui/safe-image';
@@ -42,6 +43,8 @@ import { copyToClipboard as safeCopy } from '@/lib/utils';
 import dynamic from 'next/dynamic';
 import { useTrackDriver } from '@/hooks/useTrackDriver';
 import type { MapMarker } from '@/components/tracking/LiveTrackingMap';
+import ChatModal from '@/components/chat/ChatModal';
+import { getDeterministicChatId, ChatType, initializeOrderChat } from '@/lib/chat-service';
 
 // Dynamic import for LiveTrackingMap (no SSR)
 const LiveTrackingMap = dynamic(
@@ -213,6 +216,27 @@ export default function OrderTrackingPage() {
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
   const [deliveryPerson, setDeliveryPerson] = useState<DeliveryPerson | null>(null);
   const [loading, setLoading] = useState(true);
+  const [activeChat, setActiveChat] = useState<{ isOpen: boolean; type: ChatType } | null>(null);
+
+  const openChat = async (type: ChatType) => {
+    if (!order || !user) return;
+    try {
+      await initializeOrderChat({
+        orderId,
+        orderNumber: order.orderNumber || `#${orderId.slice(-6).toUpperCase()}`,
+        chatType: type,
+        customer: { id: user.uid, name: customer?.name || user.displayName || 'Customer' },
+        restaurant: restaurant?.id ? { id: restaurant.id, name: restaurant.name || order.restaurantName || 'Restaurant', phone: restaurant.phone } : undefined,
+        delivery: deliveryPerson?.id ? { id: deliveryPerson.id, name: deliveryPerson.name || order.deliveryPersonName || 'Delivery Partner', phone: deliveryPerson.phone } : undefined,
+        creatorUid: user.uid,
+        creatorRole: 'customer'
+      });
+      setActiveChat({ isOpen: true, type });
+    } catch (err) {
+      console.error('Error opening chat:', err);
+      setActiveChat({ isOpen: true, type });
+    }
+  };
 
   // Real-time order tracking
   useEffect(() => {
@@ -472,6 +496,16 @@ export default function OrderTrackingPage() {
               </Link>
             )}
 
+            {/* Live Chat Action */}
+            <Button
+              onClick={() => openChat('customer_restaurant')}
+              size="sm"
+              className="bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl text-xs gap-1.5 h-8 shadow-xs cursor-pointer"
+            >
+              <MessageSquare className="w-3.5 h-3.5" />
+              Live Chat
+            </Button>
+
             <InvoiceButton order={order} customer={customer} />
           </div>
         </div>
@@ -529,7 +563,7 @@ export default function OrderTrackingPage() {
               {order.paymentMethod === 'cod'
                 ? 'Cash On Delivery'
                 : order.paymentMethod === 'wallet'
-                ? 'AKR Hunger Wallet'
+                ? 'Hunger Wallet'
                 : 'Online (Prepaid)'}
             </span>
           </div>
@@ -802,12 +836,26 @@ export default function OrderTrackingPage() {
                 </div>
 
                 <div className="pt-2 flex flex-col gap-2">
+                  <Button
+                    onClick={() => openChat('customer_restaurant')}
+                    className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold rounded-xl text-xs sm:text-sm h-10 gap-2 shadow-xs"
+                  >
+                    <MessageSquare className="w-4 h-4" /> Live Chat with Restaurant
+                  </Button>
                   {restaurant?.phone && (
                     <a href={`tel:${restaurant.phone}`}>
                       <Button variant="outline" className="w-full border-border hover:bg-muted font-bold rounded-xl text-foreground text-xs sm:text-sm h-10">
                         <Phone className="w-4 h-4 mr-2 text-primary" /> Call Restaurant ({restaurant.phone})
                       </Button>
                     </a>
+                  )}
+                  {deliveryPerson && (
+                    <Button
+                      onClick={() => openChat('customer_delivery')}
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs sm:text-sm h-10 gap-2 shadow-xs"
+                    >
+                      <Bike className="w-4 h-4" /> Live Chat with Rider ({deliveryPerson.name || 'Valet'})
+                    </Button>
                   )}
                   {restaurant?.id && (
                     <Link href={`/customer/restaurant/${restaurant.id}`}>
@@ -860,7 +908,7 @@ export default function OrderTrackingPage() {
                   {order.paymentMethod === 'cod'
                     ? 'Cash on Delivery'
                     : order.paymentMethod === 'wallet'
-                    ? 'AKR Hunger Wallet'
+                    ? 'Hunger Wallet'
                     : 'Online / UPI'}
                 </span>
               </div>
@@ -978,6 +1026,29 @@ export default function OrderTrackingPage() {
 
           </div>
         </div>
+
+        {/* Real-time Order Chat Modal */}
+        {activeChat?.isOpen && order && user && (
+          <ChatModal
+            isOpen={activeChat.isOpen}
+            onClose={() => setActiveChat(null)}
+            chatId={getDeterministicChatId(orderId, activeChat.type)}
+            orderId={orderId}
+            currentUserId={user.uid}
+            currentUserName={customer?.name || user.displayName || 'Customer'}
+            currentUserRole="customer"
+            currentUserImage={customer?.avatar || customer?.image}
+            orderData={{
+              orderNumber: order.orderNumber || `#${orderId.slice(-6).toUpperCase()}`,
+              status: order.status,
+              total: order.total,
+              restaurantName: restaurant?.name || order.restaurantName,
+              customerName: customer?.name || order.customerName,
+              deliveryPersonName: deliveryPerson?.name || order.deliveryPersonName,
+              items: order.items?.map((it) => ({ name: it.name, quantity: it.quantity })) || [],
+            }}
+          />
+        )}
 
       </div>
     </div>

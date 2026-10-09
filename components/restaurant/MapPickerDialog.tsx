@@ -165,7 +165,7 @@ export default function MapPickerDialog({
       try {
         const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&addressdetails=1`;
         const res = await fetch(url, {
-          headers: { 'User-Agent': 'AKR-Hunger-Restaurant-Location-Picker/2.0' },
+          headers: { 'User-Agent': 'Hunger-Restaurant-Location-Picker/2.0' },
         });
         if (res.ok) {
           const data = await res.json();
@@ -343,7 +343,7 @@ export default function MapPickerDialog({
         searchQuery.trim()
       )}&countrycodes=in&limit=5`;
       const res = await fetch(url, {
-        headers: { 'User-Agent': 'AKR-Hunger-Restaurant-Location-Picker/2.0' },
+        headers: { 'User-Agent': 'Hunger-Restaurant-Location-Picker/2.0' },
       });
       if (res.ok) {
         const results = await res.json();

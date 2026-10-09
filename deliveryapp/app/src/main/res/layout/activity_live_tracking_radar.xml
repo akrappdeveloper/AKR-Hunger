@@ -1,0 +1,373 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background">
+
+    <!-- 1. Full-Screen OpenStreetMap MapView -->
+    <org.osmdroid.views.MapView
+        android:id="@+id/map_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <!-- 2. Top Floating Navigation & Mode Bar -->
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="16dp">
+
+        <ImageButton
+            android:id="@+id/btn_radar_back"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:layout_alignParentStart="true"
+            android:background="@drawable/bg_pill_primary"
+            android:backgroundTint="@color/surface"
+            android:elevation="6dp"
+            android:src="@drawable/ic_back"
+            app:tint="@color/text_primary"
+            android:contentDescription="Back" />
+
+        <!-- Mode Toggle Chip: LIVE GPS vs SIMULATION -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="44dp"
+            android:layout_alignParentEnd="true"
+            android:background="@drawable/bg_pill_primary"
+            android:backgroundTint="@color/surface"
+            android:elevation="6dp"
+            android:gravity="center_vertical"
+            android:paddingHorizontal="14dp">
+
+            <View
+                android:id="@+id/dot_radar_status"
+                android:layout_width="10dp"
+                android:layout_height="10dp"
+                android:background="@drawable/bg_pill_primary"
+                android:backgroundTint="@color/veg_green" />
+
+            <TextView
+                android:id="@+id/tv_radar_mode_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text="LIVE GPS"
+                android:textColor="@color/text_primary"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_toggle_sim"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:minWidth="0dp"
+                android:paddingHorizontal="6dp"
+                android:text="Test Sim"
+                android:textColor="@color/primary"
+                android:textSize="11sp" />
+        </LinearLayout>
+    </RelativeLayout>
+
+    <!-- 3. Floating Speedometer & Heading HUD (Top-Left / Top-Right) -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="72dp"
+        android:orientation="horizontal"
+        android:paddingHorizontal="16dp"
+        android:gravity="center_vertical">
+
+        <!-- Speedometer Card -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="18dp"
+            app:cardElevation="6dp"
+            app:strokeColor="@color/primary_light"
+            app:strokeWidth="1dp"
+            app:cardBackgroundColor="@color/surface">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingHorizontal="14dp"
+                android:paddingVertical="8dp">
+
+                <ImageView
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:src="@drawable/ic_scooter_fast"
+                    app:tint="@color/primary"
+                    android:contentDescription="Speed" />
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:orientation="vertical">
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="bottom">
+
+                        <TextView
+                            android:id="@+id/tv_radar_speed"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="28"
+                            android:textColor="@color/text_primary"
+                            android:textSize="22sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="2dp"
+                            android:text=" km/h"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="11sp" />
+                    </LinearLayout>
+                </LinearLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="1" />
+
+        <!-- Compass & Accuracy Card -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="18dp"
+            app:cardElevation="6dp"
+            app:strokeColor="@color/card_border"
+            app:strokeWidth="1dp"
+            app:cardBackgroundColor="@color/surface">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingHorizontal="14dp"
+                android:paddingVertical="8dp">
+
+                <TextView
+                    android:id="@+id/tv_radar_heading"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="NE 45°"
+                    android:textColor="@color/info"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+
+                <View
+                    android:layout_width="1dp"
+                    android:layout_height="18dp"
+                    android:layout_marginHorizontal="8dp"
+                    android:background="@color/divider" />
+
+                <TextView
+                    android:id="@+id/tv_radar_accuracy"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="±3m"
+                    android:textColor="@color/veg_green"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+    </LinearLayout>
+
+    <!-- 4. Floating Map Action Buttons (Right Margin) -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="end|center_vertical"
+        android:layout_marginEnd="16dp"
+        android:orientation="vertical">
+
+        <!-- Recenter on Bike Marker -->
+        <ImageButton
+            android:id="@+id/btn_map_recenter"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:background="@drawable/bg_pill_primary"
+            android:backgroundTint="@color/surface"
+            android:elevation="6dp"
+            android:src="@drawable/ic_location"
+            app:tint="@color/primary"
+            android:contentDescription="Recenter on Bike" />
+
+        <!-- Zoom In -->
+        <ImageButton
+            android:id="@+id/btn_map_zoom_in"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/bg_pill_primary"
+            android:backgroundTint="@color/surface"
+            android:elevation="6dp"
+            android:src="@drawable/ic_add"
+            app:tint="@color/text_primary"
+            android:contentDescription="Zoom In" />
+
+        <!-- Zoom Out -->
+        <ImageButton
+            android:id="@+id/btn_map_zoom_out"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/bg_pill_primary"
+            android:backgroundTint="@color/surface"
+            android:elevation="6dp"
+            android:src="@drawable/ic_close"
+            app:tint="@color/text_primary"
+            android:contentDescription="Zoom Out" />
+    </LinearLayout>
+
+    <!-- 5. Bottom Live Delivery Telemetry Sheet -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/card_bottom_telemetry"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:layout_margin="16dp"
+        app:cardCornerRadius="24dp"
+        app:cardElevation="10dp"
+        app:strokeColor="@color/card_border"
+        app:strokeWidth="1dp"
+        app:cardBackgroundColor="@color/surface">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="20dp">
+
+            <!-- Target Title & ETA -->
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_toStartOf="@id/layout_eta_badge"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/tv_radar_dest_label"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Delivery Target Drop"
+                        android:textColor="@color/primary"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tv_radar_dest_address"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="Flat 402, Green Avenue, Kothrud"
+                        android:textColor="@color/text_primary"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:maxLines="1"
+                        android:ellipsize="end" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/layout_eta_badge"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentEnd="true"
+                    android:orientation="vertical"
+                    android:gravity="end">
+
+                    <TextView
+                        android:id="@+id/tv_radar_distance"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="1.8 km"
+                        android:textColor="@color/text_primary"
+                        android:textSize="15sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tv_radar_eta"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="~6 mins ETA"
+                        android:textColor="@color/veg_green"
+                        android:textSize="11sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+            </RelativeLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginVertical="12dp"
+                android:background="@color/divider" />
+
+            <!-- Telemetry & IP Address Info Row -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:id="@+id/tv_radar_ip_address"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="🌐 IP: 192.168.1.5 • Wi-Fi"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="11sp" />
+
+                <TextView
+                    android:id="@+id/tv_radar_coords"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="GPS: 18.5204° N, 73.8567° E"
+                    android:textColor="@color/text_hint"
+                    android:textSize="11sp" />
+            </LinearLayout>
+
+            <!-- Navigation Buttons -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="16dp">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_radar_navigate"
+                    style="@style/Widget.Material3.Button"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:layout_weight="1"
+                    android:text="Turn-by-Turn Maps"
+                    android:textColor="@color/on_primary"
+                    android:textSize="13sp"
+                    app:icon="@drawable/ic_map"
+                    app:backgroundTint="@color/primary"
+                    app:cornerRadius="24dp" />
+            </LinearLayout>
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

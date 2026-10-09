@@ -341,7 +341,7 @@ export default function AdCampaignsPage() {
                 key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_dummy',
                 amount: amount * 100,
                 currency: 'INR',
-                name: 'AKR Hunger',
+                name: 'Hunger',
                 description: `Purchase ${points} ad points`,
                 image: '/logo.png',
                 handler: async function (response: any) {

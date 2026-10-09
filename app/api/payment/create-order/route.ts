@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
       amount: Math.round(amount), // in paise
       currency: 'INR',
       receipt: orderId,
-      description: `AKR Hunger Food Order - ${orderId}`,
+      description: `Hunger Food Order - ${orderId}`,
       customer_notify: 1,
       notes: {
         orderId,

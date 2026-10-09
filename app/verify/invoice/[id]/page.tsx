@@ -58,7 +58,7 @@ export default function InvoiceVerificationPage() {
           foundOrder = { ...docSnap.data(), id: docSnap.id } as Order;
         } else {
           // 2. Query by orderId or short code if parameter is an invoice reference
-          const cleanRef = invoiceParam.replace(/^VER-|^INV-\d{4}-|^AKR-/, '').trim();
+          const cleanRef = invoiceParam.replace(/^VER-|^INV-\d{4}-|^AKR-|^HNG-/, '').trim();
           
           const ordersCol = collection(db, 'orders');
           const q1 = query(ordersCol, where('orderId', '==', invoiceParam));
@@ -121,11 +121,11 @@ export default function InvoiceVerificationPage() {
       <div className="w-full max-w-3xl flex items-center justify-between mb-8">
         <Link href="/" className="flex items-center gap-3 group">
           <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-primary to-orange-600 flex items-center justify-center text-white font-black text-xl shadow-lg shadow-primary/25">
-            A
+            H
           </div>
           <div>
             <span className="text-2xl font-black tracking-tight text-primary">
-              AKR<span className="text-foreground">Hunger</span>
+              Hunger
             </span>
             <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
               Digital Verification Portal
@@ -148,7 +148,7 @@ export default function InvoiceVerificationPage() {
             <RefreshCw className="w-10 h-10 text-primary animate-spin mb-4" />
             <h3 className="text-lg font-bold text-foreground">Verifying Invoice Authenticity...</h3>
             <p className="text-xs text-muted-foreground mt-1 max-w-sm">
-              Connecting to AKR Hunger Digital Ledger to cryptographically validate invoice credentials.
+              Connecting to Hunger Digital Ledger to cryptographically validate invoice credentials.
             </p>
           </div>
         ) : notFound || !invoiceData ? (
@@ -163,14 +163,14 @@ export default function InvoiceVerificationPage() {
               Invoice Could Not Be Verified
             </h2>
             <p className="text-sm text-muted-foreground max-w-md mx-auto mb-6 leading-relaxed">
-              The reference <span className="font-mono font-bold text-foreground">{invoiceParam}</span> was not found in the authentic AKR Hunger registry. This record may be counterfeit, altered, or deleted.
+              The reference <span className="font-mono font-bold text-foreground">{invoiceParam}</span> was not found in the authentic Hunger registry. This record may be counterfeit, altered, or deleted.
             </p>
             <div className="p-4 bg-muted/50 rounded-2xl border border-border max-w-md mx-auto text-left text-xs text-muted-foreground space-y-1 mb-6">
               <div className="flex items-center gap-2 text-foreground font-semibold">
                 <Lock className="w-3.5 h-3.5 text-primary" /> Anti-Tamper Security Notice
               </div>
               <p>
-                Only official AKR Hunger invoices generated through registered kitchens and genuine digital checkout links carry valid cryptographic tokens.
+                Only official Hunger invoices generated through registered kitchens and genuine digital checkout links carry valid cryptographic tokens.
               </p>
             </div>
             <div className="flex justify-center gap-3">
@@ -478,7 +478,7 @@ export default function InvoiceVerificationPage() {
 
       {/* Footer */}
       <div className="w-full max-w-3xl mt-12 pt-6 border-t border-border flex flex-col sm:flex-row items-center justify-between text-xs text-muted-foreground gap-3">
-        <p>© 2026 AKR Hunger Technologies Pvt. Ltd. All rights reserved.</p>
+        <p>© 2026 Hunger Technologies Pvt. Ltd. All rights reserved.</p>
         <p>Support: <a href="mailto:hunger@gmail.com" className="text-primary hover:underline font-semibold">hunger@gmail.com</a> | <a href="tel:+916393752013" className="text-primary hover:underline font-semibold">+91 6393752013</a></p>
       </div>
     </div>

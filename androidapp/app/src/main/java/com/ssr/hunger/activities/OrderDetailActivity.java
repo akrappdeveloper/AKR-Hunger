@@ -309,6 +309,18 @@ public class OrderDetailActivity extends BaseActivity {
         String existingPhone = order.getRestaurantPhone();
         String existingAddr = order.getRestaurantAddress();
 
+        View btnChat = findViewById(R.id.btn_chat_restaurant);
+        if (btnChat != null) {
+            btnChat.setOnClickListener(v -> {
+                Intent chatIntent = new Intent(this, ChatActivity.class);
+                chatIntent.putExtra(ChatActivity.EXTRA_ORDER_ID, order.getId());
+                chatIntent.putExtra(ChatActivity.EXTRA_COUNTERPART_ROLE, "restaurant");
+                chatIntent.putExtra(ChatActivity.EXTRA_COUNTERPART_NAME, restName);
+                chatIntent.putExtra(ChatActivity.EXTRA_PHONE, existingPhone);
+                startActivity(chatIntent);
+            });
+        }
+
         if (existingPhone != null && !existingPhone.isEmpty()) {
             if (tvPhone != null) tvPhone.setText("📞 " + existingPhone);
             if (btnCall != null) {
@@ -365,6 +377,19 @@ public class OrderDetailActivity extends BaseActivity {
                 if (btnCallDriver != null) {
                     btnCallDriver.setVisibility(View.VISIBLE);
                     btnCallDriver.setOnClickListener(v -> callPhoneNumber(driverPhone, driverName));
+                }
+
+                View btnChatDriver = findViewById(R.id.btn_chat_driver);
+                if (btnChatDriver != null) {
+                    btnChatDriver.setVisibility(View.VISIBLE);
+                    btnChatDriver.setOnClickListener(v -> {
+                        Intent chatIntent = new Intent(this, ChatActivity.class);
+                        chatIntent.putExtra(ChatActivity.EXTRA_ORDER_ID, order.getId());
+                        chatIntent.putExtra(ChatActivity.EXTRA_COUNTERPART_ROLE, "delivery");
+                        chatIntent.putExtra(ChatActivity.EXTRA_COUNTERPART_NAME, driverName);
+                        chatIntent.putExtra(ChatActivity.EXTRA_PHONE, driverPhone);
+                        startActivity(chatIntent);
+                    });
                 }
             } else {
                 if (tvPhone != null) tvPhone.setVisibility(View.GONE);

@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background"
+    android:orientation="vertical">
+
+    <!-- Top Action Bar -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/surface"
+        android:elevation="3dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:paddingTop="12dp"
+        android:paddingBottom="12dp">
+
+        <ImageButton
+            android:id="@+id/btn_back"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_arrow_back"
+            app:tint="@color/text_primary" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/tv_counterpart_name"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:text="Customer"
+                    android:textColor="@color/text_primary"
+                    android:textSize="17sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tv_order_badge"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:background="@drawable/bg_pill_soft"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp"
+                    android:paddingTop="2dp"
+                    android:paddingBottom="2dp"
+                    android:text="#ORD-1234"
+                    android:textColor="@color/primary"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/tv_presence_status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Real-time Order Chat"
+                android:textColor="@color/success"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <ImageButton
+            android:id="@+id/btn_call"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_phone"
+            android:visibility="gone"
+            app:tint="@color/success" />
+    </LinearLayout>
+
+    <!-- Driving Safety Pill -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#FEF3C7"
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:paddingHorizontal="14dp"
+        android:paddingVertical="6dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="⚠️ Safety Reminder: Never type while driving."
+            android:textColor="#92400E"
+            android:textSize="11.5sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <!-- Message List -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rv_rider_messages"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:clipToPadding="false"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp" />
+
+    <!-- Typing Indicator View -->
+    <TextView
+        android:id="@+id/tv_typing_indicator"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginBottom="4dp"
+        android:text="Typing..."
+        android:textColor="@color/text_hint"
+        android:textSize="11sp"
+        android:visibility="gone" />
+
+    <!-- Rider Quick Replies Scroll Row -->
+    <HorizontalScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/surface"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:id="@+id/layout_rider_quick_replies"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp" />
+    </HorizontalScrollView>
+
+    <!-- Bottom Input Bar (Big Buttons) -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/surface"
+        android:elevation="6dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:paddingTop="10dp"
+        android:paddingBottom="10dp">
+
+        <EditText
+            android:id="@+id/et_message_input"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="@drawable/bg_pill_soft"
+            android:hint="Type message..."
+            android:imeOptions="actionSend"
+            android:inputType="textCapSentences|textMultiLine"
+            android:maxLines="3"
+            android:minHeight="48dp"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:textColor="@color/text_primary"
+            android:textColorHint="@color/text_hint"
+            android:textSize="15sp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_send_message"
+            android:layout_width="52dp"
+            android:layout_height="52dp"
+            android:layout_marginStart="10dp"
+            android:backgroundTint="#2563EB"
+            android:insetLeft="0dp"
+            android:insetTop="0dp"
+            android:insetRight="0dp"
+            android:insetBottom="0dp"
+            app:cornerRadius="26dp"
+            app:icon="@drawable/ic_send"
+            app:iconGravity="textStart"
+            app:iconPadding="0dp"
+            app:iconTint="@color/white" />
+    </LinearLayout>
+
+</LinearLayout>

@@ -12,6 +12,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import SafeImage from '@/components/ui/safe-image';
 import CustomerSearchBar from '@/components/customer/CustomerSearchBar';
+import SmartMealFinder from '@/components/customer/SmartMealFinder';
+import { MealIntent } from '@/lib/hunger-types-client';
 import {
   Search,
   Clock,
@@ -266,6 +268,27 @@ export default function SearchPage() {
               setSearchQuery(term);
               performSearch(term);
               router.replace(`/customer/search?q=${encodeURIComponent(term)}`);
+            }}
+          />
+        </div>
+
+        {/* ── HUNGER SMART MEAL AI CARD ── */}
+        <div className="rounded-2xl border border-orange-500/25 bg-gradient-to-br from-orange-500/10 via-amber-500/5 to-transparent p-4 sm:p-5 shadow-xs">
+          <div className="flex items-center gap-2 mb-3.5">
+            <span className="text-xl">✨</span>
+            <div>
+              <h2 className="font-bold text-sm sm:text-base text-foreground">Hunger Smart Meal</h2>
+              <p className="text-xs text-muted-foreground">Tell us what you want in plain language (e.g. &ldquo;₹200 ke andar spicy veg&rdquo;)</p>
+            </div>
+          </div>
+          <SmartMealFinder
+            onResults={(intent: MealIntent, q: string) => {
+              const term = q || intent.query || '';
+              if (term) {
+                setSearchQuery(term);
+                performSearch(term);
+                router.replace(`/customer/search?q=${encodeURIComponent(term)}`);
+              }
             }}
           />
         </div>

@@ -1,0 +1,14 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- Lucide check-circle-2 outline style -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#10B981"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M12,22c5.523,0 10,-4.477 10,-10S17.523,2 12,2 2,6.477 2,12s4.477,10 10,10z M9,12l2,2 4,-4" />
+</vector>

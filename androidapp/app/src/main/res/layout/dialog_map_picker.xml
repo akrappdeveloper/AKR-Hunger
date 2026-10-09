@@ -235,6 +235,7 @@
             android:layout_marginTop="4dp"
             android:ellipsize="end"
             android:lineSpacingExtra="2dp"
+            android:minLines="2"
             android:maxLines="3"
             android:text="Detecting location..."
             android:textColor="@color/text_secondary"

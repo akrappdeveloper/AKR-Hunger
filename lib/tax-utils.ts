@@ -189,7 +189,7 @@ export function generateInvoiceVerificationHash(
   grandTotal: number,
   timestamp: string
 ): string {
-  const payload = `${invoiceNumber}|${orderId}|${grandTotal.toFixed(2)}|${timestamp}|AKR_TAX_SEC_2026`;
+  const payload = `${invoiceNumber}|${orderId}|${grandTotal.toFixed(2)}|${timestamp}|HNG_TAX_SEC_2026`;
   let hash1 = 0x811c9dc5;
   let hash2 = 0x27d4eb2f;
   for (let i = 0; i < payload.length; i++) {

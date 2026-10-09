@@ -1,5 +1,5 @@
 /**
- * SEO Schema Generators for AKR Hunger Food Delivery Platform
+ * SEO Schema Generators for Hunger Food Delivery Platform
  * Generates JSON-LD structured data for different panel types
  */
 
@@ -55,7 +55,7 @@ export function generateRestaurantPortalSchema() {
     return {
         '@context': 'https://schema.org',
         '@type': 'SoftwareApplication',
-        name: 'AKR Hunger Restaurant Partner Portal',
+        name: 'Hunger Restaurant Partner Portal',
         applicationCategory: 'BusinessApplication',
         offers: {
             '@type': 'Offer',
@@ -76,10 +76,10 @@ export function generateDeliveryJobSchema() {
         '@context': 'https://schema.org',
         '@type': 'JobPosting',
         title: 'Delivery Partner - Food Delivery',
-        description: 'Join AKR Hunger as a delivery partner. Flexible hours, competitive earnings, and be your own boss.',
+        description: 'Join Hunger as a delivery partner. Flexible hours, competitive earnings, and be your own boss.',
         hiringOrganization: {
             '@type': 'Organization',
-            name: 'AKR Hunger',
+            name: 'Hunger',
             url: baseUrl,
         },
         jobLocation: {
@@ -128,7 +128,7 @@ export function generateWebSiteSchema() {
     return {
         '@context': 'https://schema.org',
         '@type': 'WebSite',
-        name: 'AKR Hunger',
+        name: 'Hunger',
         url: baseUrl,
         potentialAction: {
             '@type': 'SearchAction',
@@ -151,39 +151,39 @@ export function generateFAQSchema() {
         mainEntity: [
             {
                 '@type': 'Question',
-                name: 'What is AKR Hunger?',
+                name: 'What is Hunger?',
                 acceptedAnswer: {
                     '@type': 'Answer',
-                    text: 'AKR Hunger is a leading food delivery platform that connects customers with their favorite local restaurants for fast and reliable food delivery.',
+                    text: 'Hunger is a leading food delivery platform that connects customers with their favorite local restaurants for fast and reliable food delivery.',
                 },
             },
             {
                 '@type': 'Question',
-                name: 'How to order food on AKR Hunger?',
+                name: 'How to order food on Hunger?',
                 acceptedAnswer: {
                     '@type': 'Answer',
-                    text: 'You can order food on AKR Hunger by visiting our website or downloading our mobile app. Simply browse restaurants, select your items, and checkout securely.',
+                    text: 'You can order food on Hunger by visiting our website or downloading our mobile app. Simply browse restaurants, select your items, and checkout securely.',
                 },
             },
             {
                 '@type': 'Question',
-                name: 'Is AKR Hunger available near me?',
+                name: 'Is Hunger available near me?',
                 acceptedAnswer: {
                     '@type': 'Answer',
-                    text: 'AKR Hunger is rapidly expanding across major cities. You can check availability by entering your delivery address on our homepage or app.',
+                    text: 'Hunger is rapidly expanding across major cities. You can check availability by entering your delivery address on our homepage or app.',
                 },
             },
             {
                 '@type': 'Question',
-                name: 'Is AKR Hunger mobile friendly?',
+                name: 'Is Hunger mobile friendly?',
                 acceptedAnswer: {
                     '@type': 'Answer',
-                    text: 'Yes, AKR Hunger is fully optimized for mobile devices. We offer a seamless experience on both our responsive website and dedicated mobile applications.',
+                    text: 'Yes, Hunger is fully optimized for mobile devices. We offer a seamless experience on both our responsive website and dedicated mobile applications.',
                 },
             },
             {
                 '@type': 'Question',
-                name: 'Does AKR Hunger provide fast delivery?',
+                name: 'Does Hunger provide fast delivery?',
                 acceptedAnswer: {
                     '@type': 'Answer',
                     text: 'Yes, we prioritize speed. Our advanced logistics network ensures your food reaches you hot and fresh in the shortest time possible.',

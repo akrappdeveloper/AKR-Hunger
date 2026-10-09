@@ -281,7 +281,7 @@ export default function InvoiceButton({ order, customer }: InvoiceButtonProps) {
                   )}
                 </DialogTitle>
                 <p className="text-xs text-muted-foreground">
-                  AKR Hunger Technologies Pvt. Ltd. &bull; Official GST Record
+                  Hunger Technologies Pvt. Ltd. &bull; Official GST Record
                 </p>
               </div>
             </div>
@@ -431,7 +431,7 @@ function ReceiptIcon(props: React.SVGProps<SVGSVGElement>) {
 
 /**
  * Generates Enterprise-Grade High-Fidelity Invoice HTML
- * Preserves the iconic AKR Hunger visual identity (orange accents, clean cards, deep charcoal grand total)
+ * Preserves the iconic Hunger visual identity (orange accents, clean cards, deep charcoal grand total)
  * Separates Packaging, Delivery, Platform Fee, and Dynamic CGST + SGST or IGST.
  */
 function generateEnterpriseInvoiceHTML(
@@ -451,17 +451,17 @@ function generateEnterpriseInvoiceHTML(
       <!-- ================= 1. ENTERPRISE HEADER ================= -->
       <div style="display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 20px; margin-bottom: 20px; border-bottom: 1px solid #f4f4f5;">
         
-        <!-- Left: AKR Hunger ECO Brand -->
+        <!-- Left: Hunger ECO Brand -->
         <div style="display: flex; align-items: center; gap: 14px;">
           <div style="position: relative;">
             ${logoBase64
-      ? `<img src="${logoBase64}" width="50" height="50" style="width: 50px; height: 50px; object-fit: contain; border-radius: 12px; border: 1px solid rgba(234, 88, 12, 0.18); box-shadow: 0 4px 12px rgba(234, 88, 12, 0.1); display: block;" alt="AKR Hunger Logo" />`
-      : `<div style="width: 50px; height: 50px; border-radius: 12px; background: linear-gradient(135deg, #ea580c, #f97316); display: flex; align-items: center; justify-content: center; color: #ffffff; font-weight: 900; font-size: 19px; box-shadow: 0 4px 12px rgba(234, 88, 12, 0.2);">AKR</div>`
+      ? `<img src="${logoBase64}" width="50" height="50" style="width: 50px; height: 50px; object-fit: contain; border-radius: 12px; border: 1px solid rgba(234, 88, 12, 0.18); box-shadow: 0 4px 12px rgba(234, 88, 12, 0.1); display: block;" alt="Hunger Logo" />`
+      : `<div style="width: 50px; height: 50px; border-radius: 12px; background: linear-gradient(135deg, #ea580c, #f97316); display: flex; align-items: center; justify-content: center; color: #ffffff; font-weight: 900; font-size: 19px; box-shadow: 0 4px 12px rgba(234, 88, 12, 0.2);">H</div>`
     }
           </div>
           <div>
             <div style="display: flex; align-items: center; gap: 8px;">
-              <span style="font-size: 24px; font-weight: 900; letter-spacing: -0.03em; color: #ea580c;">AKR<span style="color: #09090b;">Hunger</span></span>
+              <span style="font-size: 24px; font-weight: 900; letter-spacing: -0.03em; color: #ea580c;">Hunger</span>
               <span style="display: inline-block; padding: 4px 10px; border-radius: 6px; background: #fff7ed; color: #ea580c; border: 1.5px solid #fed7aa; font-size: 12px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; line-height: 1;">TAX INVOICE</span>
             </div>
             <p style="margin: 3px 0 0 0; font-size: 11px; font-weight: 600; color: #52525b;">${inv.operatorLegalName}</p>
@@ -773,7 +773,7 @@ function generateEnterpriseInvoiceHTML(
           </p>
         </div>
         <div style="text-align: right; flex-shrink: 0;">
-          <div style="font-size: 10.5px; font-weight: 800; color: #09090b; letter-spacing: -0.01em;">AKR Hunger &bull; Happy Dining! 🍽️</div>
+          <div style="font-size: 10.5px; font-weight: 800; color: #09090b; letter-spacing: -0.01em;">Hunger &bull; Happy Dining! 🍽️</div>
           <div style="font-size: 8.5px; color: #a1a1aa; margin-top: 1px;">Taste Delivered in Minutes</div>
         </div>
       </div>

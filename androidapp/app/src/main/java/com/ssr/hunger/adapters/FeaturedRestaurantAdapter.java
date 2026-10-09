@@ -48,6 +48,12 @@ public class FeaturedRestaurantAdapter extends RecyclerView.Adapter<FeaturedRest
         holder.tvRating.setText(restaurant.getDisplayRating());
         holder.tvCuisine.setText(restaurant.getCuisineString());
 
+        // Operating status closed badge
+        boolean isOpen = restaurant.isOperatingNow();
+        if (holder.tvClosedBadge != null) {
+            holder.tvClosedBadge.setVisibility(isOpen ? View.GONE : View.VISIBLE);
+        }
+
         // Load image with Glide
         if (restaurant.getImage() != null && !restaurant.getImage().isEmpty()) {
             Glide.with(holder.itemView.getContext())
@@ -67,7 +73,7 @@ public class FeaturedRestaurantAdapter extends RecyclerView.Adapter<FeaturedRest
 
     static class ViewHolder extends RecyclerView.ViewHolder {
         ImageView ivImage;
-        TextView tvName, tvRating, tvCuisine;
+        TextView tvName, tvRating, tvCuisine, tvClosedBadge;
 
         ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -75,6 +81,7 @@ public class FeaturedRestaurantAdapter extends RecyclerView.Adapter<FeaturedRest
             tvName = itemView.findViewById(R.id.tv_restaurant_name);
             tvRating = itemView.findViewById(R.id.tv_restaurant_rating);
             tvCuisine = itemView.findViewById(R.id.tv_restaurant_cuisine);
+            tvClosedBadge = itemView.findViewById(R.id.tv_closed_badge);
         }
     }
 }

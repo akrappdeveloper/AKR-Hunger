@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background"
+    android:orientation="vertical">
+
+    <!-- Top Action Bar -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/surface"
+        android:elevation="3dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:paddingTop="10dp"
+        android:paddingBottom="10dp">
+
+        <ImageButton
+            android:id="@+id/btn_back"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_back"
+            app:tint="@color/text_primary" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/tv_counterpart_name"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:text="Restaurant"
+                    android:textColor="@color/text_primary"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tv_order_badge"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:background="@drawable/bg_status_preparing"
+                    android:paddingStart="6dp"
+                    android:paddingEnd="6dp"
+                    android:paddingTop="2dp"
+                    android:paddingBottom="2dp"
+                    android:text="#ORD-1234"
+                    android:textColor="@color/primary"
+                    android:textSize="10sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/tv_presence_status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Online • Real-time Chat"
+                android:textColor="@color/success"
+                android:textSize="11sp" />
+        </LinearLayout>
+
+        <ImageButton
+            android:id="@+id/btn_call"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_phone"
+            android:visibility="gone"
+            app:tint="@color/primary" />
+    </LinearLayout>
+
+    <!-- Message List -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rv_chat_messages"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:clipToPadding="false"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp" />
+
+    <!-- Typing Indicator View -->
+    <TextView
+        android:id="@+id/tv_typing_indicator"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginBottom="4dp"
+        android:text="Restaurant is typing..."
+        android:textColor="@color/text_hint"
+        android:textSize="11sp"
+        android:visibility="gone" />
+
+    <!-- Quick Replies Scroll Row -->
+    <HorizontalScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/surface"
+        android:paddingTop="6dp"
+        android:paddingBottom="6dp"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:id="@+id/layout_quick_replies"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp" />
+    </HorizontalScrollView>
+
+    <!-- Bottom Input Bar -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/surface"
+        android:elevation="4dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp">
+
+        <EditText
+            android:id="@+id/et_message_input"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="@drawable/bg_search_bar"
+            android:hint="Type message..."
+            android:imeOptions="actionSend"
+            android:inputType="textCapSentences|textMultiLine"
+            android:maxLines="4"
+            android:minHeight="42dp"
+            android:paddingStart="14dp"
+            android:paddingEnd="14dp"
+            android:textColor="@color/text_primary"
+            android:textColorHint="@color/text_hint"
+            android:textSize="14sp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_send_message"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_marginStart="8dp"
+            android:insetLeft="0dp"
+            android:insetTop="0dp"
+            android:insetRight="0dp"
+            android:insetBottom="0dp"
+            app:cornerRadius="24dp"
+            app:icon="@drawable/ic_send"
+            app:iconGravity="textStart"
+            app:iconPadding="0dp"
+            app:iconTint="@color/on_primary" />
+    </LinearLayout>
+
+</LinearLayout>

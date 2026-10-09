@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { admin, messaging } from '@/lib/firebase-admin';
+import { admin, messaging, adminRealtimeDb } from '@/lib/firebase-admin';
 
 export async function POST(request: Request) {
     try {
@@ -83,7 +83,43 @@ export async function POST(request: Request) {
             }
         });
 
-        // 3. Try to send FCM push notification if token exists
+        // 3. Post authoritative system message to all active RTDB chats for this order
+        if (adminRealtimeDb) {
+            try {
+                const now = Date.now();
+                const chatTypes = ['customer_restaurant', 'customer_delivery', 'restaurant_delivery'];
+                for (const cType of chatTypes) {
+                    const chatId = `chat_${orderId}_${cType}`;
+                    const chatRef = adminRealtimeDb.ref(`chats/${chatId}`);
+                    const chatSnap = await chatRef.once('value');
+                    if (chatSnap.exists()) {
+                        const msgRef = chatRef.child('messages').push();
+                        const sysMsg = {
+                            messageId: msgRef.key,
+                            chatId,
+                            orderId,
+                            senderId: 'system',
+                            senderRole: 'system',
+                            senderName: 'Hunger Updates',
+                            type: 'ORDER_UPDATE',
+                            text: `⚡ ${notifTitle}: ${notifBody}`,
+                            createdAt: now,
+                            status: 'SENT',
+                        };
+                        await msgRef.set(sysMsg);
+                        await chatRef.update({
+                            lastMessage: sysMsg.text,
+                            lastMessageAt: now,
+                            updatedAt: now,
+                        });
+                    }
+                }
+            } catch (rtdbErr) {
+                console.warn('[RTDB] Failed to post system update to chat:', rtdbErr);
+            }
+        }
+
+        // 4. Try to send FCM push notification if token exists
         let fcmSent = false;
         try {
             const customerSnap = await admin.firestore().collection('users').doc(customerId).get();
@@ -111,7 +147,7 @@ export async function POST(request: Request) {
             console.warn('[FCM] Push delivery failed (in-app notification saved successfully):', fcmError);
         }
 
-        return NextResponse.json({ success: true, message: 'Notification created in Firestore', fcmSent });
+        return NextResponse.json({ success: true, message: 'Notification created in Firestore and chat updated', fcmSent });
     } catch (error: any) {
         console.error('Error sending order status notification:', error);
         return NextResponse.json({ error: error.message }, { status: 500 });

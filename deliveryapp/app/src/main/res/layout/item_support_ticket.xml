@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="10dp"
+    app:cardCornerRadius="14dp"
+    app:cardElevation="1dp"
+    app:strokeColor="@color/card_border"
+    app:strokeWidth="1dp"
+    app:cardBackgroundColor="@color/surface">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:id="@+id/tv_ticket_subject"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentStart="true"
+                android:text="Issue with Order Payout"
+                android:textColor="@color/text_primary"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tv_ticket_status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:background="@drawable/bg_pill_primary"
+                android:backgroundTint="@color/primary_tint"
+                android:paddingHorizontal="10dp"
+                android:paddingVertical="3dp"
+                android:text="Open"
+                android:textColor="@color/primary"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+        </RelativeLayout>
+
+        <TextView
+            android:id="@+id/tv_ticket_category_date"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="Payment / Wallet • Today"
+            android:textColor="@color/text_hint"
+            android:textSize="12sp" />
+
+        <TextView
+            android:id="@+id/tv_ticket_desc"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Payment was not credited for the last completed order."
+            android:textColor="@color/text_secondary"
+            android:textSize="13sp" />
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>

@@ -419,12 +419,32 @@ public class CartActivity extends BaseActivity implements CartManager.CartChange
         // GPS Pincode Validation: Check if restaurant delivers to this pincode
         String deliveryPincode = deliveryAddress.getPincode();
         String restaurantId = cartManager.getRestaurantId();
-        if (!TextUtils.isEmpty(restaurantId) && !TextUtils.isEmpty(deliveryPincode)) {
-            // Block order until pincode check completes
+        if (!TextUtils.isEmpty(restaurantId)) {
+            // Block order until restaurant operating check and pincode check complete
             findViewById(R.id.btn_place_order).setEnabled(false);
-            final String finalDeliveryPincode = deliveryPincode.trim();
+            final String finalDeliveryPincode = deliveryPincode != null ? deliveryPincode.trim() : "";
             db.collection(Constants.COLLECTION_RESTAURANTS).document(restaurantId).get()
                     .addOnSuccessListener(restaurantDoc -> {
+                        if (restaurantDoc != null && restaurantDoc.exists()) {
+                            com.ssr.hunger.models.Restaurant rest = restaurantDoc.toObject(com.ssr.hunger.models.Restaurant.class);
+                            if (rest != null && !rest.isOperatingNow()) {
+                                runOnUiThread(() -> {
+                                    findViewById(R.id.btn_place_order).setEnabled(true);
+                                    ModernDialogHelper.showWarningDialog(
+                                            CartActivity.this,
+                                            "Restaurant Closed",
+                                            "Sorry, "
+                                                    + (rest.getName() != null ? rest.getName() : "this restaurant")
+                                                    + " is currently closed and not accepting orders right now. Please try again during opening hours.",
+                                            "OK",
+                                            null
+                                    );
+                                });
+                                return;
+                            }
+                        }
+
+                        // Check delivery pincode serviceability
                         List<String> servicePincodes = null;
                         if (restaurantDoc != null && restaurantDoc.exists()) {
                             Object spObj = restaurantDoc.get("servicePincodes");
@@ -435,8 +455,8 @@ public class CartActivity extends BaseActivity implements CartManager.CartChange
                                 }
                             }
                         }
-                        // If restaurant has no pincode list, allow order (no restriction set)
-                        if (servicePincodes == null || servicePincodes.isEmpty()) {
+                        // If restaurant has no pincode list or pincode is empty, allow order
+                        if (servicePincodes == null || servicePincodes.isEmpty() || TextUtils.isEmpty(finalDeliveryPincode)) {
                             findViewById(R.id.btn_place_order).setEnabled(true);
                             proceedToPlaceOrder(deliveryAddress);
                             return;
@@ -478,7 +498,7 @@ public class CartActivity extends BaseActivity implements CartManager.CartChange
                     })
                     .addOnFailureListener(e -> {
                         // On failure, allow order to proceed (don't block on network issues)
-                        logBreadcrumb("servicePincode check failed, proceeding: " + e.getMessage());
+                        logBreadcrumb("restaurant check failed, proceeding: " + e.getMessage());
                         runOnUiThread(() -> {
                             findViewById(R.id.btn_place_order).setEnabled(true);
                             proceedToPlaceOrder(deliveryAddress);

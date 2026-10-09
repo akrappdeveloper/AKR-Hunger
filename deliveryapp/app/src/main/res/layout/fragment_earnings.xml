@@ -1,0 +1,295 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/swipe_refresh_earnings"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background">
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <!-- Hero Earnings Banner -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="4dp"
+                app:cardBackgroundColor="@color/primary">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="20dp">
+
+                    <TextView
+                        android:id="@+id/tv_earnings_date"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Today's Earnings"
+                        android:textColor="@color/on_primary"
+                        android:alpha="0.85"
+                        android:textSize="14sp" />
+
+                    <TextView
+                        android:id="@+id/tv_hero_total_earnings"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="₹786"
+                        android:textColor="@color/on_primary"
+                        android:textSize="38sp"
+                        android:textStyle="bold" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginTop="16dp"
+                        android:gravity="center_vertical">
+
+                        <TextView
+                            android:id="@+id/tv_today_trips_count"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="🛵 14 Deliveries"
+                            android:textColor="@color/on_primary"
+                            android:textSize="13sp"
+                            android:textStyle="bold" />
+
+                        <View
+                            android:layout_width="1dp"
+                            android:layout_height="14dp"
+                            android:layout_marginHorizontal="12dp"
+                            android:background="@color/on_primary"
+                            android:alpha="0.4" />
+
+                        <TextView
+                            android:id="@+id/tv_today_distance"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="📍 42.5 km"
+                            android:textColor="@color/on_primary"
+                            android:textSize="13sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Earnings Breakdown Card -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="2dp"
+                app:strokeColor="@color/card_border"
+                app:strokeWidth="1dp"
+                app:cardBackgroundColor="@color/surface">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Earnings Breakdown"
+                        android:textColor="@color/text_primary"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <!-- Base Earnings -->
+                    <RelativeLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="14dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Base Delivery Pay"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="14sp" />
+
+                        <TextView
+                            android:id="@+id/tv_breakdown_base"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_alignParentEnd="true"
+                            android:text="₹560"
+                            android:textColor="@color/text_primary"
+                            android:textSize="14sp"
+                            android:textStyle="bold" />
+                    </RelativeLayout>
+
+                    <!-- Distance & Surge Bonus -->
+                    <RelativeLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Distance &amp; Peak Bonus"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="14sp" />
+
+                        <TextView
+                            android:id="@+id/tv_breakdown_bonus"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_alignParentEnd="true"
+                            android:text="₹150"
+                            android:textColor="@color/text_primary"
+                            android:textSize="14sp"
+                            android:textStyle="bold" />
+                    </RelativeLayout>
+
+                    <!-- Customer Tips -->
+                    <RelativeLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Customer Tips (100% to you)"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="14sp" />
+
+                        <TextView
+                            android:id="@+id/tv_breakdown_tips"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_alignParentEnd="true"
+                            android:text="₹76"
+                            android:textColor="@color/veg_green"
+                            android:textSize="14sp"
+                            android:textStyle="bold" />
+                    </RelativeLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_marginVertical="12dp"
+                        android:background="@color/divider" />
+
+                    <!-- Pending Settlement -->
+                    <RelativeLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Pending Wallet Balance"
+                            android:textColor="@color/text_primary"
+                            android:textSize="14sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/tv_pending_settlement"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_alignParentEnd="true"
+                            android:text="₹786"
+                            android:textColor="@color/primary"
+                            android:textSize="15sp"
+                            android:textStyle="bold" />
+                    </RelativeLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Fair Route Score Card -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="2dp"
+                app:strokeColor="@color/card_border"
+                app:strokeWidth="1dp"
+                app:cardBackgroundColor="@color/surface">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <RelativeLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Fair Route Efficiency Score"
+                            android:textColor="@color/text_primary"
+                            android:textSize="15sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/tv_fair_score"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_alignParentEnd="true"
+                            android:text="88 / 100"
+                            android:textColor="@color/veg_green"
+                            android:textSize="15sp"
+                            android:textStyle="bold" />
+                    </RelativeLayout>
+
+                    <ProgressBar
+                        android:id="@+id/progress_fair_score"
+                        style="@style/Widget.AppCompat.ProgressBar.Horizontal"
+                        android:layout_width="match_parent"
+                        android:layout_height="8dp"
+                        android:layout_marginTop="10dp"
+                        android:max="100"
+                        android:progress="88"
+                        android:progressTint="@color/veg_green" />
+
+                    <TextView
+                        android:id="@+id/tv_fair_score_desc"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="✅ Excellent routes! Low restaurant waiting times and fair payout."
+                        android:textColor="@color/text_secondary"
+                        android:textSize="12sp" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Payout Request Button -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_request_payout"
+                style="@style/Widget.Material3.Button"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:layout_marginTop="20dp"
+                android:layout_marginBottom="24dp"
+                android:text="Request Payout to Bank / UPI"
+                android:textColor="@color/on_primary"
+                app:icon="@drawable/ic_wallet"
+                app:backgroundTint="@color/primary"
+                app:cornerRadius="26dp" />
+
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+</androidx.swiperefreshlayout.widget.SwipeRefreshLayout>

@@ -20,7 +20,8 @@ import {
   MapPin,
   Calendar,
   Users,
-  User
+  User,
+  MessageSquare
 } from 'lucide-react';
 import NotificationBell from '@/components/notifications/NotificationBell';
 import ThemeToggle from '@/components/ThemeToggle';
@@ -36,23 +37,25 @@ interface RestaurantSidebarProps {
 export default function RestaurantSidebar({ isMobile = false, onClose }: RestaurantSidebarProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const { user, restaurant, logout } = useRestaurantAuth();
+  const { user, restaurant, logout, isStaff, staffRole, hasPermission } = useRestaurantAuth();
   const [pendingCount, setPendingCount] = useState(0);
   const [activeOrdersCount, setActiveOrdersCount] = useState(0);
 
-  useEffect(() => {
-    if (user) {
-      fetchCounts();
-    }
-  }, [user]);
+  const targetRestaurantId = restaurant?.id || user?.restaurantId || user?.uid;
 
-  const fetchCounts = async () => {
+  useEffect(() => {
+    if (targetRestaurantId) {
+      fetchCounts(targetRestaurantId);
+    }
+  }, [targetRestaurantId]);
+
+  const fetchCounts = async (rId: string) => {
     try {
       // Get pending menu items
       const menuItemsRef = collection(db, 'menuItems');
       const pendingQuery = query(
         menuItemsRef,
-        where('restaurantId', '==', user!.uid),
+        where('restaurantId', '==', rId),
         where('approvalStatus', '==', 'pending')
       );
       const pendingSnapshot = await getDocs(pendingQuery);
@@ -62,7 +65,7 @@ export default function RestaurantSidebar({ isMobile = false, onClose }: Restaur
       const ordersRef = collection(db, 'orders');
       const activeQuery = query(
         ordersRef,
-        where('restaurantId', '==', user!.uid),
+        where('restaurantId', '==', rId),
         where('status', 'in', ['confirmed', 'preparing', 'ready', 'out_for_delivery'])
       );
       const activeSnapshot = await getDocs(activeQuery);
@@ -73,8 +76,9 @@ export default function RestaurantSidebar({ isMobile = false, onClose }: Restaur
   };
 
   const handleLogout = async () => {
+    const wasStaff = isStaff;
     await logout();
-    router.push('/restaurant/login');
+    router.push(wasStaff ? '/restaurant/staff/dashboard/login' : '/restaurant/login');
     if (onClose) onClose();
   };
 
@@ -82,87 +86,114 @@ export default function RestaurantSidebar({ isMobile = false, onClose }: Restaur
     return null;
   }
 
-  const navItems = [
+  const allNavItems = [
     {
-      href: '/restaurant',
-      label: 'Dashboard',
+      href: isStaff ? '/restaurant/staff/dashboard' : '/restaurant',
+      label: isStaff ? 'Staff Hub' : 'Dashboard',
       icon: LayoutDashboard,
-      exact: true
+      exact: true,
+      permission: null,
     },
     {
       href: '/restaurant/orders',
       label: 'Orders',
       icon: ShoppingCart,
-      badge: activeOrdersCount > 0 ? activeOrdersCount : undefined
+      badge: activeOrdersCount > 0 ? activeOrdersCount : undefined,
+      permission: 'orders',
     },
     {
       href: '/restaurant/orders/tracking',
       label: 'Live Tracking',
-      icon: MapPin
+      icon: MapPin,
+      permission: 'orders',
+    },
+    {
+      href: '/restaurant/chat',
+      label: 'Order Chat Hub',
+      icon: MessageSquare,
+      permission: 'orders',
     },
     {
       href: '/restaurant/menu',
       label: 'Menu Management',
       icon: Package,
       badge: pendingCount > 0 ? pendingCount : undefined,
-      badgeVariant: 'secondary' as const
+      badgeVariant: 'secondary' as const,
+      permission: 'menu',
     },
     {
       href: '/restaurant/schedule',
       label: 'Kitchen Schedule',
-      icon: Calendar
+      icon: Calendar,
+      permission: 'schedule',
     },
     {
       href: '/restaurant/staff',
       label: 'Staff Management',
-      icon: Users
+      icon: Users,
+      permission: 'staff',
     },
     {
       href: '/restaurant/wallet',
       label: 'Wallet & Payouts',
-      icon: Wallet
+      icon: Wallet,
+      permission: 'wallet',
     },
     {
       href: '/restaurant/quality',
       label: 'Quality Analytics',
-      icon: BarChart3
+      icon: BarChart3,
+      permission: 'quality',
     },
     {
       href: '/restaurant/campaigns',
       label: 'Ad Campaigns',
-      icon: Utensils
+      icon: Utensils,
+      permission: 'campaigns',
     },
     {
       href: '/restaurant/analytics',
       label: 'Analytics',
-      icon: BarChart3
+      icon: BarChart3,
+      permission: 'analytics',
     },
     {
       href: '/restaurant/reviews',
       label: 'Reviews & Ratings',
-      icon: Star
+      icon: Star,
+      permission: 'reviews',
     },
     {
       href: '/restaurant/notifications',
       label: 'Notifications',
-      icon: Bell
+      icon: Bell,
+      permission: null,
     },
     {
       href: '/restaurant/profile',
       label: 'Restaurant Profile',
-      icon: User
+      icon: User,
+      permission: 'settings',
     },
     {
       href: '/restaurant/settings',
       label: 'Settings',
-      icon: Settings
+      icon: Settings,
+      permission: 'settings',
     },
     {
       href: '/restaurant/support',
       label: 'Support',
-      icon: HelpCircle
+      icon: HelpCircle,
+      permission: null,
     },
   ];
+
+  const navItems = allNavItems.filter((item) => {
+    if (!isStaff) return true;
+    if (!item.permission) return true;
+    return hasPermission(item.permission);
+  });
 
   const isActive = (href: string, exact?: boolean) => {
     if (exact) {
@@ -184,7 +215,7 @@ export default function RestaurantSidebar({ isMobile = false, onClose }: Restaur
               <Utensils className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-base font-bold text-foreground">AKR Hunger</h1>
+              <h1 className="text-base font-bold text-foreground">Hunger</h1>
               <p className="text-xs text-muted-foreground font-medium">Partner Portal</p>
             </div>
           </div>
@@ -194,8 +225,17 @@ export default function RestaurantSidebar({ isMobile = false, onClose }: Restaur
           </div>
         </div>
         <div className="bg-muted/60 backdrop-blur-sm rounded-xl p-3 border border-border/80 shadow-xs">
-          <p className="text-sm font-bold text-foreground truncate">{restaurant?.name || 'Restaurant'}</p>
-          <p className="text-xs text-muted-foreground truncate font-medium">{user.email}</p>
+          <div className="flex items-center justify-between gap-1 mb-0.5">
+            <p className="text-sm font-bold text-foreground truncate">{restaurant?.name || 'Restaurant'}</p>
+            {isStaff && (
+              <Badge variant="secondary" className="text-[10px] uppercase font-bold bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/20">
+                {staffRole || 'STAFF'}
+              </Badge>
+            )}
+          </div>
+          <p className="text-xs text-muted-foreground truncate font-medium">
+            {user.staffName ? `${user.staffName} (${user.email})` : user.email}
+          </p>
         </div>
       </div>
 

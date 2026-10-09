@@ -203,7 +203,7 @@ export default function WalletPage() {
                 key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID, // Ensure this is in env
                 amount: parseFloat(addAmount) * 100, // Amount in paise
                 currency: "INR",
-                name: "AKR Hunger",
+                name: "Hunger",
                 description: "Add Money to Wallet",
                 order_id: result.orderId,
                 handler: async function (response: any) {
@@ -654,7 +654,7 @@ export default function WalletPage() {
                                 <div className="relative z-10 flex justify-between items-start">
                                     <div>
                                         <h3 className="font-black text-lg tracking-wider text-white flex items-center gap-1.5">
-                                            AKR<span className="text-primary font-extrabold">PREMIUM</span>
+                                            HUNGER<span className="text-primary font-extrabold">PREMIUM</span>
                                         </h3>
                                         <span className="text-[11px] text-zinc-300 font-semibold uppercase tracking-widest">VIP Membership Card</span>
                                     </div>

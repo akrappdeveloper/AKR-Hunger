@@ -1,5 +1,5 @@
 /**
- * Enterprise QR Code Generator for AKR Hunger Invoices
+ * Enterprise QR Code Generator for Hunger Invoices
  * Generates high-contrast, zero-latency Data URLs or SVG for printable invoices and web previews.
  */
 import QRCode from 'qrcode';

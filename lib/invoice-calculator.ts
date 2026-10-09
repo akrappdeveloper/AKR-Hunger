@@ -103,7 +103,7 @@ export function calculateInvoice(
   const rawId = order.id || 'ORDER';
   const orderIdShort = rawId.length > 8 ? rawId.slice(-8).toUpperCase() : rawId.toUpperCase();
   const invoiceNumber = `INV-${invoiceYear}-${orderIdShort}`;
-  const orderIdDisplay = `AKR-${orderIdShort}`;
+  const orderIdDisplay = `HNG-${orderIdShort}`;
   const verificationId = `VER-${orderIdShort}`;
   const verificationUrl = `${baseUrl}/verify/invoice/${rawId}`;
 
@@ -113,21 +113,21 @@ export function calculateInvoice(
   const invoiceDateDisplay = orderDateDisplay;
 
   // 2. Resolve Parties
-  // Operator: AKR Hunger
-  const operatorName = 'AKR Hunger';
-  const operatorLegalName = 'AKR Hunger Technologies Pvt. Ltd.';
+  // Operator: Hunger
+  const operatorName = 'Hunger';
+  const operatorLegalName = 'Hunger Technologies Pvt. Ltd.';
   const operatorGstin = '09AABCA1234F1Z8'; // Registered in Uttar Pradesh
   const operatorFssai = '10020051003421';
   const operatorCin = 'U74999UP2024PTC198765';
   const operatorAddress = 'Suite 402, Cyber Tower, Sector 62, Noida, Uttar Pradesh 201309';
 
   // Seller / Restaurant
-  const sellerName = restaurant?.name || order.restaurantName || 'AKR Partner Kitchen';
+  const sellerName = restaurant?.name || order.restaurantName || 'Hunger Partner Kitchen';
   const sellerLegalName = (restaurant as any)?.legalName || sellerName;
   const sellerGstin = (restaurant as any)?.gstin || 'Composition / Unregistered';
   const sellerFssai = (restaurant as any)?.fssai || '10022064001890';
   const sellerPhone = restaurant?.phone || '+91 98765 43210';
-  const sellerEmail = restaurant?.email || 'kitchen@akrhunger.com';
+  const sellerEmail = restaurant?.email || 'kitchen@hunger.com';
 
   let sellerAddress = restaurant?.address || '';
   if (!sellerAddress && restaurant?.street) {
@@ -295,7 +295,7 @@ export function calculateInvoice(
   }
 
   const paymentMethodDisplay = isWallet
-    ? 'AKR Hunger Wallet (Prepaid Balance)'
+    ? 'Hunger Wallet (Prepaid Balance)'
     : isCOD 
     ? 'Cash on Delivery (COD)' 
     : 'Online Payment (UPI / Credit Card / Debit Card / Net Banking)';

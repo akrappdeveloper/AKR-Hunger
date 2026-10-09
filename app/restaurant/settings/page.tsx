@@ -9,9 +9,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { uploadImage } from '@/lib/imageUpload';
+import { uploadToCloudinary } from '@/lib/cloudinary';
 import {
   Settings as SettingsIcon,
   Store,
@@ -82,6 +83,7 @@ export default function RestaurantSettingsPage() {
   const [pincodeLoading, setPincodeLoading] = useState(false);
   const [locatingGps, setLocatingGps] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [logoUploadProgress, setLogoUploadProgress] = useState(0);
 
   // Restaurant Settings State
   const [settings, setSettings] = useState({
@@ -140,7 +142,7 @@ export default function RestaurantSettingsPage() {
         try {
           const res = await fetch(
             `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&addressdetails=1`,
-            { headers: { 'User-Agent': 'AKR-Hunger-Restaurant-Settings/2.0' } }
+            { headers: { 'User-Agent': 'Hunger-Restaurant-Settings/2.0' } }
           );
           if (res.ok) {
             const data = await res.json();
@@ -448,8 +450,20 @@ export default function RestaurantSettingsPage() {
                         </div>
                       )}
                       {uploadingImage && (
-                        <div className="absolute inset-0 bg-background/70 flex items-center justify-center">
-                          <Loader2 className="w-8 h-8 text-primary animate-spin" />
+                        <div className="absolute inset-0 bg-background/90 backdrop-blur-xs flex flex-col items-center justify-center p-3 text-center space-y-2 z-20">
+                          <div className="relative w-10 h-10 flex items-center justify-center">
+                            <Loader2 className="w-10 h-10 text-primary animate-spin" />
+                            <span className="text-[10px] font-mono font-black text-foreground absolute">{logoUploadProgress}%</span>
+                          </div>
+                          <div className="w-20 h-1.5 bg-muted rounded-full overflow-hidden border border-border">
+                            <div
+                              className="h-full bg-primary rounded-full transition-all duration-150"
+                              style={{ width: `${logoUploadProgress}%` }}
+                            />
+                          </div>
+                          <span className="text-[10px] font-bold text-primary uppercase tracking-wider">
+                            {logoUploadProgress === 100 ? 'Finalizing...' : 'Uploading...'}
+                          </span>
                         </div>
                       )}
                       <label className="absolute inset-0 bg-background/80 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center cursor-pointer text-foreground text-xs font-bold uppercase tracking-wider backdrop-blur-sm">
@@ -459,12 +473,21 @@ export default function RestaurantSettingsPage() {
                           const file = e.target.files?.[0];
                           if (!file) return;
                           setUploadingImage(true);
+                          setLogoUploadProgress(0);
                           try {
-                            const url = await uploadImage(file, 'restaurant-logos', user?.uid || 'restaurant');
+                            let url = '';
+                            try {
+                              url = await uploadToCloudinary(file, (pct) => setLogoUploadProgress(pct));
+                            } catch (cloudErr) {
+                              url = await uploadImage(file, 'restaurant-logos', user?.uid || 'restaurant', (pct) => setLogoUploadProgress(pct));
+                            }
                             setSettings(prev => ({ ...prev, image: url }));
-                            toast.success("Logo uploaded!");
+                            toast.success("Logo uploaded to Cloudinary successfully!");
                           } catch (e: any) { toast.error(e?.message || "Upload failed"); }
-                          finally { setUploadingImage(false); }
+                          finally {
+                            setUploadingImage(false);
+                            setLogoUploadProgress(0);
+                          }
                         }} />
                       </label>
                     </div>

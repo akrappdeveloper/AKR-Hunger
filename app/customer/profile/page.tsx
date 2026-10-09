@@ -3,8 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { doc, updateDoc, onSnapshot } from 'firebase/firestore'; // Added onSnapshot, removed getDoc, arrayUnion
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { db, storage } from '@/lib/firebase';
+import { db } from '@/lib/firebase';
 import { Customer, Address } from '@/lib/types';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -710,7 +709,7 @@ export default function ProfilePage() {
             <div className="bg-gradient-to-br from-primary via-orange-600 to-amber-600 rounded-3xl p-6 relative overflow-hidden text-white shadow-lg shadow-primary/20">
               <div className="relative z-10">
                 <Badge className="bg-white/20 text-white border-white/30 backdrop-blur-md mb-2 text-xs font-black">PRIME MEMBER</Badge>
-                <h3 className="text-xl font-black text-white mb-1">AKR Prime Pass</h3>
+                <h3 className="text-xl font-black text-white mb-1">Hunger Prime Pass</h3>
                 <p className="text-white/90 text-xs sm:text-sm mb-4 leading-relaxed">Enjoy zero delivery fees and priority customer support on every order!</p>
                 <Button variant="secondary" className="w-full bg-white text-primary hover:bg-white/90 font-black rounded-xl shadow-md">
                   View Benefits

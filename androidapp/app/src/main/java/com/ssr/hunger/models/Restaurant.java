@@ -1,6 +1,11 @@
 package com.ssr.hunger.models;
 
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 public class Restaurant {
     private String id;
@@ -13,8 +18,11 @@ public class Restaurant {
     private double deliveryCharge;
     private double minimumOrder;
     private List<String> cuisineType;
-    private boolean isOpen;
-    private boolean isActive;
+    private boolean isOpen = true;
+    private boolean isCurrentlyOpen = true;
+    private boolean isActive = true;
+    private Map<String, Object> schedule;
+    private List<Map<String, Object>> specialDays;
     private String address;
     private String street;
     private String city;
@@ -62,10 +70,25 @@ public class Restaurant {
     public void setCuisineType(List<String> cuisineType) { this.cuisineType = cuisineType; }
 
     public boolean isOpen() { return isOpen; }
-    public void setOpen(boolean open) { isOpen = open; }
+    public void setOpen(boolean open) {
+        this.isOpen = open;
+        this.isCurrentlyOpen = open;
+    }
+
+    public boolean isCurrentlyOpen() { return isCurrentlyOpen; }
+    public void setCurrentlyOpen(boolean currentlyOpen) {
+        this.isCurrentlyOpen = currentlyOpen;
+        this.isOpen = currentlyOpen;
+    }
 
     public boolean isActive() { return isActive; }
     public void setActive(boolean active) { isActive = active; }
+
+    public Map<String, Object> getSchedule() { return schedule; }
+    public void setSchedule(Map<String, Object> schedule) { this.schedule = schedule; }
+
+    public List<Map<String, Object>> getSpecialDays() { return specialDays; }
+    public void setSpecialDays(List<Map<String, Object>> specialDays) { this.specialDays = specialDays; }
 
     public String getAddress() { return address; }
     public void setAddress(String address) { this.address = address; }
@@ -109,8 +132,104 @@ public class Restaurant {
     }
 
     public String getDisplayRating() {
-        if (averageRating > 0) return String.format("%.1f", averageRating);
-        if (rating > 0) return String.format("%.1f", rating);
+        if (averageRating > 0) return String.format(Locale.getDefault(), "%.1f", averageRating);
+        if (rating > 0) return String.format(Locale.getDefault(), "%.1f", rating);
         return "4.5";
+    }
+
+    public boolean isOperatingNow() {
+        if (!isActive) return false;
+        if (!isOpen || !isCurrentlyOpen) return false;
+
+        Calendar now = Calendar.getInstance();
+        int currentMinutes = now.get(Calendar.HOUR_OF_DAY) * 60 + now.get(Calendar.MINUTE);
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+        String todayDate = sdf.format(new Date());
+
+        // Check special days first
+        if (specialDays != null) {
+            for (Map<String, Object> sd : specialDays) {
+                if (sd != null && todayDate.equals(sd.get("date"))) {
+                    Object isClosedObj = sd.get("isClosed");
+                    if (isClosedObj instanceof Boolean && (Boolean) isClosedObj) {
+                        return false;
+                    }
+                    Object openObj = sd.get("openTime") != null ? sd.get("openTime") : sd.get("open");
+                    Object closeObj = sd.get("closeTime") != null ? sd.get("closeTime") : sd.get("close");
+                    if (openObj instanceof String && closeObj instanceof String) {
+                        int sOpen = parseTimeToMinutes((String) openObj);
+                        int sClose = parseTimeToMinutes((String) closeObj);
+                        if (sOpen != -1 && sClose != -1) {
+                            if (sOpen <= sClose) {
+                                return currentMinutes >= sOpen && currentMinutes <= sClose;
+                            } else {
+                                return currentMinutes >= sOpen || currentMinutes <= sClose;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Check regular schedule
+        if (schedule != null) {
+            String[] days = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
+            int dayOfWeek = now.get(Calendar.DAY_OF_WEEK) - 1; // 0 = Sunday
+            if (dayOfWeek >= 0 && dayOfWeek < days.length) {
+                String dayCap = days[dayOfWeek];
+                String dayLower = dayCap.toLowerCase(Locale.getDefault());
+                Object dayConfigObj = schedule.get(dayCap);
+                if (dayConfigObj == null) {
+                    dayConfigObj = schedule.get(dayLower);
+                }
+                if (dayConfigObj instanceof Map) {
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> dayConfig = (Map<String, Object>) dayConfigObj;
+                    Object dayOpenObj = dayConfig.get("isOpen");
+                    if (dayOpenObj instanceof Boolean && !(Boolean) dayOpenObj) {
+                        return false;
+                    }
+                    Object openObj = dayConfig.get("openTime") != null ? dayConfig.get("openTime") : dayConfig.get("open");
+                    Object closeObj = dayConfig.get("closeTime") != null ? dayConfig.get("closeTime") : dayConfig.get("close");
+                    if (openObj instanceof String && closeObj instanceof String) {
+                        int oMinutes = parseTimeToMinutes((String) openObj);
+                        int cMinutes = parseTimeToMinutes((String) closeObj);
+                        if (oMinutes != -1 && cMinutes != -1) {
+                            boolean withinHours;
+                            if (oMinutes <= cMinutes) {
+                                withinHours = currentMinutes >= oMinutes && currentMinutes <= cMinutes;
+                            } else {
+                                withinHours = currentMinutes >= oMinutes || currentMinutes <= cMinutes;
+                            }
+                            if (!withinHours) return false;
+                        }
+                    }
+                    // Check break
+                    Object bStartObj = dayConfig.get("breakStart");
+                    Object bEndObj = dayConfig.get("breakEnd");
+                    if (bStartObj instanceof String && bEndObj instanceof String) {
+                        int bStart = parseTimeToMinutes((String) bStartObj);
+                        int bEnd = parseTimeToMinutes((String) bEndObj);
+                        if (bStart != -1 && bEnd != -1 && currentMinutes >= bStart && currentMinutes <= bEnd) {
+                            return false;
+                        }
+                    }
+                }
+            }
+        }
+
+        return true;
+    }
+
+    private static int parseTimeToMinutes(String timeStr) {
+        if (timeStr == null || !timeStr.contains(":")) return -1;
+        try {
+            String[] parts = timeStr.trim().split(":");
+            int h = Integer.parseInt(parts[0].trim());
+            int m = Integer.parseInt(parts[1].trim());
+            return h * 60 + m;
+        } catch (Exception e) {
+            return -1;
+        }
     }
 }

@@ -27,7 +27,7 @@ export const ROLE_QUICK_PROMPTS: RoleQuickPrompt[] = [
     // Customer Prompts
     { role: 'customer', label: '📦 Track My Order', query: 'How do I track my active order?' },
     { role: 'customer', label: '❌ Cancel & Refund', query: 'What is the order cancellation and refund policy?' },
-    { role: 'customer', label: '💰 Wallet & Points', query: 'How do AKR Wallet and loyalty points work?' },
+    { role: 'customer', label: '💰 Wallet & Points', query: 'How do Hunger Wallet and loyalty points work?' },
     { role: 'customer', label: '💳 Payment Methods', query: 'What payment options are available?' },
     { role: 'customer', label: '⭐ Rate Food / Rider', query: 'How do I review a restaurant or delivery partner?' },
 
@@ -100,17 +100,17 @@ export const KNOWLEDGE_BASE: KnowledgeItem[] = [
             'I cancelled my order, when will I get my refund?',
             'Can I cancel after food is prepared?'
         ],
-        summary: 'Free cancellation within 5 minutes of placing. Instant refund to AKR Wallet or 5-7 days to bank.',
+        summary: 'Free cancellation within 5 minutes of placing. Instant refund to Hunger Wallet or 5-7 days to bank.',
         answer: `Here is our complete **Cancellation & Refund Policy**:
 
 - **5-Minute Cancellation Window:** You can cancel your order directly from the order details page within **5 minutes** of placing it at no charge.
 - **After 5 Minutes:** Once the restaurant begins cooking (**Preparing** status), automated cancellations are locked to prevent food wastage. If you have an emergency, please contact customer support immediately.
 - **Refund Timelines:**
-  - **AKR Wallet Refunds:** Credited **instantly** to your AKR Wallet balance.
+  - **Hunger Wallet Refunds:** Credited **instantly** to your Hunger Wallet balance.
   - **Online Payments (UPI, Cards, Netbanking via Razorpay):** Refunded to the original bank account within **5 to 7 business days**.
-  - **Cash on Delivery (COD):** If not yet paid, no refund needed. If an issue occurred after payment, refund is credited to your AKR Wallet upon review.`,
+  - **Cash on Delivery (COD):** If not yet paid, no refund needed. If an issue occurred after payment, refund is credited to your Hunger Wallet upon review.`,
         actionLink: { label: 'Go to Orders', url: '/customer/orders' },
-        relatedQuestions: ['How do AKR Wallet and loyalty points work?', 'I have a payment issue']
+        relatedQuestions: ['How do Hunger Wallet and loyalty points work?', 'I have a payment issue']
     },
     {
         id: 'cust_payment_methods',
@@ -127,14 +127,14 @@ export const KNOWLEDGE_BASE: KnowledgeItem[] = [
             'How do I apply a discount coupon?',
             'Is UPI supported?'
         ],
-        summary: 'Pay securely using UPI, Cards, Netbanking via Razorpay, AKR Wallet, or COD.',
+        summary: 'Pay securely using UPI, Cards, Netbanking via Razorpay, Hunger Wallet, or COD.',
         answer: `We offer multiple fast and secure checkout options:
 
 1. **Razorpay Gateway:**
    - **UPI:** Google Pay, PhonePe, Paytm, BHIM, Cred, and any UPI ID.
    - **Credit / Debit Cards:** Visa, MasterCard, RuPay, Maestro, Diners.
    - **Netbanking:** All major Indian banks.
-2. **AKR Wallet:**
+2. **Hunger Wallet:**
    - 1-click instantaneous checkout with zero gateway delays.
    - You can top up your wallet anytime from the [Customer Wallet](/customer/wallet).
 3. **Cash on Delivery (COD):**
@@ -142,25 +142,25 @@ export const KNOWLEDGE_BASE: KnowledgeItem[] = [
 4. **Promo Codes & Coupons:**
    - On the **Cart page**, browse available discount coupons or type a valid promo code to enjoy instant savings.`,
         actionLink: { label: 'Manage Wallet', url: '/customer/wallet' },
-        relatedQuestions: ['What is the order cancellation and refund policy?', 'How do AKR Wallet and loyalty points work?']
+        relatedQuestions: ['What is the order cancellation and refund policy?', 'How do Hunger Wallet and loyalty points work?']
     },
     {
         id: 'cust_wallet_rewards',
         role: 'customer',
         category: 'Wallet & Rewards',
-        title: 'AKR Wallet, Cashbacks, and Loyalty Points',
+        title: 'Hunger Wallet, Cashbacks, and Loyalty Points',
         keywords: [
             'wallet', 'points', 'loyalty', 'cashback', 'rewards', 'balance',
             'recharge', 'topup', 'membership', 'add money', 'coins'
         ],
         questionExamples: [
-            'How does the AKR Wallet work?',
+            'How does the Hunger Wallet work?',
             'How do I earn loyalty reward points?',
             'Can I use my wallet balance to pay for food?',
             'How do I add money to my wallet?'
         ],
         summary: 'Earn points on orders, enjoy 1-click payments, and get instant cancellation refunds.',
-        answer: `The **AKR Wallet** provides speed, loyalty benefits, and convenience:
+        answer: `The **Hunger Wallet** provides speed, loyalty benefits, and convenience:
 
 - **1-Click Checkout:** Skip bank OTPs and complete orders in a single second.
 - **Loyalty Reward Points:**

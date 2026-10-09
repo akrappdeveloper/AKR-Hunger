@@ -651,7 +651,7 @@ export default function LoginPage() {
         updatedAt: new Date(),
       });
 
-      toast.success('Mobile number saved! Welcome to AKR Hunger.');
+      toast.success('Mobile number saved! Welcome to Hunger.');
       setIsPhoneModalOpen(false);
       router.push('/customer');
     } catch (err: any) {
@@ -1020,7 +1020,7 @@ export default function LoginPage() {
                         </div>
                       ) : (
                         <div className="flex items-center justify-center gap-2">
-                          <span>{isLogin ? 'Sign In to AKR Hunger' : 'Create Free Account'}</span>
+                          <span>{isLogin ? 'Sign In to Hunger' : 'Create Free Account'}</span>
                           <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                         </div>
                       )}
@@ -1075,7 +1075,7 @@ export default function LoginPage() {
 
       {/* Footer copyright */}
       <footer className="w-full py-4 text-center text-xs text-muted-foreground z-10">
-        © {new Date().getFullYear()} AKR Hunger Technologies Inc. All rights reserved.
+        © {new Date().getFullYear()} Hunger Technologies Inc. All rights reserved.
       </footer>
 
       {/* Google Sign-in Mandatory Phone Setup Dialog */}
@@ -1097,7 +1097,7 @@ export default function LoginPage() {
               One Last Step: Enter Phone Number
             </DialogTitle>
             <DialogDescription className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-              Welcome to AKR Hunger, <strong className="text-foreground">{authenticatedGoogleUser?.name || 'Foodie'}</strong>! To coordinate your food deliveries and share your delivery OTP, please enter your mobile number.
+              Welcome to Hunger, <strong className="text-foreground">{authenticatedGoogleUser?.name || 'Foodie'}</strong>! To coordinate your food deliveries and share your delivery OTP, please enter your mobile number.
             </DialogDescription>
           </DialogHeader>
 

@@ -12,11 +12,77 @@
       ".read": true,
       ".write": true
     },
+    "chats": {
+      ".indexOn": [
+        "orderId",
+        "chatType",
+        "updatedAt",
+        "lastMessageAt"
+      ],
+      "$chatId": {
+        ".read": "auth != null",
+        ".write": "auth != null",
+        "participants": {
+          "$uid": {
+            ".read": "auth != null",
+            ".write": "auth != null"
+          }
+        },
+        "messages": {
+          ".indexOn": [
+            "createdAt",
+            "serverTimestamp"
+          ],
+          "$messageId": {
+            ".read": "auth != null",
+            ".write": "auth != null && (!data.exists() || data.child('senderId').val() === auth.uid || auth.token.admin === true || auth.token.role === 'admin')",
+            ".validate": "newData.hasChildren(['messageId', 'chatId', 'senderId', 'text', 'type']) && newData.child('text').isString() && newData.child('text').val().length <= 2500"
+          }
+        }
+      }
+    },
+    "userChats": {
+      "$uid": {
+        ".read": "auth != null && (auth.uid === $uid || auth.token.admin === true || auth.token.role === 'admin')",
+        ".write": "auth != null",
+        ".indexOn": [
+          "updatedAt",
+          "lastMessageAt",
+          "active",
+          "unreadCount"
+        ]
+      }
+    },
+    "chatPresence": {
+      ".read": "auth != null",
+      "$uid": {
+        ".write": "auth != null && (auth.uid === $uid || auth.token.admin === true || auth.token.role === 'admin')"
+      }
+    },
+    "chatTyping": {
+      "$chatId": {
+        ".read": "auth != null",
+        "$uid": {
+          ".write": "auth != null && (auth.uid === $uid || auth.token.admin === true || auth.token.role === 'admin')"
+        }
+      }
+    },
+    "chatReports": {
+      ".read": "auth != null",
+      ".write": "auth != null",
+      ".indexOn": [
+        "createdAt",
+        "status"
+      ]
+    },
     "supportChats": {
       "$ticketId": {
         ".read": "auth != null",
         ".write": "auth != null",
         "messages": {
+          ".indexOn": [
+            "timestamp"
+          ],
           "$messageId": {
             ".read": "auth != null",
             ".write": "auth != null"

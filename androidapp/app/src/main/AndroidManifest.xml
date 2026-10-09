@@ -251,6 +251,12 @@
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
 
+        <!-- Real-time Order Chat Activity -->
+        <activity
+            android:name=".activities.ChatActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+
 
         <!-- FCM Service -->
         <service

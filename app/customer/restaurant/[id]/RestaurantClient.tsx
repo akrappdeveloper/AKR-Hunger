@@ -38,9 +38,10 @@ import {
     DialogContent,
     DialogClose
 } from '@/components/ui/dialog';
-import { doc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { doc, updateDoc, arrayUnion, arrayRemove, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { copyToClipboard } from '@/lib/utils';
+import { checkRestaurantOperatingStatus, OperatingStatus } from '@/lib/restaurant-schedule';
 
 interface RestaurantClientProps {
     restaurantId: string;
@@ -68,8 +69,33 @@ export default function RestaurantClient({
     const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isFavorite, setIsFavorite] = useState(false);
+    const [itemFavorites, setItemFavorites] = useState<string[]>([]);
+    const [currentTime, setCurrentTime] = useState(new Date());
     const [activePromotions, setActivePromotions] = useState<any[]>([]);
     const [activeOrder, setActiveOrder] = useState<any | null>(null);
+
+    // Keep clock tick every 30s so time-based schedule changes evaluate live
+    useEffect(() => {
+        const interval = setInterval(() => setCurrentTime(new Date()), 30000);
+        return () => clearInterval(interval);
+    }, []);
+
+    // Realtime restaurant status listener
+    useEffect(() => {
+        if (!restaurantId) return;
+        const unsubscribe = onSnapshot(doc(db, 'restaurants', restaurantId), (docSnap) => {
+            if (docSnap.exists()) {
+                const data = { id: docSnap.id, ...docSnap.data() } as Restaurant;
+                setRestaurant(data);
+            }
+        }, (err) => {
+            console.error('Realtime restaurant listener error:', err);
+        });
+        return () => unsubscribe();
+    }, [restaurantId]);
+
+    // Computed real-time operating status
+    const operatingStatus = checkRestaurantOperatingStatus(restaurant, currentTime);
 
     const categoryRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
@@ -279,11 +305,56 @@ export default function RestaurantClient({
             .reduce((sum, item) => sum + item.quantity, 0);
     };
 
+    // Sync customer favorites array
+    useEffect(() => {
+        if (customer?.favorites) {
+            setItemFavorites(customer.favorites);
+        }
+    }, [customer?.favorites]);
+
+    const handleToggleItemFavorite = async (itemId: string, e?: React.MouseEvent) => {
+        if (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        if (!user) {
+            toast.error("Please login to save items to your wishlist");
+            return;
+        }
+        const isFav = itemFavorites.includes(itemId);
+        try {
+            const customerRef = doc(db, 'customers', user.uid);
+            if (isFav) {
+                await updateDoc(customerRef, {
+                    favorites: arrayRemove(itemId)
+                });
+                setItemFavorites(prev => prev.filter(id => id !== itemId));
+                toast.success("Removed from wishlist");
+            } else {
+                await updateDoc(customerRef, {
+                    favorites: arrayUnion(itemId)
+                });
+                setItemFavorites(prev => [...prev, itemId]);
+                toast.success("Added to your wishlist ❤️");
+            }
+        } catch (error) {
+            console.error("Error toggling item favorite:", error);
+            toast.error("Failed to update wishlist");
+        }
+    };
+
     const handleAddToCart = (item: MenuItem, e?: React.MouseEvent) => {
         if (e) {
             e.preventDefault();
             e.stopPropagation();
         }
+
+        // Realtime restaurant operating status check
+        if (!operatingStatus.isOpen) {
+            toast.error(`Restaurant is currently closed (${operatingStatus.reason}). You cannot place orders right now, but you can save items to your wishlist!`);
+            return;
+        }
+
         if (!isServiceable) {
             toast.error("Sorry, this restaurant does not deliver to your current location.");
             return;
@@ -475,6 +546,39 @@ export default function RestaurantClient({
 
             {/* 2. LUXURY RESTAURANT HERO CARD & DETAILS SECTION */}
             <div className="w-full max-w-[1440px] mx-auto px-3 sm:px-6 pt-4 sm:pt-6">
+                {/* Real-time Closed Alert Banner */}
+                {!operatingStatus.isOpen && (
+                    <div className="mb-5 p-4 sm:p-5 rounded-3xl bg-rose-500/10 border-2 border-rose-500/30 text-rose-700 dark:text-rose-300 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-lg shadow-rose-500/5 transition-all">
+                        <div className="flex items-center gap-3.5">
+                            <div className="w-12 h-12 rounded-2xl bg-rose-500 text-white flex items-center justify-center shrink-0 shadow-md">
+                                <AlertTriangle className="w-6 h-6" />
+                            </div>
+                            <div>
+                                <div className="flex items-center gap-2 flex-wrap">
+                                    <span className="text-xs font-black uppercase tracking-wider text-rose-600 dark:text-rose-400 flex items-center gap-1.5">
+                                        <span className="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block animate-pulse" />
+                                        Restaurant is Currently Closed
+                                    </span>
+                                    {operatingStatus.nextOpenTime && (
+                                        <Badge variant="outline" className="text-[10px] border-rose-500/40 text-rose-600 dark:text-rose-400 font-bold">
+                                            Opens {operatingStatus.nextOpenTime}
+                                        </Badge>
+                                    )}
+                                </div>
+                                <h4 className="font-extrabold text-sm sm:text-base text-foreground mt-0.5">
+                                    {operatingStatus.reason}
+                                </h4>
+                                <p className="text-xs text-muted-foreground mt-0.5">
+                                    New orders and adding to cart are disabled. You can browse the menu and save items to your wishlist!
+                                </p>
+                            </div>
+                        </div>
+                        <Badge variant="destructive" className="px-3 py-1 font-black text-xs uppercase tracking-wider shrink-0">
+                            Closed for Orders
+                        </Badge>
+                    </div>
+                )}
+
                 {/* Active Order In-Progress Alert Banner */}
                 {activeOrder && (
                     <div className="mb-4 p-4 rounded-3xl bg-gradient-to-r from-emerald-500/15 via-teal-500/10 to-primary/15 border-2 border-emerald-500/30 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-lg shadow-emerald-500/5 animate-pulse-subtle">
@@ -841,6 +945,26 @@ export default function RestaurantClient({
                                                                     <Star className="w-2.5 h-2.5 fill-current" /> Bestseller
                                                                 </span>
                                                             )}
+                                                            {item.isNew && (
+                                                                <span className="text-[10px] font-extrabold bg-blue-500/15 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-md border border-blue-500/25 flex items-center gap-1 uppercase tracking-wider">
+                                                                    ✨ New
+                                                                </span>
+                                                            )}
+                                                            {item.isChefSpecial && (
+                                                                <span className="text-[10px] font-extrabold bg-rose-500/15 text-rose-600 dark:text-rose-400 px-2 py-0.5 rounded-md border border-rose-500/25 flex items-center gap-1 uppercase tracking-wider">
+                                                                    👨‍🍳 Chef's Pick
+                                                                </span>
+                                                            )}
+                                                            {item.isMustTry && (
+                                                                <span className="text-[10px] font-extrabold bg-orange-500/15 text-orange-600 dark:text-orange-400 px-2 py-0.5 rounded-md border border-orange-500/25 flex items-center gap-1 uppercase tracking-wider">
+                                                                    🔥 Must Try
+                                                                </span>
+                                                            )}
+                                                            {item.isTrending && (
+                                                                <span className="text-[10px] font-extrabold bg-violet-500/15 text-violet-600 dark:text-violet-400 px-2 py-0.5 rounded-md border border-violet-500/25 flex items-center gap-1 uppercase tracking-wider">
+                                                                    ⚡ Trending
+                                                                </span>
+                                                            )}
                                                         </div>
 
                                                         {/* Item Title */}
@@ -888,14 +1012,50 @@ export default function RestaurantClient({
                                                             className="object-cover group-hover:scale-105 transition-transform duration-500"
                                                             fallbackType="food"
                                                         />
+                                                        {/* Quick Wishlist / Favorite Heart Button on Card Image */}
+                                                        <button
+                                                            type="button"
+                                                            onClick={(e) => handleToggleItemFavorite(item.id, e)}
+                                                            className={`absolute top-1.5 right-1.5 w-7 h-7 rounded-full backdrop-blur-md flex items-center justify-center transition-all z-10 ${
+                                                                itemFavorites.includes(item.id)
+                                                                    ? 'bg-rose-500 text-white shadow-md scale-105'
+                                                                    : 'bg-black/40 text-white/90 hover:bg-black/60 hover:text-white'
+                                                            }`}
+                                                            title={itemFavorites.includes(item.id) ? 'Saved in Wishlist' : 'Add to Wishlist'}
+                                                            aria-label="Wishlist"
+                                                        >
+                                                            <Heart className={`w-3.5 h-3.5 ${itemFavorites.includes(item.id) ? 'fill-current' : ''}`} />
+                                                        </button>
                                                     </div>
 
-                                                    {/* ADD / Quantity Counter Button */}
+                                                    {/* ADD / Quantity Counter Button or Closed Wishlist Pill */}
                                                     <div
                                                         className="w-full mt-2"
                                                         onClick={(e) => e.stopPropagation()}
                                                     >
-                                                        {qty > 0 ? (
+                                                        {!operatingStatus.isOpen ? (
+                                                            <div className="w-full flex items-center gap-1">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={(e) => handleToggleItemFavorite(item.id, e)}
+                                                                    className={`flex-1 h-8 rounded-xl border text-[11px] font-bold flex items-center justify-center gap-1 transition-all ${
+                                                                        itemFavorites.includes(item.id)
+                                                                            ? 'bg-rose-500/10 border-rose-500/30 text-rose-500'
+                                                                            : 'bg-muted/60 border-border/70 text-foreground hover:bg-muted'
+                                                                    }`}
+                                                                    title="Add to Wishlist"
+                                                                >
+                                                                    <Heart className={`w-3 h-3 ${itemFavorites.includes(item.id) ? 'fill-current text-rose-500' : ''}`} />
+                                                                    <span className="text-[10px]">{itemFavorites.includes(item.id) ? 'Saved' : 'Wishlist'}</span>
+                                                                </button>
+                                                                <div
+                                                                    className="px-2 h-8 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400 font-extrabold text-[10px] flex items-center justify-center border border-rose-500/20 cursor-not-allowed uppercase"
+                                                                    title={`Restaurant Closed: ${operatingStatus.reason}`}
+                                                                >
+                                                                    Closed
+                                                                </div>
+                                                            </div>
+                                                        ) : qty > 0 ? (
                                                             <div className="w-full h-8 bg-primary rounded-xl flex items-center justify-between px-1.5 shadow-md shadow-primary/20 text-primary-foreground font-black">
                                                                 <button
                                                                     type="button"
@@ -1034,7 +1194,34 @@ export default function RestaurantClient({
                                 </div>
 
                                 <div className="pt-2">
-                                    {getQuantityInCart(selectedItem.id) > 0 ? (
+                                    {!operatingStatus.isOpen ? (
+                                        <div className="space-y-3">
+                                            <div className="p-3 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-600 dark:text-rose-400 text-center text-xs font-bold leading-relaxed">
+                                                ⚠️ Restaurant is currently closed ({operatingStatus.reason}). Ordering is temporarily paused.
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <Button
+                                                    type="button"
+                                                    onClick={() => handleToggleItemFavorite(selectedItem.id)}
+                                                    variant="outline"
+                                                    className={`flex-1 h-12 rounded-2xl font-bold text-xs gap-2 transition-all ${
+                                                        itemFavorites.includes(selectedItem.id)
+                                                            ? 'border-rose-500 text-rose-500 bg-rose-500/10 hover:bg-rose-500/20'
+                                                            : 'text-foreground hover:bg-muted'
+                                                    }`}
+                                                >
+                                                    <Heart className={`w-4 h-4 ${itemFavorites.includes(selectedItem.id) ? 'fill-current text-rose-500' : ''}`} />
+                                                    {itemFavorites.includes(selectedItem.id) ? 'Saved in Wishlist' : 'Add to Wishlist'}
+                                                </Button>
+                                                <Button
+                                                    disabled
+                                                    className="flex-1 h-12 rounded-2xl bg-muted text-muted-foreground font-black text-xs cursor-not-allowed"
+                                                >
+                                                    Closed for Orders
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    ) : getQuantityInCart(selectedItem.id) > 0 ? (
                                         <div className="flex items-center bg-primary rounded-xl h-11 px-3 gap-3 w-full justify-between">
                                             <button
                                                 className="w-9 h-full flex items-center justify-center text-primary-foreground hover:opacity-80 transition-opacity"

@@ -12,10 +12,14 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.OvershootInterpolator;
+import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -23,6 +27,10 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
 import androidx.core.app.ActivityCompat;
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -82,6 +90,23 @@ public class OrderTrackingActivity extends BaseActivity {
     private TextView tvMapRiderStatus;
     private View gpsLiveBadge;
 
+    // Fullscreen Map & Extended Views
+    private boolean isMapFullScreen = false;
+    private FrameLayout frameMapContainer;
+    private View viewMapFade;
+    private View btnFullscreenToggle;
+    private ImageView ivFullscreenIcon;
+    private View scrollTrackingContent;
+    private View layoutFullscreenBottomCard;
+    private TextView tvTopTitle;
+    private TextView tvFsDriverName, tvFsDriverSub;
+    private View btnFsCallDriver, btnFsExit;
+    private int defaultMapHeightPx = 0;
+
+    // Cached Leaflet Assets
+    private static String cachedLeafletCss = null;
+    private static String cachedLeafletJs = null;
+
     // Live Map
     private android.webkit.WebView wvLiveMap;
     private double mapDriverLat = 0, mapDriverLng = 0;
@@ -137,6 +162,7 @@ public class OrderTrackingActivity extends BaseActivity {
             return;
         }
 
+        defaultMapHeightPx = (int) (330 * getResources().getDisplayMetrics().density);
         bindViews();
         setupLiveMap();
         listenToOrder();
@@ -200,15 +226,69 @@ public class OrderTrackingActivity extends BaseActivity {
         tvTrackingDeliveryBadge    = findViewById(R.id.tv_tracking_delivery_badge);
         wvLiveMap          = findViewById(R.id.wv_live_map);
 
+        frameMapContainer          = findViewById(R.id.frame_map_container);
+        viewMapFade                = findViewById(R.id.view_map_fade);
+        btnFullscreenToggle        = findViewById(R.id.btn_fullscreen_toggle);
+        ivFullscreenIcon           = findViewById(R.id.iv_fullscreen_icon);
+        scrollTrackingContent      = findViewById(R.id.scroll_tracking_content);
+        layoutFullscreenBottomCard = findViewById(R.id.layout_fullscreen_bottom_card);
+        tvTopTitle                 = findViewById(R.id.tv_top_title);
+        tvFsDriverName             = findViewById(R.id.tv_fs_driver_name);
+        tvFsDriverSub              = findViewById(R.id.tv_fs_driver_sub);
+        btnFsCallDriver            = findViewById(R.id.btn_fs_call_driver);
+        btnFsExit                  = findViewById(R.id.btn_fs_exit);
+
+        if (btnFullscreenToggle != null) btnFullscreenToggle.setOnClickListener(v -> toggleMapFullScreen());
+        if (btnFsExit != null) btnFsExit.setOnClickListener(v -> toggleMapFullScreen());
+        if (layoutFullscreenBottomCard != null) layoutFullscreenBottomCard.setOnClickListener(v -> toggleMapFullScreen());
+
         if (btnShareTracking != null) btnShareTracking.setOnClickListener(v -> shareTrackingInfo());
         if (btnRecenterRider != null) btnRecenterRider.setOnClickListener(v -> recenterMapOnDriver());
         if (btnFitRoute != null) btnFitRoute.setOnClickListener(v -> fitMapRoute());
         if (btnCallRestaurant != null) {
             btnCallRestaurant.setOnClickListener(v -> callPhoneNumber(restaurantPhone, tvRestaurantName != null ? tvRestaurantName.getText().toString() : "Restaurant"));
         }
+
+        View btnChatRestaurant = findViewById(R.id.btn_chat_restaurant);
+        if (btnChatRestaurant != null) {
+            btnChatRestaurant.setOnClickListener(v -> {
+                Intent chatIntent = new Intent(this, ChatActivity.class);
+                chatIntent.putExtra(ChatActivity.EXTRA_ORDER_ID, orderId);
+                chatIntent.putExtra(ChatActivity.EXTRA_COUNTERPART_ROLE, "restaurant");
+                chatIntent.putExtra(ChatActivity.EXTRA_COUNTERPART_NAME, restaurantNameStr);
+                chatIntent.putExtra(ChatActivity.EXTRA_PHONE, restaurantPhone);
+                startActivity(chatIntent);
+            });
+        }
+
+        View btnChatDriver = findViewById(R.id.btn_chat_driver);
+        if (btnChatDriver != null) {
+            btnChatDriver.setOnClickListener(v -> {
+                Intent chatIntent = new Intent(this, ChatActivity.class);
+                chatIntent.putExtra(ChatActivity.EXTRA_ORDER_ID, orderId);
+                chatIntent.putExtra(ChatActivity.EXTRA_COUNTERPART_ROLE, "delivery");
+                chatIntent.putExtra(ChatActivity.EXTRA_COUNTERPART_NAME, tvDriverName != null && !TextUtils.isEmpty(tvDriverName.getText()) ? tvDriverName.getText().toString() : "Delivery Valet");
+                chatIntent.putExtra(ChatActivity.EXTRA_PHONE, tvDriverPhone != null ? tvDriverPhone.getText().toString() : "");
+                startActivity(chatIntent);
+            });
+        }
     }
 
-    // ─── Live Map: Leaflet + OpenStreetMap + Fallback Canvas in WebView ───────
+    // ─── Live Map: Leaflet + OpenStreetMap + Animated Real Driver Navigation ─
+
+    private String loadAssetString(String path) {
+        try (InputStream is = getAssets().open(path);
+             BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {
+            StringBuilder sb = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                sb.append(line).append('\n');
+            }
+            return sb.toString();
+        } catch (Exception e) {
+            return null;
+        }
+    }
 
     @android.annotation.SuppressLint("SetJavaScriptEnabled")
     private void setupLiveMap() {
@@ -260,7 +340,6 @@ public class OrderTrackingActivity extends BaseActivity {
             @Override
             public void onReceivedError(android.webkit.WebView view, int errorCode, String description, String failingUrl) {
                 super.onReceivedError(view, errorCode, description, failingUrl);
-                view.evaluateJavascript("if (typeof startCanvasFallback === 'function') { startCanvasFallback(); }", null);
             }
         });
 
@@ -272,7 +351,7 @@ public class OrderTrackingActivity extends BaseActivity {
         });
 
         String html = buildLeafletHtml(28.6139, 77.2090, 14);
-        wvLiveMap.loadDataWithBaseURL("https://shungher.vercel.app", html, "text/html", "UTF-8", null);
+        wvLiveMap.loadDataWithBaseURL("https://tile.openstreetmap.org/", html, "text/html", "UTF-8", null);
 
         // Theme switcher buttons
         View btnStreet = findViewById(R.id.btn_map_theme_street);
@@ -284,218 +363,268 @@ public class OrderTrackingActivity extends BaseActivity {
     }
 
     private String buildLeafletHtml(double lat, double lng, int zoom) {
-        return "<!DOCTYPE html>"
-            + "<html><head>"
-            + "<meta charset='utf-8'/>"
-            + "<meta name='viewport' content='width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no'/>"
-            + "<link rel='stylesheet' href='https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'/>"
-            + "<script src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'></script>"
-            + "<style>"
-            + "* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }"
-            + "html, body, #map { margin: 0; padding: 0; width: 100%; height: 100%; background: #0f172a; overflow: hidden; font-family: sans-serif; }"
-            + "#fallbackCanvas { display: none; width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 999; }"
-            + "@keyframes radarPulse { 0% { transform: scale(0.6); opacity: 0.9; } 100% { transform: scale(2.6); opacity: 0; } }"
-            + "@keyframes riderBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }"
-            + ".rider-container { position: relative; width: 52px; height: 52px; display: flex; align-items: center; justify-content: center; }"
-            + ".rider-pulse { position: absolute; width: 44px; height: 44px; border-radius: 50%; background: rgba(255,87,34,0.45); animation: radarPulse 1.8s infinite cubic-bezier(0.2,0.6,0.3,1); pointer-events: none; }"
-            + ".rider-pulse.p2 { animation-delay: 0.9s; }"
-            + ".rider-icon-box { width: 44px; height: 44px; border-radius: 50%; background: #FF5722; border: 3px solid #FFFFFF; box-shadow: 0 4px 14px rgba(255,87,34,0.6); display: flex; align-items: center; justify-content: center; transition: transform 0.4s ease-out; animation: riderBob 0.6s infinite ease-in-out; }"
-            + ".rider-label { position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); background: #1E293B; color: #FFFFFF; font-size: 9px; font-weight: bold; padding: 2px 6px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.3); white-space: nowrap; }"
-            + ".pin-box { position: relative; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; }"
-            + ".pin-circle { width: 38px; height: 38px; border-radius: 50%; border: 3px solid #FFF; display: flex; align-items: center; justify-content: center; font-size: 19px; box-shadow: 0 4px 12px rgba(0,0,0,0.4); }"
-            + ".pin-rest { background: #F59E0B; }"
-            + ".pin-cust { background: #10B981; }"
-            + ".pin-tag { position: absolute; top: -14px; left: 50%; transform: translateX(-50%); background: rgba(15,23,42,0.9); color: #FFF; font-size: 10px; font-weight: bold; padding: 2px 7px; border-radius: 8px; white-space: nowrap; border: 1px solid rgba(255,255,255,0.2); }"
-            + "</style>"
-            + "</head><body>"
-            + "<div id='map'></div>"
-            + "<canvas id='fallbackCanvas'></canvas>"
-            + "<script>"
-            + "var map = null;"
-            + "var streetLayer = null, darkLayer = null, satLayer = null;"
-            + "var driverMarker = null, restMarker = null, custMarker = null;"
-            + "var routeGlow = null, routeDashed = null, routeCompleted = null;"
-            + "var waypoints = [];"
-            + "var simInterval = null;"
-            + "var simIndex = 0;"
-            + "var isSimulating = false;"
-            + "var curLat = " + lat + ", curLng = " + lng + ";"
-            + "function initMap() {"
-            + "  try {"
-            + "    if (typeof L === 'undefined') { startCanvasFallback(); return; }"
-            + "    map = L.map('map', { zoomControl: false, attributionControl: false }).setView([curLat, curLng], " + zoom + ");"
-            + "    streetLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { subdomains: 'abcd', maxZoom: 19 });"
-            + "    darkLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { subdomains: 'abcd', maxZoom: 19 });"
-            + "    satLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 });"
-            + "    streetLayer.addTo(map);"
-            + "    setTimeout(function() { if(map) map.invalidateSize(); }, 300);"
-            + "    setTimeout(function() { if(map) map.invalidateSize(); }, 800);"
-            + "    setTimeout(function() { if(map) map.invalidateSize(); }, 1600);"
-            + "    if (window.AndroidMapBridge) { window.AndroidMapBridge.onMapReady(); }"
-            + "  } catch(e) {"
-            + "    startCanvasFallback();"
-            + "  }"
-            + "}"
-            + "function generateRoute(rLat, rLng, cLat, cLng) {"
-            + "  var pts = []; var steps = 14; var dLat = cLat - rLat; var dLng = cLng - rLng;"
-            + "  var pLat = -dLng * 0.16; var pLng = dLat * 0.16;"
-            + "  for (var i = 0; i <= steps; i++) {"
-            + "    var t = i / steps; var curve = 4 * t * (1 - t);"
-            + "    pts.push([rLat + dLat * t + curve * pLat, rLng + dLng * t + curve * pLng]);"
-            + "  }"
-            + "  return pts;"
-            + "}"
-            + "function setOrderRoute(rLat, rLng, rName, cLat, cLng, status) {"
-            + "  if (!map) return;"
-            + "  if (restMarker) map.removeLayer(restMarker);"
-            + "  if (custMarker) map.removeLayer(custMarker);"
-            + "  if (routeGlow) map.removeLayer(routeGlow);"
-            + "  if (routeDashed) map.removeLayer(routeDashed);"
-            + "  if (routeCompleted) map.removeLayer(routeCompleted);"
-            + "  var restEl = '<div class=\"pin-box\"><div class=\"pin-tag\">' + (rName || 'Restaurant') + '</div><div class=\"pin-circle pin-rest\">🍔</div></div>';"
-            + "  restMarker = L.marker([rLat, rLng], { icon: L.divIcon({ html: restEl, className: '', iconSize: [44,44], iconAnchor: [22,22] }) }).addTo(map);"
-            + "  var custEl = '<div class=\"pin-box\"><div class=\"pin-tag\">Your Home</div><div class=\"pin-circle pin-cust\">🏠</div></div>';"
-            + "  custMarker = L.marker([cLat, cLng], { icon: L.divIcon({ html: custEl, className: '', iconSize: [44,44], iconAnchor: [22,22] }) }).addTo(map);"
-            + "  waypoints = generateRoute(rLat, rLng, cLat, cLng);"
-            + "  routeGlow = L.polyline(waypoints, { color: '#FF5722', weight: 8, opacity: 0.35, lineCap: 'round', lineJoin: 'round' }).addTo(map);"
-            + "  routeDashed = L.polyline(waypoints, { color: '#FF9800', weight: 4, dashArray: '6, 10', opacity: 0.95 }).addTo(map);"
-            + "  routeCompleted = L.polyline([], { color: '#10B981', weight: 5, opacity: 0.95 }).addTo(map);"
-            + "  map.fitBounds(L.latLngBounds([[rLat, rLng], [cLat, cLng]]), { padding: [50, 50], maxZoom: 16 });"
-            + "  if (status === 'out_for_delivery') {"
-            + "    startSimulation();"
-            + "  } else if (status === 'delivered') {"
-            + "    updateDriver(cLat, cLng, 0, 0);"
-            + "  } else {"
-            + "    updateDriver(rLat, rLng, 0, 0);"
-            + "  }"
-            + "}"
-            + "function calcHeading(lat1, lng1, lat2, lng2) {"
-            + "  var dLng = (lng2 - lng1) * Math.PI / 180;"
-            + "  var y = Math.sin(dLng) * Math.cos(lat2 * Math.PI / 180);"
-            + "  var x = Math.cos(lat1 * Math.PI / 180) * Math.sin(lat2 * Math.PI / 180) - Math.sin(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.cos(dLng);"
-            + "  var brng = Math.atan2(y, x) * 180 / Math.PI;"
-            + "  return (brng + 360) % 360;"
-            + "}"
-            + "function calcDistKm(lat1, lon1, lat2, lon2) {"
-            + "  var R = 6371;"
-            + "  var dLat = (lat2 - lat1) * Math.PI / 180;"
-            + "  var dLon = (lon2 - lon1) * Math.PI / 180;"
-            + "  var a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);"
-            + "  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));"
-            + "}"
-            + "function makeRiderHtml(heading, speed) {"
-            + "  var spdText = (speed > 0 ? Math.round(speed) + ' km/h' : 'Valet');"
-            + "  return '<div class=\"rider-container\">' +"
-            + "         '<div class=\"rider-pulse\"></div>' +"
-            + "         '<div class=\"rider-pulse p2\"></div>' +"
-            + "         '<div class=\"rider-icon-box\" style=\"transform: rotate(' + Math.round(heading) + 'deg);\"><span style=\"font-size:24px;line-height:1;\">🛵</span></div>' +"
-            + "         '<div class=\"rider-label\">' + spdText + '</div>' +"
-            + "         '</div>';"
-            + "}"
-            + "function updateDriver(lat, lng, heading, speed) {"
-            + "  if (!map) return;"
-            + "  if (isSimulating) { clearInterval(simInterval); isSimulating = false; }"
-            + "  var h = heading || 0; var s = speed || 24;"
-            + "  if (!driverMarker) {"
-            + "    driverMarker = L.marker([lat, lng], {"
-            + "      icon: L.divIcon({ html: makeRiderHtml(h, s), className: '', iconSize: [52, 52], iconAnchor: [26, 26] }),"
-            + "      zIndexOffset: 1000"
-            + "    }).addTo(map);"
-            + "  } else {"
-            + "    driverMarker.setLatLng([lat, lng]);"
-            + "    driverMarker.setIcon(L.divIcon({ html: makeRiderHtml(h, s), className: '', iconSize: [52, 52], iconAnchor: [26, 26] }));"
-            + "  }"
-            + "  if (custMarker) {"
-            + "    var cPos = custMarker.getLatLng();"
-            + "    var dist = calcDistKm(lat, lng, cPos.lat, cPos.lng);"
-            + "    var mins = Math.max(1, Math.round((dist / Math.max(15, s)) * 60));"
-            + "    if (window.AndroidMapBridge) { window.AndroidMapBridge.onRiderProgress(50, dist, s, mins); }"
-            + "  }"
-            + "}"
-            + "function startSimulation() {"
-            + "  if (isSimulating || waypoints.length < 2) return;"
-            + "  isSimulating = true; simIndex = 0; var total = waypoints.length;"
-            + "  simInterval = setInterval(function() {"
-            + "    if (!isSimulating) return;"
-            + "    simIndex++;"
-            + "    if (simIndex >= total) {"
-            + "      simIndex = total - 1; clearInterval(simInterval); isSimulating = false;"
-            + "      if (window.AndroidMapBridge) { window.AndroidMapBridge.onRiderProgress(100, 0, 0, 0); }"
-            + "      return;"
-            + "    }"
-            + "    var cur = waypoints[simIndex]; var prev = waypoints[Math.max(0, simIndex - 1)];"
-            + "    var h = calcHeading(prev[0], prev[1], cur[0], cur[1]); var speed = 28;"
-            + "    if (!driverMarker) {"
-            + "      driverMarker = L.marker(cur, {"
-            + "        icon: L.divIcon({ html: makeRiderHtml(h, speed), className: '', iconSize: [52, 52], iconAnchor: [26, 26] }),"
-            + "        zIndexOffset: 1000"
-            + "      }).addTo(map);"
-            + "    } else {"
-            + "      driverMarker.setLatLng(cur);"
-            + "      driverMarker.setIcon(L.divIcon({ html: makeRiderHtml(h, speed), className: '', iconSize: [52, 52], iconAnchor: [26, 26] }));"
-            + "    }"
-            + "    if (routeCompleted) { routeCompleted.setLatLngs(waypoints.slice(0, simIndex + 1)); }"
-            + "    var dest = waypoints[total - 1];"
-            + "    var remDist = calcDistKm(cur[0], cur[1], dest[0], dest[1]);"
-            + "    var remMins = Math.max(1, Math.round((remDist / 25) * 60));"
-            + "    var progress = (simIndex / (total - 1)) * 100;"
-            + "    if (window.AndroidMapBridge) { window.AndroidMapBridge.onRiderProgress(progress, remDist, speed, remMins); }"
-            + "  }, 750);"
-            + "}"
-            + "function recenterOnDriver() {"
-            + "  if (!map) return;"
-            + "  if (driverMarker) map.setView(driverMarker.getLatLng(), 16, { animate: true, duration: 0.6 });"
-            + "  else if (restMarker) map.setView(restMarker.getLatLng(), 15, { animate: true });"
-            + "}"
-            + "function fitRoute() {"
-            + "  if (!map) return;"
-            + "  var grp = [];"
-            + "  if (driverMarker) grp.push(driverMarker.getLatLng());"
-            + "  if (restMarker) grp.push(restMarker.getLatLng());"
-            + "  if (custMarker) grp.push(custMarker.getLatLng());"
-            + "  if (grp.length > 0) map.fitBounds(L.latLngBounds(grp), { padding: [50, 50], maxZoom: 16 });"
-            + "}"
-            + "function switchStyle(style) {"
-            + "  if (!map) return;"
-            + "  map.removeLayer(streetLayer); map.removeLayer(darkLayer); map.removeLayer(satLayer);"
-            + "  if (style === 'dark') darkLayer.addTo(map);"
-            + "  else if (style === 'satellite') satLayer.addTo(map);"
-            + "  else streetLayer.addTo(map);"
-            + "}"
-            + "function startCanvasFallback() {"
-            + "  var cv = document.getElementById('fallbackCanvas');"
-            + "  var mapDiv = document.getElementById('map');"
-            + "  if (!cv) return;"
-            + "  if (mapDiv) mapDiv.style.display = 'none';"
-            + "  cv.style.display = 'block';"
-            + "  var ctx = cv.getContext('2d');"
-            + "  var w = cv.width = window.innerWidth || 360;"
-            + "  var h = cv.height = window.innerHeight || 320;"
-            + "  var t = 0;"
-            + "  function drawFrame() {"
-            + "    t = (t + 0.005) % 1;"
-            + "    ctx.fillStyle = '#0f172a'; ctx.fillRect(0, 0, w, h);"
-            + "    ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 1;"
-            + "    for (var x = 0; x < w; x += 40) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke(); }"
-            + "    for (var y = 0; y < h; y += 40) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke(); }"
-            + "    var p0 = { x: 70, y: 70 }, p1 = { x: w * 0.7, y: 90 }, p2 = { x: w - 70, y: h - 70 };"
-            + "    ctx.beginPath(); ctx.moveTo(p0.x, p0.y); ctx.quadraticCurveTo(p1.x, p1.y, p2.x, p2.y);"
-            + "    ctx.strokeStyle = 'rgba(255,87,34,0.4)'; ctx.lineWidth = 8; ctx.stroke();"
-            + "    ctx.strokeStyle = '#FF9800'; ctx.lineWidth = 3; ctx.setLineDash([8, 8]); ctx.stroke(); ctx.setLineDash([]);"
-            + "    var rt = (1 - t) * (1 - t) * p0.x + 2 * (1 - t) * t * p1.x + t * t * p2.x;"
-            + "    var ry = (1 - t) * (1 - t) * p0.y + 2 * (1 - t) * t * p1.y + t * t * p2.y;"
-            + "    ctx.fillStyle = '#FF5722'; ctx.beginPath(); ctx.arc(rt, ry, 16, 0, Math.PI * 2); ctx.fill();"
-            + "    ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = 3; ctx.stroke();"
-            + "    ctx.fillStyle = '#F59E0B'; ctx.beginPath(); ctx.arc(p0.x, p0.y, 14, 0, Math.PI * 2); ctx.fill();"
-            + "    ctx.fillStyle = '#10B981'; ctx.beginPath(); ctx.arc(p2.x, p2.y, 14, 0, Math.PI * 2); ctx.fill();"
-            + "    requestAnimationFrame(drawFrame);"
-            + "  }"
-            + "  requestAnimationFrame(drawFrame);"
-            + "  if (window.AndroidMapBridge) { window.AndroidMapBridge.onMapReady(); }"
-            + "}"
-            + "window.addEventListener('load', initMap);"
-            + "setTimeout(function() { if (!map && typeof L === 'undefined') startCanvasFallback(); }, 1800);"
-            + "</script></body></html>";
+        if (cachedLeafletCss == null) cachedLeafletCss = loadAssetString("leaflet/leaflet.css");
+        if (cachedLeafletJs == null)  cachedLeafletJs  = loadAssetString("leaflet/leaflet.js");
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("<!DOCTYPE html><html><head>");
+        sb.append("<meta charset='utf-8'/>");
+        sb.append("<meta name='viewport' content='width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no'/>");
+
+        // CSS: inlined if available from local assets, else CDN fallback
+        if (cachedLeafletCss != null && !cachedLeafletCss.isEmpty()) {
+            sb.append("<style>").append(cachedLeafletCss).append("</style>");
+        } else {
+            sb.append("<link rel='stylesheet' href='https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'/>");
+        }
+
+        sb.append("<style>");
+        sb.append("* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }");
+        sb.append("html, body, #map { margin: 0; padding: 0; width: 100%; height: 100%; background: #0f172a; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }");
+        sb.append("@keyframes radarPulse { 0% { transform: scale(0.6); opacity: 0.9; } 100% { transform: scale(2.6); opacity: 0; } }");
+        sb.append("@keyframes riderBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }");
+        sb.append("@keyframes dashFlow { to { stroke-dashoffset: -32; } }");
+        sb.append(".route-flow-line { animation: dashFlow 1.4s linear infinite; }");
+        sb.append(".rider-container { position: relative; width: 54px; height: 54px; display: flex; align-items: center; justify-content: center; }");
+        sb.append(".rider-pulse { position: absolute; width: 46px; height: 46px; border-radius: 50%; background: rgba(255,87,34,0.45); animation: radarPulse 1.8s infinite cubic-bezier(0.2,0.6,0.3,1); pointer-events: none; }");
+        sb.append(".rider-pulse.p2 { animation-delay: 0.9s; }");
+        sb.append(".rider-icon-box { width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, #FF6F00, #FF3D00); border: 3px solid #FFFFFF; box-shadow: 0 4px 16px rgba(255,87,34,0.6); display: flex; align-items: center; justify-content: center; transition: transform 0.35s ease-out; animation: riderBob 0.8s infinite ease-in-out; }");
+        sb.append(".rider-label { position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); background: #0F172A; color: #FFFFFF; font-size: 9px; font-weight: 800; padding: 2px 7px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.35); box-shadow: 0 2px 6px rgba(0,0,0,0.4); white-space: nowrap; }");
+        sb.append(".pin-box { position: relative; width: 46px; height: 46px; display: flex; align-items: center; justify-content: center; }");
+        sb.append(".pin-circle { width: 40px; height: 40px; border-radius: 50%; border: 3px solid #FFF; display: flex; align-items: center; justify-content: center; font-size: 20px; box-shadow: 0 4px 14px rgba(0,0,0,0.4); }");
+        sb.append(".pin-rest { background: linear-gradient(135deg, #F59E0B, #D97706); }");
+        sb.append(".pin-cust { background: linear-gradient(135deg, #10B981, #059669); }");
+        sb.append(".pin-tag { position: absolute; top: -15px; left: 50%; transform: translateX(-50%); background: rgba(15,23,42,0.92); color: #FFF; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; white-space: nowrap; border: 1px solid rgba(255,255,255,0.25); box-shadow: 0 2px 8px rgba(0,0,0,0.3); }");
+        sb.append("</style></head><body>");
+
+        sb.append("<div id='map'></div>");
+
+        // JS: inlined if available, else CDN fallback
+        if (cachedLeafletJs != null && !cachedLeafletJs.isEmpty()) {
+            sb.append("<script>").append(cachedLeafletJs).append("</script>");
+        } else {
+            sb.append("<script src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'></script>");
+        }
+
+        // Map script
+        sb.append("<script>");
+        sb.append("var map = null;\n");
+        sb.append("var streetLayer = null, darkLayer = null, satLayer = null;\n");
+        sb.append("var driverMarker = null, restMarker = null, custMarker = null;\n");
+        sb.append("var routeGlow = null, routeDashed = null, routeCompleted = null;\n");
+        sb.append("var waypoints = [];\n");
+        sb.append("var simInterval = null, simIndex = 0, isSimulating = false;\n");
+        sb.append("var curLat = ").append(lat).append(", curLng = ").append(lng).append(";\n");
+        sb.append("var animFrameId = null;\n");
+
+        sb.append("function initMap() {\n");
+        sb.append("  try {\n");
+        sb.append("    if (typeof L === 'undefined') return;\n");
+        sb.append("    map = L.map('map', { zoomControl: false, attributionControl: false, fadeAnimation: true, zoomAnimation: true }).setView([curLat, curLng], ").append(zoom).append(");\n");
+        sb.append("    streetLayer = L.tileLayer('https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { subdomains: 'abcd', maxZoom: 19 });\n");
+        sb.append("    streetLayer.on('tileerror', function() {\n");
+        sb.append("      if (!streetLayer._fb) { streetLayer._fb = true; streetLayer.setUrl('https://tile.openstreetmap.org/{z}/{x}/{y}.png'); }\n");
+        sb.append("    });\n");
+        sb.append("    darkLayer = L.tileLayer('https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { subdomains: 'abcd', maxZoom: 19 });\n");
+        sb.append("    satLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 });\n");
+        sb.append("    streetLayer.addTo(map);\n");
+        sb.append("    setTimeout(function() { if(map) map.invalidateSize(); }, 200);\n");
+        sb.append("    setTimeout(function() { if(map) map.invalidateSize(); }, 600);\n");
+        sb.append("    setTimeout(function() { if(map) map.invalidateSize(); }, 1200);\n");
+        sb.append("    if (window.AndroidMapBridge) { window.AndroidMapBridge.onMapReady(); }\n");
+        sb.append("  } catch(e) { console.error('Map init error:', e); }\n");
+        sb.append("}\n");
+
+        sb.append("function generateRoute(rLat, rLng, cLat, cLng) {\n");
+        sb.append("  var pts = []; var steps = 16; var dLat = cLat - rLat; var dLng = cLng - rLng;\n");
+        sb.append("  var pLat = -dLng * 0.18; var pLng = dLat * 0.18;\n");
+        sb.append("  for (var i = 0; i <= steps; i++) {\n");
+        sb.append("    var t = i / steps; var curve = 4 * t * (1 - t);\n");
+        sb.append("    pts.push([rLat + dLat * t + curve * pLat, rLng + dLng * t + curve * pLng]);\n");
+        sb.append("  }\n");
+        sb.append("  return pts;\n");
+        sb.append("}\n");
+
+        sb.append("function drawRouteLines(pts) {\n");
+        sb.append("  if (!map || !pts || pts.length < 2) return;\n");
+        sb.append("  if (routeGlow) map.removeLayer(routeGlow);\n");
+        sb.append("  if (routeDashed) map.removeLayer(routeDashed);\n");
+        sb.append("  if (routeCompleted) map.removeLayer(routeCompleted);\n");
+        sb.append("  routeGlow = L.polyline(pts, { color: '#FF5722', weight: 9, opacity: 0.35, lineCap: 'round', lineJoin: 'round' }).addTo(map);\n");
+        sb.append("  routeDashed = L.polyline(pts, { color: '#FF9800', weight: 4, dashArray: '8, 12', className: 'route-flow-line', opacity: 0.95 }).addTo(map);\n");
+        sb.append("  routeCompleted = L.polyline([], { color: '#10B981', weight: 5, opacity: 0.95, lineCap: 'round' }).addTo(map);\n");
+        sb.append("}\n");
+
+        sb.append("function fetchOSRMRoute(rLat, rLng, cLat, cLng) {\n");
+        sb.append("  try {\n");
+        sb.append("    var url = 'https://router.project-osrm.org/route/v1/driving/' + rLng + ',' + rLat + ';' + cLng + ',' + cLat + '?overview=full&geometries=geojson';\n");
+        sb.append("    fetch(url).then(function(res) { return res.json(); }).then(function(data) {\n");
+        sb.append("      if (data && data.routes && data.routes.length > 0 && data.routes[0].geometry) {\n");
+        sb.append("        var coords = data.routes[0].geometry.coordinates;\n");
+        sb.append("        if (coords && coords.length > 2) {\n");
+        sb.append("          waypoints = coords.map(function(c) { return [c[1], c[0]]; });\n");
+        sb.append("          drawRouteLines(waypoints);\n");
+        sb.append("        }\n");
+        sb.append("      }\n");
+        sb.append("    }).catch(function() {});\n");
+        sb.append("  } catch(e) {}\n");
+        sb.append("}\n");
+
+        sb.append("function setOrderRoute(rLat, rLng, rName, cLat, cLng, status) {\n");
+        sb.append("  if (!map) return;\n");
+        sb.append("  if (restMarker) map.removeLayer(restMarker);\n");
+        sb.append("  if (custMarker) map.removeLayer(custMarker);\n");
+        sb.append("  var restEl = '<div class=\"pin-box\"><div class=\"pin-tag\">' + (rName || 'Restaurant') + '</div><div class=\"pin-circle pin-rest\">🍔</div></div>';\n");
+        sb.append("  restMarker = L.marker([rLat, rLng], { icon: L.divIcon({ html: restEl, className: '', iconSize: [46, 46], iconAnchor: [23, 23] }), zIndexOffset: 500 }).addTo(map);\n");
+        sb.append("  var custEl = '<div class=\"pin-box\"><div class=\"pin-tag\">Your Location</div><div class=\"pin-circle pin-cust\">🏠</div></div>';\n");
+        sb.append("  custMarker = L.marker([cLat, cLng], { icon: L.divIcon({ html: custEl, className: '', iconSize: [46, 46], iconAnchor: [23, 23] }), zIndexOffset: 500 }).addTo(map);\n");
+        sb.append("  waypoints = generateRoute(rLat, rLng, cLat, cLng);\n");
+        sb.append("  drawRouteLines(waypoints);\n");
+        sb.append("  map.fitBounds(L.latLngBounds([[rLat, rLng], [cLat, cLng]]), { padding: [55, 55], maxZoom: 16 });\n");
+        sb.append("  fetchOSRMRoute(rLat, rLng, cLat, cLng);\n");
+        sb.append("  if (status === 'out_for_delivery') {\n");
+        sb.append("    if (!driverMarker) updateDriver(rLat, rLng, 0, 24);\n");
+        sb.append("    startSimulation();\n");
+        sb.append("  } else if (status === 'delivered') {\n");
+        sb.append("    updateDriver(cLat, cLng, 0, 0);\n");
+        sb.append("  } else {\n");
+        sb.append("    updateDriver(rLat, rLng, 0, 0);\n");
+        sb.append("  }\n");
+        sb.append("}\n");
+
+        sb.append("function calcHeading(lat1, lng1, lat2, lng2) {\n");
+        sb.append("  var dLng = (lng2 - lng1) * Math.PI / 180;\n");
+        sb.append("  var y = Math.sin(dLng) * Math.cos(lat2 * Math.PI / 180);\n");
+        sb.append("  var x = Math.cos(lat1 * Math.PI / 180) * Math.sin(lat2 * Math.PI / 180) - Math.sin(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.cos(dLng);\n");
+        sb.append("  return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;\n");
+        sb.append("}\n");
+
+        sb.append("function calcDistKm(lat1, lon1, lat2, lon2) {\n");
+        sb.append("  var R = 6371; var dLat = (lat2 - lat1) * Math.PI / 180; var dLon = (lon2 - lon1) * Math.PI / 180;\n");
+        sb.append("  var a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);\n");
+        sb.append("  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));\n");
+        sb.append("}\n");
+
+        sb.append("function makeRiderHtml(heading, speed) {\n");
+        sb.append("  var spdText = (speed > 0 ? Math.round(speed) + ' km/h' : 'Valet');\n");
+        sb.append("  return '<div class=\"rider-container\">' +\n");
+        sb.append("         '<div class=\"rider-pulse\"></div><div class=\"rider-pulse p2\"></div>' +\n");
+        sb.append("         '<div class=\"rider-icon-box\" style=\"transform: rotate(' + Math.round(heading) + 'deg);\"><span style=\"font-size:24px;line-height:1;\">🛵</span></div>' +\n");
+        sb.append("         '<div class=\"rider-label\">' + spdText + '</div></div>';\n");
+        sb.append("}\n");
+
+        sb.append("function smoothMoveMarker(marker, fromPos, toPos, duration, heading, speed) {\n");
+        sb.append("  var start = performance.now();\n");
+        sb.append("  marker.setIcon(L.divIcon({ html: makeRiderHtml(heading, speed), className: '', iconSize: [54, 54], iconAnchor: [27, 27] }));\n");
+        sb.append("  if (animFrameId) cancelAnimationFrame(animFrameId);\n");
+        sb.append("  function step(time) {\n");
+        sb.append("    var elapsed = time - start; var t = Math.min(elapsed / duration, 1);\n");
+        sb.append("    var ease = 1 - Math.pow(1 - t, 3);\n");
+        sb.append("    var curLat = fromPos.lat + (toPos.lat - fromPos.lat) * ease;\n");
+        sb.append("    var curLng = fromPos.lng + (toPos.lng - fromPos.lng) * ease;\n");
+        sb.append("    marker.setLatLng([curLat, curLng]);\n");
+        sb.append("    if (t < 1) { animFrameId = requestAnimationFrame(step); }\n");
+        sb.append("  }\n");
+        sb.append("  animFrameId = requestAnimationFrame(step);\n");
+        sb.append("}\n");
+
+        sb.append("function findNearestIdx(pos, pts) {\n");
+        sb.append("  var minD = 999999, idx = 0;\n");
+        sb.append("  for (var i = 0; i < pts.length; i++) {\n");
+        sb.append("    var d = calcDistKm(pos[0], pos[1], pts[i][0], pts[i][1]);\n");
+        sb.append("    if (d < minD) { minD = d; idx = i; }\n");
+        sb.append("  }\n");
+        sb.append("  return idx;\n");
+        sb.append("}\n");
+
+        sb.append("function updateDriver(lat, lng, heading, speed) {\n");
+        sb.append("  if (!map) return;\n");
+        sb.append("  if (isSimulating) { clearInterval(simInterval); isSimulating = false; }\n");
+        sb.append("  var h = (typeof heading === 'number' && !isNaN(heading)) ? heading : 0;\n");
+        sb.append("  var s = (typeof speed === 'number' && !isNaN(speed) && speed > 0) ? speed : 24;\n");
+        sb.append("  if (!driverMarker) {\n");
+        sb.append("    driverMarker = L.marker([lat, lng], {\n");
+        sb.append("      icon: L.divIcon({ html: makeRiderHtml(h, s), className: '', iconSize: [54, 54], iconAnchor: [27, 27] }),\n");
+        sb.append("      zIndexOffset: 1000\n");
+        sb.append("    }).addTo(map);\n");
+        sb.append("  } else {\n");
+        sb.append("    var oldPos = driverMarker.getLatLng();\n");
+        sb.append("    smoothMoveMarker(driverMarker, oldPos, { lat: lat, lng: lng }, 1000, h, s);\n");
+        sb.append("  }\n");
+        sb.append("  if (waypoints && waypoints.length > 0) {\n");
+        sb.append("    var nIdx = findNearestIdx([lat, lng], waypoints);\n");
+        sb.append("    if (nIdx > 0 && routeCompleted) routeCompleted.setLatLngs(waypoints.slice(0, nIdx + 1));\n");
+        sb.append("  }\n");
+        sb.append("  if (custMarker) {\n");
+        sb.append("    var cPos = custMarker.getLatLng();\n");
+        sb.append("    var dist = calcDistKm(lat, lng, cPos.lat, cPos.lng);\n");
+        sb.append("    var mins = Math.max(1, Math.round((dist / Math.max(15, s)) * 60));\n");
+        sb.append("    var prog = 50;\n");
+        sb.append("    if (restMarker) {\n");
+        sb.append("      var rPos = restMarker.getLatLng();\n");
+        sb.append("      var tDist = calcDistKm(rPos.lat, rPos.lng, cPos.lat, cPos.lng);\n");
+        sb.append("      prog = Math.min(96, Math.max(10, Math.round(((tDist - dist) / Math.max(0.1, tDist)) * 100)));\n");
+        sb.append("    }\n");
+        sb.append("    if (window.AndroidMapBridge) { window.AndroidMapBridge.onRiderProgress(prog, dist, s, mins); }\n");
+        sb.append("  }\n");
+        sb.append("}\n");
+
+        sb.append("function startSimulation() {\n");
+        sb.append("  if (isSimulating || waypoints.length < 2) return;\n");
+        sb.append("  isSimulating = true; simIndex = 0; var total = waypoints.length;\n");
+        sb.append("  simInterval = setInterval(function() {\n");
+        sb.append("    if (!isSimulating) return;\n");
+        sb.append("    simIndex++;\n");
+        sb.append("    if (simIndex >= total) {\n");
+        sb.append("      simIndex = total - 1; clearInterval(simInterval); isSimulating = false;\n");
+        sb.append("      if (window.AndroidMapBridge) { window.AndroidMapBridge.onRiderProgress(100, 0, 0, 0); }\n");
+        sb.append("      return;\n");
+        sb.append("    }\n");
+        sb.append("    var cur = waypoints[simIndex]; var prev = waypoints[Math.max(0, simIndex - 1)];\n");
+        sb.append("    var h = calcHeading(prev[0], prev[1], cur[0], cur[1]); var speed = 26;\n");
+        sb.append("    if (!driverMarker) {\n");
+        sb.append("      driverMarker = L.marker(cur, { icon: L.divIcon({ html: makeRiderHtml(h, speed), className: '', iconSize: [54, 54], iconAnchor: [27, 27] }), zIndexOffset: 1000 }).addTo(map);\n");
+        sb.append("    } else {\n");
+        sb.append("      driverMarker.setLatLng(cur);\n");
+        sb.append("      driverMarker.setIcon(L.divIcon({ html: makeRiderHtml(h, speed), className: '', iconSize: [54, 54], iconAnchor: [27, 27] }));\n");
+        sb.append("    }\n");
+        sb.append("    if (routeCompleted) routeCompleted.setLatLngs(waypoints.slice(0, simIndex + 1));\n");
+        sb.append("    var dest = waypoints[total - 1];\n");
+        sb.append("    var remDist = calcDistKm(cur[0], cur[1], dest[0], dest[1]);\n");
+        sb.append("    var remMins = Math.max(1, Math.round((remDist / 25) * 60));\n");
+        sb.append("    var prog = (simIndex / (total - 1)) * 100;\n");
+        sb.append("    if (window.AndroidMapBridge) { window.AndroidMapBridge.onRiderProgress(prog, remDist, speed, remMins); }\n");
+        sb.append("  }, 900);\n");
+        sb.append("}\n");
+
+        sb.append("function recenterOnDriver() {\n");
+        sb.append("  if (!map) return;\n");
+        sb.append("  if (driverMarker) map.setView(driverMarker.getLatLng(), 16, { animate: true, duration: 0.7 });\n");
+        sb.append("  else if (restMarker) map.setView(restMarker.getLatLng(), 15, { animate: true });\n");
+        sb.append("}\n");
+
+        sb.append("function fitRoute() {\n");
+        sb.append("  if (!map) return;\n");
+        sb.append("  var grp = [];\n");
+        sb.append("  if (driverMarker) grp.push(driverMarker.getLatLng());\n");
+        sb.append("  if (restMarker) grp.push(restMarker.getLatLng());\n");
+        sb.append("  if (custMarker) grp.push(custMarker.getLatLng());\n");
+        sb.append("  if (grp.length > 0) map.fitBounds(L.latLngBounds(grp), { padding: [55, 55], maxZoom: 16 });\n");
+        sb.append("}\n");
+
+        sb.append("function switchStyle(style) {\n");
+        sb.append("  if (!map) return;\n");
+        sb.append("  map.removeLayer(streetLayer); map.removeLayer(darkLayer); map.removeLayer(satLayer);\n");
+        sb.append("  if (style === 'dark') darkLayer.addTo(map);\n");
+        sb.append("  else if (style === 'satellite') satLayer.addTo(map);\n");
+        sb.append("  else streetLayer.addTo(map);\n");
+        sb.append("}\n");
+
+        sb.append("window.addEventListener('load', initMap);\n");
+        sb.append("setTimeout(function() { if (!map) initMap(); }, 400);\n");
+        sb.append("</script></body></html>");
+
+        return sb.toString();
     }
 
     private void pushPendingCoordinatesToMap() {
@@ -520,6 +649,14 @@ public class OrderTrackingActivity extends BaseActivity {
             } else {
                 tvMapRiderStatus.setText(String.format(Locale.getDefault(),
                     "🛵 Valet on the way • %.1f km away • ~%d mins", distKm, Math.max(1, etaMinutes)));
+            }
+        }
+        if (tvFsDriverSub != null) {
+            if (distKm <= 0.05 || progressPct >= 98) {
+                tvFsDriverSub.setText("📍 Valet arrived at your doorstep!");
+            } else {
+                tvFsDriverSub.setText(String.format(Locale.getDefault(),
+                    "🛵 ~%d mins • %.1f km away • %.0f km/h", Math.max(1, etaMinutes), distKm, speedKmh));
             }
         }
         if (progressTrack != null && progressPct > 0) {
@@ -556,6 +693,49 @@ public class OrderTrackingActivity extends BaseActivity {
         currentMapStyle = style;
         if (!mapLoaded || wvLiveMap == null) return;
         runOnUiThread(() -> wvLiveMap.evaluateJavascript("if (typeof switchStyle === 'function') { switchStyle('" + style + "'); }", null));
+    }
+
+    // ─── Full Screen Map Toggle & Back Handling ───────────────────────────────
+
+    public void toggleMapFullScreen() {
+        isMapFullScreen = !isMapFullScreen;
+        if (frameMapContainer == null) return;
+
+        if (isMapFullScreen) {
+            if (scrollTrackingContent != null) scrollTrackingContent.setVisibility(View.GONE);
+            if (viewMapFade != null) viewMapFade.setVisibility(View.GONE);
+            if (layoutFullscreenBottomCard != null) layoutFullscreenBottomCard.setVisibility(View.VISIBLE);
+            if (ivFullscreenIcon != null) ivFullscreenIcon.setImageResource(R.drawable.ic_fullscreen_exit);
+            if (tvTopTitle != null) tvTopTitle.setText("Live Fullscreen Map");
+
+            ViewGroup.LayoutParams lp = frameMapContainer.getLayoutParams();
+            lp.height = ViewGroup.LayoutParams.MATCH_PARENT;
+            frameMapContainer.setLayoutParams(lp);
+        } else {
+            if (scrollTrackingContent != null) scrollTrackingContent.setVisibility(View.VISIBLE);
+            if (viewMapFade != null) viewMapFade.setVisibility(View.VISIBLE);
+            if (layoutFullscreenBottomCard != null) layoutFullscreenBottomCard.setVisibility(View.GONE);
+            if (ivFullscreenIcon != null) ivFullscreenIcon.setImageResource(R.drawable.ic_fullscreen);
+            if (tvTopTitle != null) tvTopTitle.setText("Live Order Tracking");
+
+            ViewGroup.LayoutParams lp = frameMapContainer.getLayoutParams();
+            lp.height = defaultMapHeightPx > 0 ? defaultMapHeightPx : (int) (330 * getResources().getDisplayMetrics().density);
+            frameMapContainer.setLayoutParams(lp);
+        }
+
+        if (wvLiveMap != null) {
+            wvLiveMap.evaluateJavascript("if (typeof map !== 'undefined' && map) { map.invalidateSize(); }", null);
+        }
+        new Handler(Looper.getMainLooper()).postDelayed(this::fitMapRoute, 300);
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (isMapFullScreen) {
+            toggleMapFullScreen();
+            return;
+        }
+        super.onBackPressed();
     }
 
     // ─── Animated Map Placeholder ─────────────────────────────────────────────
@@ -931,6 +1111,21 @@ public class OrderTrackingActivity extends BaseActivity {
                 }
             }
 
+            // Sync with Fullscreen Card
+            if (tvFsDriverName != null) {
+                tvFsDriverName.setText(hasDriver ? driverName : "Delivery Valet");
+            }
+            if (tvFsDriverSub != null && (tvFsDriverSub.getText() == null || tvFsDriverSub.getText().toString().isEmpty() || tvFsDriverSub.getText().toString().contains("Realtime"))) {
+                if (status != null) tvFsDriverSub.setText(getStatusEmoji(status) + " " + getStatusLabel(status));
+            }
+            if (btnFsCallDriver != null) {
+                final String phone = driverPhone;
+                btnFsCallDriver.setVisibility(hasDriver && phone != null && !phone.isEmpty() ? View.VISIBLE : View.GONE);
+                if (hasDriver && phone != null && !phone.isEmpty()) {
+                    btnFsCallDriver.setOnClickListener(v -> callPhoneNumber(phone, driverName));
+                }
+            }
+
             // Build step track
             buildStepTracker(status);
         });
@@ -1003,7 +1198,10 @@ public class OrderTrackingActivity extends BaseActivity {
         }
         if (hint != null) {
             final String finalHint = hint;
-            runOnUiThread(() -> tvOrderStatus.setText(finalHint));
+            runOnUiThread(() -> {
+                tvOrderStatus.setText(finalHint);
+                if (tvFsDriverSub != null) tvFsDriverSub.setText(finalHint);
+            });
         }
     }
 
