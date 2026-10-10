@@ -24,8 +24,11 @@
 
     <!-- Camera & Storage (Proof of Delivery, Bag Photo, KYC Documents) -->
     <uses-permission android:name="android.permission.CAMERA" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28" />
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
 
     <!-- Customer & Restaurant Hotline Calling -->
@@ -126,6 +129,12 @@
         <!-- Live Telemetry Radar Activity -->
         <activity
             android:name=".activities.LiveTrackingRadarActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- WebRTC Live Video KYC Activity -->
+        <activity
+            android:name=".activities.VkycVideoCallActivity"
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
 

@@ -61,17 +61,25 @@ export default function AdminKycPage() {
   const [approving, setApproving] = useState(false);
   const [rejecting, setRejecting] = useState(false);
   const [docViewer, setDocViewer] = useState<{ url: string; title: string } | null>(null);
+  const [vkycRequests, setVkycRequests] = useState<Record<string, any>>({});
 
   // WebRTC
   const [callOpen, setCallOpen] = useState(false);
 
-  useEffect(() => {
     const q = query(collection(db, 'deliveryPersons'), orderBy('createdAt', 'desc'));
     const unsub = onSnapshot(q, snap => {
       setApplications(snap.docs.map(d => ({ id: d.id, ...d.data() } as KycApplication)));
       setLoading(false);
     }, () => setLoading(false));
-    return () => unsub();
+
+    const qVkyc = query(collection(db, 'vkyc_requests'));
+    const unsubVkyc = onSnapshot(qVkyc, snap => {
+      const requests: Record<string, any> = {};
+      snap.forEach(d => { requests[d.id] = d.data(); });
+      setVkycRequests(requests);
+    });
+
+    return () => { unsub(); unsubVkyc(); };
   }, []);
 
   const getStatus = (app: KycApplication) => app.kycStatus || app.verificationStatus || 'pending';
@@ -169,6 +177,9 @@ export default function AdminKycPage() {
                     <div className="flex-1 min-w-0"><p className="text-foreground font-semibold text-sm truncate">{app.name}</p><p className="text-muted-foreground text-xs">{app.phone} • {app.vehicleType || app.vehicle || 'Vehicle N/A'}</p></div>
                     <div className="flex items-center gap-3">
                       <Badge className={status==='approved'?'bg-emerald-500/20 text-emerald-400 border-emerald-500/30':status==='rejected'?'bg-rose-500/20 text-rose-400 border-rose-500/30':'bg-amber-500/20 text-amber-400 border-amber-500/30'}>{status==='approved'?'Approved':status==='rejected'?'Rejected':'Pending'}</Badge>
+                      {vkycRequests[app.id] && status==='pending' && (
+                        <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">V-KYC Booked</Badge>
+                      )}
                       <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
                     </div>
                   </motion.div>
@@ -212,8 +223,19 @@ export default function AdminKycPage() {
               </div>
               <div className="bg-gradient-to-r from-blue-900/30 to-violet-900/30 rounded-2xl p-4 border border-blue-500/20">
                 <h3 className="text-foreground font-semibold mb-2 flex items-center gap-2"><Video className="w-4 h-4 text-blue-400" />Live Video Verification (WebRTC)</h3>
-                <p className="text-muted-foreground text-sm mb-3">Conduct a live video call to verify the applicant identity in real-time.</p>
-                <Button onClick={startVideoCall} className="bg-blue-600 hover:bg-blue-700 text-foreground gap-2"><Video className="w-4 h-4" />Start Video Call</Button>
+                
+                {vkycRequests[selected.id] && (
+                  <div className="mb-4 p-3 bg-blue-950/50 rounded-xl border border-blue-500/30 flex justify-between items-center">
+                    <div>
+                      <p className="text-blue-300 text-xs font-semibold uppercase tracking-wider mb-1">Requested Slot</p>
+                      <p className="text-foreground font-medium">{vkycRequests[selected.id].requestedDate} at {vkycRequests[selected.id].requestedTimeSlot}</p>
+                    </div>
+                    <Badge className="bg-blue-600 text-white">Pending Call</Badge>
+                  </div>
+                )}
+
+                <p className="text-muted-foreground text-sm mb-3">Conduct a live video call to verify the applicant identity in real-time. Accept the V-KYC connection.</p>
+                <Button onClick={startVideoCall} className="bg-blue-600 hover:bg-blue-700 text-foreground gap-2"><Video className="w-4 h-4" />Accept & Connect with Partner</Button>
               </div>
               {getStatus(selected) === 'pending' && (
                 <div className="space-y-3">

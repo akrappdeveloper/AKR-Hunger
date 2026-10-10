@@ -59,6 +59,8 @@ public class DashboardOrdersFragment extends Fragment {
     private MaterialSwitch switchOnline;
 
     private ImageButton btnSos, btnWallet, btnNotifications;
+    private View cardKycWarning;
+    private View btnBookVkyc;
 
     private View layoutActiveSection;
     private TextView tvActiveCount;
@@ -111,6 +113,8 @@ public class DashboardOrdersFragment extends Fragment {
         btnSos = view.findViewById(R.id.btn_header_sos);
         btnWallet = view.findViewById(R.id.btn_header_wallet);
         btnNotifications = view.findViewById(R.id.btn_header_notifications);
+        cardKycWarning = view.findViewById(R.id.card_kyc_warning);
+        btnBookVkyc = view.findViewById(R.id.btn_book_vkyc);
 
         layoutActiveSection = view.findViewById(R.id.layout_active_section);
         tvActiveCount = view.findViewById(R.id.tv_active_count);
@@ -126,6 +130,12 @@ public class DashboardOrdersFragment extends Fragment {
         switchOnline.setOnClickListener(v -> toggleOnlineStatus());
         btnManagePincodes.setOnClickListener(v -> openPincodeManager());
         tvGpsStatus.setOnClickListener(v -> startActivity(new Intent(getContext(), LiveTrackingRadarActivity.class)));
+
+        btnBookVkyc.setOnClickListener(v -> {
+            if (getContext() != null) {
+                new com.ssr.hunger.delivery.dialogs.VkycSlotDialog(getContext()).show();
+            }
+        });
 
         btnSos.setOnClickListener(v -> {
             if (getContext() != null) new EmergencySosDialog(getContext()).show();
@@ -192,6 +202,12 @@ public class DashboardOrdersFragment extends Fragment {
 
                     isOnline = partner.isOnline();
                     updateStatusUI(isOnline);
+                    
+                    if (!partner.isVerified()) {
+                        cardKycWarning.setVisibility(View.VISIBLE);
+                    } else {
+                        cardKycWarning.setVisibility(View.GONE);
+                    }
 
                     listenActiveDeliveries();
                     if (isOnline) {
