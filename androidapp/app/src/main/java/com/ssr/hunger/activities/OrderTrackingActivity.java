@@ -381,6 +381,7 @@ public class OrderTrackingActivity extends BaseActivity {
         sb.append("<style>");
         sb.append("* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }");
         sb.append("html, body, #map { margin: 0; padding: 0; width: 100%; height: 100%; background: #0f172a; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }");
+        sb.append(".dark-tiles { filter: invert(100%) hue-rotate(180deg) brightness(85%) contrast(90%) !important; -webkit-filter: invert(100%) hue-rotate(180deg) brightness(85%) contrast(90%) !important; }");
         sb.append("@keyframes radarPulse { 0% { transform: scale(0.6); opacity: 0.9; } 100% { transform: scale(2.6); opacity: 0; } }");
         sb.append("@keyframes riderBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }");
         sb.append("@keyframes dashFlow { to { stroke-dashoffset: -32; } }");
@@ -421,12 +422,15 @@ public class OrderTrackingActivity extends BaseActivity {
         sb.append("  try {\n");
         sb.append("    if (typeof L === 'undefined') return;\n");
         sb.append("    map = L.map('map', { zoomControl: false, attributionControl: false, fadeAnimation: true, zoomAnimation: true }).setView([curLat, curLng], ").append(zoom).append(");\n");
-        sb.append("    streetLayer = L.tileLayer('https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { subdomains: 'abcd', maxZoom: 19 });\n");
+        sb.append("    streetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { subdomains: 'abc', maxZoom: 19, attribution: '&copy; OpenStreetMap' });\n");
         sb.append("    streetLayer.on('tileerror', function() {\n");
-        sb.append("      if (!streetLayer._fb) { streetLayer._fb = true; streetLayer.setUrl('https://tile.openstreetmap.org/{z}/{x}/{y}.png'); }\n");
+        sb.append("      if (!streetLayer._fb) { streetLayer._fb = true; streetLayer.setUrl('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png'); }\n");
         sb.append("    });\n");
-        sb.append("    darkLayer = L.tileLayer('https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { subdomains: 'abcd', maxZoom: 19 });\n");
-        sb.append("    satLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 });\n");
+        sb.append("    darkLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { subdomains: 'abc', maxZoom: 19, className: 'dark-tiles', attribution: '&copy; OpenStreetMap' });\n");
+        sb.append("    darkLayer.on('tileerror', function() {\n");
+        sb.append("      if (!darkLayer._fb) { darkLayer._fb = true; darkLayer.setUrl('https://tile.openstreetmap.de/{z}/{x}/{y}.png'); }\n");
+        sb.append("    });\n");
+        sb.append("    satLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, attribution: '&copy; Esri' });\n");
         sb.append("    streetLayer.addTo(map);\n");
         sb.append("    setTimeout(function() { if(map) map.invalidateSize(); }, 200);\n");
         sb.append("    setTimeout(function() { if(map) map.invalidateSize(); }, 600);\n");
@@ -614,7 +618,7 @@ public class OrderTrackingActivity extends BaseActivity {
 
         sb.append("function switchStyle(style) {\n");
         sb.append("  if (!map) return;\n");
-        sb.append("  map.removeLayer(streetLayer); map.removeLayer(darkLayer); map.removeLayer(satLayer);\n");
+        sb.append("  map.eachLayer(function(l) { if (l instanceof L.TileLayer) { map.removeLayer(l); } });\n");
         sb.append("  if (style === 'dark') darkLayer.addTo(map);\n");
         sb.append("  else if (style === 'satellite') satLayer.addTo(map);\n");
         sb.append("  else streetLayer.addTo(map);\n");

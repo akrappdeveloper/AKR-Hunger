@@ -154,7 +154,7 @@ export default function AdminMembershipsPage() {
       case 'pending': return 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20';
       case 'approved': return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
       case 'rejected': return 'bg-red-500/10 text-red-400 border-red-500/20';
-      default: return 'bg-gray-500/10 text-gray-400 border-gray-500/20';
+      default: return 'bg-gray-500/10 text-muted-foreground border-border/20';
     }
   };
 
@@ -162,8 +162,8 @@ export default function AdminMembershipsPage() {
     switch (status) {
       case 'active': return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
       case 'blocked': return 'bg-red-500/10 text-red-400 border-red-500/20';
-      case 'expired': return 'bg-gray-500/10 text-gray-400 border-gray-500/20';
-      default: return 'bg-gray-500/10 text-gray-400 border-gray-500/20';
+      case 'expired': return 'bg-gray-500/10 text-muted-foreground border-border/20';
+      default: return 'bg-gray-500/10 text-muted-foreground border-border/20';
     }
   };
 
@@ -172,7 +172,7 @@ export default function AdminMembershipsPage() {
       <div className="flex items-center justify-center h-[60vh]">
         <div className="text-center space-y-4">
           <div className="h-10 w-10 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-gray-400">Loading memberships...</p>
+          <p className="text-muted-foreground">Loading memberships...</p>
         </div>
       </div>
     );
@@ -185,7 +185,7 @@ export default function AdminMembershipsPage() {
         <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white via-gray-100 to-gray-400 tracking-tight mb-2">
           Membership Management
         </h1>
-        <p className="text-gray-400">Manage membership requests, approvals, and issued cards.</p>
+        <p className="text-muted-foreground">Manage membership requests, approvals, and issued cards.</p>
       </div>
 
       {/* Stats */}
@@ -215,8 +215,8 @@ export default function AdminMembershipsPage() {
                 <div className="flex items-center justify-between mb-3">
                   <Icon className={`w-5 h-5 ${iconColors[stat.color]}`} />
                 </div>
-                <p className="text-2xl font-bold text-white font-mono">{stat.value}</p>
-                <p className="text-[11px] text-gray-400 mt-1">{stat.title}</p>
+                <p className="text-2xl font-bold text-foreground font-mono">{stat.value}</p>
+                <p className="text-[11px] text-muted-foreground mt-1">{stat.title}</p>
               </CardContent>
             </Card>
           );
@@ -225,47 +225,47 @@ export default function AdminMembershipsPage() {
 
       {/* Tabs */}
       <Tabs defaultValue="pending" className="space-y-6">
-        <TabsList className="bg-white/5 border border-white/10 p-1">
-          <TabsTrigger value="pending" className="data-[state=active]:bg-blue-600/20 data-[state=active]:text-blue-400 text-gray-400 gap-2">
+        <TabsList className="bg-card/5 border border-border/50 p-1">
+          <TabsTrigger value="pending" className="data-[state=active]:bg-blue-600/20 data-[state=active]:text-blue-400 text-muted-foreground gap-2">
             <Clock size={14} /> Pending ({pendingRequests.length})
           </TabsTrigger>
-          <TabsTrigger value="all" className="data-[state=active]:bg-blue-600/20 data-[state=active]:text-blue-400 text-gray-400 gap-2">
+          <TabsTrigger value="all" className="data-[state=active]:bg-blue-600/20 data-[state=active]:text-blue-400 text-muted-foreground gap-2">
             <IdCard size={14} /> All Requests
           </TabsTrigger>
-          <TabsTrigger value="cards" className="data-[state=active]:bg-blue-600/20 data-[state=active]:text-blue-400 text-gray-400 gap-2">
+          <TabsTrigger value="cards" className="data-[state=active]:bg-blue-600/20 data-[state=active]:text-blue-400 text-muted-foreground gap-2">
             <CreditCard size={14} /> Issued Cards
           </TabsTrigger>
         </TabsList>
 
         {/* Pending Requests */}
         <TabsContent value="pending">
-          <Card className="bg-black/40 border-white/10 backdrop-blur-md shadow-xl overflow-hidden">
-            <CardHeader className="border-b border-white/5 bg-white/5 pb-4">
-              <CardTitle className="text-lg font-semibold text-white flex items-center gap-2">
+          <Card className="bg-background/40 border-border/50 backdrop-blur-md shadow-xl overflow-hidden">
+            <CardHeader className="border-b border-border/50 bg-card/5 pb-4">
+              <CardTitle className="text-lg font-semibold text-foreground flex items-center gap-2">
                 <Clock className="w-5 h-5 text-yellow-400" />
                 Pending Membership Requests
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
               {pendingRequests.length === 0 ? (
-                <div className="text-center py-12 text-gray-500">
+                <div className="text-center py-12 text-muted-foreground">
                   <CheckCircle className="w-10 h-10 mx-auto mb-3 opacity-30" />
                   <p>No pending requests</p>
                 </div>
               ) : (
                 <div className="divide-y divide-white/5">
                   {pendingRequests.map((req) => (
-                    <div key={req.id} className="p-5 hover:bg-white/5 transition-colors">
+                    <div key={req.id} className="p-5 hover:bg-card/5 transition-colors">
                       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-yellow-600/20 to-orange-600/20 flex items-center justify-center border border-white/5">
+                          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-yellow-600/20 to-orange-600/20 flex items-center justify-center border border-border/50">
                             <IdCard className="w-5 h-5 text-yellow-400" />
                           </div>
                           <div>
-                            <p className="text-white font-medium">{req.customerName}</p>
-                            <p className="text-gray-500 text-sm">{req.customerEmail}</p>
+                            <p className="text-foreground font-medium">{req.customerName}</p>
+                            <p className="text-muted-foreground text-sm">{req.customerEmail}</p>
                             {req.contactNumber && (
-                              <p className="text-gray-600 text-xs mt-0.5">📞 {req.contactNumber}</p>
+                              <p className="text-muted-foreground text-xs mt-0.5">📞 {req.contactNumber}</p>
                             )}
                           </div>
                         </div>
@@ -309,20 +309,20 @@ export default function AdminMembershipsPage() {
 
         {/* All Requests */}
         <TabsContent value="all">
-          <Card className="bg-black/40 border-white/10 backdrop-blur-md shadow-xl overflow-hidden">
-            <CardHeader className="border-b border-white/5 bg-white/5 pb-4">
+          <Card className="bg-background/40 border-border/50 backdrop-blur-md shadow-xl overflow-hidden">
+            <CardHeader className="border-b border-border/50 bg-card/5 pb-4">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-lg font-semibold text-white flex items-center gap-2">
+                <CardTitle className="text-lg font-semibold text-foreground flex items-center gap-2">
                   <IdCard className="w-5 h-5 text-blue-400" />
                   All Membership Requests
                 </CardTitle>
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
                     placeholder="Search..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 bg-black/20 border-white/10 text-white placeholder:text-gray-500 w-48"
+                    className="pl-10 bg-background/20 border-border/50 text-foreground placeholder:text-muted-foreground w-48"
                   />
                 </div>
               </div>
@@ -331,29 +331,29 @@ export default function AdminMembershipsPage() {
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
-                    <TableRow className="border-white/5 hover:bg-transparent">
-                      <TableHead className="text-gray-400">Customer</TableHead>
-                      <TableHead className="text-gray-400">Email</TableHead>
-                      <TableHead className="text-gray-400">Contact</TableHead>
-                      <TableHead className="text-gray-400 text-center">Status</TableHead>
-                      <TableHead className="text-gray-400">Date</TableHead>
-                      <TableHead className="text-gray-400 text-center">Actions</TableHead>
+                    <TableRow className="border-border/50 hover:bg-transparent">
+                      <TableHead className="text-muted-foreground">Customer</TableHead>
+                      <TableHead className="text-muted-foreground">Email</TableHead>
+                      <TableHead className="text-muted-foreground">Contact</TableHead>
+                      <TableHead className="text-muted-foreground text-center">Status</TableHead>
+                      <TableHead className="text-muted-foreground">Date</TableHead>
+                      <TableHead className="text-muted-foreground text-center">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {requests
                       .filter(r => searchQuery === '' || r.customerName.toLowerCase().includes(searchQuery.toLowerCase()) || r.customerEmail.toLowerCase().includes(searchQuery.toLowerCase()))
                       .map((req) => (
-                        <TableRow key={req.id} className="border-white/5 hover:bg-white/5 transition-colors">
-                          <TableCell className="text-white font-medium text-sm">{req.customerName}</TableCell>
-                          <TableCell className="text-gray-300 text-sm">{req.customerEmail}</TableCell>
-                          <TableCell className="text-gray-300 text-sm">{req.contactNumber || '-'}</TableCell>
+                        <TableRow key={req.id} className="border-border/50 hover:bg-card/5 transition-colors">
+                          <TableCell className="text-foreground font-medium text-sm">{req.customerName}</TableCell>
+                          <TableCell className="text-muted-foreground text-sm">{req.customerEmail}</TableCell>
+                          <TableCell className="text-muted-foreground text-sm">{req.contactNumber || '-'}</TableCell>
                           <TableCell className="text-center">
                             <Badge variant="outline" className={`text-xs capitalize ${getStatusColor(req.status)}`}>
                               {req.status}
                             </Badge>
                           </TableCell>
-                          <TableCell className="text-gray-400 text-sm">
+                          <TableCell className="text-muted-foreground text-sm">
                             {(req.createdAt as any)?.toDate ? (req.createdAt as any).toDate().toLocaleDateString() : (req.createdAt ? new Date(req.createdAt).toLocaleDateString() : '-')}
                           </TableCell>
                           <TableCell className="text-center">
@@ -379,16 +379,16 @@ export default function AdminMembershipsPage() {
 
         {/* Issued Cards */}
         <TabsContent value="cards">
-          <Card className="bg-black/40 border-white/10 backdrop-blur-md shadow-xl overflow-hidden">
-            <CardHeader className="border-b border-white/5 bg-white/5 pb-4">
-              <CardTitle className="text-lg font-semibold text-white flex items-center gap-2">
+          <Card className="bg-background/40 border-border/50 backdrop-blur-md shadow-xl overflow-hidden">
+            <CardHeader className="border-b border-border/50 bg-card/5 pb-4">
+              <CardTitle className="text-lg font-semibold text-foreground flex items-center gap-2">
                 <CreditCard className="w-5 h-5 text-purple-400" />
                 Issued Membership Cards
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
               {cards.length === 0 ? (
-                <div className="text-center py-12 text-gray-500">
+                <div className="text-center py-12 text-muted-foreground">
                   <CreditCard className="w-10 h-10 mx-auto mb-3 opacity-30" />
                   <p>No cards issued yet</p>
                 </div>
@@ -396,12 +396,12 @@ export default function AdminMembershipsPage() {
                 <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
-                      <TableRow className="border-white/5 hover:bg-transparent">
-                        <TableHead className="text-gray-400">Customer</TableHead>
-                        <TableHead className="text-gray-400">Card Number</TableHead>
-                        <TableHead className="text-gray-400 text-center">Status</TableHead>
-                        <TableHead className="text-gray-400">Issued Date</TableHead>
-                        <TableHead className="text-gray-400 text-center">Actions</TableHead>
+                      <TableRow className="border-border/50 hover:bg-transparent">
+                        <TableHead className="text-muted-foreground">Customer</TableHead>
+                        <TableHead className="text-muted-foreground">Card Number</TableHead>
+                        <TableHead className="text-muted-foreground text-center">Status</TableHead>
+                        <TableHead className="text-muted-foreground">Issued Date</TableHead>
+                        <TableHead className="text-muted-foreground text-center">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -412,22 +412,22 @@ export default function AdminMembershipsPage() {
                             setSelectedCardToEdit(card);
                             setEditCardDialogOpen(true);
                           }}
-                          className="border-white/5 hover:bg-white/10 transition-colors cursor-pointer group"
+                          className="border-border/50 hover:bg-card/10 transition-colors cursor-pointer group"
                         >
-                          <TableCell className="text-white font-medium text-sm">
+                          <TableCell className="text-foreground font-medium text-sm">
                             <div className="flex items-center gap-2.5">
                               <div className="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-400 flex items-center justify-center border border-blue-500/20 group-hover:scale-105 transition-transform">
                                 <CreditCard className="w-4 h-4" />
                               </div>
                               <div>
-                                <p className="text-white font-semibold">{card.customerName}</p>
-                                <span className="text-[11px] text-gray-500 font-mono">#{card.id.slice(0, 8)}</span>
+                                <p className="text-foreground font-semibold">{card.customerName}</p>
+                                <span className="text-[11px] text-muted-foreground font-mono">#{card.id.slice(0, 8)}</span>
                               </div>
                             </div>
                           </TableCell>
-                          <TableCell className="text-gray-300 font-mono text-sm">
+                          <TableCell className="text-muted-foreground font-mono text-sm">
                             <div className="flex items-center gap-2">
-                              <span className="font-bold tracking-wider text-white">•••• •••• •••• {card.cardNumber?.slice(-4) || '****'}</span>
+                              <span className="font-bold tracking-wider text-foreground">•••• •••• •••• {card.cardNumber?.slice(-4) || '****'}</span>
                               <Badge variant="outline" className="text-[10px] text-blue-400 border-blue-500/30 bg-blue-500/10 py-0 px-1.5 opacity-80 group-hover:opacity-100 transition-opacity">
                                 Click to Edit
                               </Badge>
@@ -438,7 +438,7 @@ export default function AdminMembershipsPage() {
                               {card.status}
                             </Badge>
                           </TableCell>
-                          <TableCell className="text-gray-400 text-sm">
+                          <TableCell className="text-muted-foreground text-sm">
                             {(card.issuedAt as any)?.toDate ? (card.issuedAt as any).toDate().toLocaleDateString() : (card.issuedAt ? new Date(card.issuedAt).toLocaleDateString() : '-')}
                           </TableCell>
                           <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
@@ -480,24 +480,24 @@ export default function AdminMembershipsPage() {
 
       {/* Rejection Dialog */}
       <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
-        <DialogContent className="bg-gray-900 border-white/10 text-white max-w-md">
+        <DialogContent className="bg-card border-border/50 text-foreground max-w-md">
           <DialogHeader>
             <DialogTitle className="text-red-400">Reject Membership</DialogTitle>
-            <DialogDescription className="text-gray-400">
+            <DialogDescription className="text-muted-foreground">
               Rejecting membership for {selectedRequest?.customerName}
             </DialogDescription>
           </DialogHeader>
           <div className="mt-4">
-            <Label className="text-gray-300 text-sm">Rejection Reason</Label>
+            <Label className="text-muted-foreground text-sm">Rejection Reason</Label>
             <Textarea
               value={rejectionReason}
               onChange={(e) => setRejectionReason(e.target.value)}
               placeholder="Provide a reason for rejection..."
-              className="mt-1 bg-black/20 border-white/10 text-white min-h-[100px]"
+              className="mt-1 bg-background/20 border-border/50 text-foreground min-h-[100px]"
             />
           </div>
           <DialogFooter className="mt-4">
-            <Button variant="outline" onClick={() => setRejectDialogOpen(false)} className="border-white/10 text-white hover:bg-white/10">
+            <Button variant="outline" onClick={() => setRejectDialogOpen(false)} className="border-border/50 text-foreground hover:bg-card/10">
               Cancel
             </Button>
             <Button variant="destructive" onClick={handleReject}>
@@ -509,41 +509,41 @@ export default function AdminMembershipsPage() {
 
       {/* Detail Dialog */}
       <Dialog open={detailDialogOpen} onOpenChange={setDetailDialogOpen}>
-        <DialogContent className="bg-gray-900 border-white/10 text-white max-w-md">
+        <DialogContent className="bg-card border-border/50 text-foreground max-w-md">
           <DialogHeader>
             <DialogTitle>Request Details</DialogTitle>
           </DialogHeader>
           {detailRequest && (
             <div className="space-y-4 mt-4">
               <div className="grid grid-cols-2 gap-4">
-                <div className="bg-black/20 rounded-xl p-4 border border-white/5">
-                  <p className="text-gray-500 text-xs uppercase tracking-wider mb-1">Customer</p>
-                  <p className="text-white font-medium text-sm">{detailRequest.customerName}</p>
+                <div className="bg-background/20 rounded-xl p-4 border border-border/50">
+                  <p className="text-muted-foreground text-xs uppercase tracking-wider mb-1">Customer</p>
+                  <p className="text-foreground font-medium text-sm">{detailRequest.customerName}</p>
                 </div>
-                <div className="bg-black/20 rounded-xl p-4 border border-white/5">
-                  <p className="text-gray-500 text-xs uppercase tracking-wider mb-1">Email</p>
-                  <p className="text-white font-medium text-sm truncate">{detailRequest.customerEmail}</p>
+                <div className="bg-background/20 rounded-xl p-4 border border-border/50">
+                  <p className="text-muted-foreground text-xs uppercase tracking-wider mb-1">Email</p>
+                  <p className="text-foreground font-medium text-sm truncate">{detailRequest.customerEmail}</p>
                 </div>
               </div>
               {detailRequest.bankDetails && (
-                <div className="bg-black/20 rounded-xl p-4 border border-white/5 space-y-2">
-                  <p className="text-gray-500 text-xs uppercase tracking-wider mb-2">Bank Details</p>
+                <div className="bg-background/20 rounded-xl p-4 border border-border/50 space-y-2">
+                  <p className="text-muted-foreground text-xs uppercase tracking-wider mb-2">Bank Details</p>
                   <div className="grid grid-cols-2 gap-2 text-sm">
                     <div>
-                      <p className="text-gray-500 text-xs">Bank</p>
-                      <p className="text-white">{detailRequest.bankDetails.bankName}</p>
+                      <p className="text-muted-foreground text-xs">Bank</p>
+                      <p className="text-foreground">{detailRequest.bankDetails.bankName}</p>
                     </div>
                     <div>
-                      <p className="text-gray-500 text-xs">Account Holder</p>
-                      <p className="text-white">{detailRequest.bankDetails.accountHolderName}</p>
+                      <p className="text-muted-foreground text-xs">Account Holder</p>
+                      <p className="text-foreground">{detailRequest.bankDetails.accountHolderName}</p>
                     </div>
                     <div>
-                      <p className="text-gray-500 text-xs">Account No.</p>
-                      <p className="text-white font-mono">{detailRequest.bankDetails.accountNumber}</p>
+                      <p className="text-muted-foreground text-xs">Account No.</p>
+                      <p className="text-foreground font-mono">{detailRequest.bankDetails.accountNumber}</p>
                     </div>
                     <div>
-                      <p className="text-gray-500 text-xs">IFSC</p>
-                      <p className="text-white font-mono">{detailRequest.bankDetails.ifscCode}</p>
+                      <p className="text-muted-foreground text-xs">IFSC</p>
+                      <p className="text-foreground font-mono">{detailRequest.bankDetails.ifscCode}</p>
                     </div>
                   </div>
                 </div>

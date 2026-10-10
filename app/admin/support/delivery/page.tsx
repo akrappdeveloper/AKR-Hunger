@@ -334,7 +334,7 @@ export default function AdminDeliverySupportPage() {
   const resolvedCount = tickets.filter((t) => (t.status || '').replace('_', '-') === 'resolved').length;
 
   return (
-    <div className="space-y-6 flex flex-col h-[calc(100vh-100px)] p-2 md:p-6 bg-gray-950/70 backdrop-blur-md rounded-3xl border border-white/5">
+    <div className="space-y-6 flex flex-col h-[calc(100vh-100px)] p-2 md:p-6 bg-background/70 backdrop-blur-md rounded-3xl border border-border/50">
       {/* Top Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shrink-0">
         <div className="flex items-center gap-3">
@@ -342,24 +342,24 @@ export default function AdminDeliverySupportPage() {
             <Button
               variant="outline"
               size="sm"
-              className="border-white/10 text-gray-300 hover:text-white hover:bg-white/10 rounded-xl gap-1.5"
+              className="border-border/50 text-muted-foreground hover:text-foreground hover:bg-card/10 rounded-xl gap-1.5"
             >
               <ArrowLeft className="w-4 h-4" /> All Desks
             </Button>
           </Link>
 
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-violet-600/20 font-bold">
+          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center text-foreground shadow-lg shadow-violet-600/20 font-bold">
             <Truck className="w-5 h-5" />
           </div>
 
           <div>
-            <h1 className="text-2xl md:text-3xl font-black tracking-tight text-white flex items-center gap-2.5">
+            <h1 className="text-2xl md:text-3xl font-black tracking-tight text-foreground flex items-center gap-2.5">
               Delivery Fleet Support
               <Badge variant="outline" className="text-[10px] font-mono text-violet-400 border-violet-500/30 bg-violet-500/10">
                 RIDER DESK
               </Badge>
             </h1>
-            <p className="text-gray-400 text-xs md:text-sm">
+            <p className="text-muted-foreground text-xs md:text-sm">
               Live resolution workspace for delivery partners, payout issues & route disputes.
             </p>
           </div>
@@ -378,7 +378,7 @@ export default function AdminDeliverySupportPage() {
           <a href="https://wa.me/916393752013" target="_blank" rel="noreferrer">
             <Button
               size="sm"
-              className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs gap-1.5 rounded-xl shadow-lg shadow-emerald-600/20"
+              className="bg-emerald-600 hover:bg-emerald-500 text-foreground font-bold text-xs gap-1.5 rounded-xl shadow-lg shadow-emerald-600/20"
             >
               <Phone className="w-3.5 h-3.5" /> Fleet Emergency Line
             </Button>
@@ -388,11 +388,11 @@ export default function AdminDeliverySupportPage() {
 
       {/* Metrics Row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 shrink-0">
-        <Card className="bg-black/40 border-white/5 rounded-2xl">
+        <Card className="bg-background/40 border-border/50 rounded-2xl">
           <CardContent className="p-4 flex items-center justify-between">
             <div>
-              <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Rider Inquiries</p>
-              <h3 className="text-2xl font-black text-white mt-1">{totalCount}</h3>
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Rider Inquiries</p>
+              <h3 className="text-2xl font-black text-foreground mt-1">{totalCount}</h3>
               <p className="text-[10px] text-violet-400 mt-1">Fleet tickets</p>
             </div>
             <div className="p-2.5 bg-violet-500/10 rounded-xl">
@@ -401,12 +401,12 @@ export default function AdminDeliverySupportPage() {
           </CardContent>
         </Card>
 
-        <Card className="bg-black/40 border-white/5 rounded-2xl">
+        <Card className="bg-background/40 border-border/50 rounded-2xl">
           <CardContent className="p-4 flex items-center justify-between">
             <div>
-              <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Awaiting Reply</p>
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Awaiting Reply</p>
               <h3 className="text-2xl font-black text-amber-400 mt-1">{openCount}</h3>
-              <p className="text-[10px] text-gray-400 mt-1">Pending riders</p>
+              <p className="text-[10px] text-muted-foreground mt-1">Pending riders</p>
             </div>
             <div className="p-2.5 bg-amber-500/10 rounded-xl">
               <Clock className="w-5 h-5 text-amber-400" />
@@ -414,10 +414,10 @@ export default function AdminDeliverySupportPage() {
           </CardContent>
         </Card>
 
-        <Card className="bg-black/40 border-white/5 rounded-2xl">
+        <Card className="bg-background/40 border-border/50 rounded-2xl">
           <CardContent className="p-4 flex items-center justify-between">
             <div>
-              <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">High Priority</p>
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">High Priority</p>
               <h3 className="text-2xl font-black text-rose-400 mt-1 flex items-center gap-1.5">
                 {urgentCount}
                 {urgentCount > 0 && <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping" />}
@@ -430,10 +430,10 @@ export default function AdminDeliverySupportPage() {
           </CardContent>
         </Card>
 
-        <Card className="bg-black/40 border-white/5 rounded-2xl">
+        <Card className="bg-background/40 border-border/50 rounded-2xl">
           <CardContent className="p-4 flex items-center justify-between">
             <div>
-              <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Resolved</p>
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Resolved</p>
               <h3 className="text-2xl font-black text-emerald-400 mt-1">{resolvedCount}</h3>
               <p className="text-[10px] text-emerald-400/80 mt-1">Closed successfully</p>
             </div>
@@ -445,18 +445,18 @@ export default function AdminDeliverySupportPage() {
       </div>
 
       {/* Main Workspace Layout */}
-      <div className="flex-1 min-h-0 bg-black/40 border border-white/5 rounded-3xl overflow-hidden flex flex-col lg:flex-row shadow-2xl">
+      <div className="flex-1 min-h-0 bg-background/40 border border-border/50 rounded-3xl overflow-hidden flex flex-col lg:flex-row shadow-2xl">
         {/* Left Column: Tickets Browser */}
-        <div className="w-full lg:w-[380px] xl:w-[420px] flex flex-col border-r border-white/5 bg-gray-950/40 h-full">
-          <div className="p-3 border-b border-white/5 space-y-3 bg-gray-900/30">
+        <div className="w-full lg:w-[380px] xl:w-[420px] flex flex-col border-r border-border/50 bg-background/40 h-full">
+          <div className="p-3 border-b border-border/50 space-y-3 bg-card/30">
             {/* Search Box */}
             <div className="relative">
-              <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-500" />
+              <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search by rider name, phone, subject..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9 h-9 bg-black/50 border-white/10 text-white placeholder:text-gray-500 rounded-xl text-xs focus:border-violet-500/50"
+                className="pl-9 h-9 bg-background/50 border-border/50 text-foreground placeholder:text-muted-foreground rounded-xl text-xs focus:border-violet-500/50"
               />
             </div>
 
@@ -468,8 +468,8 @@ export default function AdminDeliverySupportPage() {
                   onClick={() => setStatusFilter(status)}
                   className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all border shrink-0 ${
                     statusFilter === status
-                      ? 'bg-violet-600 text-white border-violet-500 shadow-md shadow-violet-600/30'
-                      : 'bg-white/5 text-gray-400 border-white/5 hover:bg-white/10'
+                      ? 'bg-violet-600 text-foreground border-violet-500 shadow-md shadow-violet-600/30'
+                      : 'bg-card/5 text-muted-foreground border-border/50 hover:bg-card/10'
                   }`}
                 >
                   {status === 'in-progress' ? 'In Progress' : status}
@@ -482,13 +482,13 @@ export default function AdminDeliverySupportPage() {
           <ScrollArea className="flex-1 p-2">
             <div className="space-y-2">
               {loading ? (
-                <div className="text-center py-12 text-gray-500 text-xs">
+                <div className="text-center py-12 text-muted-foreground text-xs">
                   <RefreshCw className="w-6 h-6 animate-spin mx-auto text-violet-400 mb-2" />
                   Loading fleet tickets in real-time...
                 </div>
               ) : filteredTickets.length === 0 ? (
-                <div className="text-center py-12 text-gray-500 text-xs space-y-2">
-                  <Truck className="w-8 h-8 mx-auto text-gray-600" />
+                <div className="text-center py-12 text-muted-foreground text-xs space-y-2">
+                  <Truck className="w-8 h-8 mx-auto text-muted-foreground" />
                   <p>No rider tickets match your filters.</p>
                 </div>
               ) : (
@@ -504,7 +504,7 @@ export default function AdminDeliverySupportPage() {
                       className={`p-3.5 rounded-2xl border transition-all cursor-pointer relative ${
                         isSelected
                           ? 'bg-gradient-to-r from-violet-600/20 to-indigo-600/10 border-violet-500/50 shadow-lg shadow-violet-600/10'
-                          : 'bg-white/[0.03] border-white/5 hover:bg-white/[0.06] hover:border-white/10'
+                          : 'bg-card/[0.03] border-border/50 hover:bg-card/[0.06] hover:border-border/50'
                       }`}
                     >
                       <div className="flex items-start justify-between gap-2 mb-1.5">
@@ -513,8 +513,8 @@ export default function AdminDeliverySupportPage() {
                             {ticket.userName?.charAt(0)?.toUpperCase() || 'R'}
                           </div>
                           <div>
-                            <p className="text-white font-bold text-xs truncate max-w-[170px]">{ticket.userName}</p>
-                            <p className="text-[10px] text-gray-400">{ticket.userPhone || 'No phone'}</p>
+                            <p className="text-foreground font-bold text-xs truncate max-w-[170px]">{ticket.userName}</p>
+                            <p className="text-[10px] text-muted-foreground">{ticket.userPhone || 'No phone'}</p>
                           </div>
                         </div>
 
@@ -538,10 +538,10 @@ export default function AdminDeliverySupportPage() {
                         </div>
                       </div>
 
-                      <h4 className="text-white text-xs font-semibold line-clamp-1 mb-1">{ticket.subject}</h4>
-                      <p className="text-gray-400 text-[11px] line-clamp-2 leading-relaxed">{ticket.description}</p>
+                      <h4 className="text-foreground text-xs font-semibold line-clamp-1 mb-1">{ticket.subject}</h4>
+                      <p className="text-muted-foreground text-[11px] line-clamp-2 leading-relaxed">{ticket.description}</p>
 
-                      <div className="mt-2.5 pt-2 border-t border-white/5 flex items-center justify-between text-[10px] text-gray-500">
+                      <div className="mt-2.5 pt-2 border-t border-border/50 flex items-center justify-between text-[10px] text-muted-foreground">
                         <span className="capitalize text-violet-400/80 font-medium">#{ticket.category}</span>
                         <span>
                           {ticket.createdAt?.toDate
@@ -558,21 +558,21 @@ export default function AdminDeliverySupportPage() {
         </div>
 
         {/* Right Column: Ticket Conversation Workspace */}
-        <div className="flex-1 flex flex-col h-full bg-gray-950/60 overflow-hidden">
+        <div className="flex-1 flex flex-col h-full bg-background/60 overflow-hidden">
           {selectedTicket ? (
             <>
               {/* Ticket Details Header */}
-              <div className="p-4 border-b border-white/5 bg-gray-900/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shrink-0">
+              <div className="p-4 border-b border-border/50 bg-card/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shrink-0">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-violet-600/30">
+                  <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center text-foreground font-bold text-sm shadow-lg shadow-violet-600/30">
                     🛵
                   </div>
                   <div>
-                    <h3 className="text-white font-bold text-sm sm:text-base flex items-center gap-2">
+                    <h3 className="text-foreground font-bold text-sm sm:text-base flex items-center gap-2">
                       {selectedTicket.subject}
                     </h3>
-                    <div className="flex items-center gap-2 mt-0.5 text-xs text-gray-400">
-                      <span>Rider: <strong className="text-white">{selectedTicket.userName}</strong></span>
+                    <div className="flex items-center gap-2 mt-0.5 text-xs text-muted-foreground">
+                      <span>Rider: <strong className="text-foreground">{selectedTicket.userName}</strong></span>
                       {selectedTicket.userPhone && (
                         <>
                           <span>•</span>
@@ -602,7 +602,7 @@ export default function AdminDeliverySupportPage() {
                   <Button
                     size="sm"
                     onClick={() => setCreditModalOpen(true)}
-                    className="h-8 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-amber-600/20 gap-1"
+                    className="h-8 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-foreground font-bold text-xs rounded-xl shadow-lg shadow-amber-600/20 gap-1"
                   >
                     <Wallet className="w-3 h-3" /> Credit Wallet
                   </Button>
@@ -611,7 +611,7 @@ export default function AdminDeliverySupportPage() {
                   <select
                     value={selectedTicket.status || 'open'}
                     onChange={(e) => updateStatus(selectedTicket.id, e.target.value)}
-                    className="h-8 bg-black/60 border border-white/10 rounded-xl px-2 text-xs text-white font-bold cursor-pointer focus:outline-none"
+                    className="h-8 bg-background/60 border border-border/50 rounded-xl px-2 text-xs text-foreground font-bold cursor-pointer focus:outline-none"
                   >
                     <option value="open">Open</option>
                     <option value="in-progress">In Progress</option>
@@ -624,8 +624,8 @@ export default function AdminDeliverySupportPage() {
               {/* Chat Thread */}
               <ScrollArea className="flex-1 p-4 sm:p-6 space-y-4">
                 {/* Rider's Initial Ticket Details */}
-                <div className="bg-white/5 border border-white/10 rounded-2xl p-4 mb-4">
-                  <div className="flex items-center justify-between text-xs text-gray-400 mb-2">
+                <div className="bg-card/5 border border-border/50 rounded-2xl p-4 mb-4">
+                  <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
                     <span className="font-bold text-violet-400 uppercase tracking-wider text-[10px]">Initial Issue Report</span>
                     <span>
                       {selectedTicket.createdAt?.toDate
@@ -633,7 +633,7 @@ export default function AdminDeliverySupportPage() {
                         : 'N/A'}
                     </span>
                   </div>
-                  <p className="text-white text-sm whitespace-pre-wrap leading-relaxed">{selectedTicket.description}</p>
+                  <p className="text-foreground text-sm whitespace-pre-wrap leading-relaxed">{selectedTicket.description}</p>
                 </div>
 
                 {/* Conversation Replies */}
@@ -649,14 +649,14 @@ export default function AdminDeliverySupportPage() {
                           className={`p-3.5 rounded-2xl border text-sm max-w-[85%] ${
                             isAdmin
                               ? 'bg-violet-600/20 border-violet-500/30 text-violet-100 rounded-tr-sm shadow-lg shadow-violet-600/10'
-                              : 'bg-white/10 border-white/10 text-white rounded-tl-sm'
+                              : 'bg-card/10 border-border/50 text-foreground rounded-tl-sm'
                           }`}
                         >
                           <div className="flex items-center justify-between gap-4 mb-1">
-                            <span className={`text-xs font-bold ${isAdmin ? 'text-violet-300' : 'text-gray-300'}`}>
+                            <span className={`text-xs font-bold ${isAdmin ? 'text-violet-300' : 'text-muted-foreground'}`}>
                               {isAdmin ? (r.userName || '🎧 Fleet Support Agent') : `🛵 ${selectedTicket.userName}`}
                             </span>
-                            <span className="text-[10px] text-gray-400">
+                            <span className="text-[10px] text-muted-foreground">
                               {r.createdAt?.toDate
                                 ? r.createdAt.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
                                 : ''}
@@ -672,12 +672,12 @@ export default function AdminDeliverySupportPage() {
               </ScrollArea>
 
               {/* Canned Templates Bar */}
-              <div className="px-4 py-2 bg-black/40 border-t border-white/5 overflow-x-auto flex gap-1.5 shrink-0">
+              <div className="px-4 py-2 bg-background/40 border-t border-border/50 overflow-x-auto flex gap-1.5 shrink-0">
                 {CANNED_DELIVERY_RESPONSES.map((tmpl, idx) => (
                   <button
                     key={idx}
                     onClick={() => setReplyText(tmpl.text)}
-                    className="text-[11px] px-3 py-1 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full text-gray-300 whitespace-nowrap transition-all"
+                    className="text-[11px] px-3 py-1 bg-card/5 hover:bg-card/10 border border-border/50 rounded-full text-muted-foreground whitespace-nowrap transition-all"
                   >
                     {tmpl.label}
                   </button>
@@ -685,7 +685,7 @@ export default function AdminDeliverySupportPage() {
               </div>
 
               {/* Reply Input Bar */}
-              <div className="p-4 bg-gray-900/40 border-t border-white/5 flex items-center gap-2 shrink-0">
+              <div className="p-4 bg-card/40 border-t border-border/50 flex items-center gap-2 shrink-0">
                 <Input
                   placeholder="Type an instant reply to the delivery partner..."
                   value={replyText}
@@ -696,12 +696,12 @@ export default function AdminDeliverySupportPage() {
                       handleReply();
                     }
                   }}
-                  className="bg-black/50 border-white/10 text-white placeholder:text-gray-500 rounded-xl h-11 text-sm focus:border-violet-500/50"
+                  className="bg-background/50 border-border/50 text-foreground placeholder:text-muted-foreground rounded-xl h-11 text-sm focus:border-violet-500/50"
                 />
                 <Button
                   onClick={handleReply}
                   disabled={sendingReply || !replyText.trim()}
-                  className="h-11 px-5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-bold text-xs gap-1.5 shadow-lg shadow-violet-600/30 shrink-0"
+                  className="h-11 px-5 rounded-xl bg-violet-600 hover:bg-violet-500 text-foreground font-bold text-xs gap-1.5 shadow-lg shadow-violet-600/30 shrink-0"
                 >
                   {sendingReply ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                   Send Reply
@@ -709,9 +709,9 @@ export default function AdminDeliverySupportPage() {
               </div>
             </>
           ) : (
-            <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-gray-500">
-              <Truck className="w-12 h-12 text-gray-600 mb-3" />
-              <h3 className="text-lg font-bold text-white mb-1">No Ticket Selected</h3>
+            <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-muted-foreground">
+              <Truck className="w-12 h-12 text-muted-foreground mb-3" />
+              <h3 className="text-lg font-bold text-foreground mb-1">No Ticket Selected</h3>
               <p className="text-xs max-w-sm">
                 Select a delivery partner support ticket from the left panel to review inquiry details, reply, or credit wallet balance.
               </p>
@@ -722,36 +722,36 @@ export default function AdminDeliverySupportPage() {
 
       {/* Credit Wallet Compensation Modal */}
       <Dialog open={creditModalOpen} onOpenChange={setCreditModalOpen}>
-        <DialogContent className="bg-gray-950 border-white/10 text-white max-w-md rounded-3xl">
+        <DialogContent className="bg-background border-border/50 text-foreground max-w-md rounded-3xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-lg">
               <Wallet className="w-5 h-5 text-amber-400" />
               Credit Rider Wallet Balance
             </DialogTitle>
-            <DialogDescription className="text-gray-400 text-xs">
+            <DialogDescription className="text-muted-foreground text-xs">
               Directly credit compensation or fuel bonus to {selectedTicket?.userName}'s delivery account.
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-2">
             <div>
-              <label className="text-xs text-gray-400 font-medium">Credit Amount (₹) *</label>
+              <label className="text-xs text-muted-foreground font-medium">Credit Amount (₹) *</label>
               <Input
                 type="number"
                 placeholder="e.g. 50"
                 value={creditAmount}
                 onChange={(e) => setCreditAmount(e.target.value)}
-                className="mt-1 bg-black/50 border-white/10 text-white text-lg font-bold"
+                className="mt-1 bg-background/50 border-border/50 text-foreground text-lg font-bold"
               />
             </div>
 
             <div>
-              <label className="text-xs text-gray-400 font-medium">Reason for Credit *</label>
+              <label className="text-xs text-muted-foreground font-medium">Reason for Credit *</label>
               <Input
                 placeholder="Reason..."
                 value={creditReason}
                 onChange={(e) => setCreditReason(e.target.value)}
-                className="mt-1 bg-black/50 border-white/10 text-white text-xs"
+                className="mt-1 bg-background/50 border-border/50 text-foreground text-xs"
               />
             </div>
           </div>
@@ -760,14 +760,14 @@ export default function AdminDeliverySupportPage() {
             <Button
               variant="outline"
               onClick={() => setCreditModalOpen(false)}
-              className="border-white/10 text-gray-300"
+              className="border-border/50 text-muted-foreground"
             >
               Cancel
             </Button>
             <Button
               onClick={handleCreditRiderWallet}
               disabled={processingCredit || !creditAmount}
-              className="bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs shadow-lg shadow-amber-600/30"
+              className="bg-amber-600 hover:bg-amber-500 text-foreground font-bold text-xs shadow-lg shadow-amber-600/30"
             >
               {processingCredit ? <RefreshCw className="w-4 h-4 animate-spin" /> : <DollarSign className="w-4 h-4" />}
               Confirm Credit (₹{creditAmount || '0'})

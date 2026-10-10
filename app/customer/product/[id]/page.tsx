@@ -76,7 +76,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
             title: `${product.name} - Order Online`,
             description: description,
             images: product.image ? [{ url: product.image }] : [],
-            url: `https://akrhunger.vercel.app/customer/product/${id}`,
+            url: `https://shunger.vercel.app/customer/product/${id}`,
         },
     };
 }

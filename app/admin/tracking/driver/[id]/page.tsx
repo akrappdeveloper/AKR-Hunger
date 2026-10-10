@@ -191,8 +191,8 @@ export default function AdminDriverDetailPage() {
     return (
       <div className="flex items-center justify-center h-[60vh] text-center">
         <div>
-          <User className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-white mb-2">Driver Not Found</h2>
+          <User className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+          <h2 className="text-xl font-bold text-foreground mb-2">Driver Not Found</h2>
           <Button onClick={() => router.push('/admin/tracking')}>Back to Fleet</Button>
         </div>
       </div>
@@ -207,20 +207,20 @@ export default function AdminDriverDetailPage() {
           variant="outline"
           size="icon"
           onClick={() => router.push('/admin/tracking')}
-          className="rounded-full border-white/10 text-gray-400 hover:text-white"
+          className="rounded-full border-border/50 text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="w-5 h-5" />
         </Button>
         <div className="flex-1">
           <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-bold text-white tracking-tight">{partner.name}</h1>
+            <h1 className="text-3xl font-bold text-foreground tracking-tight">{partner.name}</h1>
             {currentStage && (
               <Badge className={`border text-xs font-bold ${getStageColor(currentStage).bg} ${getStageColor(currentStage).text} ${getStageColor(currentStage).border}`}>
                 {getStageLabel(currentStage)}
               </Badge>
             )}
           </div>
-          <p className="text-gray-400 text-sm mt-0.5">{partner.vehicle} • {partner.vehicleNumber} • {partner.email}</p>
+          <p className="text-muted-foreground text-sm mt-0.5">{partner.vehicle} • {partner.vehicleNumber} • {partner.email}</p>
         </div>
         <div className="flex items-center gap-2">
           {driverLocation?.isOnline ? (
@@ -229,12 +229,12 @@ export default function AdminDriverDetailPage() {
               GPS Active
             </Badge>
           ) : (
-            <Badge className="bg-gray-500/10 text-gray-400 border border-gray-500/20">
+            <Badge className="bg-gray-500/10 text-muted-foreground border border-border/20">
               GPS Offline
             </Badge>
           )}
           <a href={`tel:${partner.phone}`}>
-            <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white rounded-full gap-1">
+            <Button size="sm" className="bg-green-600 hover:bg-green-700 text-foreground rounded-full gap-1">
               <Phone className="w-3.5 h-3.5" /> Call
             </Button>
           </a>
@@ -242,7 +242,7 @@ export default function AdminDriverDetailPage() {
       </div>
 
       {/* Live Map with Route Visualization */}
-      <Card className="bg-black/40 border-white/10 overflow-hidden relative shadow-2xl">
+      <Card className="bg-background/40 border-border/50 overflow-hidden relative shadow-2xl">
         <div className="h-[48vh] relative">
           {driverLocation && driverLocation.latitude ? (
             <>
@@ -272,10 +272,10 @@ export default function AdminDriverDetailPage() {
               </div>
             </>
           ) : (
-            <div className="h-full flex flex-col items-center justify-center bg-white/5">
-              <Satellite className="w-12 h-12 text-gray-700 mb-4" />
-              <h3 className="text-white font-bold mb-1">No GPS Data</h3>
-              <p className="text-gray-500 text-sm">Driver's GPS is currently not broadcasting</p>
+            <div className="h-full flex flex-col items-center justify-center bg-card/5">
+              <Satellite className="w-12 h-12 text-muted-foreground mb-4" />
+              <h3 className="text-foreground font-bold mb-1">No GPS Data</h3>
+              <p className="text-muted-foreground text-sm">Driver's GPS is currently not broadcasting</p>
             </div>
           )}
         </div>
@@ -291,34 +291,34 @@ export default function AdminDriverDetailPage() {
           { label: 'Longitude', value: driverLocation ? driverLocation.longitude.toFixed(5) : '—', icon: MapPin, color: 'text-blue-400' },
           { label: 'Rating', value: `⭐ ${partner.rating.toFixed(1)}`, icon: CheckCircle, color: 'text-amber-400' },
         ].map((stat, i) => (
-          <Card key={i} className="bg-white/5 border-white/10">
+          <Card key={i} className="bg-card/5 border-border/50">
             <CardContent className="p-3">
               <stat.icon className={`w-3.5 h-3.5 ${stat.color} mb-1.5`} />
-              <p className="text-white font-bold text-sm font-mono truncate">{stat.value}</p>
-              <p className="text-gray-500 text-[9px] uppercase tracking-wider font-bold">{stat.label}</p>
+              <p className="text-foreground font-bold text-sm font-mono truncate">{stat.value}</p>
+              <p className="text-muted-foreground text-[9px] uppercase tracking-wider font-bold">{stat.label}</p>
             </CardContent>
           </Card>
         ))}
       </div>
 
       {/* Active Orders with Stage Details */}
-      <Card className="bg-black/40 border-white/10">
-        <CardHeader className="border-b border-white/5 bg-white/5">
-          <CardTitle className="text-base text-white flex items-center justify-between">
+      <Card className="bg-background/40 border-border/50">
+        <CardHeader className="border-b border-border/50 bg-card/5">
+          <CardTitle className="text-base text-foreground flex items-center justify-between">
             <div className="flex items-center gap-2">
               <ShoppingBag className="w-4 h-4 text-blue-400" />
               Active Assigned Orders ({activeOrders.length})
             </div>
             {currentStage && (
-              <span className="text-xs font-normal text-gray-400">
-                Current Route: <strong className="text-white">{currentRouteDest === 'restaurant' ? 'Driver → Restaurant' : 'Driver → Customer'}</strong>
+              <span className="text-xs font-normal text-muted-foreground">
+                Current Route: <strong className="text-foreground">{currentRouteDest === 'restaurant' ? 'Driver → Restaurant' : 'Driver → Customer'}</strong>
               </span>
             )}
           </CardTitle>
         </CardHeader>
         <CardContent className="p-4">
           {activeOrders.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-muted-foreground">
               <Package className="w-8 h-8 mx-auto mb-2 opacity-30" />
               <p>No active orders assigned to this driver</p>
             </div>
@@ -333,27 +333,27 @@ export default function AdminDriverDetailPage() {
                   <div
                     key={order.id}
                     onClick={() => setSelectedOrderId(order.id)}
-                    className={`bg-white/5 rounded-xl p-4 border transition-all cursor-pointer ${
-                      isSelected ? 'border-blue-500/50 bg-blue-500/5 ring-1 ring-blue-500/30' : 'border-white/10 hover:border-white/20'
+                    className={`bg-card/5 rounded-xl p-4 border transition-all cursor-pointer ${
+                      isSelected ? 'border-blue-500/50 bg-blue-500/5 ring-1 ring-blue-500/30' : 'border-border/50 hover:border-border'
                     }`}
                   >
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                       <div>
                         <div className="flex items-center gap-2 mb-1">
-                          <p className="text-white font-bold text-sm font-mono">#{order.id.slice(0, 8)}</p>
+                          <p className="text-foreground font-bold text-sm font-mono">#{order.id.slice(0, 8)}</p>
                           <Badge className={`text-[10px] font-bold border ${stageColor.bg} ${stageColor.text} ${stageColor.border}`}>
                             {getStageLabel(stage)}
                           </Badge>
                         </div>
-                        <div className="flex items-center gap-2 text-xs text-gray-400">
-                          <span className="text-white font-medium">{order.restaurantName}</span>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <span className="text-foreground font-medium">{order.restaurantName}</span>
                           <span>→</span>
-                          <span className="text-white font-medium">{order.customerName}</span>
+                          <span className="text-foreground font-medium">{order.customerName}</span>
                         </div>
                       </div>
                       <div className="text-right flex sm:flex-col items-center sm:items-end justify-between sm:justify-center">
                         <p className="text-emerald-400 font-bold font-mono text-base">₹{order.total}</p>
-                        <span className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold">
+                        <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">
                           {isSelected ? '● Active Route' : 'Click to View Route'}
                         </span>
                       </div>

@@ -1,13 +1,27 @@
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="24dp" android:height="24dp"
-    android:viewportWidth="24" android:viewportHeight="24">
-    <path android:fillColor="@android:color/transparent"
-        android:pathData="M21,18v1a2,2 0,0 1,-2 2H5a2,2 0,0 1,-2,-2V5a2,2 0,0 1,2,-2h14a2,2 0,0 1,2,2v1"
-        android:strokeColor="#666" android:strokeWidth="2" android:strokeLineCap="round" />
-    <path android:fillColor="@android:color/transparent"
-        android:pathData="M16,12m-2,0a2,2 0,1 1,4,0a2,2 0,1 1,-4,0"
-        android:strokeColor="#666" android:strokeWidth="2" />
-    <path android:fillColor="@android:color/transparent"
-        android:pathData="M22,9H13a2,2 0,0 0,-2,2v2a2,2 0,0 0,2,2h9v-6z"
-        android:strokeColor="#666" android:strokeWidth="2" android:strokeLineJoin="round" />
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- Main Wallet Body -->
+    <path
+        android:fillColor="@android:color/transparent"
+        android:strokeColor="#FF000000"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M20,6 H4 C2.9,6 2,6.9 2,8 V18 C2,19.1 2.9,20 4,20 H20 C21.1,20 22,19.1 22,18 V8 C22,6.9 21.1,6 20,6 Z" />
+    <!-- Flap Clasp -->
+    <path
+        android:fillColor="@android:color/transparent"
+        android:strokeColor="#FF000000"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M15,10 H22 V16 H15 C13.3,16 12,14.7 12,13 C12,11.3 13.3,10 15,10 Z" />
+    <!-- Center Coin / Clasp Dot -->
+    <path
+        android:strokeColor="#FF000000"
+        android:strokeWidth="1.8"
+        android:pathData="M16.5,13m-1,0a1,1 0 1,0 2,0a1,1 0 1,0 -2,0" />
 </vector>

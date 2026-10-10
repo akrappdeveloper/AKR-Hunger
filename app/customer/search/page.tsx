@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import SafeImage from '@/components/ui/safe-image';
 import CustomerSearchBar from '@/components/customer/CustomerSearchBar';
 import SmartMealFinder from '@/components/customer/SmartMealFinder';
+import RestaurantCard from '@/components/customer/RestaurantCard';
 import { MealIntent } from '@/lib/hunger-types-client';
 import {
   Search,
@@ -476,50 +477,13 @@ export default function SearchPage() {
                 <h3 className="text-lg font-black text-foreground flex items-center gap-2">
                   <Store className="w-5 h-5 text-orange-500" /> Restaurants ({filteredRestaurants.length})
                 </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                   {filteredRestaurants.map((rest) => (
-                    <Link
+                    <RestaurantCard
                       key={rest.id}
-                      href={`/customer/restaurant/${rest.id}`}
-                      className="group rounded-3xl border border-border/70 bg-card hover:border-primary/50 hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col justify-between"
-                    >
-                      <div className="relative h-40 w-full overflow-hidden bg-muted">
-                        {rest.image ? (
-                          <SafeImage
-                            src={rest.image}
-                            alt={rest.name}
-                            fill
-                            className="object-cover group-hover:scale-105 transition-transform duration-500"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-4xl">🏪</div>
-                        )}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-                        <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-white text-xs font-bold">
-                          <span className="flex items-center gap-1 bg-black/50 backdrop-blur-md px-2 py-1 rounded-lg">
-                            <Clock className="w-3.5 h-3.5 text-primary" /> {rest.deliveryTime || 30} mins
-                          </span>
-                          <span className="flex items-center gap-1 bg-amber-500 text-black px-2 py-0.5 rounded-lg font-black">
-                            <Star className="w-3 h-3 fill-current" /> {(rest.rating || 4.5).toFixed(1)}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="p-4 space-y-2">
-                        <h4 className="font-black text-base text-foreground group-hover:text-primary transition-colors truncate">
-                          {rest.name}
-                        </h4>
-                        <p className="text-xs text-muted-foreground line-clamp-1">
-                          {Array.isArray(rest.cuisineType) ? rest.cuisineType.join(', ') : rest.description || 'Gourmet Kitchen'}
-                        </p>
-                        <div className="pt-2 flex items-center justify-between text-xs text-muted-foreground border-t border-border/50">
-                          <span>{rest.minimumOrder ? `₹${rest.minimumOrder} min order` : 'No min order'}</span>
-                          <span className="text-primary font-bold flex items-center gap-1">
-                            View Menu <ArrowUpRight className="w-3.5 h-3.5" />
-                          </span>
-                        </div>
-                      </div>
-                    </Link>
+                      restaurant={rest}
+                      variant="grid"
+                    />
                   ))}
                 </div>
               </div>

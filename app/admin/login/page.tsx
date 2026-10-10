@@ -31,7 +31,7 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-black relative overflow-hidden font-sans">
+    <div className="min-h-screen w-full flex items-center justify-center bg-background relative overflow-hidden font-sans">
       {/* Dynamic Background */}
       <div className="absolute inset-0 w-full h-full">
         <div className="absolute top-0 -left-4 w-72 h-72 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob"></div>
@@ -42,18 +42,18 @@ export default function AdminLoginPage() {
 
       {/* Glassmorphic Card */}
       <div className="relative z-10 w-full max-w-md p-8 sm:p-10 mx-4">
-        <div className="absolute inset-0 bg-white/5 backdrop-blur-2xl rounded-3xl border border-white/10 shadow-[0_0_80px_rgba(0,0,0,0.5)]"></div>
+        <div className="absolute inset-0 bg-card/5 backdrop-blur-2xl rounded-3xl border border-border/50 shadow-[0_0_80px_rgba(0,0,0,0.5)]"></div>
 
         <div className="relative z-20 flex flex-col items-center">
           <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/30 mb-8 transform hover:scale-105 transition-transform duration-300">
-            <ShieldCheck className="text-white w-8 h-8" />
+            <ShieldCheck className="text-foreground w-8 h-8" />
           </div>
 
           <div className="text-center mb-10">
             <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white via-gray-200 to-gray-400 mb-2 tracking-tight">
               Welcome Back
             </h1>
-            <p className="text-gray-400 text-sm tracking-wide uppercase">Admin Portal Access</p>
+            <p className="text-muted-foreground text-sm tracking-wide uppercase">Admin Portal Access</p>
           </div>
 
           <form onSubmit={handleLogin} className="w-full space-y-5">
@@ -64,28 +64,28 @@ export default function AdminLoginPage() {
             )}
 
             <div className="space-y-1">
-              <label className="text-xs font-medium text-gray-400 ml-1">Email Address</label>
+              <label className="text-xs font-medium text-muted-foreground ml-1">Email Address</label>
               <div className="relative group">
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="admin@akrhunger.com"
-                  className="w-full px-5 py-4 bg-black/20 border border-white/10 rounded-xl text-white placeholder-gray-600 focus:outline-none focus:border-blue-500/50 focus:bg-black/40 focus:ring-1 focus:ring-blue-500/20 transition-all duration-300"
+                  className="w-full px-5 py-4 bg-background/20 border border-border/50 rounded-xl text-foreground placeholder-gray-600 focus:outline-none focus:border-blue-500/50 focus:bg-background/40 focus:ring-1 focus:ring-blue-500/20 transition-all duration-300"
                   required
                 />
               </div>
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-medium text-gray-400 ml-1">Password</label>
+              <label className="text-xs font-medium text-muted-foreground ml-1">Password</label>
               <div className="relative group">
                 <input
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full px-5 py-4 bg-black/20 border border-white/10 rounded-xl text-white placeholder-gray-600 focus:outline-none focus:border-blue-500/50 focus:bg-black/40 focus:ring-1 focus:ring-blue-500/20 transition-all duration-300"
+                  className="w-full px-5 py-4 bg-background/20 border border-border/50 rounded-xl text-foreground placeholder-gray-600 focus:outline-none focus:border-blue-500/50 focus:bg-background/40 focus:ring-1 focus:ring-blue-500/20 transition-all duration-300"
                   required
                 />
               </div>
@@ -94,7 +94,7 @@ export default function AdminLoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full mt-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-900/20 hover:shadow-blue-600/30 transform hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full mt-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-foreground font-bold py-4 rounded-xl shadow-lg shadow-blue-900/20 hover:shadow-blue-600/30 transform hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {loading ? (
                 <>
@@ -110,8 +110,8 @@ export default function AdminLoginPage() {
             </button>
           </form>
 
-          <div className="mt-8 pt-6 border-t border-white/5 w-full text-center">
-            <Link href="/" className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-white transition-colors duration-200">
+          <div className="mt-8 pt-6 border-t border-border/50 w-full text-center">
+            <Link href="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors duration-200">
               <span>Return to Website</span>
             </Link>
           </div>
@@ -120,7 +120,7 @@ export default function AdminLoginPage() {
 
       {/* Footer / Copyright */}
       <div className="absolute bottom-6 text-center w-full">
-        <p className="text-white/20 text-xs">© 2026 Hunger. Secure Admin Environment.</p>
+        <p className="text-foreground/20 text-xs">© 2026 Hunger. Secure Admin Environment.</p>
       </div>
     </div>
   );

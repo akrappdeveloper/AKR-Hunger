@@ -1,9 +1,37 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Helper function to check admin status
+    // Helper functions for Granular Admin RBAC
+    function getAdminData(uid) {
+      return get(/databases/$(database)/documents/admins/$(uid)).data;
+    }
+    
     function isAdmin(uid) {
       return uid != null && exists(/databases/$(database)/documents/admins/$(uid));
+    }
+    
+    function hasRole(uid, allowedRoles) {
+      return isAdmin(uid) && (getAdminData(uid).role in allowedRoles || getAdminData(uid).role == 'super_admin');
+    }
+    
+    function isSuperAdmin(uid) {
+      return isAdmin(uid) && getAdminData(uid).role == 'super_admin';
+    }
+    
+    function isOpsAdmin(uid) {
+      return hasRole(uid, ['operations_admin']);
+    }
+    
+    function isFinanceAdmin(uid) {
+      return hasRole(uid, ['finance_admin']);
+    }
+    
+    function isSupportAdmin(uid) {
+      return hasRole(uid, ['support_admin']);
+    }
+    
+    function isContentAdmin(uid) {
+      return hasRole(uid, ['content_manager']);
     }
 
     // ==========================================

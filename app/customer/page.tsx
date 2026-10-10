@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { collection, query, onSnapshot, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -10,9 +10,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useCart } from '@/context/CartContext';
-import { Search, ShoppingCart, Star, Flame, Clock, Filter, MapPin, ChevronRight, TrendingUp, Plus, Store } from 'lucide-react';
+import { Search, ShoppingCart, Star, Flame, Clock, Filter, MapPin, ChevronRight, ChevronLeft, ChevronDown, TrendingUp, Plus, Store, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import SafeImage from '@/components/ui/safe-image';
+import RestaurantCard from '@/components/customer/RestaurantCard';
 import { checkRestaurantOperatingStatus } from '@/lib/restaurant-schedule';
 import { toast } from 'sonner';
 
@@ -152,6 +153,13 @@ export default function CustomerHomePage() {
   const [activeTab, setActiveTab] = useState('delivery'); // 'delivery' or 'pickup'
   const [currentTime, setCurrentTime] = useState(new Date());
 
+  // Carousel ref, quick filter state, and dish visibility limit
+  const carouselRef = useRef<HTMLDivElement>(null);
+  const [restFilterVeg, setRestFilterVeg] = useState(false);
+  const [restFilterRating4Plus, setRestFilterRating4Plus] = useState(false);
+  const [restFilterFastDelivery, setRestFilterFastDelivery] = useState(false);
+  const [visibleDishCount, setVisibleDishCount] = useState(10);
+
   // Clock tick every 30 seconds for live operating schedule evaluation
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 30000);
@@ -253,7 +261,7 @@ export default function CustomerHomePage() {
     return matchesSearch && matchesCategory && inServiceArea;
   });
 
-  // Filter Restaurants based on Service Area for Featured Section
+  // Filter Restaurants based on Service Area
   const filteredRestaurants = restaurants.filter(r => {
     if (!deliveryAddress?.pincode) return true;
     if (r.servicePincodes && r.servicePincodes.length > 0) {
@@ -262,8 +270,44 @@ export default function CustomerHomePage() {
     return true; // Default to true if no restrictions set
   });
 
-  // Featured Restaurants (Mock logic: just take first 5 from filtered)
-  const featuredRestaurants = filteredRestaurants.slice(0, 5);
+  // Featured Restaurants (Curated top picks for carousel)
+  const featuredRestaurants = filteredRestaurants
+    .filter(r => (r.rating || r.averageRating || 4.5) >= 4.0 || r.isActive)
+    .slice(0, 10);
+  const activeFeatured = featuredRestaurants.length > 0 ? featuredRestaurants : filteredRestaurants.slice(0, 8);
+
+  // Carousel smooth scroll helper
+  const scrollCarousel = (direction: 'left' | 'right') => {
+    if (carouselRef.current) {
+      const scrollAmount = direction === 'left' ? -340 : 340;
+      carouselRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    }
+  };
+
+  // Display Restaurants for "All Restaurants" Section (supports Search, Category & Quick Filters)
+  const displayRestaurants = filteredRestaurants.filter(r => {
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      const matchName = r.name?.toLowerCase().includes(q);
+      const matchCuisine = (r.cuisineType || []).some(c => c.toLowerCase().includes(q));
+      const matchDesc = r.description?.toLowerCase().includes(q);
+      if (!matchName && !matchCuisine && !matchDesc) return false;
+    }
+
+    if (categoryFilter !== 'all') {
+      const catLower = categoryFilter.toLowerCase();
+      const matchCuisine = (r.cuisineType || []).some(c => c.toLowerCase().includes(catLower));
+      const matchDesc = r.description?.toLowerCase().includes(catLower);
+      const matchName = r.name?.toLowerCase().includes(catLower);
+      if (!matchCuisine && !matchDesc && !matchName) return false;
+    }
+
+    if (restFilterVeg && !(r.isPureVeg || r.isVeg)) return false;
+    if (restFilterRating4Plus && (r.averageRating || r.rating || 4.5) < 4.0) return false;
+    if (restFilterFastDelivery && (r.deliveryTime || 30) > 30) return false;
+
+    return true;
+  });
 
   if (loading) {
     return (
@@ -376,48 +420,69 @@ export default function CustomerHomePage() {
         {!searchQuery && categoryFilter === 'all' && (
           <div className="space-y-3 sm:space-y-4">
             <div className="flex justify-between items-end">
-              <h2 className="text-lg sm:text-xl font-black tracking-tight text-foreground">Featured Restaurants</h2>
-              <Button variant="link" className="text-primary p-0 h-auto text-sm font-bold">View all</Button>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-lg sm:text-2xl font-black tracking-tight text-foreground">Featured Restaurants</h2>
+                  <Badge className="bg-primary/10 text-primary border-primary/20 text-[10px] sm:text-xs font-bold">
+                    Top Picks
+                  </Badge>
+                </div>
+                <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
+                  Handpicked favorites with top ratings and fast delivery
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                {/* Desktop Carousel Navigation Arrows */}
+                <div className="hidden sm:flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => scrollCarousel('left')}
+                    className="w-8 h-8 rounded-full border border-border/70 hover:border-primary/50 hover:bg-primary/10 flex items-center justify-center text-foreground transition-all active:scale-95 shadow-xs"
+                    aria-label="Scroll left"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => scrollCarousel('right')}
+                    className="w-8 h-8 rounded-full border border-border/70 hover:border-primary/50 hover:bg-primary/10 flex items-center justify-center text-foreground transition-all active:scale-95 shadow-xs"
+                    aria-label="Scroll right"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    const el = document.getElementById('all-restaurants-section');
+                    if (el) el.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                  className="text-primary hover:text-primary/80 hover:bg-primary/10 font-bold text-xs sm:text-sm h-8 px-2.5 rounded-lg flex items-center gap-1"
+                >
+                  <span>View all</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </Button>
+              </div>
             </div>
-            <div className="flex gap-3.5 sm:gap-5 overflow-x-auto pb-3 scrollbar-hide snap-x -mx-3 px-3 sm:mx-0 sm:px-0">
-              {featuredRestaurants.map((restaurant) => (
-                <Link key={restaurant.id} href={`/customer/restaurant/${restaurant.id}`} className="snap-center min-w-[240px] sm:min-w-[290px] md:min-w-[320px] group">
-                  <div className="h-56 sm:h-64 rounded-2xl sm:rounded-3xl overflow-hidden relative shadow-md bg-card border border-border/80 group-hover:border-primary/40 group-hover:shadow-xl transition-all duration-500">
-                    <SafeImage
-                      src={restaurant.image}
-                      fallbackType="restaurant"
-                      useImgTag={true}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                      alt={restaurant.name}
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
-                    <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4 text-white">
-                      <h3 className="text-base sm:text-lg font-bold text-white mb-1 drop-shadow-md truncate">{restaurant.name}</h3>
-                      <div className="flex items-center gap-2 text-xs sm:text-sm text-zinc-200 mb-1">
-                        <span className="bg-green-600 text-white px-2 py-0.5 rounded-md text-xs font-black flex items-center gap-0.5 shadow-sm">
-                          <Star className="w-3 h-3 fill-current" /> {restaurant.rating || '4.5'}
-                        </span>
-                        <span className="w-1 h-1 bg-zinc-300 rounded-full" />
-                        <span className="truncate text-zinc-300">{restaurant.cuisineType?.join(', ') || 'Multi-cuisine'}</span>
-                      </div>
-                    </div>
-                    {/* Badges */}
-                    <div className="absolute top-3 left-3 flex items-center gap-1.5">
-                      <div className="bg-primary text-primary-foreground text-[10px] font-black px-2.5 py-1 rounded-lg shadow-md uppercase tracking-wider">
-                        Promoted
-                      </div>
-                      {!checkRestaurantOperatingStatus(restaurant, currentTime).isOpen && (
-                        <div className="bg-rose-600 text-white text-[10px] font-black px-2.5 py-1 rounded-lg shadow-md uppercase tracking-wider">
-                          Closed
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </Link>
+
+            <div
+              ref={carouselRef}
+              className="flex gap-4 sm:gap-5 overflow-x-auto pb-4 pt-1 scrollbar-hide snap-x scroll-smooth -mx-3 px-3 sm:mx-0 sm:px-0"
+            >
+              {activeFeatured.map((restaurant) => (
+                <RestaurantCard
+                  key={restaurant.id}
+                  restaurant={restaurant}
+                  variant="carousel"
+                  isPromoted={true}
+                  currentTime={currentTime}
+                />
               ))}
-              {featuredRestaurants.length === 0 && (
+              {activeFeatured.length === 0 && (
                 [1, 2, 3].map(i => (
-                  <div key={i} className="snap-center min-w-[240px] sm:min-w-[280px] h-56 sm:h-64 bg-muted/50 rounded-2xl animate-pulse border border-border/60" />
+                  <div key={i} className="snap-start w-[280px] sm:w-[320px] md:w-[340px] flex-shrink-0 h-64 bg-muted/40 rounded-2xl sm:rounded-3xl animate-pulse border border-border/60" />
                 ))
               )}
             </div>
@@ -456,7 +521,7 @@ export default function CustomerHomePage() {
           )}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 sm:gap-5">
-            {filteredItems.map((item) => (
+            {filteredItems.slice(0, visibleDishCount).map((item) => (
               <Link key={item.id} href={`/customer/product/${item.id}`} className="group block h-full">
                 <div className="bg-card border border-border/60 rounded-2xl sm:rounded-3xl overflow-hidden hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/10 hover:-translate-y-1.5 transition-all duration-300 relative h-full flex flex-col">
 
@@ -554,6 +619,106 @@ export default function CustomerHomePage() {
               </Link>
             ))}
           </div>
+
+          {/* View More Option for Popular Near You */}
+          {filteredItems.length > visibleDishCount && (
+            <div className="flex justify-center pt-4">
+              <Button
+                type="button"
+                onClick={() => setVisibleDishCount(prev => prev + 10)}
+                variant="outline"
+                className="rounded-full px-7 py-2.5 font-bold text-sm border-primary/40 text-primary hover:bg-primary hover:text-primary-foreground shadow-sm hover:shadow-md transition-all gap-2"
+              >
+                <span>View More Dishes ({filteredItems.length - visibleDishCount} remaining)</span>
+                <ChevronDown className="w-4 h-4" />
+              </Button>
+            </div>
+          )}
+        </div>
+
+        {/* All Restaurants Near You Section - Moved to bottom of Popular Near You */}
+        <div id="all-restaurants-section" className="space-y-3 sm:space-y-4 pt-4 border-t border-border/50">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <h2 className="text-lg sm:text-2xl font-black text-foreground flex items-center gap-2">
+                <Store className="w-5 h-5 text-primary" />
+                <span>{categoryFilter !== 'all' ? `${categoryFilter} Restaurants` : 'All Restaurants Near You'}</span>
+                <Badge variant="outline" className="text-xs font-bold border-border/80">
+                  {displayRestaurants.length}
+                </Badge>
+              </h2>
+              <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
+                Explore verified kitchen partners, authentic menus, and lightning delivery
+              </p>
+            </div>
+
+            {/* Quick Filter Pills */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                type="button"
+                onClick={() => setRestFilterVeg(prev => !prev)}
+                className={`px-3 py-1 rounded-full text-xs font-bold border transition-all ${
+                  restFilterVeg
+                    ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
+                    : 'bg-card text-muted-foreground border-border/80 hover:border-border'
+                }`}
+              >
+                🌱 Pure Veg
+              </button>
+              <button
+                type="button"
+                onClick={() => setRestFilterRating4Plus(prev => !prev)}
+                className={`px-3 py-1 rounded-full text-xs font-bold border transition-all ${
+                  restFilterRating4Plus
+                    ? 'bg-amber-500 text-black border-amber-500 shadow-sm'
+                    : 'bg-card text-muted-foreground border-border/80 hover:border-border'
+                }`}
+              >
+                ⭐ 4.0+ Rating
+              </button>
+              <button
+                type="button"
+                onClick={() => setRestFilterFastDelivery(prev => !prev)}
+                className={`px-3 py-1 rounded-full text-xs font-bold border transition-all ${
+                  restFilterFastDelivery
+                    ? 'bg-primary text-primary-foreground border-primary shadow-sm'
+                    : 'bg-card text-muted-foreground border-border/80 hover:border-border'
+                }`}
+              >
+                ⚡ &lt;30 Mins
+              </button>
+            </div>
+          </div>
+
+          {displayRestaurants.length === 0 ? (
+            <div className="text-center py-8 bg-card rounded-2xl border border-dashed border-border p-6">
+              <p className="text-muted-foreground font-medium text-sm">No restaurants match your selected filters.</p>
+              <Button
+                variant="link"
+                onClick={() => {
+                  setRestFilterVeg(false);
+                  setRestFilterRating4Plus(false);
+                  setRestFilterFastDelivery(false);
+                  setCategoryFilter('all');
+                  setSearchQuery('');
+                }}
+                className="text-primary font-bold mt-1 text-xs"
+              >
+                Reset Filters
+              </Button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+              {displayRestaurants.map((restaurant) => (
+                <RestaurantCard
+                  key={restaurant.id}
+                  restaurant={restaurant}
+                  variant="grid"
+                  currentTime={currentTime}
+                />
+              ))}
+            </div>
+          )}
         </div>
 
       </div>

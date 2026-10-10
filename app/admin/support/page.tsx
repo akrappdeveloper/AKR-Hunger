@@ -404,7 +404,7 @@ function AdminSupportContent() {
   const resolvedCount = tickets.filter((t) => (t.status || '').replace('_', '-') === 'resolved').length;
 
   return (
-    <div className="space-y-6 flex flex-col h-[calc(100vh-100px)] p-2 md:p-6 bg-gray-950/60 backdrop-blur-md rounded-2xl border border-white/5">
+    <div className="space-y-6 flex flex-col h-[calc(100vh-100px)] p-2 md:p-6 bg-background/60 backdrop-blur-md rounded-2xl border border-border/50">
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shrink-0">
         <div>
@@ -413,13 +413,13 @@ function AdminSupportContent() {
               🎧
             </div>
             <div>
-              <h1 className="text-2xl md:text-3xl font-black tracking-tight text-white flex items-center gap-3">
+              <h1 className="text-2xl md:text-3xl font-black tracking-tight text-foreground flex items-center gap-3">
                 Customer Support Desk
                 <Badge variant="outline" className="text-[10px] font-mono text-emerald-400 border-emerald-500/30 bg-emerald-500/10">
                   REAL-TIME SYNC
                 </Badge>
               </h1>
-              <p className="text-gray-400 text-xs md:text-sm font-medium">
+              <p className="text-muted-foreground text-xs md:text-sm font-medium">
                 Live 2-way resolution workspace for Web &amp; Android Customer Tickets.
               </p>
             </div>
@@ -442,7 +442,7 @@ function AdminSupportContent() {
             onClick={() => {
               toast.success('Refreshing support stream...');
             }}
-            className="border-white/10 text-gray-300 hover:text-white hover:bg-white/5 text-xs gap-1.5 rounded-xl"
+            className="border-border/50 text-muted-foreground hover:text-foreground hover:bg-card/5 text-xs gap-1.5 rounded-xl"
           >
             <RefreshCw className="w-3.5 h-3.5" />
             Sync
@@ -450,7 +450,7 @@ function AdminSupportContent() {
           <a href="https://wa.me/916393752013" target="_blank" rel="noreferrer">
             <Button
               size="sm"
-              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs gap-1.5 rounded-xl shadow-lg shadow-emerald-600/20"
+              className="bg-emerald-600 hover:bg-emerald-700 text-foreground font-bold text-xs gap-1.5 rounded-xl shadow-lg shadow-emerald-600/20"
             >
               <Phone className="w-3.5 h-3.5" /> Hotline (+91 6393752013)
             </Button>
@@ -460,11 +460,11 @@ function AdminSupportContent() {
 
       {/* Metrics Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 shrink-0">
-        <Card className="bg-black/40 border-white/5 hover:border-blue-500/30 transition-all rounded-2xl group">
+        <Card className="bg-background/40 border-border/50 hover:border-blue-500/30 transition-all rounded-2xl group">
           <CardContent className="p-4 flex items-center justify-between">
             <div>
-              <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Total Inquiries</p>
-              <h3 className="text-2xl font-black text-white mt-1">{totalCount}</h3>
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Total Inquiries</p>
+              <h3 className="text-2xl font-black text-foreground mt-1">{totalCount}</h3>
               <p className="text-[10px] text-blue-400 mt-1">{inProgressCount} in progress</p>
             </div>
             <div className="p-2.5 bg-blue-500/10 rounded-xl group-hover:scale-110 transition-transform">
@@ -473,12 +473,12 @@ function AdminSupportContent() {
           </CardContent>
         </Card>
 
-        <Card className="bg-black/40 border-white/5 hover:border-yellow-500/30 transition-all rounded-2xl group">
+        <Card className="bg-background/40 border-border/50 hover:border-yellow-500/30 transition-all rounded-2xl group">
           <CardContent className="p-4 flex items-center justify-between">
             <div>
-              <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Open / Pending</p>
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Open / Pending</p>
               <h3 className="text-2xl font-black text-yellow-400 mt-1">{openCount}</h3>
-              <p className="text-[10px] text-gray-400 mt-1">Awaiting first reply</p>
+              <p className="text-[10px] text-muted-foreground mt-1">Awaiting first reply</p>
             </div>
             <div className="p-2.5 bg-yellow-500/10 rounded-xl group-hover:scale-110 transition-transform">
               <Clock className="w-5 h-5 text-yellow-400" />
@@ -486,10 +486,10 @@ function AdminSupportContent() {
           </CardContent>
         </Card>
 
-        <Card className="bg-black/40 border-white/5 hover:border-red-500/30 transition-all rounded-2xl group">
+        <Card className="bg-background/40 border-border/50 hover:border-red-500/30 transition-all rounded-2xl group">
           <CardContent className="p-4 flex items-center justify-between">
             <div>
-              <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Urgent Attention</p>
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Urgent Attention</p>
               <h3 className="text-2xl font-black text-red-400 mt-1 flex items-center gap-1.5">
                 {urgentCount}
                 {urgentCount > 0 && <span className="w-2 h-2 rounded-full bg-red-500 animate-ping" />}
@@ -502,10 +502,10 @@ function AdminSupportContent() {
           </CardContent>
         </Card>
 
-        <Card className="bg-black/40 border-white/5 hover:border-emerald-500/30 transition-all rounded-2xl group">
+        <Card className="bg-background/40 border-border/50 hover:border-emerald-500/30 transition-all rounded-2xl group">
           <CardContent className="p-4 flex items-center justify-between">
             <div>
-              <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Resolved</p>
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Resolved</p>
               <h3 className="text-2xl font-black text-emerald-400 mt-1">{resolvedCount}</h3>
               <p className="text-[10px] text-emerald-400/80 mt-1">Closed successfully</p>
             </div>
@@ -517,17 +517,17 @@ function AdminSupportContent() {
       </div>
 
       {/* Main Support Workspace */}
-      <div className="flex-1 min-h-0 bg-black/40 border border-white/5 rounded-2xl overflow-hidden flex flex-col lg:flex-row shadow-2xl">
+      <div className="flex-1 min-h-0 bg-background/40 border border-border/50 rounded-2xl overflow-hidden flex flex-col lg:flex-row shadow-2xl">
         {/* Left Column: Ticket Browser & Filters */}
-        <div className="w-full lg:w-[380px] xl:w-[420px] flex flex-col border-r border-white/5 bg-gray-950/40 h-full">
+        <div className="w-full lg:w-[380px] xl:w-[420px] flex flex-col border-r border-border/50 bg-background/40 h-full">
           {/* Department Tabs */}
-          <div className="p-3 border-b border-white/5 space-y-3 bg-gray-900/30">
+          <div className="p-3 border-b border-border/50 space-y-3 bg-card/30">
             <Tabs
               value={activeDepartment}
               onValueChange={(val: any) => setActiveDepartment(val)}
               className="w-full"
             >
-              <TabsList className="bg-black/50 border border-white/5 p-1 w-full grid grid-cols-4 rounded-xl">
+              <TabsList className="bg-background/50 border border-border/50 p-1 w-full grid grid-cols-4 rounded-xl">
                 <TabsTrigger value="all" className="text-[11px] font-bold">
                   All
                 </TabsTrigger>
@@ -545,12 +545,12 @@ function AdminSupportContent() {
 
             {/* Search Box */}
             <div className="relative">
-              <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-500" />
+              <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search by user, email, subject, #order..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9 h-9 bg-black/50 border-white/10 text-white placeholder:text-gray-500 rounded-xl text-xs focus:border-blue-500/50"
+                className="pl-9 h-9 bg-background/50 border-border/50 text-foreground placeholder:text-muted-foreground rounded-xl text-xs focus:border-blue-500/50"
               />
             </div>
 
@@ -562,8 +562,8 @@ function AdminSupportContent() {
                     key={status}
                     onClick={() => setStatusFilter(status)}
                     className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all border shrink-0 ${statusFilter === status
-                        ? 'bg-blue-600 text-white border-blue-500 shadow-md shadow-blue-600/30'
-                        : 'bg-white/5 text-gray-400 border-white/5 hover:bg-white/10'
+                        ? 'bg-blue-600 text-foreground border-blue-500 shadow-md shadow-blue-600/30'
+                        : 'bg-card/5 text-muted-foreground border-border/50 hover:bg-card/10'
                       }`}
                   >
                     {status === 'in-progress' ? 'In Progress' : status}
@@ -578,12 +578,12 @@ function AdminSupportContent() {
           <ScrollArea className="flex-1 p-2">
             <div className="space-y-2">
               {loading ? (
-                <div className="text-center py-12 text-gray-500 text-xs">
+                <div className="text-center py-12 text-muted-foreground text-xs">
                   Loading tickets in real-time...
                 </div>
               ) : filteredTickets.length === 0 ? (
-                <div className="text-center py-12 text-gray-500 text-xs space-y-2">
-                  <Inbox className="w-8 h-8 mx-auto text-gray-600" />
+                <div className="text-center py-12 text-muted-foreground text-xs space-y-2">
+                  <Inbox className="w-8 h-8 mx-auto text-muted-foreground" />
                   <p>No tickets match your filters.</p>
                 </div>
               ) : (
@@ -599,21 +599,21 @@ function AdminSupportContent() {
                       onClick={() => setSelectedTicket(ticket)}
                       className={`p-3.5 rounded-2xl cursor-pointer transition-all border text-left ${isSelected
                           ? 'bg-blue-600/15 border-blue-500/50 shadow-lg shadow-blue-500/10'
-                          : 'bg-white/[0.02] border-white/5 hover:bg-white/[0.05] hover:border-white/10'
+                          : 'bg-card/[0.02] border-border/50 hover:bg-card/[0.05] hover:border-border/50'
                         }`}
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex items-center gap-2 min-w-0">
-                          <Avatar className="h-7 w-7 border border-white/10">
-                            <AvatarFallback className="bg-gray-800 text-gray-300 text-[10px] font-bold">
+                          <Avatar className="h-7 w-7 border border-border/50">
+                            <AvatarFallback className="bg-secondary text-muted-foreground text-[10px] font-bold">
                               {ticket.userName?.charAt(0) || 'U'}
                             </AvatarFallback>
                           </Avatar>
                           <div className="min-w-0">
-                            <p className="text-xs font-bold text-white truncate">
+                            <p className="text-xs font-bold text-foreground truncate">
                               {ticket.userName || 'Customer'}
                             </p>
-                            <p className="text-[10px] text-gray-400 truncate">
+                            <p className="text-[10px] text-muted-foreground truncate">
                               {ticket.userEmail || ticket.userPhone || 'No contact email'}
                             </p>
                           </div>
@@ -634,24 +634,24 @@ function AdminSupportContent() {
                       </div>
 
                       {/* Subject */}
-                      <p className="text-xs font-semibold text-gray-200 mt-2 line-clamp-1">
+                      <p className="text-xs font-semibold text-foreground mt-2 line-clamp-1">
                         {ticket.subject}
                       </p>
 
                       {/* Snippet */}
-                      <p className="text-[11px] text-gray-400 line-clamp-2 mt-0.5 leading-relaxed">
+                      <p className="text-[11px] text-muted-foreground line-clamp-2 mt-0.5 leading-relaxed">
                         {ticket.description || ticket.message}
                       </p>
 
                       {/* Footer tags */}
-                      <div className="flex items-center justify-between mt-3 pt-2 border-t border-white/5 text-[10px] text-gray-500">
+                      <div className="flex items-center justify-between mt-3 pt-2 border-t border-border/50 text-[10px] text-muted-foreground">
                         <div className="flex items-center gap-1.5 flex-wrap">
                           {isUrgent && (
                             <span className="px-1.5 py-0.5 rounded bg-red-500/20 text-red-400 font-bold flex items-center gap-1 text-[9px]">
                               <Flame className="w-2.5 h-2.5" /> URGENT
                             </span>
                           )}
-                          <span className="px-1.5 py-0.5 rounded bg-white/5 text-gray-400 uppercase text-[9px]">
+                          <span className="px-1.5 py-0.5 rounded bg-card/5 text-muted-foreground uppercase text-[9px]">
                             {ticket.category || 'General'}
                           </span>
                           {ticket.orderId && (
@@ -676,35 +676,35 @@ function AdminSupportContent() {
         </div>
 
         {/* Right Column: Ticket Conversation Workspace */}
-        <div className="flex-1 flex flex-col min-w-0 bg-gray-950/20 h-full">
+        <div className="flex-1 flex flex-col min-w-0 bg-background/20 h-full">
           {selectedTicket ? (
             <>
               {/* Ticket Top Action Bar */}
-              <div className="p-4 border-b border-white/5 bg-gray-900/40 backdrop-blur-md flex flex-wrap items-center justify-between gap-3 shrink-0">
+              <div className="p-4 border-b border-border/50 bg-card/40 backdrop-blur-md flex flex-wrap items-center justify-between gap-3 shrink-0">
                 <div className="flex items-center gap-3 min-w-0">
-                  <Avatar className="h-10 w-10 border border-white/10 ring-2 ring-blue-500/20">
-                    <AvatarFallback className="bg-gradient-to-br from-blue-600 to-indigo-600 text-white font-bold text-sm">
+                  <Avatar className="h-10 w-10 border border-border/50 ring-2 ring-blue-500/20">
+                    <AvatarFallback className="bg-gradient-to-br from-blue-600 to-indigo-600 text-foreground font-bold text-sm">
                       {selectedTicket.userName?.charAt(0) || 'U'}
                     </AvatarFallback>
                   </Avatar>
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      <h3 className="font-bold text-sm text-white truncate">
+                      <h3 className="font-bold text-sm text-foreground truncate">
                         {selectedTicket.userName || 'Anonymous User'}
                       </h3>
                       <Badge
                         variant="outline"
-                        className="text-[10px] font-mono border-white/10 text-gray-400 uppercase"
+                        className="text-[10px] font-mono border-border/50 text-muted-foreground uppercase"
                       >
                         {selectedTicket.userType || 'customer'}
                       </Badge>
                     </div>
-                    <div className="flex items-center gap-3 text-xs text-gray-400 mt-0.5">
+                    <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
                       <span>{selectedTicket.userEmail || 'No email provided'}</span>
                       {selectedTicket.userPhone && (
                         <>
                           <span>•</span>
-                          <span className="font-mono text-gray-300">{selectedTicket.userPhone}</span>
+                          <span className="font-mono text-muted-foreground">{selectedTicket.userPhone}</span>
                         </>
                       )}
                     </div>
@@ -749,7 +749,7 @@ function AdminSupportContent() {
                   <Button
                     size="sm"
                     onClick={() => setRefundModalOpen(true)}
-                    className="bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl text-xs gap-1.5 shadow-md shadow-amber-600/20"
+                    className="bg-amber-600 hover:bg-amber-700 text-foreground font-bold rounded-xl text-xs gap-1.5 shadow-md shadow-amber-600/20"
                   >
                     <Wallet className="w-3.5 h-3.5" /> Refund Wallet
                   </Button>
@@ -760,12 +760,12 @@ function AdminSupportContent() {
                       <Button
                         variant="outline"
                         size="sm"
-                        className="border-white/10 text-white rounded-xl text-xs gap-1.5"
+                        className="border-border/50 text-foreground rounded-xl text-xs gap-1.5"
                       >
                         Status: <span className="font-bold uppercase text-blue-400">{selectedTicket.status || 'open'}</span>
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="bg-gray-900 border-gray-800 text-gray-200">
+                    <DropdownMenuContent align="end" className="bg-card border-border/50 text-foreground">
                       <DropdownMenuItem onClick={() => updateTicketStatus(selectedTicket.id!, 'open')}>
                         <Clock className="w-4 h-4 mr-2 text-yellow-400" /> Set as Open
                       </DropdownMenuItem>
@@ -776,7 +776,7 @@ function AdminSupportContent() {
                         <CheckCircle className="w-4 h-4 mr-2 text-emerald-400" /> Mark as Resolved
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => updateTicketStatus(selectedTicket.id!, 'closed')}>
-                        <XCircle className="w-4 h-4 mr-2 text-gray-400" /> Close Ticket
+                        <XCircle className="w-4 h-4 mr-2 text-muted-foreground" /> Close Ticket
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -784,11 +784,11 @@ function AdminSupportContent() {
                   {/* More Menu */}
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-white rounded-xl">
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground rounded-xl">
                         <MoreVertical className="w-4 h-4" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="bg-gray-900 border-gray-800 text-gray-300 w-48">
+                    <DropdownMenuContent align="end" className="bg-card border-border/50 text-muted-foreground w-48">
                       <DropdownMenuItem
                         onClick={() => {
                           navigator.clipboard.writeText(selectedTicket.id || '');
@@ -797,7 +797,7 @@ function AdminSupportContent() {
                       >
                         <Copy className="mr-2 h-4 w-4" /> Copy Ticket ID
                       </DropdownMenuItem>
-                      <DropdownMenuSeparator className="bg-gray-800" />
+                      <DropdownMenuSeparator className="bg-secondary" />
                       <DropdownMenuItem
                         onClick={() => updateTicketPriority(selectedTicket.id!, 'urgent')}
                         className="text-red-400"
@@ -810,7 +810,7 @@ function AdminSupportContent() {
                       >
                         <AlertTriangle className="mr-2 h-4 w-4" /> Set High Priority
                       </DropdownMenuItem>
-                      <DropdownMenuSeparator className="bg-gray-800" />
+                      <DropdownMenuSeparator className="bg-secondary" />
                       <DropdownMenuItem
                         onClick={() => handleDeleteTicket(selectedTicket.id!)}
                         className="text-red-500 focus:text-red-400 focus:bg-red-950/20"
@@ -823,10 +823,10 @@ function AdminSupportContent() {
               </div>
 
               {/* Ticket Details Summary Bar */}
-              <div className="px-6 py-3 bg-white/[0.015] border-b border-white/5 flex flex-wrap items-center justify-between text-xs gap-3">
+              <div className="px-6 py-3 bg-card/[0.015] border-b border-border/50 flex flex-wrap items-center justify-between text-xs gap-3">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-bold text-gray-300">{selectedTicket.subject}</span>
-                  <Badge variant="outline" className="text-[10px] uppercase border-white/10 text-gray-400">
+                  <span className="font-bold text-muted-foreground">{selectedTicket.subject}</span>
+                  <Badge variant="outline" className="text-[10px] uppercase border-border/50 text-muted-foreground">
                     Category: {selectedTicket.category || 'General'}
                   </Badge>
                   {selectedTicket.orderId && (
@@ -835,7 +835,7 @@ function AdminSupportContent() {
                     </Badge>
                   )}
                 </div>
-                <div className="text-[11px] text-gray-500">
+                <div className="text-[11px] text-muted-foreground">
                   Created {formatDate(selectedTicket.createdAt)}
                 </div>
               </div>
@@ -845,24 +845,24 @@ function AdminSupportContent() {
                 <div className="max-w-3xl mx-auto space-y-6">
                   {/* Initial Ticket Inquiry (User Bubble) */}
                   <div className="flex gap-3">
-                    <Avatar className="h-8 w-8 mt-1 border border-white/10 shrink-0">
-                      <AvatarFallback className="bg-gray-800 text-gray-300 text-xs font-bold">
+                    <Avatar className="h-8 w-8 mt-1 border border-border/50 shrink-0">
+                      <AvatarFallback className="bg-secondary text-muted-foreground text-xs font-bold">
                         {selectedTicket.userName?.charAt(0) || 'U'}
                       </AvatarFallback>
                     </Avatar>
                     <div className="space-y-1.5 max-w-[85%]">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-gray-200">
+                        <span className="text-xs font-bold text-foreground">
                           {selectedTicket.userName || 'Customer'}
                         </span>
-                        <span className="text-[10px] text-gray-500">
+                        <span className="text-[10px] text-muted-foreground">
                           {formatDate(selectedTicket.createdAt)}
                         </span>
                         <Badge variant="outline" className="text-[9px] border-amber-500/30 text-amber-400 py-0 px-1">
                           Inquiry
                         </Badge>
                       </div>
-                      <div className="p-4 rounded-2xl rounded-tl-none bg-gray-900 border border-white/10 text-gray-200 text-sm leading-relaxed shadow-sm">
+                      <div className="p-4 rounded-2xl rounded-tl-none bg-card border border-border/50 text-foreground text-sm leading-relaxed shadow-sm">
                         {selectedTicket.description || selectedTicket.message}
                       </div>
                     </div>
@@ -881,11 +881,11 @@ function AdminSupportContent() {
                         <Avatar
                           className={`h-8 w-8 mt-1 shrink-0 ${isAdminSender
                               ? 'border-blue-500/40 ring-2 ring-blue-500/20'
-                              : 'border-white/10'
+                              : 'border-border/50'
                             }`}
                         >
                           <AvatarFallback
-                            className={isAdminSender ? 'bg-blue-600 text-white font-bold text-xs' : 'bg-gray-800 text-gray-300 text-xs'}
+                            className={isAdminSender ? 'bg-blue-600 text-foreground font-bold text-xs' : 'bg-secondary text-muted-foreground text-xs'}
                           >
                             {isAdminSender ? 'A' : reply.senderName?.charAt(0) || reply.userName?.charAt(0) || 'U'}
                           </AvatarFallback>
@@ -896,18 +896,18 @@ function AdminSupportContent() {
                             }`}
                         >
                           <div className="flex items-center gap-2">
-                            <span className="text-xs font-bold text-gray-300">
+                            <span className="text-xs font-bold text-muted-foreground">
                               {isAdminSender ? reply.senderName || 'Hunger Support Agent' : reply.senderName || reply.userName || 'Customer'}
                             </span>
-                            <span className="text-[10px] text-gray-500">
+                            <span className="text-[10px] text-muted-foreground">
                               {formatDate(reply.timestamp || reply.createdAt)}
                             </span>
                           </div>
 
                           <div
                             className={`p-4 rounded-2xl text-sm leading-relaxed shadow-md ${isAdminSender
-                                ? 'bg-blue-600 text-white rounded-tr-none shadow-blue-600/10'
-                                : 'bg-gray-900 border border-white/10 text-gray-200 rounded-tl-none'
+                                ? 'bg-blue-600 text-foreground rounded-tr-none shadow-blue-600/10'
+                                : 'bg-card border border-border/50 text-foreground rounded-tl-none'
                               }`}
                           >
                             {messageContent}
@@ -922,16 +922,16 @@ function AdminSupportContent() {
               </ScrollArea>
 
               {/* Quick Canned Response Pills */}
-              <div className="px-4 py-2 border-t border-white/5 bg-gray-900/60 overflow-x-auto">
+              <div className="px-4 py-2 border-t border-border/50 bg-card/60 overflow-x-auto">
                 <div className="flex items-center gap-2 max-w-3xl mx-auto">
-                  <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider shrink-0 flex items-center gap-1">
+                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider shrink-0 flex items-center gap-1">
                     <Sparkles className="w-3 h-3 text-amber-400" /> Templates:
                   </span>
                   {QUICK_TEMPLATES.map((tmpl, idx) => (
                     <button
                       key={idx}
                       onClick={() => setReplyText(tmpl.text)}
-                      className="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-blue-600/20 hover:text-blue-400 text-gray-400 text-[11px] font-medium shrink-0 border border-white/5 transition-all"
+                      className="px-2.5 py-1 rounded-lg bg-card/5 hover:bg-blue-600/20 hover:text-blue-400 text-muted-foreground text-[11px] font-medium shrink-0 border border-border/50 transition-all"
                     >
                       {tmpl.label}
                     </button>
@@ -940,12 +940,12 @@ function AdminSupportContent() {
               </div>
 
               {/* Reply Input Box */}
-              <div className="p-4 bg-gray-900/80 border-t border-white/5 shrink-0">
+              <div className="p-4 bg-card/80 border-t border-border/50 shrink-0">
                 <div className="max-w-3xl mx-auto space-y-2">
                   <div className="relative">
                     <Textarea
                       placeholder="Type a response to the customer... (Ctrl+Enter to send)"
-                      className="bg-black/60 border-white/10 text-white resize-none min-h-[90px] rounded-2xl p-3 pr-14 text-sm focus:border-blue-500/50"
+                      className="bg-background/60 border-border/50 text-foreground resize-none min-h-[90px] rounded-2xl p-3 pr-14 text-sm focus:border-blue-500/50"
                       value={replyText}
                       onChange={(e) => setReplyText(e.target.value)}
                       onKeyDown={(e) => {
@@ -961,8 +961,8 @@ function AdminSupportContent() {
                         disabled={!replyText.trim() || sendingReply}
                         onClick={handleReply}
                         className={`h-9 w-9 rounded-xl transition-all ${!replyText.trim()
-                            ? 'bg-gray-800 text-gray-500'
-                            : 'bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-600/25'
+                            ? 'bg-secondary text-muted-foreground'
+                            : 'bg-blue-600 hover:bg-blue-500 text-foreground shadow-lg shadow-blue-600/25'
                           }`}
                       >
                         <Send className="h-4 w-4" />
@@ -970,7 +970,7 @@ function AdminSupportContent() {
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between text-[11px] text-gray-500 px-1">
+                  <div className="flex items-center justify-between text-[11px] text-muted-foreground px-1">
                     <span>
                       Customer receives real-time notification on Web and Android app.
                     </span>
@@ -980,10 +980,10 @@ function AdminSupportContent() {
               </div>
             </>
           ) : (
-            <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-gray-500">
-              <MessageSquare className="w-12 h-12 text-gray-700 mb-3" />
-              <h3 className="font-bold text-gray-300 text-base">Select a ticket from the left</h3>
-              <p className="text-xs text-gray-500 max-w-sm mt-1">
+            <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-muted-foreground">
+              <MessageSquare className="w-12 h-12 text-muted-foreground mb-3" />
+              <h3 className="font-bold text-muted-foreground text-base">Select a ticket from the left</h3>
+              <p className="text-xs text-muted-foreground max-w-sm mt-1">
                 Choose an inquiry to view the conversation history, reply in real-time, or issue a wallet refund.
               </p>
             </div>
@@ -993,43 +993,43 @@ function AdminSupportContent() {
 
       {/* Instant Wallet Refund Dialog */}
       <Dialog open={refundModalOpen} onOpenChange={setRefundModalOpen}>
-        <DialogContent className="sm:max-w-md bg-gray-900 border-gray-800 text-white rounded-3xl p-6 shadow-2xl">
+        <DialogContent className="sm:max-w-md bg-card border-border/50 text-foreground rounded-3xl p-6 shadow-2xl">
           <DialogHeader>
-            <DialogTitle className="text-lg font-bold flex items-center gap-2 text-white">
+            <DialogTitle className="text-lg font-bold flex items-center gap-2 text-foreground">
               <Wallet className="w-5 h-5 text-amber-400" />
               Issue Hunger Wallet Refund
             </DialogTitle>
-            <DialogDescription className="text-xs text-gray-400">
+            <DialogDescription className="text-xs text-muted-foreground">
               Instantly credits the customer's wallet balance and logs the audit trail.
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-2">
             <div>
-              <label className="text-xs font-bold text-gray-300">Customer</label>
-              <p className="text-sm font-semibold text-white mt-1">
+              <label className="text-xs font-bold text-muted-foreground">Customer</label>
+              <p className="text-sm font-semibold text-foreground mt-1">
                 {selectedTicket?.userName} ({selectedTicket?.userEmail || selectedTicket?.userPhone})
               </p>
             </div>
 
             <div>
-              <label className="text-xs font-bold text-gray-300">Refund Amount (₹)</label>
+              <label className="text-xs font-bold text-muted-foreground">Refund Amount (₹)</label>
               <Input
                 type="number"
                 placeholder="e.g. 150"
                 value={refundAmount}
                 onChange={(e) => setRefundAmount(e.target.value)}
-                className="bg-black/50 border-white/10 text-white mt-1 rounded-xl text-lg font-mono font-bold text-emerald-400"
+                className="bg-background/50 border-border/50 text-foreground mt-1 rounded-xl text-lg font-mono font-bold text-emerald-400"
               />
             </div>
 
             <div>
-              <label className="text-xs font-bold text-gray-300">Reason / Resolution Note</label>
+              <label className="text-xs font-bold text-muted-foreground">Reason / Resolution Note</label>
               <Input
                 placeholder="e.g. Late delivery compensation, Missing items"
                 value={refundReason}
                 onChange={(e) => setRefundReason(e.target.value)}
-                className="bg-black/50 border-white/10 text-white mt-1 rounded-xl text-xs"
+                className="bg-background/50 border-border/50 text-foreground mt-1 rounded-xl text-xs"
               />
             </div>
           </div>
@@ -1038,14 +1038,14 @@ function AdminSupportContent() {
             <Button
               variant="outline"
               onClick={() => setRefundModalOpen(false)}
-              className="border-white/10 text-gray-400 hover:text-white rounded-xl"
+              className="border-border/50 text-muted-foreground hover:text-foreground rounded-xl"
             >
               Cancel
             </Button>
             <Button
               onClick={handleProcessWalletRefund}
               disabled={processingRefund || !refundAmount}
-              className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl gap-2 shadow-lg shadow-emerald-600/25"
+              className="bg-emerald-600 hover:bg-emerald-500 text-foreground font-bold rounded-xl gap-2 shadow-lg shadow-emerald-600/25"
             >
               {processingRefund ? 'Crediting...' : 'Confirm Refund'}
             </Button>
@@ -1060,7 +1060,7 @@ export default function AdminSupportPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex items-center justify-center min-h-[60vh] text-gray-400 text-sm">
+        <div className="flex items-center justify-center min-h-[60vh] text-muted-foreground text-sm">
           Loading support desk workspace...
         </div>
       }

@@ -38,7 +38,7 @@ import {
     DialogContent,
     DialogClose
 } from '@/components/ui/dialog';
-import { doc, updateDoc, arrayUnion, arrayRemove, onSnapshot } from 'firebase/firestore';
+import { doc, updateDoc, arrayUnion, arrayRemove, onSnapshot, collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { copyToClipboard } from '@/lib/utils';
 import { checkRestaurantOperatingStatus, OperatingStatus } from '@/lib/restaurant-schedule';
@@ -107,7 +107,7 @@ export default function RestaurantClient({
         }
 
         try {
-            const { collection, query, where, onSnapshot } = require('firebase/firestore');
+            if (!db) return;
             const ordersRef = collection(db, 'orders');
             const q = query(
                 ordersRef,
@@ -156,7 +156,7 @@ export default function RestaurantClient({
 
             // 2. Client-side Firestore fallback with silent error catch to prevent console permission spam
             try {
-                const { collection, getDocs, query, where } = await import('firebase/firestore');
+                if (!db) return;
                 const promotionsRef = collection(db, 'promotions');
                 const q = query(promotionsRef, where('isActive', '==', true));
                 const snapshot = await getDocs(q);

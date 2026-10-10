@@ -180,7 +180,7 @@ export default function AdminZonesPage() {
       <div className="flex items-center justify-center h-[60vh]">
         <div className="text-center space-y-4">
           <div className="h-10 w-10 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-gray-400">Loading delivery zones...</p>
+          <p className="text-muted-foreground">Loading delivery zones...</p>
         </div>
       </div>
     );
@@ -194,9 +194,9 @@ export default function AdminZonesPage() {
           <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white via-gray-100 to-gray-400 tracking-tight mb-2">
             Delivery Zones
           </h1>
-          <p className="text-gray-400">Manage delivery areas, fees, and restaurant coverage.</p>
+          <p className="text-muted-foreground">Manage delivery areas, fees, and restaurant coverage.</p>
         </div>
-        <Button onClick={handleOpenCreate} className="gap-2 bg-blue-600 hover:bg-blue-700 text-white">
+        <Button onClick={handleOpenCreate} className="gap-2 bg-blue-600 hover:bg-blue-700 text-foreground">
           <Plus size={16} />
           Add Zone
         </Button>
@@ -226,8 +226,8 @@ export default function AdminZonesPage() {
                 <div className="flex items-center justify-between mb-3">
                   <Icon className={`w-5 h-5 ${iconColors[stat.color]}`} />
                 </div>
-                <p className="text-2xl font-bold text-white font-mono">{stat.value}</p>
-                <p className="text-[11px] text-gray-400 mt-1">{stat.title}</p>
+                <p className="text-2xl font-bold text-foreground font-mono">{stat.value}</p>
+                <p className="text-[11px] text-muted-foreground mt-1">{stat.title}</p>
               </CardContent>
             </Card>
           );
@@ -235,27 +235,27 @@ export default function AdminZonesPage() {
       </div>
 
       {/* Zones Table */}
-      <Card className="bg-black/40 border-white/10 backdrop-blur-md shadow-xl overflow-hidden">
-        <CardHeader className="border-b border-white/5 bg-white/5 pb-4">
+      <Card className="bg-background/40 border-border/50 backdrop-blur-md shadow-xl overflow-hidden">
+        <CardHeader className="border-b border-border/50 bg-card/5 pb-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <CardTitle className="text-lg font-semibold text-white flex items-center gap-2">
+            <CardTitle className="text-lg font-semibold text-foreground flex items-center gap-2">
               <Map className="w-5 h-5 text-blue-400" />
               All Delivery Zones
             </CardTitle>
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 placeholder="Search zones..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 bg-black/20 border-white/10 text-white placeholder:text-gray-500 w-56"
+                className="pl-10 bg-background/20 border-border/50 text-foreground placeholder:text-muted-foreground w-56"
               />
             </div>
           </div>
         </CardHeader>
         <CardContent className="p-0">
           {filteredZones.length === 0 ? (
-            <div className="text-center py-12 text-gray-500">
+            <div className="text-center py-12 text-muted-foreground">
               <Map className="w-10 h-10 mx-auto mb-3 opacity-30" />
               <p className="text-lg font-medium">No delivery zones</p>
               <p className="text-sm">Create your first delivery zone to get started.</p>
@@ -264,33 +264,37 @@ export default function AdminZonesPage() {
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow className="border-white/5 hover:bg-transparent">
-                    <TableHead className="text-gray-400">Zone Name</TableHead>
-                    <TableHead className="text-gray-400">Pincode</TableHead>
-                    <TableHead className="text-gray-400">City</TableHead>
-                    <TableHead className="text-gray-400">State</TableHead>
-                    <TableHead className="text-gray-400 text-right">Delivery Fee</TableHead>
-                    <TableHead className="text-gray-400 text-right">Min Order</TableHead>
-                    <TableHead className="text-gray-400 text-center">Restaurants</TableHead>
-                    <TableHead className="text-gray-400 text-center">Status</TableHead>
-                    <TableHead className="text-gray-400 text-center">Actions</TableHead>
+                  <TableRow className="border-border/50 hover:bg-transparent">
+                    <TableHead className="text-muted-foreground">Zone Name</TableHead>
+                    <TableHead className="text-muted-foreground">Pincode</TableHead>
+                    <TableHead className="text-muted-foreground">City</TableHead>
+                    <TableHead className="text-muted-foreground">State</TableHead>
+                    <TableHead className="text-muted-foreground text-right">Delivery Fee</TableHead>
+                    <TableHead className="text-muted-foreground text-right">Min Order</TableHead>
+                    <TableHead className="text-muted-foreground text-center">Restaurants</TableHead>
+                    <TableHead className="text-muted-foreground text-center">Status</TableHead>
+                    <TableHead className="text-muted-foreground text-center">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredZones.map((zone) => (
-                    <TableRow key={zone.id} className="border-white/5 hover:bg-white/5 transition-colors">
-                      <TableCell className="text-white font-medium text-sm">{zone.name}</TableCell>
-                      <TableCell className="text-gray-300 font-mono text-sm">{zone.pincode}</TableCell>
-                      <TableCell className="text-gray-300 text-sm">{zone.city || '-'}</TableCell>
-                      <TableCell className="text-gray-300 text-sm">{zone.state || '-'}</TableCell>
+                    <TableRow 
+                      key={zone.id} 
+                      className="border-border/50 hover:bg-card/5 transition-colors cursor-pointer"
+                      onClick={() => handleOpenEdit(zone)}
+                    >
+                      <TableCell className="text-foreground font-medium text-sm">{zone.name}</TableCell>
+                      <TableCell className="text-muted-foreground font-mono text-sm">{zone.pincode}</TableCell>
+                      <TableCell className="text-muted-foreground text-sm">{zone.city || '-'}</TableCell>
+                      <TableCell className="text-muted-foreground text-sm">{zone.state || '-'}</TableCell>
                       <TableCell className="text-emerald-400 text-right font-mono text-sm">₹{zone.deliveryFee}</TableCell>
-                      <TableCell className="text-gray-300 text-right font-mono text-sm">₹{zone.minOrderAmount}</TableCell>
+                      <TableCell className="text-muted-foreground text-right font-mono text-sm">₹{zone.minOrderAmount}</TableCell>
                       <TableCell className="text-center">
                         <Badge variant="outline" className="bg-blue-500/10 text-blue-400 border-blue-500/20 text-xs">
                           {zone.restaurantCount}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-center">
+                      <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
                         <button onClick={() => handleToggle(zone)} className="inline-flex items-center">
                           {zone.isActive ? (
                             <Badge variant="outline" className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 text-xs gap-1 cursor-pointer hover:bg-emerald-500/20 transition-colors">
@@ -303,7 +307,7 @@ export default function AdminZonesPage() {
                           )}
                         </button>
                       </TableCell>
-                      <TableCell className="text-center">
+                      <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-center gap-1">
                           <Button size="sm" variant="ghost" onClick={() => handleOpenEdit(zone)} className="text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 h-8 w-8 p-0">
                             <Edit size={14} />
@@ -324,87 +328,87 @@ export default function AdminZonesPage() {
 
       {/* Create/Edit Zone Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="bg-gray-900 border-white/10 text-white max-w-md">
+        <DialogContent className="bg-card border-border/50 text-foreground max-w-md">
           <DialogHeader>
             <DialogTitle>{editingZone ? 'Edit Zone' : 'Create New Zone'}</DialogTitle>
-            <DialogDescription className="text-gray-400">
+            <DialogDescription className="text-muted-foreground">
               {editingZone ? 'Update delivery zone settings' : 'Add a new delivery zone to the platform'}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 mt-4">
             <div>
-              <Label className="text-gray-300 text-sm">Zone Name</Label>
+              <Label className="text-muted-foreground text-sm">Zone Name</Label>
               <Input
                 value={formData.name}
                 onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                 placeholder="e.g., Downtown Area"
-                className="mt-1 bg-black/20 border-white/10 text-white"
+                className="mt-1 bg-background/20 border-border/50 text-foreground"
               />
             </div>
             <div>
-              <Label className="text-gray-300 text-sm">Pincode</Label>
+              <Label className="text-muted-foreground text-sm">Pincode</Label>
               <Input
                 value={formData.pincode}
                 onChange={(e) => setFormData(prev => ({ ...prev, pincode: e.target.value }))}
                 placeholder="e.g., 560001"
-                className="mt-1 bg-black/20 border-white/10 text-white"
+                className="mt-1 bg-background/20 border-border/50 text-foreground"
               />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label className="text-gray-300 text-sm">City</Label>
+                <Label className="text-muted-foreground text-sm">City</Label>
                 <Input
                   value={formData.city}
                   onChange={(e) => setFormData(prev => ({ ...prev, city: e.target.value }))}
                   placeholder="e.g., Bangalore"
-                  className="mt-1 bg-black/20 border-white/10 text-white"
+                  className="mt-1 bg-background/20 border-border/50 text-foreground"
                 />
               </div>
               <div>
-                <Label className="text-gray-300 text-sm">State</Label>
+                <Label className="text-muted-foreground text-sm">State</Label>
                 <Input
                   value={formData.state}
                   onChange={(e) => setFormData(prev => ({ ...prev, state: e.target.value }))}
                   placeholder="e.g., Karnataka"
-                  className="mt-1 bg-black/20 border-white/10 text-white"
+                  className="mt-1 bg-background/20 border-border/50 text-foreground"
                 />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label className="text-gray-300 text-sm">Delivery Fee (₹)</Label>
+                <Label className="text-muted-foreground text-sm">Delivery Fee (₹)</Label>
                 <Input
                   type="number"
                   value={formData.deliveryFee}
                   onChange={(e) => setFormData(prev => ({ ...prev, deliveryFee: Number(e.target.value) }))}
-                  className="mt-1 bg-black/20 border-white/10 text-white font-mono"
+                  className="mt-1 bg-background/20 border-border/50 text-foreground font-mono"
                 />
               </div>
               <div>
-                <Label className="text-gray-300 text-sm">Min Order (₹)</Label>
+                <Label className="text-muted-foreground text-sm">Min Order (₹)</Label>
                 <Input
                   type="number"
                   value={formData.minOrderAmount}
                   onChange={(e) => setFormData(prev => ({ ...prev, minOrderAmount: Number(e.target.value) }))}
-                  className="mt-1 bg-black/20 border-white/10 text-white font-mono"
+                  className="mt-1 bg-background/20 border-border/50 text-foreground font-mono"
                 />
               </div>
             </div>
-            <div className="flex items-center justify-between p-3 bg-black/20 rounded-xl border border-white/5">
-              <span className="text-gray-300 text-sm">Zone Active</span>
+            <div className="flex items-center justify-between p-3 bg-background/20 rounded-xl border border-border/50">
+              <span className="text-muted-foreground text-sm">Zone Active</span>
               <input
                 type="checkbox"
                 checked={formData.isActive}
                 onChange={(e) => setFormData(prev => ({ ...prev, isActive: e.target.checked }))}
-                className="w-5 h-5 rounded bg-black/40 border-gray-600 text-blue-600"
+                className="w-5 h-5 rounded bg-background/40 border-border text-blue-600"
               />
             </div>
           </div>
           <DialogFooter className="mt-4">
-            <Button variant="outline" onClick={() => setDialogOpen(false)} className="border-white/10 text-white hover:bg-white/10">
+            <Button variant="outline" onClick={() => setDialogOpen(false)} className="border-border/50 text-foreground hover:bg-card/10">
               Cancel
             </Button>
-            <Button onClick={handleSave} className="bg-blue-600 hover:bg-blue-700 text-white">
+            <Button onClick={handleSave} className="bg-blue-600 hover:bg-blue-700 text-foreground">
               {editingZone ? 'Update Zone' : 'Create Zone'}
             </Button>
           </DialogFooter>

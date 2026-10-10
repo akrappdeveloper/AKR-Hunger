@@ -23,18 +23,18 @@ export const metadata: Metadata = {
     'restaurant owner portal',
   ],
   alternates: {
-    canonical: 'https://akrhunger.vercel.app/restaurant/login',
+    canonical: 'https://shunger.vercel.app/restaurant/login',
   },
   openGraph: {
     type: 'website',
     locale: 'en_IN',
-    url: 'https://akrhunger.vercel.app/restaurant/login',
+    url: 'https://shunger.vercel.app/restaurant/login',
     title: 'Hunger Restaurant Partner - Grow Your Business',
     description: 'Join Hunger as a restaurant partner. Manage menu, orders, and grow your business.',
     siteName: 'Hunger Restaurant Partners',
     images: [
       {
-        url: 'https://akrhunger.vercel.app/hunger.png',
+        url: 'https://shunger.vercel.app/hunger.png',
         width: 1200,
         height: 630,
         alt: 'Hunger Restaurant Partner Portal',
@@ -45,7 +45,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Hunger Restaurant Partner - Grow Your Business',
     description: 'Join Hunger as a restaurant partner and manage your business',
-    images: ['https://akrhunger.vercel.app/hunger.png'],
+    images: ['https://shunger.vercel.app/hunger.png'],
   },
 };
 

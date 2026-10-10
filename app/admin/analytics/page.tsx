@@ -70,13 +70,13 @@ const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899'
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-black/90 border border-white/10 p-3 rounded-xl shadow-2xl backdrop-blur-md">
-        <p className="font-semibold text-white mb-2 text-sm">{label}</p>
+      <div className="bg-background/90 border border-border/50 p-3 rounded-xl shadow-2xl backdrop-blur-md">
+        <p className="font-semibold text-foreground mb-2 text-sm">{label}</p>
         {payload.map((entry: any, index: number) => (
           <div key={index} className="flex items-center gap-2 text-xs mb-1">
             <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color || entry.fill }} />
-            <span className="text-gray-400 capitalize">{entry.name}:</span>
-            <span className="font-bold text-white font-mono">
+            <span className="text-muted-foreground capitalize">{entry.name}:</span>
+            <span className="font-bold text-foreground font-mono">
               {entry.name.includes('revenue') || entry.name.includes('Revenue') || entry.name === 'value'
                 ? `₹${Number(entry.value).toLocaleString()}`
                 : entry.value}
@@ -360,7 +360,7 @@ export default function AdminAnalyticsPage() {
       <div className="flex items-center justify-center h-[60vh]">
         <div className="text-center space-y-4">
           <div className="h-10 w-10 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-gray-400">Loading analytics...</p>
+          <p className="text-muted-foreground">Loading analytics...</p>
         </div>
       </div>
     );
@@ -374,17 +374,17 @@ export default function AdminAnalyticsPage() {
           <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white via-gray-100 to-gray-400 tracking-tight mb-2">
             Platform Analytics
           </h1>
-          <p className="text-gray-400">Comprehensive insights across your entire platform.</p>
+          <p className="text-muted-foreground">Comprehensive insights across your entire platform.</p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="flex bg-white/5 rounded-lg border border-white/10 p-0.5">
+          <div className="flex bg-card/5 rounded-lg border border-border/50 p-0.5">
             {(['week', 'month', 'year'] as const).map(range => (
               <button
                 key={range}
                 onClick={() => setDateRange(range)}
                 className={`px-4 py-2 rounded-md text-xs font-medium transition-all capitalize ${dateRange === range
                   ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30'
-                  : 'text-gray-400 hover:text-white'
+                  : 'text-muted-foreground hover:text-foreground'
                   }`}
               >
                 {range}
@@ -394,7 +394,7 @@ export default function AdminAnalyticsPage() {
           <Button
             onClick={handleExport}
             variant="outline"
-            className="gap-2 bg-white/5 border-white/10 text-white hover:bg-white/10 hover:text-white"
+            className="gap-2 bg-card/5 border-border/50 text-foreground hover:bg-card/10 hover:text-foreground"
           >
             <Download size={16} />
             Export
@@ -411,11 +411,11 @@ export default function AdminAnalyticsPage() {
               <CardContent className="p-5">
                 <div className="flex items-center justify-between mb-3">
                   <Icon className={`w-5 h-5 ${iconColorMap[stat.color]}`} />
-                  <Activity className="w-3 h-3 text-gray-600" />
+                  <Activity className="w-3 h-3 text-muted-foreground" />
                 </div>
-                <p className="text-2xl font-bold text-white font-mono">{stat.value}</p>
-                <p className="text-[11px] text-gray-400 mt-1">{stat.title}</p>
-                <p className="text-[10px] text-gray-500 mt-0.5">{stat.change}</p>
+                <p className="text-2xl font-bold text-foreground font-mono">{stat.value}</p>
+                <p className="text-[11px] text-muted-foreground mt-1">{stat.title}</p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">{stat.change}</p>
               </CardContent>
             </Card>
           );
@@ -424,13 +424,13 @@ export default function AdminAnalyticsPage() {
 
       {/* Revenue & Order Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="bg-black/40 border-white/10 backdrop-blur-md shadow-xl overflow-hidden">
-          <CardHeader className="border-b border-white/5 bg-white/5 pb-4">
-            <CardTitle className="text-lg font-semibold text-white flex items-center gap-2">
+        <Card className="bg-background/40 border-border/50 backdrop-blur-md shadow-xl overflow-hidden">
+          <CardHeader className="border-b border-border/50 bg-card/5 pb-4">
+            <CardTitle className="text-lg font-semibold text-foreground flex items-center gap-2">
               <TrendingUp className="w-5 h-5 text-emerald-400" />
               Revenue & Orders Trend
             </CardTitle>
-            <CardDescription className="text-gray-500">Monthly breakdown</CardDescription>
+            <CardDescription className="text-muted-foreground">Monthly breakdown</CardDescription>
           </CardHeader>
           <CardContent className="pt-6 pl-0">
             <ResponsiveContainer width="100%" height={320}>
@@ -454,13 +454,13 @@ export default function AdminAnalyticsPage() {
           </CardContent>
         </Card>
 
-        <Card className="bg-black/40 border-white/10 backdrop-blur-md shadow-xl overflow-hidden">
-          <CardHeader className="border-b border-white/5 bg-white/5 pb-4">
-            <CardTitle className="text-lg font-semibold text-white flex items-center gap-2">
+        <Card className="bg-background/40 border-border/50 backdrop-blur-md shadow-xl overflow-hidden">
+          <CardHeader className="border-b border-border/50 bg-card/5 pb-4">
+            <CardTitle className="text-lg font-semibold text-foreground flex items-center gap-2">
               <PieChartIcon className="w-5 h-5 text-blue-400" />
               Order Status Distribution
             </CardTitle>
-            <CardDescription className="text-gray-500">All-time breakdown</CardDescription>
+            <CardDescription className="text-muted-foreground">All-time breakdown</CardDescription>
           </CardHeader>
           <CardContent className="pt-6 flex items-center justify-center">
             <ResponsiveContainer width="100%" height={320}>
@@ -482,7 +482,7 @@ export default function AdminAnalyticsPage() {
                 <Tooltip content={<CustomTooltip />} />
                 <Legend
                   wrapperStyle={{ color: '#9CA3AF', fontSize: 12, paddingTop: '20px' }}
-                  formatter={(value) => <span className="text-gray-300">{value}</span>}
+                  formatter={(value) => <span className="text-muted-foreground">{value}</span>}
                 />
               </PieChart>
             </ResponsiveContainer>
@@ -492,13 +492,13 @@ export default function AdminAnalyticsPage() {
 
       {/* Peak Hours & Customer Growth */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="bg-black/40 border-white/10 backdrop-blur-md shadow-xl overflow-hidden">
-          <CardHeader className="border-b border-white/5 bg-white/5 pb-4">
-            <CardTitle className="text-lg font-semibold text-white flex items-center gap-2">
+        <Card className="bg-background/40 border-border/50 backdrop-blur-md shadow-xl overflow-hidden">
+          <CardHeader className="border-b border-border/50 bg-card/5 pb-4">
+            <CardTitle className="text-lg font-semibold text-foreground flex items-center gap-2">
               <Clock className="w-5 h-5 text-orange-400" />
               Peak Order Hours
             </CardTitle>
-            <CardDescription className="text-gray-500">Hourly order volume</CardDescription>
+            <CardDescription className="text-muted-foreground">Hourly order volume</CardDescription>
           </CardHeader>
           <CardContent className="pt-6 pl-0">
             <ResponsiveContainer width="100%" height={260}>
@@ -513,13 +513,13 @@ export default function AdminAnalyticsPage() {
           </CardContent>
         </Card>
 
-        <Card className="bg-black/40 border-white/10 backdrop-blur-md shadow-xl overflow-hidden">
-          <CardHeader className="border-b border-white/5 bg-white/5 pb-4">
-            <CardTitle className="text-lg font-semibold text-white flex items-center gap-2">
+        <Card className="bg-background/40 border-border/50 backdrop-blur-md shadow-xl overflow-hidden">
+          <CardHeader className="border-b border-border/50 bg-card/5 pb-4">
+            <CardTitle className="text-lg font-semibold text-foreground flex items-center gap-2">
               <Users className="w-5 h-5 text-purple-400" />
               Customer Growth
             </CardTitle>
-            <CardDescription className="text-gray-500">Monthly unique customers</CardDescription>
+            <CardDescription className="text-muted-foreground">Monthly unique customers</CardDescription>
           </CardHeader>
           <CardContent className="pt-6 pl-0">
             <ResponsiveContainer width="100%" height={260}>
@@ -543,10 +543,10 @@ export default function AdminAnalyticsPage() {
 
       {/* Top Restaurants & Top Partners */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="bg-black/40 border-white/10 backdrop-blur-md shadow-xl overflow-hidden">
-          <CardHeader className="border-b border-white/5 bg-white/5 pb-4">
+        <Card className="bg-background/40 border-border/50 backdrop-blur-md shadow-xl overflow-hidden">
+          <CardHeader className="border-b border-border/50 bg-card/5 pb-4">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-lg font-semibold text-white flex items-center gap-2">
+              <CardTitle className="text-lg font-semibold text-foreground flex items-center gap-2">
                 <Store className="w-5 h-5 text-emerald-400" />
                 Top Restaurants
               </CardTitle>
@@ -556,17 +556,17 @@ export default function AdminAnalyticsPage() {
           <CardContent className="p-0">
             <div className="divide-y divide-white/5">
               {topRestaurants.length === 0 ? (
-                <div className="text-center py-8 text-gray-500 text-sm">No restaurant data yet</div>
+                <div className="text-center py-8 text-muted-foreground text-sm">No restaurant data yet</div>
               ) : (
                 topRestaurants.map((rest, i) => (
-                  <div key={rest.id} className="flex items-center justify-between p-4 hover:bg-white/5 transition-colors group">
+                  <div key={rest.id} className="flex items-center justify-between p-4 hover:bg-card/5 transition-colors group">
                     <div className="flex items-center gap-4">
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold ${i === 0 ? 'bg-yellow-500/20 text-yellow-400' : i === 1 ? 'bg-gray-400/20 text-gray-300' : i === 2 ? 'bg-orange-500/20 text-orange-400' : 'bg-white/5 text-gray-500'}`}>
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold ${i === 0 ? 'bg-yellow-500/20 text-yellow-400' : i === 1 ? 'bg-gray-400/20 text-muted-foreground' : i === 2 ? 'bg-orange-500/20 text-orange-400' : 'bg-card/5 text-muted-foreground'}`}>
                         #{i + 1}
                       </div>
                       <div>
-                        <p className="text-white font-medium text-sm">{rest.name}</p>
-                        <p className="text-gray-500 text-xs">{rest.orders} orders</p>
+                        <p className="text-foreground font-medium text-sm">{rest.name}</p>
+                        <p className="text-muted-foreground text-xs">{rest.orders} orders</p>
                       </div>
                     </div>
                     <div className="text-right">
@@ -579,10 +579,10 @@ export default function AdminAnalyticsPage() {
           </CardContent>
         </Card>
 
-        <Card className="bg-black/40 border-white/10 backdrop-blur-md shadow-xl overflow-hidden">
-          <CardHeader className="border-b border-white/5 bg-white/5 pb-4">
+        <Card className="bg-background/40 border-border/50 backdrop-blur-md shadow-xl overflow-hidden">
+          <CardHeader className="border-b border-border/50 bg-card/5 pb-4">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-lg font-semibold text-white flex items-center gap-2">
+              <CardTitle className="text-lg font-semibold text-foreground flex items-center gap-2">
                 <Truck className="w-5 h-5 text-blue-400" />
                 Top Delivery Partners
               </CardTitle>
@@ -594,23 +594,23 @@ export default function AdminAnalyticsPage() {
           <CardContent className="p-0">
             <div className="divide-y divide-white/5">
               {deliveryPartners.length === 0 ? (
-                <div className="text-center py-8 text-gray-500 text-sm">No delivery partner data found</div>
+                <div className="text-center py-8 text-muted-foreground text-sm">No delivery partner data found</div>
               ) : (
                 deliveryPartners.slice(0, 5).map((partner, i) => (
-                  <div key={partner.id} className="flex items-center justify-between p-4 hover:bg-white/5 transition-colors group">
+                  <div key={partner.id} className="flex items-center justify-between p-4 hover:bg-card/5 transition-colors group">
                     <div className="flex items-center gap-4">
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold ${i === 0 ? 'bg-yellow-500/20 text-yellow-400' : i === 1 ? 'bg-gray-400/20 text-gray-300' : i === 2 ? 'bg-orange-500/20 text-orange-400' : 'bg-white/5 text-gray-500'}`}>
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold ${i === 0 ? 'bg-yellow-500/20 text-yellow-400' : i === 1 ? 'bg-gray-400/20 text-muted-foreground' : i === 2 ? 'bg-orange-500/20 text-orange-400' : 'bg-card/5 text-muted-foreground'}`}>
                         #{i + 1}
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <p className="text-white font-medium text-sm">{partner.name}</p>
+                          <p className="text-foreground font-medium text-sm">{partner.name}</p>
                           <span className={`w-2 h-2 rounded-full ${
                             partner.status === 'online' ? 'bg-emerald-400 animate-pulse' :
                             partner.status === 'on_delivery' ? 'bg-amber-400' : 'bg-gray-600'
                           }`} />
                         </div>
-                        <p className="text-gray-500 text-xs">
+                        <p className="text-muted-foreground text-xs">
                           {partner.vehicle} • {partner.phone} • ⭐ {partner.rating.toFixed(1)}
                         </p>
                       </div>
@@ -628,17 +628,17 @@ export default function AdminAnalyticsPage() {
       </div>
 
       {/* Comprehensive Delivery Partners Fleet Details & Performance Section */}
-      <Card className="bg-black/40 border-white/10 backdrop-blur-md shadow-xl overflow-hidden">
-        <CardHeader className="border-b border-white/5 bg-white/5 pb-4">
+      <Card className="bg-background/40 border-border/50 backdrop-blur-md shadow-xl overflow-hidden">
+        <CardHeader className="border-b border-border/50 bg-card/5 pb-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <CardTitle className="text-xl font-bold text-white flex items-center gap-2.5">
+              <CardTitle className="text-xl font-bold text-foreground flex items-center gap-2.5">
                 <div className="p-2 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20">
                   <Truck className="w-5 h-5" />
                 </div>
                 Delivery Partners Fleet Overview & Performance
               </CardTitle>
-              <CardDescription className="text-gray-400 mt-1">
+              <CardDescription className="text-muted-foreground mt-1">
                 Real-time tracking of drivers, completed deliveries, 80% earnings payouts, and cash in hand.
               </CardDescription>
             </div>
@@ -655,27 +655,27 @@ export default function AdminAnalyticsPage() {
         <CardContent className="p-6 space-y-6">
           {/* Fleet Performance Summary Cards */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="p-4 rounded-2xl bg-white/5 border border-white/10">
-              <span className="text-xs text-gray-400 uppercase font-semibold">Total Fleet Size</span>
-              <p className="text-2xl font-black text-white mt-1 font-mono">{metrics.totalDeliveryPartners}</p>
+            <div className="p-4 rounded-2xl bg-card/5 border border-border/50">
+              <span className="text-xs text-muted-foreground uppercase font-semibold">Total Fleet Size</span>
+              <p className="text-2xl font-black text-foreground mt-1 font-mono">{metrics.totalDeliveryPartners}</p>
               <span className="text-[11px] text-emerald-400 mt-0.5 block">{metrics.activeDeliveryPartners} currently active</span>
             </div>
-            <div className="p-4 rounded-2xl bg-white/5 border border-white/10">
-              <span className="text-xs text-gray-400 uppercase font-semibold">Completed Deliveries</span>
+            <div className="p-4 rounded-2xl bg-card/5 border border-border/50">
+              <span className="text-xs text-muted-foreground uppercase font-semibold">Completed Deliveries</span>
               <p className="text-2xl font-black text-blue-400 mt-1 font-mono">
                 {deliveryPartners.reduce((acc, p) => acc + p.deliveries, 0)}
               </p>
-              <span className="text-[11px] text-gray-500 mt-0.5 block">Total dropped orders</span>
+              <span className="text-[11px] text-muted-foreground mt-0.5 block">Total dropped orders</span>
             </div>
-            <div className="p-4 rounded-2xl bg-white/5 border border-white/10">
-              <span className="text-xs text-gray-400 uppercase font-semibold">Total Driver Payouts</span>
+            <div className="p-4 rounded-2xl bg-card/5 border border-border/50">
+              <span className="text-xs text-muted-foreground uppercase font-semibold">Total Driver Payouts</span>
               <p className="text-2xl font-black text-emerald-400 mt-1 font-mono">
                 ₹{metrics.totalDriverPayouts.toLocaleString()}
               </p>
-              <span className="text-[11px] text-gray-500 mt-0.5 block">80% delivery fee share</span>
+              <span className="text-[11px] text-muted-foreground mt-0.5 block">80% delivery fee share</span>
             </div>
-            <div className="p-4 rounded-2xl bg-white/5 border border-white/10">
-              <span className="text-xs text-gray-400 uppercase font-semibold">Driver Cash in Hand</span>
+            <div className="p-4 rounded-2xl bg-card/5 border border-border/50">
+              <span className="text-xs text-muted-foreground uppercase font-semibold">Driver Cash in Hand</span>
               <p className="text-2xl font-black text-amber-400 mt-1 font-mono">
                 ₹{metrics.totalDriverCashInHand.toLocaleString()}
               </p>
@@ -684,9 +684,9 @@ export default function AdminAnalyticsPage() {
           </div>
 
           {/* Delivery Partners Table */}
-          <div className="overflow-x-auto rounded-xl border border-white/10">
-            <table className="w-full text-left text-sm text-gray-300">
-              <thead className="bg-white/5 text-xs uppercase tracking-wider text-gray-400 border-b border-white/10">
+          <div className="overflow-x-auto rounded-xl border border-border/50">
+            <table className="w-full text-left text-sm text-muted-foreground">
+              <thead className="bg-card/5 text-xs uppercase tracking-wider text-muted-foreground border-b border-border/50">
                 <tr>
                   <th className="py-3.5 px-4 font-semibold">Driver</th>
                   <th className="py-3.5 px-4 font-semibold">Contact & Phone</th>
@@ -701,29 +701,29 @@ export default function AdminAnalyticsPage() {
               <tbody className="divide-y divide-white/5 font-sans">
                 {deliveryPartners.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="text-center py-12 text-gray-500">
+                    <td colSpan={8} className="text-center py-12 text-muted-foreground">
                       No delivery partners registered in the platform yet.
                     </td>
                   </tr>
                 ) : (
                   deliveryPartners.map((partner) => (
-                    <tr key={partner.id} className="hover:bg-white/5 transition-colors">
-                      <td className="py-3.5 px-4 font-medium text-white flex items-center gap-3">
+                    <tr key={partner.id} className="hover:bg-card/5 transition-colors">
+                      <td className="py-3.5 px-4 font-medium text-foreground flex items-center gap-3">
                         <div className="w-8 h-8 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-center justify-center font-bold text-xs shrink-0">
                           {partner.name.slice(0, 2).toUpperCase()}
                         </div>
                         <div>
-                          <p className="font-semibold text-white leading-tight">{partner.name}</p>
-                          <span className="text-[11px] text-gray-500 font-mono">ID: {partner.id.slice(0, 8)}...</span>
+                          <p className="font-semibold text-foreground leading-tight">{partner.name}</p>
+                          <span className="text-[11px] text-muted-foreground font-mono">ID: {partner.id.slice(0, 8)}...</span>
                         </div>
                       </td>
-                      <td className="py-3.5 px-4 text-gray-300 font-mono text-xs">
+                      <td className="py-3.5 px-4 text-muted-foreground font-mono text-xs">
                         {partner.phone}
                       </td>
-                      <td className="py-3.5 px-4 text-gray-300 text-xs">
+                      <td className="py-3.5 px-4 text-muted-foreground text-xs">
                         <span className="capitalize">{partner.vehicle}</span>
                         {partner.vehicleNumber && partner.vehicleNumber !== 'N/A' && (
-                          <span className="block text-[10px] text-gray-500 font-mono">{partner.vehicleNumber}</span>
+                          <span className="block text-[10px] text-muted-foreground font-mono">{partner.vehicleNumber}</span>
                         )}
                       </td>
                       <td className="py-3.5 px-4">
@@ -732,7 +732,7 @@ export default function AdminAnalyticsPage() {
                             ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
                             : partner.status === 'on_delivery'
                             ? 'bg-amber-500/15 text-amber-400 border border-amber-500/30'
-                            : 'bg-gray-800 text-gray-400 border border-gray-700'
+                            : 'bg-secondary text-muted-foreground border border-border/50'
                         }`}>
                           <span className={`w-1.5 h-1.5 rounded-full ${
                             partner.status === 'online' ? 'bg-emerald-400' :
@@ -750,7 +750,7 @@ export default function AdminAnalyticsPage() {
                           {partner.kycStatus || 'pending'}
                         </Badge>
                       </td>
-                      <td className="py-3.5 px-4 text-right font-mono font-bold text-white">
+                      <td className="py-3.5 px-4 text-right font-mono font-bold text-foreground">
                         {partner.deliveries}
                       </td>
                       <td className="py-3.5 px-4 text-right font-mono font-bold text-emerald-400">

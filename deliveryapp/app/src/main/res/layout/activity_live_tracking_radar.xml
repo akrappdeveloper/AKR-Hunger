@@ -65,10 +65,11 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="6dp"
                 android:minWidth="0dp"
-                android:paddingHorizontal="6dp"
+                android:paddingHorizontal="8dp"
                 android:text="Test Sim"
                 android:textColor="@color/primary"
-                android:textSize="11sp" />
+                android:textSize="11.5sp"
+                android:textStyle="bold" />
         </LinearLayout>
     </RelativeLayout>
 
@@ -87,7 +88,7 @@
             android:layout_height="wrap_content"
             app:cardCornerRadius="18dp"
             app:cardElevation="6dp"
-            app:strokeColor="@color/primary_light"
+            app:strokeColor="@color/card_border"
             app:strokeWidth="1dp"
             app:cardBackgroundColor="@color/surface">
 
@@ -282,7 +283,7 @@
                         android:layout_marginTop="2dp"
                         android:text="Flat 402, Green Avenue, Kothrud"
                         android:textColor="@color/text_primary"
-                        android:textSize="14sp"
+                        android:textSize="14.5sp"
                         android:textStyle="bold"
                         android:maxLines="1"
                         android:ellipsize="end" />
@@ -311,7 +312,7 @@
                         android:layout_height="wrap_content"
                         android:text="~6 mins ETA"
                         android:textColor="@color/veg_green"
-                        android:textSize="11sp"
+                        android:textSize="11.5sp"
                         android:textStyle="bold" />
                 </LinearLayout>
             </RelativeLayout>
@@ -319,7 +320,7 @@
             <View
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
-                android:layout_marginVertical="12dp"
+                android:layout_marginVertical="14dp"
                 android:background="@color/divider" />
 
             <!-- Telemetry & IP Address Info Row -->
@@ -336,7 +337,7 @@
                     android:layout_weight="1"
                     android:text="🌐 IP: 192.168.1.5 • Wi-Fi"
                     android:textColor="@color/text_secondary"
-                    android:textSize="11sp" />
+                    android:textSize="11.5sp" />
 
                 <TextView
                     android:id="@+id/tv_radar_coords"
@@ -344,7 +345,7 @@
                     android:layout_height="wrap_content"
                     android:text="GPS: 18.5204° N, 73.8567° E"
                     android:textColor="@color/text_hint"
-                    android:textSize="11sp" />
+                    android:textSize="11.5sp" />
             </LinearLayout>
 
             <!-- Navigation Buttons -->
@@ -357,13 +358,15 @@
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btn_radar_navigate"
                     style="@style/Widget.Material3.Button"
-                    android:layout_width="0dp"
+                    android:layout_width="match_parent"
                     android:layout_height="48dp"
-                    android:layout_weight="1"
                     android:text="Turn-by-Turn Maps"
                     android:textColor="@color/on_primary"
-                    android:textSize="13sp"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
                     app:icon="@drawable/ic_map"
+                    app:iconTint="@color/on_primary"
+                    app:iconPadding="8dp"
                     app:backgroundTint="@color/primary"
                     app:cornerRadius="24dp" />
             </LinearLayout>

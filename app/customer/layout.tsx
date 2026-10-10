@@ -26,18 +26,18 @@ export const metadata: Metadata = {
     'best restaurants near me',
   ],
   alternates: {
-    canonical: 'https://akrhunger.vercel.app/customer',
+    canonical: 'https://shunger.vercel.app/customer',
   },
   openGraph: {
     type: 'website',
     locale: 'en_IN',
-    url: 'https://akrhunger.vercel.app/customer',
+    url: 'https://shunger.vercel.app/customer',
     title: 'Hunger - Order Food Online | Fast Delivery',
     description: 'Order delicious food online from your favorite restaurants. Fast delivery, great prices, wide selection.',
     siteName: 'Hunger',
     images: [
       {
-        url: 'https://akrhunger.vercel.app/hunger.png',
+        url: 'https://shunger.vercel.app/hunger.png',
         width: 1200,
         height: 630,
         alt: 'Hunger Food Delivery',
@@ -48,7 +48,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Hunger - Order Food Online | Fast Delivery',
     description: 'Order delicious food online from your favorite restaurants',
-    images: ['https://akrhunger.vercel.app/hunger.png'],
+    images: ['https://shunger.vercel.app/hunger.png'],
   },
 };
 

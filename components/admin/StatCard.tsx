@@ -37,14 +37,14 @@ export default function StatCard({
   };
 
   return (
-    <div className="group bg-white/5 backdrop-blur-md rounded-2xl p-6 border border-white/10 hover:bg-white/10 transition-all duration-300 relative overflow-hidden">
-      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-white/5 to-transparent rounded-bl-full -mr-10 -mt-10 transition-transform group-hover:scale-110" />
+    <div className="group bg-card backdrop-blur-md rounded-2xl p-6 border border-border/50 shadow-sm hover:shadow-md transition-all duration-300 relative overflow-hidden">
+      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-foreground/5 to-transparent rounded-bl-full -mr-10 -mt-10 transition-transform group-hover:scale-110" />
 
       <div className="flex items-start justify-between relative z-10">
         <div>
-          <p className="text-gray-400 text-sm font-medium mb-1 tracking-wide uppercase">{title}</p>
+          <p className="text-muted-foreground text-sm font-medium mb-1 tracking-wide uppercase">{title}</p>
           <div className="flex items-baseline gap-2">
-            <h3 className="text-3xl font-bold text-white tracking-tight">{value}</h3>
+            <h3 className="text-3xl font-bold text-foreground tracking-tight">{value}</h3>
           </div>
 
           {change && (
@@ -60,7 +60,7 @@ export default function StatCard({
           )}
         </div>
 
-        <div className={`p-3.5 rounded-xl bg-gradient-to-br ${gradientColors[color]} shadow-lg text-white transform group-hover:scale-110 transition-transform duration-300`}>
+        <div className={`p-3.5 rounded-xl bg-gradient-to-br ${gradientColors[color]} shadow-lg text-foreground transform group-hover:scale-110 transition-transform duration-300`}>
           <Icon size={22} className="stroke-[2.5]" />
         </div>
       </div>

@@ -28,12 +28,21 @@ public class DeliveryPartner implements Serializable {
     private String activeOrderId;
     private String fcmToken;
 
+    private String vehicle; // "bike", "car", "truck"
+    private String vehicleImage; // URL of RC Document
+    private String drivingLicense; // URL of Driving License
+    private String rcDocument; // Alias for vehicleImage
+    private String verificationStatus; // "pending", "approved", "rejected"
+    private String rejectionReason;
+    private String password;
+
     public DeliveryPartner() {
         this.servicePincodes = new ArrayList<>();
         this.rating = 5.0;
         this.fairRouteScore = 85;
         this.status = "offline";
         this.kycStatus = "pending";
+        this.verificationStatus = "pending";
     }
 
     // Getters and Setters
@@ -104,6 +113,31 @@ public class DeliveryPartner implements Serializable {
 
     public String getFcmToken() { return fcmToken; }
     public void setFcmToken(String fcmToken) { this.fcmToken = fcmToken; }
+
+    public String getVehicle() { return vehicle != null ? vehicle : (vehicleType != null ? vehicleType : "bike"); }
+    public void setVehicle(String vehicle) { this.vehicle = vehicle; if (this.vehicleType == null) this.vehicleType = vehicle; }
+
+    public String getVehicleImage() { return vehicleImage != null ? vehicleImage : rcDocument; }
+    public void setVehicleImage(String vehicleImage) { this.vehicleImage = vehicleImage; this.rcDocument = vehicleImage; }
+
+    public String getRcDocument() { return getVehicleImage(); }
+    public void setRcDocument(String rcDocument) { setVehicleImage(rcDocument); }
+
+    public String getDrivingLicense() { return drivingLicense; }
+    public void setDrivingLicense(String drivingLicense) { this.drivingLicense = drivingLicense; }
+
+    public String getVerificationStatus() { return verificationStatus != null ? verificationStatus : kycStatus; }
+    public void setVerificationStatus(String verificationStatus) { this.verificationStatus = verificationStatus; this.kycStatus = verificationStatus; }
+
+    public String getRejectionReason() { return rejectionReason; }
+    public void setRejectionReason(String rejectionReason) { this.rejectionReason = rejectionReason; }
+
+    public String getPassword() { return password; }
+    public void setPassword(String password) { this.password = password; }
+
+    public boolean isApproved() {
+        return "approved".equalsIgnoreCase(getVerificationStatus()) || isVerified;
+    }
 
     public boolean isOnline() {
         return isAvailable || "online".equalsIgnoreCase(status);

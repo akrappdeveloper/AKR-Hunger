@@ -33,6 +33,44 @@ export async function POST(request: NextRequest) {
 
     console.log('[v0] Payment verified successfully for order:', orderId);
 
+    // Send Payment Verified Receipt Email via Resend
+    if (orderId) {
+      try {
+        const { adminDb } = await import('@/lib/firebase-admin-db');
+        const { sendPaymentVerifiedEmail } = await import('@/lib/email/service');
+        if (adminDb) {
+          const orderDoc = await adminDb.collection('orders').doc(orderId).get();
+          if (orderDoc.exists) {
+            const oData = orderDoc.data();
+            let customerEmail = oData?.customerEmail;
+            const customerName = oData?.customerName || 'Foodie';
+            const amount = oData?.total || 0;
+
+            if (!customerEmail && oData?.customerId) {
+              const custDoc = await adminDb.collection('customers').doc(oData.customerId).get();
+              if (custDoc.exists) {
+                customerEmail = custDoc.data()?.email;
+              }
+            }
+
+            if (customerEmail) {
+              await sendPaymentVerifiedEmail({
+                orderId,
+                customerEmail,
+                customerName,
+                amount,
+                paymentMethod: 'online',
+                paymentId: razorpayPaymentId,
+                status: 'completed',
+              });
+            }
+          }
+        }
+      } catch (emailErr) {
+        console.warn('[Resend] Payment receipt email notice:', emailErr);
+      }
+    }
+
     return NextResponse.json({
       success: true,
       message: 'Payment verified',

@@ -21,11 +21,12 @@
 
         <ImageButton
             android:id="@+id/btn_back"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@drawable/ic_arrow_back"
-            app:tint="@color/text_primary" />
+            app:tint="@color/text_primary"
+            android:contentDescription="Back" />
 
         <LinearLayout
             android:layout_width="0dp"
@@ -78,30 +79,31 @@
 
         <ImageButton
             android:id="@+id/btn_call"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@drawable/ic_phone"
             android:visibility="gone"
-            app:tint="@color/success" />
+            app:tint="@color/success"
+            android:contentDescription="Call" />
     </LinearLayout>
 
     <!-- Driving Safety Pill -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="#FEF3C7"
+        android:background="@color/warning_light"
         android:gravity="center"
         android:orientation="horizontal"
         android:paddingHorizontal="14dp"
-        android:paddingVertical="6dp">
+        android:paddingVertical="7dp">
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="⚠️ Safety Reminder: Never type while driving."
-            android:textColor="#92400E"
-            android:textSize="11.5sp"
+            android:textColor="@color/warning"
+            android:textSize="12sp"
             android:textStyle="bold" />
     </LinearLayout>
 
@@ -145,7 +147,7 @@
             android:paddingEnd="12dp" />
     </HorizontalScrollView>
 
-    <!-- Bottom Input Bar (Big Buttons) -->
+    <!-- Bottom Input Bar -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -163,7 +165,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:background="@drawable/bg_pill_soft"
+            android:background="@drawable/bg_input_rounded"
             android:hint="Type message..."
             android:imeOptions="actionSend"
             android:inputType="textCapSentences|textMultiLine"
@@ -173,23 +175,23 @@
             android:paddingEnd="16dp"
             android:textColor="@color/text_primary"
             android:textColorHint="@color/text_hint"
-            android:textSize="15sp" />
+            android:textSize="14.5sp" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_send_message"
-            android:layout_width="52dp"
-            android:layout_height="52dp"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
             android:layout_marginStart="10dp"
-            android:backgroundTint="#2563EB"
+            android:backgroundTint="@color/primary"
             android:insetLeft="0dp"
             android:insetTop="0dp"
             android:insetRight="0dp"
             android:insetBottom="0dp"
-            app:cornerRadius="26dp"
+            app:cornerRadius="24dp"
             app:icon="@drawable/ic_send"
             app:iconGravity="textStart"
             app:iconPadding="0dp"
-            app:iconTint="@color/white" />
+            app:iconTint="@color/on_primary" />
     </LinearLayout>
 
 </LinearLayout>

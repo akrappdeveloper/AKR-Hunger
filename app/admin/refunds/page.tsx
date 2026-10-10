@@ -171,12 +171,12 @@ export default function AdminRefundDashboard() {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-3xl font-black text-white tracking-tight">Refund Dashboard</h1>
-          <p className="text-gray-400 text-sm mt-1">Monitor, review, and manage all order refunds</p>
+          <h1 className="text-3xl font-black text-foreground tracking-tight">Refund Dashboard</h1>
+          <p className="text-muted-foreground text-sm mt-1">Monitor, review, and manage all order refunds</p>
         </div>
         <Button
           variant="outline"
-          className="border-white/10 text-gray-300 hover:bg-white/5 gap-2"
+          className="border-border/50 text-muted-foreground hover:bg-card/5 gap-2"
           onClick={() => window.location.reload()}
         >
           <RefreshCw className="w-4 h-4" /> Refresh
@@ -192,12 +192,12 @@ export default function AdminRefundDashboard() {
               key={card.label}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className={`relative overflow-hidden rounded-2xl bg-gradient-to-br ${card.color} p-4 text-white shadow-lg`}
+              className={`relative overflow-hidden rounded-2xl bg-gradient-to-br ${card.color} p-4 text-foreground shadow-lg`}
             >
               <div className="absolute top-0 right-0 opacity-20">
                 <Icon className="w-16 h-16 -mt-3 -mr-3" />
               </div>
-              <p className="text-white/70 text-xs font-medium uppercase tracking-wide">{card.label}</p>
+              <p className="text-foreground/70 text-xs font-medium uppercase tracking-wide">{card.label}</p>
               <p className="text-2xl font-black mt-1">{card.value}</p>
             </motion.div>
           );
@@ -207,19 +207,19 @@ export default function AdminRefundDashboard() {
       {/* Search & Filter */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             placeholder="Search by Order ID, Customer ID, Razorpay ID..."
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            className="pl-9 bg-white/5 border-white/10 text-white placeholder:text-gray-500 rounded-xl"
+            className="pl-9 bg-card/5 border-border/50 text-foreground placeholder:text-muted-foreground rounded-xl"
           />
         </div>
       </div>
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={v => setActiveTab(v as RefundStatus)}>
-        <TabsList className="bg-white/5 border border-white/10 p-1 rounded-xl flex-wrap h-auto gap-1">
+        <TabsList className="bg-card/5 border border-border/50 p-1 rounded-xl flex-wrap h-auto gap-1">
           {TAB_FILTERS.map(tab => {
             const count = tab === 'ALL' ? refunds.length :
               refunds.filter(r => r.status === tab).length;
@@ -227,11 +227,11 @@ export default function AdminRefundDashboard() {
               <TabsTrigger
                 key={tab}
                 value={tab}
-                className="data-[state=active]:bg-white/10 data-[state=active]:text-white text-gray-400 rounded-lg text-xs px-3 py-1.5 gap-1"
+                className="data-[state=active]:bg-card/10 data-[state=active]:text-foreground text-muted-foreground rounded-lg text-xs px-3 py-1.5 gap-1"
               >
                 {tab.replace('_', ' ')}
                 {count > 0 && (
-                  <span className="bg-white/20 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">
+                  <span className="bg-card/20 text-foreground text-[10px] px-1.5 py-0.5 rounded-full font-bold">
                     {count}
                   </span>
                 )}
@@ -247,16 +247,16 @@ export default function AdminRefundDashboard() {
             </div>
           ) : filtered.length === 0 ? (
             <div className="text-center py-20">
-              <IndianRupee className="w-12 h-12 text-gray-600 mx-auto mb-3" />
-              <p className="text-gray-400 font-semibold">No refunds found</p>
+              <IndianRupee className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+              <p className="text-muted-foreground font-semibold">No refunds found</p>
             </div>
           ) : (
-            <div className="overflow-x-auto rounded-2xl border border-white/10">
+            <div className="overflow-x-auto rounded-2xl border border-border/50">
               <table className="w-full">
                 <thead>
-                  <tr className="bg-white/5 border-b border-white/10">
+                  <tr className="bg-card/5 border-b border-border/50">
                     {['Refund ID', 'Order ID', 'Amount', 'Method', 'Status', 'Created', 'Actions'].map(h => (
-                      <th key={h} className="text-left px-4 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider whitespace-nowrap">
+                      <th key={h} className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider whitespace-nowrap">
                         {h}
                       </th>
                     ))}
@@ -271,10 +271,10 @@ export default function AdminRefundDashboard() {
                         key={refund.id}
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        className="hover:bg-white/3 transition-colors group"
+                        className="hover:bg-card/3 transition-colors group"
                       >
                         <td className="px-4 py-3">
-                          <span className="text-xs font-mono text-gray-300">
+                          <span className="text-xs font-mono text-muted-foreground">
                             {refund.id?.substring(0, 12)}...
                           </span>
                         </td>
@@ -284,10 +284,10 @@ export default function AdminRefundDashboard() {
                           </span>
                         </td>
                         <td className="px-4 py-3">
-                          <span className="font-bold text-white">₹{refund.amount?.toFixed(2)}</span>
+                          <span className="font-bold text-foreground">₹{refund.amount?.toFixed(2)}</span>
                         </td>
                         <td className="px-4 py-3">
-                          <span className="text-xs text-gray-300">
+                          <span className="text-xs text-muted-foreground">
                             {refund.refundMethod === 'WALLET' ? '🪙 Wallet' :
                              refund.refundMethod === 'RAZORPAY' ? '🏦 Razorpay' : refund.paymentMethod}
                           </span>
@@ -298,7 +298,7 @@ export default function AdminRefundDashboard() {
                             {cfg.label}
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-xs text-gray-400 whitespace-nowrap">
+                        <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">
                           {formatDate(refund.createdAt)}
                         </td>
                         <td className="px-4 py-3">
@@ -307,7 +307,7 @@ export default function AdminRefundDashboard() {
                             size="sm"
                             variant="ghost"
                             onClick={() => openDetail(refund)}
-                            className="text-gray-400 hover:text-white hover:bg-white/10 rounded-lg h-8 px-3 gap-1.5"
+                            className="text-muted-foreground hover:text-foreground hover:bg-card/10 rounded-lg h-8 px-3 gap-1.5"
                           >
                             <Eye className="w-3.5 h-3.5" /> View
                           </Button>
@@ -324,10 +324,10 @@ export default function AdminRefundDashboard() {
 
       {/* Refund Detail Dialog */}
       <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
-        <DialogContent className="max-w-2xl bg-gray-900 border border-white/10 text-white rounded-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl bg-card border border-border/50 text-foreground rounded-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-xl font-black">Refund Details</DialogTitle>
-            <DialogDescription className="text-gray-400">
+            <DialogDescription className="text-muted-foreground">
               Manage and review this refund record
             </DialogDescription>
           </DialogHeader>
@@ -359,9 +359,9 @@ export default function AdminRefundDashboard() {
                     { label: 'Updated', value: formatDate(selectedRefund.updatedAt) },
                     { label: 'Completed', value: formatDate(selectedRefund.completedAt) },
                   ].map(({ label, value }) => (
-                    <div key={label} className="bg-white/5 rounded-xl p-3">
-                      <p className="text-xs text-gray-500 mb-1">{label}</p>
-                      <p className="text-sm font-semibold text-white break-all">{value}</p>
+                    <div key={label} className="bg-card/5 rounded-xl p-3">
+                      <p className="text-xs text-muted-foreground mb-1">{label}</p>
+                      <p className="text-sm font-semibold text-foreground break-all">{value}</p>
                     </div>
                   ))}
                 </div>
@@ -375,8 +375,8 @@ export default function AdminRefundDashboard() {
 
                 {/* Admin Actions */}
                 {['MANUAL_REVIEW', 'FAILED'].includes(selectedRefund.status) && (
-                  <div className="border border-white/10 rounded-2xl p-4 space-y-3">
-                    <p className="text-sm font-bold text-white flex items-center gap-2">
+                  <div className="border border-border/50 rounded-2xl p-4 space-y-3">
+                    <p className="text-sm font-bold text-foreground flex items-center gap-2">
                       <ShieldCheck className="w-4 h-4 text-blue-400" /> Admin Actions
                     </p>
                     <textarea
@@ -384,7 +384,7 @@ export default function AdminRefundDashboard() {
                       onChange={e => setActionNotes(e.target.value)}
                       placeholder="Add notes for this action (optional)..."
                       rows={2}
-                      className="w-full rounded-xl border border-white/10 bg-white/5 text-white placeholder:text-gray-500 p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full rounded-xl border border-border/50 bg-card/5 text-foreground placeholder:text-muted-foreground p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                     <div className="flex flex-wrap gap-2">
                       {selectedRefund.razorpayPaymentId && (
@@ -392,7 +392,7 @@ export default function AdminRefundDashboard() {
                           id="retry-razorpay-btn"
                           onClick={() => handleAdminAction('RETRY_RAZORPAY')}
                           disabled={actionLoading}
-                          className="flex-1 rounded-xl bg-blue-600 hover:bg-blue-700 text-white border-0 gap-2"
+                          className="flex-1 rounded-xl bg-blue-600 hover:bg-blue-700 text-foreground border-0 gap-2"
                         >
                           <RotateCcw className="w-4 h-4" />
                           Retry Razorpay Refund
@@ -402,7 +402,7 @@ export default function AdminRefundDashboard() {
                         id="approve-wallet-btn"
                         onClick={() => handleAdminAction('APPROVE_WALLET')}
                         disabled={actionLoading}
-                        className="flex-1 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white border-0 gap-2"
+                        className="flex-1 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-foreground border-0 gap-2"
                       >
                         <Wallet className="w-4 h-4" />
                         Credit to Wallet
@@ -424,19 +424,19 @@ export default function AdminRefundDashboard() {
                 {/* Audit Logs */}
                 {auditLogs.length > 0 && (
                   <div>
-                    <p className="text-sm font-bold text-white mb-3 flex items-center gap-2">
+                    <p className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
                       <Activity className="w-4 h-4 text-blue-400" /> Audit Trail
                     </p>
                     <div className="space-y-2 max-h-48 overflow-y-auto">
                       {auditLogs.map((log) => (
-                        <div key={log.id} className="flex items-start gap-3 bg-white/5 rounded-xl p-3">
+                        <div key={log.id} className="flex items-start gap-3 bg-card/5 rounded-xl p-3">
                           <div className="w-2 h-2 rounded-full bg-blue-400 mt-1.5 shrink-0" />
                           <div className="flex-1 min-w-0">
-                            <p className="text-xs font-bold text-white">{log.action}</p>
-                            <p className="text-xs text-gray-400">
+                            <p className="text-xs font-bold text-foreground">{log.action}</p>
+                            <p className="text-xs text-muted-foreground">
                               by {log.performedBy} · {formatDate(log.timestamp)}
                             </p>
-                            {log.notes && <p className="text-xs text-gray-500 mt-0.5">{log.notes}</p>}
+                            {log.notes && <p className="text-xs text-muted-foreground mt-0.5">{log.notes}</p>}
                           </div>
                         </div>
                       ))}
@@ -451,7 +451,7 @@ export default function AdminRefundDashboard() {
             <Button
               variant="outline"
               onClick={() => setDetailOpen(false)}
-              className="border-white/10 text-gray-300 hover:bg-white/5 rounded-xl"
+              className="border-border/50 text-muted-foreground hover:bg-card/5 rounded-xl"
             >
               Close
             </Button>

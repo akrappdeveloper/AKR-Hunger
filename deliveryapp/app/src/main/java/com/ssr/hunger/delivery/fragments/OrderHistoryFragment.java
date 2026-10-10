@@ -1,5 +1,6 @@
 package com.ssr.hunger.delivery.fragments;
 
+import android.content.Context;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -16,14 +17,16 @@ import com.google.android.material.chip.Chip;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.Query;
+import com.google.firebase.firestore.ListenerRegistration;
 import com.ssr.hunger.delivery.R;
 import com.ssr.hunger.delivery.adapters.OrderHistoryAdapter;
+import com.ssr.hunger.delivery.dialogs.OrderDetailDialog;
 import com.ssr.hunger.delivery.models.DeliveryOrder;
 import com.ssr.hunger.delivery.utils.Constants;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class OrderHistoryFragment extends Fragment {
@@ -37,8 +40,9 @@ public class OrderHistoryFragment extends Fragment {
     private SwipeRefreshLayout swipeRefresh;
 
     private Chip chipAll, chipDelivered, chipCancelled;
-    private List<DeliveryOrder> allHistory = new ArrayList<>();
+    private final List<DeliveryOrder> allHistory = new ArrayList<>();
     private String currentFilter = "all";
+    private ListenerRegistration historyListener;
 
     @Nullable
     @Override
@@ -67,7 +71,12 @@ public class OrderHistoryFragment extends Fragment {
         chipCancelled = view.findViewById(R.id.chip_filter_cancelled);
 
         rvHistory.setLayoutManager(new LinearLayoutManager(getContext()));
-        adapter = new OrderHistoryAdapter();
+        adapter = new OrderHistoryAdapter(order -> {
+            Context ctx = getContext();
+            if (ctx != null) {
+                new OrderDetailDialog(ctx, order).show();
+            }
+        });
         rvHistory.setAdapter(adapter);
 
         chipAll.setOnClickListener(v -> applyFilter("all"));
@@ -84,11 +93,14 @@ public class OrderHistoryFragment extends Fragment {
         if (auth.getCurrentUser() == null) return;
         String uid = auth.getCurrentUser().getUid();
 
-        db.collection(Constants.COLLECTION_ORDERS)
+        if (historyListener != null) historyListener.remove();
+
+        historyListener = db.collection(Constants.COLLECTION_ORDERS)
                 .whereEqualTo("deliveryPersonId", uid)
                 .whereIn("status", Arrays.asList(Constants.STATUS_DELIVERED, Constants.STATUS_CANCELLED))
-                .get()
-                .addOnSuccessListener(snapshots -> {
+                .addSnapshotListener((snapshots, error) -> {
+                    if (error != null || snapshots == null) return;
+
                     allHistory.clear();
                     for (DocumentSnapshot doc : snapshots.getDocuments()) {
                         DeliveryOrder o = doc.toObject(DeliveryOrder.class);
@@ -98,10 +110,11 @@ public class OrderHistoryFragment extends Fragment {
                         }
                     }
 
-                    // Sort newest first
-                    allHistory.sort((a, b) -> {
-                        if (a.getCreatedAt() == null || b.getCreatedAt() == null) return 0;
-                        return b.getCreatedAt().compareTo(a.getCreatedAt());
+                    // Sort newest first by deliveredAt or createdAt
+                    Collections.sort(allHistory, (a, b) -> {
+                        long tA = a.getDeliveredAt() != null ? a.getDeliveredAt().getTime() : (a.getCreatedAt() != null ? a.getCreatedAt().getTime() : 0);
+                        long tB = b.getDeliveredAt() != null ? b.getDeliveredAt().getTime() : (b.getCreatedAt() != null ? b.getCreatedAt().getTime() : 0);
+                        return Long.compare(tB, tA);
                     });
 
                     applyFilter(currentFilter);
@@ -130,5 +143,11 @@ public class OrderHistoryFragment extends Fragment {
             rvHistory.setVisibility(View.VISIBLE);
             adapter.setOrders(filtered);
         }
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        if (historyListener != null) historyListener.remove();
     }
 }

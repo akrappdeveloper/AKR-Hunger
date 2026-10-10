@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Base Theme (Dark Mode via DayNight) -->
+    <style name="Theme.AKRHunger" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorPrimaryDark">@color/primary_dark</item>
+        <item name="colorAccent">@color/primary</item>
+        <item name="colorOnPrimary">@color/on_primary</item>
+        <item name="colorSecondary">@color/secondary</item>
+        <item name="colorOnSecondary">@color/on_secondary</item>
+        <item name="android:colorBackground">@color/background</item>
+        <item name="colorSurface">@color/surface</item>
+        <item name="colorOnSurface">@color/on_surface</item>
+        <item name="colorSurfaceVariant">@color/surface_variant</item>
+        <item name="colorOnSurfaceVariant">@color/text_secondary</item>
+        <item name="colorOutline">@color/card_border</item>
+        <item name="android:statusBarColor">@color/surface</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:navigationBarColor">@color/surface</item>
+        <item name="android:windowLightNavigationBar">false</item>
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="materialAlertDialogTheme">@style/ThemeOverlay.AKR.MaterialAlertDialog</item>
+        <item name="bottomSheetDialogTheme">@style/ThemeOverlay.AKR.BottomSheetDialog</item>
+    </style>
+
+    <!-- Splash Theme (Dark Mode) -->
+    <style name="Theme.AKRHunger.Splash" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="android:statusBarColor">@color/splash_bg</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:navigationBarColor">@color/splash_bg</item>
+        <item name="android:windowLightNavigationBar">false</item>
+        <item name="android:colorBackground">@color/splash_bg</item>
+        <item name="colorPrimary">@color/primary</item>
+        <item name="android:windowSplashScreenBackground">@color/splash_bg</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/logo_akr_hunger</item>
+    </style>
+
+    <!-- Dialog Styling (Dark Mode) -->
+    <style name="ThemeOverlay.AKR.MaterialAlertDialog" parent="ThemeOverlay.Material3.MaterialAlertDialog">
+        <item name="shapeAppearance">@style/ShapeAppearance.AKR.Dialog</item>
+        <item name="shapeAppearanceOverlay">@style/ShapeAppearance.AKR.Dialog</item>
+        <item name="colorSurface">@color/surface</item>
+        <item name="android:backgroundDimAmount">0.65</item>
+        <item name="materialAlertDialogTitleTextStyle">@style/TextAppearance.AKR.Dialog.Title</item>
+        <item name="materialAlertDialogBodyTextStyle">@style/TextAppearance.AKR.Dialog.Body</item>
+        <item name="buttonBarPositiveButtonStyle">@style/Widget.AKR.Dialog.Button.Positive</item>
+        <item name="buttonBarNegativeButtonStyle">@style/Widget.AKR.Dialog.Button.Negative</item>
+        <item name="buttonBarNeutralButtonStyle">@style/Widget.AKR.Dialog.Button.Neutral</item>
+    </style>
+
+    <!-- Bottom Sheets (Dark Mode) -->
+    <style name="Widget.AKR.BottomSheet" parent="Widget.Material3.BottomSheet">
+        <item name="shapeAppearanceOverlay">@style/ShapeAppearance.AKR.BottomSheet</item>
+        <item name="backgroundTint">@color/surface</item>
+    </style>
+
+    <style name="Widget.AKR.BottomSheet.Rounded" parent="Widget.Material3.BottomSheet">
+        <item name="shapeAppearanceOverlay">@style/ShapeAppearance.AKR.BottomSheet</item>
+        <item name="backgroundTint">@color/surface</item>
+        <item name="android:elevation">16dp</item>
+    </style>
+
+    <style name="Widget.AKR.PermissionDialog" parent="ThemeOverlay.AKR.MaterialAlertDialog">
+        <item name="colorSurface">@color/surface</item>
+        <item name="shapeAppearance">@style/ShapeAppearance.AKR.Dialog</item>
+    </style>
+</resources>

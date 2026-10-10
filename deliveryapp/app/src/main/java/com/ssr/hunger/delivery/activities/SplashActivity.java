@@ -32,7 +32,20 @@ public class SplashActivity extends AppCompatActivity {
                     .get()
                     .addOnSuccessListener(snap -> {
                         if (snap.exists()) {
-                            startActivity(new Intent(SplashActivity.this, MainActivity.class));
+                            String verificationStatus = snap.getString("verificationStatus");
+                            String kycStatus = snap.getString("kycStatus");
+                            Boolean isVerified = snap.getBoolean("isVerified");
+                            String status = verificationStatus != null ? verificationStatus : (kycStatus != null ? kycStatus : "pending");
+
+                            if ("pending".equalsIgnoreCase(status) && (isVerified == null || !isVerified)) {
+                                auth.signOut();
+                                startActivity(new Intent(SplashActivity.this, LoginActivity.class));
+                            } else if ("rejected".equalsIgnoreCase(status)) {
+                                auth.signOut();
+                                startActivity(new Intent(SplashActivity.this, LoginActivity.class));
+                            } else {
+                                startActivity(new Intent(SplashActivity.this, MainActivity.class));
+                            }
                         } else {
                             // Document does not exist in deliveryPersons
                             auth.signOut();

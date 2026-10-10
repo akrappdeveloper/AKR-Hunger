@@ -200,21 +200,21 @@ export default function IssueCardDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-[#0b0f19] border border-blue-500/20 text-white max-w-2xl p-0 overflow-hidden shadow-2xl rounded-2xl">
+      <DialogContent className="bg-[#0b0f19] border border-blue-500/20 text-foreground max-w-2xl p-0 overflow-hidden shadow-2xl rounded-2xl">
         {/* Header */}
-        <DialogHeader className="p-6 pb-4 bg-gradient-to-r from-blue-950/60 via-indigo-950/40 to-black/60 border-b border-white/10">
+        <DialogHeader className="p-6 pb-4 bg-gradient-to-r from-blue-950/60 via-indigo-950/40 to-black/60 border-b border-border/50">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-blue-500/20 border border-blue-500/30 flex items-center justify-center text-blue-400">
               <CreditCard className="w-5 h-5" />
             </div>
             <div>
-              <DialogTitle className="text-xl font-bold text-white flex items-center gap-2">
+              <DialogTitle className="text-xl font-bold text-foreground flex items-center gap-2">
                 Issue Membership Card
                 <Badge className="bg-blue-500/20 text-blue-300 border-blue-500/30 text-[10px] uppercase font-bold tracking-wider">
                   Approved User
                 </Badge>
               </DialogTitle>
-              <DialogDescription className="text-gray-400 text-xs mt-0.5">
+              <DialogDescription className="text-muted-foreground text-xs mt-0.5">
                 Generate and issue a virtual Hunger card for {request.customerName}
               </DialogDescription>
             </div>
@@ -223,22 +223,22 @@ export default function IssueCardDialog({
 
         <div className="p-6 space-y-6 max-h-[75vh] overflow-y-auto">
           {/* Virtual Card Live Preview */}
-          <div className="relative overflow-hidden rounded-2xl p-6 aspect-[1.75/1] max-w-md mx-auto flex flex-col justify-between shadow-2xl border border-white/15 bg-gradient-to-br from-neutral-950 via-zinc-900 to-slate-900 text-white">
+          <div className="relative overflow-hidden rounded-2xl p-6 aspect-[1.75/1] max-w-md mx-auto flex flex-col justify-between shadow-2xl border border-white/15 bg-gradient-to-br from-neutral-950 via-zinc-900 to-slate-900 text-foreground">
             <div className="absolute top-[-30%] left-[-30%] w-[70%] h-[70%] bg-blue-500/20 blur-[60px] rounded-full pointer-events-none" />
             <div className="absolute bottom-[-30%] right-[-30%] w-[70%] h-[70%] bg-indigo-500/20 blur-[60px] rounded-full pointer-events-none" />
 
             <div className="relative z-10 flex justify-between items-start">
               <div>
-                <h3 className="font-black text-base tracking-wider text-white flex items-center gap-1.5">
+                <h3 className="font-black text-base tracking-wider text-foreground flex items-center gap-1.5">
                   HUNGER<span className="text-blue-400 font-extrabold">PREMIUM</span>
                 </h3>
                 <span className="text-[10px] text-zinc-300 font-semibold uppercase tracking-widest">
                   {tier} Membership Card
                 </span>
               </div>
-              <div className="flex items-center gap-1.5 bg-white/10 px-2.5 py-1 rounded-lg backdrop-blur-md border border-white/10">
+              <div className="flex items-center gap-1.5 bg-card/10 px-2.5 py-1 rounded-lg backdrop-blur-md border border-border/50">
                 <Sparkles className="w-3 h-3 text-blue-400" />
-                <span className="text-[10px] font-bold text-white uppercase tracking-wider">{cardType}</span>
+                <span className="text-[10px] font-bold text-foreground uppercase tracking-wider">{cardType}</span>
               </div>
             </div>
 
@@ -247,9 +247,9 @@ export default function IssueCardDialog({
                 <div className="w-8 h-6 rounded bg-gradient-to-tr from-amber-400 to-amber-200 border border-amber-300/40 shadow-xs flex items-center justify-center">
                   <div className="w-4 h-3 border border-amber-800/40 rounded-xs" />
                 </div>
-                <CreditCard className="w-4 h-4 text-white/50" />
+                <CreditCard className="w-4 h-4 text-foreground/50" />
               </div>
-              <div className="text-lg sm:text-xl font-mono text-white tracking-widest font-black drop-shadow-md">
+              <div className="text-lg sm:text-xl font-mono text-foreground tracking-widest font-black drop-shadow-md">
                 {cardNumber || '4000 0000 0000 0000'}
               </div>
               <div className="flex gap-6 text-[10px] text-zinc-300 uppercase tracking-wider font-mono mt-2">
@@ -264,10 +264,10 @@ export default function IssueCardDialog({
               </div>
             </div>
 
-            <div className="relative z-10 flex justify-between items-end border-t border-white/10 pt-2.5">
+            <div className="relative z-10 flex justify-between items-end border-t border-border/50 pt-2.5">
               <div>
                 <div className="text-[8px] text-zinc-400 uppercase tracking-wider mb-0.5">Card Holder</div>
-                <div className="font-bold tracking-wide uppercase text-xs text-white truncate max-w-[200px]">
+                <div className="font-bold tracking-wide uppercase text-xs text-foreground truncate max-w-[200px]">
                   {customerName || 'Customer'}
                 </div>
               </div>
@@ -282,21 +282,21 @@ export default function IssueCardDialog({
           <div className="space-y-4">
             {/* Cardholder Name */}
             <div className="space-y-1.5">
-              <Label className="text-xs font-semibold text-gray-300 flex items-center gap-1.5">
+              <Label className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
                 <User className="w-3.5 h-3.5 text-blue-400" /> Cardholder Name
               </Label>
               <Input
                 value={customerName}
                 onChange={(e) => setCustomerName(e.target.value)}
                 placeholder="Full Name"
-                className="bg-black/40 border-white/10 text-white rounded-xl focus:border-blue-500"
+                className="bg-background/40 border-border/50 text-foreground rounded-xl focus:border-blue-500"
               />
             </div>
 
             {/* 16-Digit Card Number */}
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
-                <Label className="text-xs font-semibold text-gray-300 flex items-center gap-1.5">
+                <Label className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
                   <CreditCard className="w-3.5 h-3.5 text-blue-400" /> 16-Digit Card Number
                 </Label>
                 <Button
@@ -314,10 +314,10 @@ export default function IssueCardDialog({
                   value={cardNumber}
                   onChange={(e) => handleCardNumberChange(e.target.value)}
                   placeholder="4000 0000 0000 0000"
-                  className="bg-black/40 border-white/10 text-white font-mono tracking-wider rounded-xl pl-3 pr-10 focus:border-blue-500"
+                  className="bg-background/40 border-border/50 text-foreground font-mono tracking-wider rounded-xl pl-3 pr-10 focus:border-blue-500"
                   maxLength={19}
                 />
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-gray-500 font-mono">
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground font-mono">
                   {cardNumber.replace(/\D/g, '').length}/16
                 </span>
               </div>
@@ -326,32 +326,32 @@ export default function IssueCardDialog({
             {/* Expiry & CVV */}
             <div className="grid grid-cols-3 gap-3">
               <div className="space-y-1.5">
-                <Label className="text-xs font-semibold text-gray-300 flex items-center gap-1">
+                <Label className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
                   <Calendar className="w-3 h-3 text-blue-400" /> Exp Month
                 </Label>
                 <Input
                   value={expiryMonth}
                   onChange={(e) => setExpiryMonth(e.target.value.replace(/\D/g, '').slice(0, 2))}
                   placeholder="12"
-                  className="bg-black/40 border-white/10 text-white font-mono text-center rounded-xl focus:border-blue-500"
+                  className="bg-background/40 border-border/50 text-foreground font-mono text-center rounded-xl focus:border-blue-500"
                   maxLength={2}
                 />
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-xs font-semibold text-gray-300">Exp Year</Label>
+                <Label className="text-xs font-semibold text-muted-foreground">Exp Year</Label>
                 <Input
                   value={expiryYear}
                   onChange={(e) => setExpiryYear(e.target.value.replace(/\D/g, '').slice(0, 4))}
                   placeholder="2031"
-                  className="bg-black/40 border-white/10 text-white font-mono text-center rounded-xl focus:border-blue-500"
+                  className="bg-background/40 border-border/50 text-foreground font-mono text-center rounded-xl focus:border-blue-500"
                   maxLength={4}
                 />
               </div>
 
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <Label className="text-xs font-semibold text-gray-300 flex items-center gap-1">
+                  <Label className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
                     <Lock className="w-3 h-3 text-blue-400" /> CVV
                   </Label>
                   <button
@@ -367,7 +367,7 @@ export default function IssueCardDialog({
                   value={cvv}
                   onChange={(e) => setCvv(e.target.value.replace(/\D/g, '').slice(0, 3))}
                   placeholder="123"
-                  className="bg-black/40 border-white/10 text-white font-mono text-center rounded-xl focus:border-blue-500"
+                  className="bg-background/40 border-border/50 text-foreground font-mono text-center rounded-xl focus:border-blue-500"
                   maxLength={3}
                 />
               </div>
@@ -376,7 +376,7 @@ export default function IssueCardDialog({
             {/* Tier & Card Type */}
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label className="text-xs font-semibold text-gray-300">Membership Tier</Label>
+                <Label className="text-xs font-semibold text-muted-foreground">Membership Tier</Label>
                 <div className="flex gap-1.5">
                   {['VIP', 'Gold', 'Platinum'].map((t) => (
                     <button
@@ -386,7 +386,7 @@ export default function IssueCardDialog({
                       className={`flex-1 py-1.5 text-xs font-semibold rounded-lg border transition-all ${
                         tier === t
                           ? 'bg-blue-600/30 border-blue-500 text-blue-300 shadow-sm'
-                          : 'bg-black/20 border-white/10 text-gray-400 hover:text-white'
+                          : 'bg-background/20 border-border/50 text-muted-foreground hover:text-foreground'
                       }`}
                     >
                       {t}
@@ -396,7 +396,7 @@ export default function IssueCardDialog({
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-xs font-semibold text-gray-300">Card Type</Label>
+                <Label className="text-xs font-semibold text-muted-foreground">Card Type</Label>
                 <div className="flex gap-1.5">
                   {['Virtual', 'Physical'].map((type) => (
                     <button
@@ -406,7 +406,7 @@ export default function IssueCardDialog({
                       className={`flex-1 py-1.5 text-xs font-semibold rounded-lg border transition-all ${
                         cardType === type
                           ? 'bg-blue-600/30 border-blue-500 text-blue-300 shadow-sm'
-                          : 'bg-black/20 border-white/10 text-gray-400 hover:text-white'
+                          : 'bg-background/20 border-border/50 text-muted-foreground hover:text-foreground'
                       }`}
                     >
                       {type}
@@ -417,30 +417,30 @@ export default function IssueCardDialog({
             </div>
 
             {/* Applicant Summary */}
-            <div className="p-3 bg-white/5 rounded-xl border border-white/10 text-xs text-gray-400 flex flex-col gap-1">
+            <div className="p-3 bg-card/5 rounded-xl border border-border/50 text-xs text-muted-foreground flex flex-col gap-1">
               <div className="flex justify-between">
                 <span>Customer Email:</span>
-                <span className="text-gray-200 font-medium">{request.customerEmail}</span>
+                <span className="text-foreground font-medium">{request.customerEmail}</span>
               </div>
               <div className="flex justify-between">
                 <span>Contact Number:</span>
-                <span className="text-gray-200 font-medium">{request.contactNumber}</span>
+                <span className="text-foreground font-medium">{request.contactNumber}</span>
               </div>
               <div className="flex justify-between">
                 <span>Customer ID:</span>
-                <span className="text-gray-200 font-mono text-[11px]">{request.customerId}</span>
+                <span className="text-foreground font-mono text-[11px]">{request.customerId}</span>
               </div>
             </div>
           </div>
         </div>
 
         {/* Footer */}
-        <DialogFooter className="p-4 bg-black/60 border-t border-white/10 gap-2">
+        <DialogFooter className="p-4 bg-background/60 border-t border-border/50 gap-2">
           <Button
             type="button"
             variant="ghost"
             onClick={() => onOpenChange(false)}
-            className="text-gray-400 hover:text-white rounded-xl"
+            className="text-muted-foreground hover:text-foreground rounded-xl"
             disabled={isIssuing}
           >
             Cancel
@@ -449,7 +449,7 @@ export default function IssueCardDialog({
             type="button"
             onClick={handleIssueCard}
             disabled={isIssuing}
-            className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold rounded-xl shadow-lg shadow-blue-600/25 px-5 gap-2"
+            className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-foreground font-bold rounded-xl shadow-lg shadow-blue-600/25 px-5 gap-2"
           >
             {isIssuing ? (
               <>

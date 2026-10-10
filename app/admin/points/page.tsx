@@ -228,8 +228,8 @@ export default function PointsPage() {
         <div className="space-y-6 flex flex-col h-[calc(100vh-100px)]">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shrink-0">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight text-white mb-2">Points & Wallet Management</h1>
-                    <p className="text-gray-200 font-medium">Monitor restaurant point balances and transactions.</p>
+                    <h1 className="text-3xl font-bold tracking-tight text-foreground mb-2">Points & Wallet Management</h1>
+                    <p className="text-foreground font-medium">Monitor restaurant point balances and transactions.</p>
                 </div>
                 <div className="flex gap-2">
                     {/* Potential global actions */}
@@ -244,7 +244,7 @@ export default function PointsPage() {
                         <Wallet className="h-5 w-5 text-blue-500 group-hover:scale-110 transition-transform" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-3xl font-bold text-white tracking-tight">{totalCirculation.toLocaleString()} <span className="text-sm text-gray-400 font-normal">pts</span></div>
+                        <div className="text-3xl font-bold text-foreground tracking-tight">{totalCirculation.toLocaleString()} <span className="text-sm text-muted-foreground font-normal">pts</span></div>
                     </CardContent>
                 </Card>
                 <Card className="bg-gradient-to-br from-purple-900/20 to-black/40 border-purple-500/20 backdrop-blur-md shadow-[0_0_30px_rgba(168,85,247,0.1)] group hover:shadow-[0_0_40px_rgba(168,85,247,0.2)] transition-all duration-300">
@@ -253,7 +253,7 @@ export default function PointsPage() {
                         <TrendingUp className="h-5 w-5 text-purple-500 group-hover:scale-110 transition-transform" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-3xl font-bold text-white tracking-tight">{totalSpentGlobal.toLocaleString()} <span className="text-sm text-gray-400 font-normal">pts</span></div>
+                        <div className="text-3xl font-bold text-foreground tracking-tight">{totalSpentGlobal.toLocaleString()} <span className="text-sm text-muted-foreground font-normal">pts</span></div>
                     </CardContent>
                 </Card>
                 <Card className="bg-gradient-to-br from-green-900/20 to-black/40 border-green-500/20 backdrop-blur-md shadow-[0_0_30px_rgba(34,197,94,0.1)] group hover:shadow-[0_0_40px_rgba(34,197,94,0.2)] transition-all duration-300">
@@ -262,61 +262,61 @@ export default function PointsPage() {
                         <Store className="h-5 w-5 text-green-500 group-hover:scale-110 transition-transform" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-3xl font-bold text-white tracking-tight">{accounts.length}</div>
+                        <div className="text-3xl font-bold text-foreground tracking-tight">{accounts.length}</div>
                     </CardContent>
                 </Card>
             </div>
 
             <div className="flex-1 min-h-0 flex flex-col md:flex-row gap-6 overflow-hidden">
                 {/* Left: Accounts List */}
-                <Card className="flex-1 flex flex-col bg-black/40 border-white/10 backdrop-blur-xl shadow-2xl overflow-hidden">
-                    <div className="p-4 border-b border-white/5 shrink-0">
+                <Card className="flex-1 flex flex-col bg-background/40 border-border/50 backdrop-blur-xl shadow-2xl overflow-hidden">
+                    <div className="p-4 border-b border-border/50 shrink-0">
                         <div className="relative">
-                            <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+                            <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                             <Input
                                 placeholder="Search by Restaurant Name or ID..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className="pl-9 bg-black/20 border-white/10 text-white placeholder:text-gray-500 focus:bg-black/40 focus:border-blue-500/50 transition-all"
+                                className="pl-9 bg-background/20 border-border/50 text-foreground placeholder:text-muted-foreground focus:bg-background/40 focus:border-blue-500/50 transition-all"
                             />
                         </div>
                     </div>
 
                     <ScrollArea className="flex-1">
                         <Table>
-                            <TableHeader className="bg-gray-900/80 sticky top-0 z-10 text-xs uppercase tracking-wider">
-                                <TableRow className="border-gray-800 hover:bg-transparent">
-                                    <TableHead className="text-white font-bold">Restaurant</TableHead>
-                                    <TableHead className="text-white font-bold text-right">Available Pts</TableHead>
-                                    <TableHead className="text-white font-bold text-right">Total Earned</TableHead>
+                            <TableHeader className="bg-card/80 sticky top-0 z-10 text-xs uppercase tracking-wider">
+                                <TableRow className="border-border/50 hover:bg-transparent">
+                                    <TableHead className="text-foreground font-bold">Restaurant</TableHead>
+                                    <TableHead className="text-foreground font-bold text-right">Available Pts</TableHead>
+                                    <TableHead className="text-foreground font-bold text-right">Total Earned</TableHead>
                                     <TableHead className="w-[50px]"></TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {loading ? (
                                     <TableRow>
-                                        <TableCell colSpan={4} className="h-32 text-center text-white">Loading accounts...</TableCell>
+                                        <TableCell colSpan={4} className="h-32 text-center text-foreground">Loading accounts...</TableCell>
                                     </TableRow>
                                 ) : filteredAccounts.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan={4} className="h-32 text-center text-white">No accounts found</TableCell>
+                                        <TableCell colSpan={4} className="h-32 text-center text-foreground">No accounts found</TableCell>
                                     </TableRow>
                                 ) : (
                                     filteredAccounts.map((account) => (
                                         <TableRow
                                             key={account.id}
-                                            className={`border-gray-800 cursor-pointer transition-colors ${selectedAccount?.id === account.id ? 'bg-blue-900/20 hover:bg-blue-900/30' : 'hover:bg-gray-800/40'}`}
+                                            className={`border-border/50 cursor-pointer transition-colors ${selectedAccount?.id === account.id ? 'bg-blue-900/20 hover:bg-blue-900/30' : 'hover:bg-secondary/40'}`}
                                             onClick={() => setSelectedAccount(account)}
                                         >
                                             <TableCell>
                                                 <div className="flex items-center gap-3">
                                                     <Avatar className="h-8 w-8 ring-1 ring-gray-700">
                                                         <AvatarImage src={account.restaurantImage} />
-                                                        <AvatarFallback className="bg-gray-800 text-xs font-bold">{account.restaurantName?.charAt(0)}</AvatarFallback>
+                                                        <AvatarFallback className="bg-secondary text-xs font-bold">{account.restaurantName?.charAt(0)}</AvatarFallback>
                                                     </Avatar>
                                                     <div className="flex flex-col">
-                                                        <span className="font-medium text-white text-sm">{account.restaurantName}</span>
-                                                        <span className="text-[10px] text-gray-200 font-mono truncate max-w-[120px]">{account.userId}</span>
+                                                        <span className="font-medium text-foreground text-sm">{account.restaurantName}</span>
+                                                        <span className="text-[10px] text-foreground font-mono truncate max-w-[120px]">{account.userId}</span>
                                                     </div>
                                                 </div>
                                             </TableCell>
@@ -325,11 +325,11 @@ export default function PointsPage() {
                                                     {account.availablePoints?.toLocaleString()}
                                                 </Badge>
                                             </TableCell>
-                                            <TableCell className="text-right text-gray-400 font-mono text-xs">
+                                            <TableCell className="text-right text-muted-foreground font-mono text-xs">
                                                 {account.totalPoints?.toLocaleString()}
                                             </TableCell>
                                             <TableCell>
-                                                <Wallet className="h-4 w-4 text-gray-600" />
+                                                <Wallet className="h-4 w-4 text-muted-foreground" />
                                             </TableCell>
                                         </TableRow>
                                     ))
@@ -344,8 +344,8 @@ export default function PointsPage() {
                     {selectedAccount ? (
                         <>
                             {/* Account Summary Card */}
-                            <Card className="bg-gray-900 border-gray-800 shrink-0">
-                                <CardHeader className="pb-4 border-b border-gray-800 bg-gray-900/50">
+                            <Card className="bg-card border-border/50 shrink-0">
+                                <CardHeader className="pb-4 border-b border-border/50 bg-card/50">
                                     <div className="flex justify-between items-start">
                                         <div className="flex items-center gap-3">
                                             <Avatar className="h-12 w-12 ring-2 ring-blue-500/30">
@@ -353,8 +353,8 @@ export default function PointsPage() {
                                                 <AvatarFallback className="bg-blue-900 text-blue-300 font-bold text-lg">{selectedAccount.restaurantName?.charAt(0)}</AvatarFallback>
                                             </Avatar>
                                             <div>
-                                                <CardTitle className="text-lg text-white">{selectedAccount.restaurantName}</CardTitle>
-                                                <CardDescription className="text-xs text-gray-400 font-mono">ID: {selectedAccount.userId}</CardDescription>
+                                                <CardTitle className="text-lg text-foreground">{selectedAccount.restaurantName}</CardTitle>
+                                                <CardDescription className="text-xs text-muted-foreground font-mono">ID: {selectedAccount.userId}</CardDescription>
                                             </div>
                                         </div>
                                         <Button size="sm" variant="outline" className="border-blue-500 text-blue-400 hover:bg-blue-950" onClick={() => setIsAdjustDialogOpen(true)}>
@@ -363,33 +363,33 @@ export default function PointsPage() {
                                     </div>
                                 </CardHeader>
                                 <CardContent className="pt-6 grid grid-cols-2 gap-4">
-                                    <div className="bg-gray-950 p-4 rounded-xl border border-gray-800 flex flex-col items-center justify-center">
-                                        <span className="text-xs text-gray-500 uppercase font-bold mb-1">Available Balance</span>
-                                        <span className="text-2xl font-bold text-white">{selectedAccount.availablePoints?.toLocaleString()}</span>
+                                    <div className="bg-background p-4 rounded-xl border border-border/50 flex flex-col items-center justify-center">
+                                        <span className="text-xs text-muted-foreground uppercase font-bold mb-1">Available Balance</span>
+                                        <span className="text-2xl font-bold text-foreground">{selectedAccount.availablePoints?.toLocaleString()}</span>
                                     </div>
-                                    <div className="bg-gray-950 p-4 rounded-xl border border-gray-800 flex flex-col items-center justify-center">
-                                        <span className="text-xs text-gray-500 uppercase font-bold mb-1">Lifetime Spent</span>
-                                        <span className="text-2xl font-bold text-gray-400">{selectedAccount.spentPoints?.toLocaleString()}</span>
+                                    <div className="bg-background p-4 rounded-xl border border-border/50 flex flex-col items-center justify-center">
+                                        <span className="text-xs text-muted-foreground uppercase font-bold mb-1">Lifetime Spent</span>
+                                        <span className="text-2xl font-bold text-muted-foreground">{selectedAccount.spentPoints?.toLocaleString()}</span>
                                     </div>
                                 </CardContent>
                             </Card>
 
                             {/* Transaction History */}
-                            <Card className="flex-1 flex flex-col bg-gray-900/40 border-gray-800 overflow-hidden min-h-0">
-                                <CardHeader className="py-3 px-4 border-b border-gray-800 bg-gray-900/50 sticky top-0 z-10">
-                                    <CardTitle className="text-sm font-bold text-gray-300 uppercase tracking-wider flex items-center gap-2">
+                            <Card className="flex-1 flex flex-col bg-card/40 border-border/50 overflow-hidden min-h-0">
+                                <CardHeader className="py-3 px-4 border-b border-border/50 bg-card/50 sticky top-0 z-10">
+                                    <CardTitle className="text-sm font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
                                         <Clock className="h-4 w-4" /> Recent Transactions
                                     </CardTitle>
                                 </CardHeader>
                                 <ScrollArea className="flex-1">
                                     <div className="p-0">
                                         {loadingTransactions ? (
-                                            <div className="p-8 text-center text-xs text-gray-500">Loading history...</div>
+                                            <div className="p-8 text-center text-xs text-muted-foreground">Loading history...</div>
                                         ) : transactions.length === 0 ? (
-                                            <div className="p-8 text-center text-xs text-gray-500">No transactions found.</div>
+                                            <div className="p-8 text-center text-xs text-muted-foreground">No transactions found.</div>
                                         ) : (
                                             transactions.map((tx) => (
-                                                <div key={tx.id} className="p-3 border-b border-gray-800 hover:bg-gray-800/30 transition-colors flex justify-between items-center group">
+                                                <div key={tx.id} className="p-3 border-b border-border/50 hover:bg-secondary/30 transition-colors flex justify-between items-center group">
                                                     <div className="flex items-start gap-3">
                                                         <div className={`mt-1 p-1.5 rounded-full ${tx.type === 'purchase' ? 'bg-green-500/10 text-green-400' :
                                                             tx.type === 'bonus' ? 'bg-blue-500/10 text-blue-400' :
@@ -399,15 +399,15 @@ export default function PointsPage() {
                                                             {tx.type === 'purchase' || tx.type === 'bonus' ? <ArrowDownLeft className="h-3 w-3" /> : <ArrowUpRight className="h-3 w-3" />}
                                                         </div>
                                                         <div>
-                                                            <p className="text-sm font-medium text-gray-200">{tx.description}</p>
-                                                            <p className="text-[10px] text-gray-500 flex items-center gap-2">
+                                                            <p className="text-sm font-medium text-foreground">{tx.description}</p>
+                                                            <p className="text-[10px] text-muted-foreground flex items-center gap-2">
                                                                 <span>{formatDate(tx.createdAt)}</span>
-                                                                <span className="w-1 h-1 rounded-full bg-gray-700"></span>
+                                                                <span className="w-1 h-1 rounded-full bg-secondary"></span>
                                                                 <span className="capitalize">{tx.type}</span>
                                                             </p>
                                                         </div>
                                                     </div>
-                                                    <div className={`text-sm font-bold ${tx.type === 'purchase' || tx.type === 'bonus' ? 'text-green-400' : 'text-gray-400'
+                                                    <div className={`text-sm font-bold ${tx.type === 'purchase' || tx.type === 'bonus' ? 'text-green-400' : 'text-muted-foreground'
                                                         }`}>
                                                         {tx.type === 'purchase' || tx.type === 'bonus' ? '+' : '-'}{tx.amount}
                                                     </div>
@@ -419,10 +419,10 @@ export default function PointsPage() {
                             </Card>
                         </>
                     ) : (
-                        <div className="flex-1 flex flex-col items-center justify-center p-8 bg-gray-900/20 border border-gray-800 rounded-xl border-dashed">
-                            <Wallet className="h-12 w-12 text-gray-700 mb-4" />
-                            <h3 className="text-gray-400 font-medium text-center">Select an Account</h3>
-                            <p className="text-gray-600 text-xs text-center max-w-[200px] mt-1">Click on a restaurant from the list to view their wallet details and history.</p>
+                        <div className="flex-1 flex flex-col items-center justify-center p-8 bg-card/20 border border-border/50 rounded-xl border-dashed">
+                            <Wallet className="h-12 w-12 text-muted-foreground mb-4" />
+                            <h3 className="text-muted-foreground font-medium text-center">Select an Account</h3>
+                            <p className="text-muted-foreground text-xs text-center max-w-[200px] mt-1">Click on a restaurant from the list to view their wallet details and history.</p>
                         </div>
                     )}
                 </div>
@@ -430,51 +430,51 @@ export default function PointsPage() {
 
             {/* Adjust Points Dialog */}
             <Dialog open={isAdjustDialogOpen} onOpenChange={setIsAdjustDialogOpen}>
-                <DialogContent className="bg-gray-900 border-gray-800 text-white sm:max-w-[425px]">
+                <DialogContent className="bg-card border-border/50 text-foreground sm:max-w-[425px]">
                     <DialogHeader>
                         <DialogTitle>Adjust Points Balance</DialogTitle>
-                        <DialogDescription className="text-gray-400">
+                        <DialogDescription className="text-muted-foreground">
                             Manually add or deduct points for {selectedAccount?.restaurantName}.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
                         <div className="grid grid-cols-4 items-center gap-4">
-                            <Label className="text-right text-gray-400">Type</Label>
+                            <Label className="text-right text-muted-foreground">Type</Label>
                             <Select value={adjustType} onValueChange={(val: 'add' | 'deduct') => setAdjustType(val)}>
-                                <SelectTrigger className="col-span-3 bg-gray-950 border-gray-700">
+                                <SelectTrigger className="col-span-3 bg-background border-border/50">
                                     <SelectValue />
                                 </SelectTrigger>
-                                <SelectContent className="bg-gray-900 border-gray-800 text-white">
+                                <SelectContent className="bg-card border-border/50 text-foreground">
                                     <SelectItem value="add">Add Bonus Points</SelectItem>
                                     <SelectItem value="deduct">Deduct Penalty</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
-                            <Label className="text-right text-gray-400">Amount</Label>
+                            <Label className="text-right text-muted-foreground">Amount</Label>
                             <Input
                                 id="amount"
                                 type="number"
                                 placeholder="e.g. 500"
-                                className="col-span-3 bg-gray-950 border-gray-700 text-white"
+                                className="col-span-3 bg-background border-border/50 text-foreground"
                                 value={adjustAmount}
                                 onChange={(e) => setAdjustAmount(e.target.value)}
                             />
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
-                            <Label className="text-right text-gray-400">Reason</Label>
+                            <Label className="text-right text-muted-foreground">Reason</Label>
                             <Input
                                 id="reason"
                                 placeholder="e.g. Goodwill bonus"
-                                className="col-span-3 bg-gray-950 border-gray-700 text-white"
+                                className="col-span-3 bg-background border-border/50 text-foreground"
                                 value={adjustDescription}
                                 onChange={(e) => setAdjustDescription(e.target.value)}
                             />
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsAdjustDialogOpen(false)} className="border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white">Cancel</Button>
-                        <Button onClick={handleAdjustPoints} disabled={isSubmitting} className="bg-blue-600 hover:bg-blue-500 text-white">
+                        <Button variant="outline" onClick={() => setIsAdjustDialogOpen(false)} className="border-border/50 text-muted-foreground hover:bg-secondary hover:text-foreground">Cancel</Button>
+                        <Button onClick={handleAdjustPoints} disabled={isSubmitting} className="bg-blue-600 hover:bg-blue-500 text-foreground">
                             {isSubmitting ? 'Processing...' : 'Confirm Adjustment'}
                         </Button>
                     </DialogFooter>

@@ -3,7 +3,7 @@
  * Generates JSON-LD structured data for different panel types
  */
 
-const baseUrl = 'https://akrhunger.vercel.app'
+const baseUrl = 'https://shunger.vercel.app'
 
 export interface BreadcrumbItem {
     name: string

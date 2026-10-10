@@ -11,14 +11,14 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@color/surface"
-        app:elevation="2dp">
+        app:elevation="1dp">
 
         <androidx.appcompat.widget.Toolbar
             android:id="@+id/toolbar_wallet"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             app:navigationIcon="@drawable/ic_back"
-            app:title="Partner Wallet &amp; COD"
+            app:title="Partner Wallet &amp; COD Ledger"
             app:titleTextColor="@color/text_primary" />
     </com.google.android.material.appbar.AppBarLayout>
 
@@ -34,12 +34,13 @@
             android:orientation="vertical"
             android:padding="16dp">
 
-            <!-- Wallet Balance Hero Card -->
+            <!-- 1. Wallet Balance Hero Card (Brand Orange Gradient) -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardCornerRadius="20dp"
+                app:cardCornerRadius="22dp"
                 app:cardElevation="3dp"
+                app:strokeWidth="0dp"
                 app:cardBackgroundColor="@color/primary">
 
                 <LinearLayout
@@ -48,23 +49,46 @@
                     android:orientation="vertical"
                     android:padding="22dp">
 
-                    <TextView
-                        android:layout_width="wrap_content"
+                    <LinearLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Available Earnings Balance"
-                        android:textColor="@color/on_primary"
-                        android:alpha="0.85"
-                        android:textSize="14sp" />
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Available Earnings Balance"
+                            android:textColor="@color/on_primary"
+                            android:alpha="0.88"
+                            android:textSize="13sp"
+                            android:letterSpacing="0.01" />
+
+                        <TextView
+                            android:id="@+id/tv_net_settlement"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:background="@drawable/bg_pill_primary"
+                            android:backgroundTint="#33FFFFFF"
+                            android:paddingHorizontal="10dp"
+                            android:paddingVertical="3dp"
+                            android:text="Net: ₹0.00"
+                            android:textColor="@color/on_primary"
+                            android:textSize="11.5sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
 
                     <TextView
                         android:id="@+id/tv_wallet_balance"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
-                        android:text="₹1,240.00"
+                        android:layout_marginTop="6dp"
+                        android:text="₹0.00"
                         android:textColor="@color/on_primary"
                         android:textSize="36sp"
-                        android:textStyle="bold" />
+                        android:textStyle="bold"
+                        android:letterSpacing="-0.02" />
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -75,33 +99,38 @@
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btn_wallet_withdraw"
                             style="@style/Widget.Material3.Button"
-                            android:layout_width="0dp"
-                            android:layout_height="46dp"
-                            android:layout_weight="1"
+                            android:layout_width="match_parent"
+                            android:layout_height="48dp"
                             android:text="Withdraw Funds"
                             android:textColor="@color/primary"
+                            android:textSize="14sp"
+                            android:textStyle="bold"
                             app:backgroundTint="@color/on_primary"
-                            app:cornerRadius="23dp" />
+                            app:cornerRadius="24dp"
+                            app:icon="@drawable/ic_wallet"
+                            app:iconTint="@color/primary"
+                            app:iconGravity="textStart"
+                            app:iconPadding="8dp" />
                     </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Cash On Delivery (COD) Card -->
+            <!-- 2. Cash On Delivery (COD) In Hand & Limit Card -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                app:cardCornerRadius="16dp"
+                android:layout_marginTop="14dp"
+                app:cardCornerRadius="18dp"
                 app:cardElevation="2dp"
                 app:strokeColor="@color/warning"
-                app:strokeWidth="1.5dp"
+                app:strokeWidth="1.2dp"
                 app:cardBackgroundColor="@color/surface">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="16dp">
+                    android:padding="18dp">
 
                     <RelativeLayout
                         android:layout_width="match_parent"
@@ -110,9 +139,9 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Cash In Hand (COD Collected)"
+                            android:text="Cash In Hand (COD Due)"
                             android:textColor="@color/text_primary"
-                            android:textSize="14sp"
+                            android:textSize="14.5sp"
                             android:textStyle="bold" />
 
                         <TextView
@@ -120,41 +149,242 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_alignParentEnd="true"
-                            android:text="₹450.00"
+                            android:text="₹0.00"
                             android:textColor="@color/warning"
                             android:textSize="16sp"
                             android:textStyle="bold" />
                     </RelativeLayout>
 
+                    <!-- Limit Progress Bar -->
+                    <ProgressBar
+                        android:id="@+id/progress_cash_limit"
+                        style="?android:attr/progressBarStyleHorizontal"
+                        android:layout_width="match_parent"
+                        android:layout_height="6dp"
+                        android:layout_marginTop="12dp"
+                        android:max="100"
+                        android:progress="0"
+                        android:progressTint="@color/warning"
+                        android:progressBackgroundTint="@color/surface_variant" />
+
                     <TextView
+                        android:id="@+id/tv_cash_limit_status"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="6dp"
-                        android:text="Cash collected from customers for COD orders. Automatically settled or payable to Hunger platform."
+                        android:text="Cash Limit: ₹3,000.00 (0% utilized)"
                         android:textColor="@color/text_secondary"
                         android:textSize="12sp" />
+
+                    <!-- Warning Banner (Shown if near limit) -->
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/card_cash_limit_warning"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:visibility="gone"
+                        app:cardCornerRadius="10dp"
+                        app:cardElevation="0dp"
+                        app:cardBackgroundColor="@color/error_light">
+
+                        <TextView
+                            android:id="@+id/tv_cash_limit_warning_text"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:padding="10dp"
+                            android:text="⚠️ Approaching COD Limit. Deposit cash to continue accepting COD orders."
+                            android:textColor="@color/error"
+                            android:textSize="11.5sp"
+                            android:textStyle="bold" />
+                    </com.google.android.material.card.MaterialCardView>
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btn_deposit_cod"
                         style="@style/Widget.Material3.Button.OutlinedButton"
                         android:layout_width="match_parent"
-                        android:layout_height="44dp"
-                        android:layout_marginTop="12dp"
+                        android:layout_height="46dp"
+                        android:layout_marginTop="14dp"
                         android:text="Deposit COD to Platform"
                         android:textColor="@color/primary"
+                        android:textSize="13.5sp"
+                        android:textStyle="bold"
                         app:strokeColor="@color/primary"
-                        app:cornerRadius="22dp" />
+                        app:strokeWidth="1.5dp"
+                        app:cornerRadius="23dp" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Linked Bank Account Banner -->
+            <!-- 3. Earnings Period Breakdown (2x2 Grid) -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="14dp">
+
+                <!-- Today -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="6dp"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="1dp"
+                    app:strokeColor="@color/card_border"
+                    app:strokeWidth="1dp"
+                    app:cardBackgroundColor="@color/surface">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="14dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Today"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="11.5sp" />
+
+                        <TextView
+                            android:id="@+id/tv_today_earnings"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:text="₹0.00"
+                            android:textColor="@color/text_primary"
+                            android:textSize="17sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- This Week -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="6dp"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="1dp"
+                    app:strokeColor="@color/card_border"
+                    app:strokeWidth="1dp"
+                    app:cardBackgroundColor="@color/surface">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="14dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="This Week"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="11.5sp" />
+
+                        <TextView
+                            android:id="@+id/tv_week_earnings"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:text="₹0.00"
+                            android:textColor="@color/text_primary"
+                            android:textSize="17sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="10dp">
+
+                <!-- Lifetime -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="6dp"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="1dp"
+                    app:strokeColor="@color/card_border"
+                    app:strokeWidth="1dp"
+                    app:cardBackgroundColor="@color/surface">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="14dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Total Lifetime"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="11.5sp" />
+
+                        <TextView
+                            android:id="@+id/tv_lifetime_earnings"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:text="₹0.00"
+                            android:textColor="@color/primary"
+                            android:textSize="17sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- Tips (100% Rider) -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="6dp"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="1dp"
+                    app:strokeColor="@color/card_border"
+                    app:strokeWidth="1dp"
+                    app:cardBackgroundColor="@color/surface">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="14dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Tips (100% to You)"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="11.5sp" />
+
+                        <TextView
+                            android:id="@+id/tv_tips_earnings"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:text="₹0.00"
+                            android:textColor="@color/veg_green"
+                            android:textSize="17sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+            </LinearLayout>
+
+            <!-- 4. Linked Bank Account Banner -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/card_linked_bank"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                app:cardCornerRadius="14dp"
-                app:cardElevation="1dp"
+                android:layout_marginTop="14dp"
+                app:cardCornerRadius="18dp"
+                app:cardElevation="1.5dp"
                 app:strokeColor="@color/card_border"
                 app:strokeWidth="1dp"
                 app:cardBackgroundColor="@color/surface">
@@ -167,16 +397,19 @@
                     android:gravity="center_vertical">
 
                     <ImageView
-                        android:layout_width="32dp"
-                        android:layout_height="32dp"
+                        android:layout_width="38dp"
+                        android:layout_height="38dp"
                         android:src="@drawable/ic_bank"
-                        app:tint="@color/primary" />
+                        app:tint="@color/primary"
+                        android:background="@drawable/bg_pill_primary"
+                        android:backgroundTint="@color/primary_tint"
+                        android:padding="9dp" />
 
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:layout_marginStart="12dp"
+                        android:layout_marginStart="14dp"
                         android:orientation="vertical">
 
                         <TextView
@@ -185,53 +418,97 @@
                             android:layout_height="wrap_content"
                             android:text="Bank Account"
                             android:textColor="@color/text_primary"
-                            android:textSize="14sp"
+                            android:textSize="14.5sp"
                             android:textStyle="bold" />
 
                         <TextView
                             android:id="@+id/tv_bank_summary_desc"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
                             android:text="Tap to add or update bank details"
                             android:textColor="@color/text_secondary"
                             android:textSize="12sp" />
                     </LinearLayout>
 
                     <ImageView
-                        android:layout_width="18dp"
-                        android:layout_height="18dp"
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
                         android:src="@drawable/ic_chevron_right"
                         app:tint="@color/text_hint" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Transaction History Header -->
-            <TextView
-                android:layout_width="wrap_content"
+            <!-- 5. Ledger Filter Tabs (Matching Web App) -->
+            <HorizontalScrollView
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="22dp"
-                android:layout_marginBottom="10dp"
-                android:text="Recent Transactions"
-                android:textColor="@color/text_primary"
-                android:textSize="16sp"
-                android:textStyle="bold" />
+                android:layout_marginTop="20dp"
+                android:scrollbars="none">
+
+                <com.google.android.material.chip.ChipGroup
+                    android:id="@+id/chip_group_wallet_tabs"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:singleSelection="true"
+                    app:selectionRequired="true">
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/chip_tab_transactions"
+                        style="@style/Widget.MaterialComponents.Chip.Choice"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="All Transactions"
+                        android:checked="true"
+                        app:chipCornerRadius="16dp" />
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/chip_tab_withdrawals"
+                        style="@style/Widget.MaterialComponents.Chip.Choice"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Withdrawals"
+                        app:chipCornerRadius="16dp" />
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/chip_tab_cod_orders"
+                        style="@style/Widget.MaterialComponents.Chip.Choice"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="COD Orders"
+                        app:chipCornerRadius="16dp" />
+                </com.google.android.material.chip.ChipGroup>
+            </HorizontalScrollView>
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/rv_wallet_transactions"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
                 android:nestedScrollingEnabled="false" />
 
-            <TextView
-                android:id="@+id/tv_empty_transactions"
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/card_empty_tx_container"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:text="No transactions recorded yet."
-                android:textAlignment="center"
-                android:textColor="@color/text_hint"
-                android:textSize="13sp"
-                android:visibility="gone" />
+                android:layout_marginTop="8dp"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="0dp"
+                app:strokeColor="@color/card_border"
+                app:strokeWidth="1dp"
+                app:cardBackgroundColor="@color/surface">
+
+                <TextView
+                    android:id="@+id/tv_empty_transactions"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingVertical="32dp"
+                    android:text="No transactions recorded yet."
+                    android:textAlignment="center"
+                    android:textColor="@color/text_hint"
+                    android:textSize="13.5sp"
+                    android:visibility="gone" />
+            </com.google.android.material.card.MaterialCardView>
 
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>

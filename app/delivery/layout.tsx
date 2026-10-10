@@ -22,18 +22,18 @@ export const metadata: Metadata = {
     'part time delivery jobs',
   ],
   alternates: {
-    canonical: 'https://akrhunger.vercel.app/delivery/login',
+    canonical: 'https://shunger.vercel.app/delivery/login',
   },
   openGraph: {
     type: 'website',
     locale: 'en_IN',
-    url: 'https://akrhunger.vercel.app/delivery/login',
+    url: 'https://shunger.vercel.app/delivery/login',
     title: 'Hunger Delivery Partner - Earn Money Delivering Food',
     description: 'Flexible hours, competitive earnings, weekly payouts. Join as a delivery partner.',
     siteName: 'Hunger Delivery Partners',
     images: [
       {
-        url: 'https://akrhunger.vercel.app/hunger.png',
+        url: 'https://shunger.vercel.app/hunger.png',
         width: 1200,
         height: 630,
         alt: 'Hunger Delivery Partner',
@@ -44,7 +44,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Hunger Delivery Partner - Earn Money Delivering',
     description: 'Flexible hours, competitive earnings. Join as delivery partner.',
-    images: ['https://akrhunger.vercel.app/hunger.png'],
+    images: ['https://shunger.vercel.app/hunger.png'],
   },
 };
 

@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { collection, onSnapshot, query, orderBy, updateDoc, doc, getDocs, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { AdCampaign, PointsAccount } from '@/lib/types';
+import { ContentService } from '@/lib/services/ContentService';
+import { ProtectedRoute } from '@/components/admin/ProtectedRoute';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -92,17 +94,7 @@ export default function AdminCampaignsPage() {
   const handleTogglePause = async (campaign: AdCampaign & { id: string }) => {
     try {
       const newStatus = campaign.status === 'active' ? 'paused' : 'active';
-      try {
-        await updateDoc(doc(db, 'adCampaigns', campaign.id), {
-          status: newStatus,
-          isActive: newStatus === 'active',
-        });
-      } catch {
-        await updateDoc(doc(db, 'ad_campaigns', campaign.id), {
-          status: newStatus,
-          isActive: newStatus === 'active',
-        });
-      }
+      await ContentService.updateCampaignStatus(campaign.id, newStatus);
       toast.success(`Campaign ${newStatus === 'active' ? 'resumed' : 'paused'} successfully`);
     } catch (err) {
       toast.error('Failed to update campaign');
@@ -111,17 +103,7 @@ export default function AdminCampaignsPage() {
 
   const handleCancel = async (campaign: AdCampaign & { id: string }) => {
     try {
-      try {
-        await updateDoc(doc(db, 'adCampaigns', campaign.id), {
-          status: 'cancelled',
-          isActive: false,
-        });
-      } catch {
-        await updateDoc(doc(db, 'ad_campaigns', campaign.id), {
-          status: 'cancelled',
-          isActive: false,
-        });
-      }
+      await ContentService.updateCampaignStatus(campaign.id, 'cancelled');
       toast.success('Campaign cancelled');
     } catch (err) {
       toast.error('Failed to cancel campaign');
@@ -151,7 +133,7 @@ export default function AdminCampaignsPage() {
       case 'paused': return 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20';
       case 'completed': return 'bg-blue-500/10 text-blue-400 border-blue-500/20';
       case 'cancelled': return 'bg-red-500/10 text-red-400 border-red-500/20';
-      default: return 'bg-gray-500/10 text-gray-400 border-gray-500/20';
+      default: return 'bg-gray-500/10 text-muted-foreground border-border/20';
     }
   };
 
@@ -160,13 +142,14 @@ export default function AdminCampaignsPage() {
       <div className="flex items-center justify-center h-[60vh]">
         <div className="text-center space-y-4">
           <div className="h-10 w-10 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-gray-400">Loading campaigns...</p>
+          <p className="text-muted-foreground">Loading campaigns...</p>
         </div>
       </div>
     );
   }
 
   return (
+    <ProtectedRoute allowedRoles={['super_admin', 'marketing_admin']}>
     <div className="space-y-8 animate-in fade-in duration-500">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -174,7 +157,7 @@ export default function AdminCampaignsPage() {
           <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white via-gray-100 to-gray-400 tracking-tight mb-2">
             Campaign Management
           </h1>
-          <p className="text-gray-400">Monitor and manage all restaurant advertising campaigns.</p>
+          <p className="text-muted-foreground">Monitor and manage all restaurant advertising campaigns.</p>
         </div>
       </div>
 
@@ -205,8 +188,8 @@ export default function AdminCampaignsPage() {
                 <div className="flex items-center justify-between mb-3">
                   <Icon className={`w-5 h-5 ${iconColors[stat.color]}`} />
                 </div>
-                <p className="text-2xl font-bold text-white font-mono">{stat.value}</p>
-                <p className="text-[11px] text-gray-400 mt-1">{stat.title}</p>
+                <p className="text-2xl font-bold text-foreground font-mono">{stat.value}</p>
+                <p className="text-[11px] text-muted-foreground mt-1">{stat.title}</p>
               </CardContent>
             </Card>
           );
@@ -215,9 +198,9 @@ export default function AdminCampaignsPage() {
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="bg-black/40 border-white/10 backdrop-blur-md shadow-xl overflow-hidden">
-          <CardHeader className="border-b border-white/5 bg-white/5 pb-4">
-            <CardTitle className="text-lg font-semibold text-white flex items-center gap-2">
+        <Card className="bg-background/40 border-border/50 backdrop-blur-md shadow-xl overflow-hidden">
+          <CardHeader className="border-b border-border/50 bg-card/5 pb-4">
+            <CardTitle className="text-lg font-semibold text-foreground flex items-center gap-2">
               <BarChart3 className="w-5 h-5 text-blue-400" />
               Top Campaigns by Clicks
             </CardTitle>
@@ -236,9 +219,9 @@ export default function AdminCampaignsPage() {
           </CardContent>
         </Card>
 
-        <Card className="bg-black/40 border-white/10 backdrop-blur-md shadow-xl overflow-hidden">
-          <CardHeader className="border-b border-white/5 bg-white/5 pb-4">
-            <CardTitle className="text-lg font-semibold text-white flex items-center gap-2">
+        <Card className="bg-background/40 border-border/50 backdrop-blur-md shadow-xl overflow-hidden">
+          <CardHeader className="border-b border-border/50 bg-card/5 pb-4">
+            <CardTitle className="text-lg font-semibold text-foreground flex items-center gap-2">
               <Megaphone className="w-5 h-5 text-emerald-400" />
               Campaign Status Distribution
             </CardTitle>
@@ -252,7 +235,7 @@ export default function AdminCampaignsPage() {
                   ))}
                 </Pie>
                 <Tooltip contentStyle={{ backgroundColor: 'rgba(0,0,0,0.8)', borderColor: 'rgba(255,255,255,0.1)', borderRadius: 12, color: '#fff' }} />
-                <Legend wrapperStyle={{ color: '#9CA3AF', fontSize: 12 }} formatter={(value) => <span className="text-gray-300">{value}</span>} />
+                <Legend wrapperStyle={{ color: '#9CA3AF', fontSize: 12 }} formatter={(value) => <span className="text-muted-foreground">{value}</span>} />
               </PieChart>
             </ResponsiveContainer>
           </CardContent>
@@ -260,27 +243,27 @@ export default function AdminCampaignsPage() {
       </div>
 
       {/* Filters & Table */}
-      <Card className="bg-black/40 border-white/10 backdrop-blur-md shadow-xl overflow-hidden">
-        <CardHeader className="border-b border-white/5 bg-white/5 pb-4">
+      <Card className="bg-background/40 border-border/50 backdrop-blur-md shadow-xl overflow-hidden">
+        <CardHeader className="border-b border-border/50 bg-card/5 pb-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <CardTitle className="text-lg font-semibold text-white flex items-center gap-2">
+            <CardTitle className="text-lg font-semibold text-foreground flex items-center gap-2">
               <Megaphone className="w-5 h-5 text-blue-400" />
               All Campaigns
             </CardTitle>
             <div className="flex items-center gap-3">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
                   placeholder="Search campaigns..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 bg-black/20 border-white/10 text-white placeholder:text-gray-500 w-64"
+                  className="pl-10 bg-background/20 border-border/50 text-foreground placeholder:text-muted-foreground w-64"
                 />
               </div>
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="px-3 py-2 bg-black/20 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500/50"
+                className="px-3 py-2 bg-background/20 border border-border/50 rounded-lg text-foreground text-sm focus:outline-none focus:border-blue-500/50"
               >
                 <option value="all">All Status</option>
                 <option value="active">Active</option>
@@ -293,7 +276,7 @@ export default function AdminCampaignsPage() {
         </CardHeader>
         <CardContent className="p-0">
           {filteredCampaigns.length === 0 ? (
-            <div className="text-center py-12 text-gray-500">
+            <div className="text-center py-12 text-muted-foreground">
               <Megaphone className="w-10 h-10 mx-auto mb-3 opacity-30" />
               <p>No campaigns found</p>
             </div>
@@ -301,15 +284,15 @@ export default function AdminCampaignsPage() {
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow className="border-white/5 hover:bg-transparent">
-                    <TableHead className="text-gray-400">Campaign</TableHead>
-                    <TableHead className="text-gray-400">Restaurant</TableHead>
-                    <TableHead className="text-gray-400">Status</TableHead>
-                    <TableHead className="text-gray-400 text-right">Impressions</TableHead>
-                    <TableHead className="text-gray-400 text-right">Clicks</TableHead>
-                    <TableHead className="text-gray-400 text-right">CTR</TableHead>
-                    <TableHead className="text-gray-400 text-right">Spent</TableHead>
-                    <TableHead className="text-gray-400 text-center">Actions</TableHead>
+                  <TableRow className="border-border/50 hover:bg-transparent">
+                    <TableHead className="text-muted-foreground">Campaign</TableHead>
+                    <TableHead className="text-muted-foreground">Restaurant</TableHead>
+                    <TableHead className="text-muted-foreground">Status</TableHead>
+                    <TableHead className="text-muted-foreground text-right">Impressions</TableHead>
+                    <TableHead className="text-muted-foreground text-right">Clicks</TableHead>
+                    <TableHead className="text-muted-foreground text-right">CTR</TableHead>
+                    <TableHead className="text-muted-foreground text-right">Spent</TableHead>
+                    <TableHead className="text-muted-foreground text-center">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -318,23 +301,23 @@ export default function AdminCampaignsPage() {
                       ? ((campaign.totalClicks / campaign.impressions) * 100).toFixed(1)
                       : '0';
                     return (
-                      <TableRow key={campaign.id} className="border-white/5 hover:bg-white/5 transition-colors">
-                        <TableCell className="text-white font-medium">
+                      <TableRow key={campaign.id} className="border-border/50 hover:bg-card/5 transition-colors">
+                        <TableCell className="text-foreground font-medium">
                           <div>
                             <p className="text-sm">{campaign.title || 'Untitled'}</p>
-                            <p className="text-gray-500 text-xs">{campaign.menuItemName}</p>
+                            <p className="text-muted-foreground text-xs">{campaign.menuItemName}</p>
                           </div>
                         </TableCell>
-                        <TableCell className="text-gray-300 text-sm">{campaign.restaurantName}</TableCell>
+                        <TableCell className="text-muted-foreground text-sm">{campaign.restaurantName}</TableCell>
                         <TableCell>
                           <Badge variant="outline" className={`text-xs ${getStatusColor(campaign.status)}`}>
                             {campaign.status}
                           </Badge>
                         </TableCell>
-                        <TableCell className="text-gray-300 text-right font-mono text-sm">{(campaign.impressions || 0).toLocaleString()}</TableCell>
-                        <TableCell className="text-gray-300 text-right font-mono text-sm">{(campaign.totalClicks || 0).toLocaleString()}</TableCell>
-                        <TableCell className="text-gray-300 text-right font-mono text-sm">{ctr}%</TableCell>
-                        <TableCell className="text-gray-300 text-right font-mono text-sm">{(campaign.totalSpent || 0).toLocaleString()} pts</TableCell>
+                        <TableCell className="text-muted-foreground text-right font-mono text-sm">{(campaign.impressions || 0).toLocaleString()}</TableCell>
+                        <TableCell className="text-muted-foreground text-right font-mono text-sm">{(campaign.totalClicks || 0).toLocaleString()}</TableCell>
+                        <TableCell className="text-muted-foreground text-right font-mono text-sm">{ctr}%</TableCell>
+                        <TableCell className="text-muted-foreground text-right font-mono text-sm">{(campaign.totalSpent || 0).toLocaleString()} pts</TableCell>
                         <TableCell className="text-center">
                           <div className="flex items-center justify-center gap-1">
                             <Button
@@ -382,47 +365,47 @@ export default function AdminCampaignsPage() {
 
       {/* Campaign Detail Dialog */}
       <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
-        <DialogContent className="bg-gray-900 border-white/10 text-white max-w-lg">
+        <DialogContent className="bg-card border-border/50 text-foreground max-w-lg">
           <DialogHeader>
             <DialogTitle className="text-xl">{selectedCampaign?.title || 'Campaign Details'}</DialogTitle>
-            <DialogDescription className="text-gray-400">{selectedCampaign?.description}</DialogDescription>
+            <DialogDescription className="text-muted-foreground">{selectedCampaign?.description}</DialogDescription>
           </DialogHeader>
           {selectedCampaign && (
             <div className="space-y-4 mt-4">
               <div className="grid grid-cols-2 gap-4">
-                <div className="bg-black/20 rounded-xl p-4 border border-white/5">
-                  <p className="text-gray-500 text-xs uppercase tracking-wider mb-1">Restaurant</p>
-                  <p className="text-white font-medium text-sm">{selectedCampaign.restaurantName}</p>
+                <div className="bg-background/20 rounded-xl p-4 border border-border/50">
+                  <p className="text-muted-foreground text-xs uppercase tracking-wider mb-1">Restaurant</p>
+                  <p className="text-foreground font-medium text-sm">{selectedCampaign.restaurantName}</p>
                 </div>
-                <div className="bg-black/20 rounded-xl p-4 border border-white/5">
-                  <p className="text-gray-500 text-xs uppercase tracking-wider mb-1">Menu Item</p>
-                  <p className="text-white font-medium text-sm">{selectedCampaign.menuItemName}</p>
+                <div className="bg-background/20 rounded-xl p-4 border border-border/50">
+                  <p className="text-muted-foreground text-xs uppercase tracking-wider mb-1">Menu Item</p>
+                  <p className="text-foreground font-medium text-sm">{selectedCampaign.menuItemName}</p>
                 </div>
-                <div className="bg-black/20 rounded-xl p-4 border border-white/5">
-                  <p className="text-gray-500 text-xs uppercase tracking-wider mb-1">Status</p>
+                <div className="bg-background/20 rounded-xl p-4 border border-border/50">
+                  <p className="text-muted-foreground text-xs uppercase tracking-wider mb-1">Status</p>
                   <Badge variant="outline" className={`text-xs ${getStatusColor(selectedCampaign.status)}`}>
                     {selectedCampaign.status}
                   </Badge>
                 </div>
-                <div className="bg-black/20 rounded-xl p-4 border border-white/5">
-                  <p className="text-gray-500 text-xs uppercase tracking-wider mb-1">Budget Type</p>
-                  <p className="text-white font-medium text-sm capitalize">{selectedCampaign.budget}</p>
+                <div className="bg-background/20 rounded-xl p-4 border border-border/50">
+                  <p className="text-muted-foreground text-xs uppercase tracking-wider mb-1">Budget Type</p>
+                  <p className="text-foreground font-medium text-sm capitalize">{selectedCampaign.budget}</p>
                 </div>
-                <div className="bg-black/20 rounded-xl p-4 border border-white/5">
-                  <p className="text-gray-500 text-xs uppercase tracking-wider mb-1">Total Spent</p>
+                <div className="bg-background/20 rounded-xl p-4 border border-border/50">
+                  <p className="text-muted-foreground text-xs uppercase tracking-wider mb-1">Total Spent</p>
                   <p className="text-emerald-400 font-bold font-mono">{selectedCampaign.totalSpent || 0} pts</p>
                 </div>
-                <div className="bg-black/20 rounded-xl p-4 border border-white/5">
-                  <p className="text-gray-500 text-xs uppercase tracking-wider mb-1">Remaining</p>
+                <div className="bg-background/20 rounded-xl p-4 border border-border/50">
+                  <p className="text-muted-foreground text-xs uppercase tracking-wider mb-1">Remaining</p>
                   <p className="text-orange-400 font-bold font-mono">{selectedCampaign.pointsRemaining || 0} pts</p>
                 </div>
-                <div className="bg-black/20 rounded-xl p-4 border border-white/5">
-                  <p className="text-gray-500 text-xs uppercase tracking-wider mb-1">Impressions</p>
-                  <p className="text-white font-bold font-mono">{(selectedCampaign.impressions || 0).toLocaleString()}</p>
+                <div className="bg-background/20 rounded-xl p-4 border border-border/50">
+                  <p className="text-muted-foreground text-xs uppercase tracking-wider mb-1">Impressions</p>
+                  <p className="text-foreground font-bold font-mono">{(selectedCampaign.impressions || 0).toLocaleString()}</p>
                 </div>
-                <div className="bg-black/20 rounded-xl p-4 border border-white/5">
-                  <p className="text-gray-500 text-xs uppercase tracking-wider mb-1">Clicks</p>
-                  <p className="text-white font-bold font-mono">{(selectedCampaign.totalClicks || 0).toLocaleString()}</p>
+                <div className="bg-background/20 rounded-xl p-4 border border-border/50">
+                  <p className="text-muted-foreground text-xs uppercase tracking-wider mb-1">Clicks</p>
+                  <p className="text-foreground font-bold font-mono">{(selectedCampaign.totalClicks || 0).toLocaleString()}</p>
                 </div>
               </div>
             </div>
@@ -433,7 +416,7 @@ export default function AdminCampaignsPage() {
                 <Button
                   variant="outline"
                   onClick={() => { handleTogglePause(selectedCampaign); setDetailOpen(false); }}
-                  className="border-white/10 text-white hover:bg-white/10 gap-2"
+                  className="border-border/50 text-foreground hover:bg-card/10 gap-2"
                 >
                   {selectedCampaign.status === 'active' ? <><Pause size={14} /> Pause</> : <><Play size={14} /> Resume</>}
                 </Button>
@@ -450,5 +433,6 @@ export default function AdminCampaignsPage() {
         </DialogContent>
       </Dialog>
     </div>
+    </ProtectedRoute>
   );
 }

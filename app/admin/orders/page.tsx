@@ -1,8 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { collection, onSnapshot, updateDoc, doc, query, orderBy, Timestamp } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import {
   AlertCircle,
   Clock,
@@ -68,6 +66,8 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ProtectedRoute } from '@/components/admin/ProtectedRoute';
+import { OrderService } from '@/lib/services/OrderService';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -101,27 +101,22 @@ export default function OrdersPage() {
   const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
-    const q = query(collection(db, 'orders'), orderBy('createdAt', 'desc'));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map((doc) => ({
-        ...doc.data(),
-        id: doc.id,
-      })) as Order[];
-      setOrders(data);
-      setLoading(false);
-    }, (error) => {
-      console.error("Error fetching orders:", error);
-      setLoading(false);
-    });
+    const unsubscribe = OrderService.listenAllOrders(
+      (data) => {
+        setOrders(data);
+        setLoading(false);
+      },
+      (error) => {
+        console.error("Error fetching orders:", error);
+        setLoading(false);
+      }
+    );
     return () => unsubscribe();
   }, []);
 
   const updateOrderStatus = async (orderId: string, newStatus: string) => {
     try {
-      await updateDoc(doc(db, 'orders', orderId), {
-        status: newStatus,
-        updatedAt: new Date(),
-      });
+      await OrderService.updateOrderStatus(orderId, newStatus as Order['status']);
       if (selectedOrder?.id === orderId) {
         setSelectedOrder({ ...selectedOrder, status: newStatus as any });
       }
@@ -199,18 +194,19 @@ export default function OrdersPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <ProtectedRoute allowedRoles={['operations_admin', 'support_admin']}>
+      <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-white mb-2">Order Management</h1>
-          <p className="text-gray-200 font-medium">Monitor and control all orders across the platform in real-time.</p>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground mb-2">Order Management</h1>
+          <p className="text-foreground font-medium">Monitor and control all orders across the platform in real-time.</p>
         </div>
         <div className="flex gap-2">
-          <Button onClick={exportOrders} variant="outline" className="border-gray-600 bg-gray-800/50 text-white hover:bg-gray-700 hover:text-white hover:border-gray-500 font-semibold">
+          <Button onClick={exportOrders} variant="outline" className="border-border bg-secondary/50 text-foreground hover:bg-secondary hover:text-foreground hover:border-border font-semibold">
             <Download className="h-4 w-4 mr-2" />
             Export
           </Button>
-          <Button onClick={() => window.location.reload()} variant="outline" className="border-gray-600 bg-gray-800/50 text-white hover:bg-gray-700 hover:text-white hover:border-gray-500 font-semibold">
+          <Button onClick={() => window.location.reload()} variant="outline" className="border-border bg-secondary/50 text-foreground hover:bg-secondary hover:text-foreground hover:border-border font-semibold">
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
           </Button>
@@ -225,8 +221,8 @@ export default function OrdersPage() {
             <Activity className="h-5 w-5 text-blue-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-4xl font-bold text-white mb-1 tracking-tight">{activeOrders}</div>
-            <p className="text-xs text-gray-400 font-medium flex items-center gap-1">
+            <div className="text-4xl font-bold text-foreground mb-1 tracking-tight">{activeOrders}</div>
+            <p className="text-xs text-muted-foreground font-medium flex items-center gap-1">
               <TrendingUp className="h-3 w-3" />
               In progress right now
             </p>
@@ -239,8 +235,8 @@ export default function OrdersPage() {
             <Clock className="h-5 w-5 text-orange-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-4xl font-bold text-white mb-1 tracking-tight">{pendingOrders}</div>
-            <p className="text-xs text-gray-400 font-medium">Orders waiting for confirmation</p>
+            <div className="text-4xl font-bold text-foreground mb-1 tracking-tight">{pendingOrders}</div>
+            <p className="text-xs text-muted-foreground font-medium">Orders waiting for confirmation</p>
           </CardContent>
         </Card>
 
@@ -250,8 +246,8 @@ export default function OrdersPage() {
             <DollarSign className="h-5 w-5 text-green-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-4xl font-bold text-white mb-1 tracking-tight">₹{totalRevenue.toLocaleString()}</div>
-            <p className="text-xs text-gray-400 font-medium">From delivered orders</p>
+            <div className="text-4xl font-bold text-foreground mb-1 tracking-tight">₹{totalRevenue.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground font-medium">From delivered orders</p>
           </CardContent>
         </Card>
 
@@ -261,31 +257,31 @@ export default function OrdersPage() {
             <Calendar className="h-5 w-5 text-purple-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-4xl font-bold text-white mb-1 tracking-tight">{todaysOrders}</div>
-            <p className="text-xs text-gray-400 font-medium">Avg: ₹{avgOrderValue.toFixed(0)}</p>
+            <div className="text-4xl font-bold text-foreground mb-1 tracking-tight">{todaysOrders}</div>
+            <p className="text-xs text-muted-foreground font-medium">Avg: ₹{avgOrderValue.toFixed(0)}</p>
           </CardContent>
         </Card>
       </div>
 
-      <Card className="bg-black/40 border-white/10 backdrop-blur-xl shadow-2xl">
-        <CardHeader className="pb-3 border-b border-white/5">
+      <Card className="bg-background/40 border-border/50 backdrop-blur-xl shadow-2xl">
+        <CardHeader className="pb-3 border-b border-border/50">
           <div className="flex flex-col md:flex-row gap-4 justify-between items-center">
             <Tabs defaultValue="all" value={filterStatus} onValueChange={setFilterStatus} className="w-full md:w-auto">
-              <TabsList className="bg-gray-900/50 border border-white/5 h-10 p-1">
-                <TabsTrigger value="all" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-gray-400 font-medium">All</TabsTrigger>
-                <TabsTrigger value="pending" className="data-[state=active]:bg-yellow-600 data-[state=active]:text-white text-gray-400 font-medium">Pending</TabsTrigger>
-                <TabsTrigger value="preparing" className="data-[state=active]:bg-orange-600 data-[state=active]:text-white text-gray-400 font-medium">Preparing</TabsTrigger>
-                <TabsTrigger value="out_for_delivery" className="data-[state=active]:bg-cyan-600 data-[state=active]:text-white text-gray-400 font-medium">En Route</TabsTrigger>
-                <TabsTrigger value="delivered" className="data-[state=active]:bg-green-600 data-[state=active]:text-white text-gray-400 font-medium">Completed</TabsTrigger>
+              <TabsList className="bg-card/50 border border-border/50 h-10 p-1">
+                <TabsTrigger value="all" className="data-[state=active]:bg-blue-600 data-[state=active]:text-foreground text-muted-foreground font-medium">All</TabsTrigger>
+                <TabsTrigger value="pending" className="data-[state=active]:bg-yellow-600 data-[state=active]:text-foreground text-muted-foreground font-medium">Pending</TabsTrigger>
+                <TabsTrigger value="preparing" className="data-[state=active]:bg-orange-600 data-[state=active]:text-foreground text-muted-foreground font-medium">Preparing</TabsTrigger>
+                <TabsTrigger value="out_for_delivery" className="data-[state=active]:bg-cyan-600 data-[state=active]:text-foreground text-muted-foreground font-medium">En Route</TabsTrigger>
+                <TabsTrigger value="delivered" className="data-[state=active]:bg-green-600 data-[state=active]:text-foreground text-muted-foreground font-medium">Completed</TabsTrigger>
               </TabsList>
             </Tabs>
             <div className="relative w-full md:w-64">
-              <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+              <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search orders..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9 bg-black/20 border-white/10 text-white placeholder:text-gray-500 focus:bg-black/40 focus:border-blue-500/50 h-10 transition-all rounded-lg"
+                className="pl-9 bg-background/20 border-border/50 text-foreground placeholder:text-muted-foreground focus:bg-background/40 focus:border-blue-500/50 h-10 transition-all rounded-lg"
               />
             </div>
           </div>
@@ -297,11 +293,11 @@ export default function OrdersPage() {
                 {selectedOrders.length} order{selectedOrders.length > 1 ? 's' : ''} selected
               </span>
               <div className="flex gap-2">
-                <Button size="sm" onClick={() => bulkUpdateStatus('confirmed')} className="bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-900/20">
+                <Button size="sm" onClick={() => bulkUpdateStatus('confirmed')} className="bg-blue-600 hover:bg-blue-500 text-foreground shadow-lg shadow-blue-900/20">
                   <CheckCircle className="h-3.5 w-3.5 mr-1" />
                   Confirm
                 </Button>
-                <Button size="sm" onClick={() => bulkUpdateStatus('preparing')} className="bg-orange-600 hover:bg-orange-500 text-white shadow-lg shadow-orange-900/20">
+                <Button size="sm" onClick={() => bulkUpdateStatus('preparing')} className="bg-orange-600 hover:bg-orange-500 text-foreground shadow-lg shadow-orange-900/20">
                   <ChefHat className="h-3.5 w-3.5 mr-1" />
                   Prepare
                 </Button>
@@ -317,28 +313,28 @@ export default function OrdersPage() {
           <ScrollArea className="h-[600px]">
             <div className="rounded-none">
               <Table>
-                <TableHeader className="bg-white/5 sticky top-0 z-10 backdrop-blur-sm">
-                  <TableRow className="border-white/5 hover:bg-transparent">
+                <TableHeader className="bg-card/5 sticky top-0 z-10 backdrop-blur-sm">
+                  <TableRow className="border-border/50 hover:bg-transparent">
                     <TableHead className="w-12">
                       <Checkbox
                         checked={selectedOrders.length === filteredOrders.length && filteredOrders.length > 0}
                         onCheckedChange={toggleSelectAll}
-                        className="border-gray-500 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
+                        className="border-border data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
                       />
                     </TableHead>
-                    <TableHead className="font-bold text-white">Order ID</TableHead>
-                    <TableHead className="font-bold text-white">Customer</TableHead>
-                    <TableHead className="font-bold text-white">Restaurant</TableHead>
-                    <TableHead className="font-bold text-white">Amount</TableHead>
-                    <TableHead className="font-bold text-white">Status</TableHead>
-                    <TableHead className="font-bold text-white">Time</TableHead>
-                    <TableHead className="text-right font-bold text-white">Actions</TableHead>
+                    <TableHead className="font-bold text-foreground">Order ID</TableHead>
+                    <TableHead className="font-bold text-foreground">Customer</TableHead>
+                    <TableHead className="font-bold text-foreground">Restaurant</TableHead>
+                    <TableHead className="font-bold text-foreground">Amount</TableHead>
+                    <TableHead className="font-bold text-foreground">Status</TableHead>
+                    <TableHead className="font-bold text-foreground">Time</TableHead>
+                    <TableHead className="text-right font-bold text-foreground">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {loading ? (
                     <TableRow>
-                      <TableCell colSpan={8} className="h-32 text-center text-gray-200">
+                      <TableCell colSpan={8} className="h-32 text-center text-foreground">
                         <div className="flex flex-col items-center justify-center gap-2">
                           <div className="h-6 w-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
                           <p className="font-medium">Loading orders...</p>
@@ -347,36 +343,40 @@ export default function OrdersPage() {
                     </TableRow>
                   ) : filteredOrders.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={8} className="h-32 text-center text-gray-200 font-medium">No orders found.</TableCell>
+                      <TableCell colSpan={8} className="h-32 text-center text-foreground font-medium">No orders found.</TableCell>
                     </TableRow>
                   ) : (
                     filteredOrders.map((order, index) => {
                       const status = statusConfig[order.status || 'pending'] || statusConfig.pending;
                       const StatusIcon = status.icon;
                       return (
-                        <TableRow key={order.id || `order-${index}`} className="border-gray-800 hover:bg-gray-800/30 transition-colors">
-                          <TableCell>
+                        <TableRow 
+                          key={order.id || `order-${index}`} 
+                          className="border-border/50 hover:bg-secondary/30 transition-colors cursor-pointer"
+                          onClick={() => setSelectedOrder(order)}
+                        >
+                          <TableCell onClick={(e) => e.stopPropagation()}>
                             <Checkbox
                               checked={selectedOrders.includes(order.id!)}
                               onCheckedChange={() => toggleOrderSelection(order.id!)}
-                              className="border-gray-600"
+                              className="border-border"
                             />
                           </TableCell>
-                          <TableCell className="font-mono text-xs text-white font-bold">
+                          <TableCell className="font-mono text-xs text-foreground font-bold">
                             #{formatOrderId(order.id)}
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2">
-                              <Avatar className="h-8 w-8 border border-gray-700">
-                                <AvatarFallback className="bg-gray-800 text-white text-xs font-bold">{order.customerName?.slice(0, 2).toUpperCase()}</AvatarFallback>
+                              <Avatar className="h-8 w-8 border border-border/50">
+                                <AvatarFallback className="bg-secondary text-foreground text-xs font-bold">{order.customerName?.slice(0, 2).toUpperCase()}</AvatarFallback>
                               </Avatar>
                               <div className="flex flex-col">
-                                <span className="font-semibold text-white text-sm">{order.customerName}</span>
-                                <span className="text-xs text-gray-300">{order.customerPhone}</span>
+                                <span className="font-semibold text-foreground text-sm">{order.customerName}</span>
+                                <span className="text-xs text-muted-foreground">{order.customerPhone}</span>
                               </div>
                             </div>
                           </TableCell>
-                          <TableCell className="text-gray-100 text-sm font-medium">
+                          <TableCell className="text-foreground text-sm font-medium">
                             {order.restaurantName}
                           </TableCell>
                           <TableCell className="text-green-300 font-bold text-sm">
@@ -388,40 +388,43 @@ export default function OrdersPage() {
                               {status.label}
                             </Badge>
                           </TableCell>
-                          <TableCell className="text-xs text-gray-200 font-medium">
+                          <TableCell className="text-xs text-foreground font-medium">
                             {formatDate(order.createdAt).split(' ')[1] || 'N/A'}
                           </TableCell>
                           <TableCell className="text-right">
                             <div className="flex items-center justify-end gap-2">
                               <Button
-                                onClick={() => setSelectedOrder(order)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedOrder(order);
+                                }}
                                 size="sm"
                                 variant="ghost"
-                                className="h-8 px-3 text-gray-200 hover:text-white hover:bg-gray-800"
+                                className="h-8 px-3 text-foreground hover:text-foreground hover:bg-secondary"
                               >
                                 <Eye className="h-4 w-4 mr-1" />
                                 View
                               </Button>
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                  <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-white hover:bg-gray-800 rounded-full">
+                                  <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-secondary rounded-full">
                                     <MoreHorizontal className="h-4 w-4" />
                                   </Button>
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="bg-gray-900 border-gray-800 text-gray-200 w-40">
-                                  <DropdownMenuItem onClick={() => updateOrderStatus(order.id!, 'confirmed')} className="hover:bg-gray-800 hover:text-white cursor-pointer">
+                                <DropdownMenuContent align="end" className="bg-card border-border/50 text-foreground w-40">
+                                  <DropdownMenuItem onClick={() => updateOrderStatus(order.id!, 'confirmed')} className="hover:bg-secondary hover:text-foreground cursor-pointer">
                                     <CheckCircle className="mr-2 h-4 w-4 text-blue-400" />
                                     Confirm
                                   </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={() => updateOrderStatus(order.id!, 'preparing')} className="hover:bg-gray-800 hover:text-white cursor-pointer">
+                                  <DropdownMenuItem onClick={() => updateOrderStatus(order.id!, 'preparing')} className="hover:bg-secondary hover:text-foreground cursor-pointer">
                                     <ChefHat className="mr-2 h-4 w-4 text-orange-400" />
                                     Preparing
                                   </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={() => updateOrderStatus(order.id!, 'out_for_delivery')} className="hover:bg-gray-800 hover:text-white cursor-pointer">
+                                  <DropdownMenuItem onClick={() => updateOrderStatus(order.id!, 'out_for_delivery')} className="hover:bg-secondary hover:text-foreground cursor-pointer">
                                     <Truck className="mr-2 h-4 w-4 text-cyan-400" />
                                     Dispatch
                                   </DropdownMenuItem>
-                                  <DropdownMenuSeparator className="bg-gray-800" />
+                                  <DropdownMenuSeparator className="bg-secondary" />
                                   <DropdownMenuItem onClick={() => updateOrderStatus(order.id!, 'cancelled')} className="hover:bg-red-950/30 hover:text-red-300 cursor-pointer text-red-400">
                                     <XCircle className="mr-2 h-4 w-4" />
                                     Cancel
@@ -443,29 +446,29 @@ export default function OrdersPage() {
 
       {/* Enhanced Order Details Dialog */}
       <Dialog open={!!selectedOrder} onOpenChange={() => setSelectedOrder(null)}>
-        <DialogContent className="bg-gray-900 border-gray-800 text-white sm:max-w-[800px] p-0 overflow-hidden gap-0 max-h-[90vh]">
-          <div className="bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 p-6 border-b border-gray-700">
+        <DialogContent className="bg-card border-border/50 text-foreground sm:max-w-[800px] p-0 overflow-hidden gap-0 max-h-[90vh]">
+          <div className="bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 p-6 border-b border-border/50">
             <div className="flex justify-between items-start">
               <div className="space-y-1">
                 <div className="flex items-center gap-3">
-                  <DialogTitle className="text-2xl font-bold text-white">Order #{formatOrderId(selectedOrder?.id)}</DialogTitle>
+                  <DialogTitle className="text-2xl font-bold text-foreground">Order #{formatOrderId(selectedOrder?.id)}</DialogTitle>
                   <Badge variant="outline" className={`${statusConfig[selectedOrder?.status || 'pending'].color} ${statusConfig[selectedOrder?.status || 'pending'].bgColor} border text-sm px-3 py-1 font-bold`}>
                     {statusConfig[selectedOrder?.status || 'pending'].label}
                   </Badge>
                 </div>
-                <p className="text-gray-200 text-sm flex items-center gap-2 font-medium">
+                <p className="text-foreground text-sm flex items-center gap-2 font-medium">
                   <Calendar className="h-3.5 w-3.5" />
                   {formatDate(selectedOrder?.createdAt)}
                 </p>
               </div>
-              <Button variant="outline" size="sm" className="border-gray-700 text-gray-200 gap-2 hover:bg-gray-800 hover:text-white">
+              <Button variant="outline" size="sm" className="border-border/50 text-foreground gap-2 hover:bg-secondary hover:text-foreground">
                 <Printer className="h-4 w-4" /> Print Invoice
               </Button>
             </div>
 
             {/* Enhanced Status Timeline */}
             <div className="mt-8 relative">
-              <div className="absolute top-1/2 left-0 right-0 h-1 bg-gray-800 -translate-y-1/2 hidden md:block rounded-full" />
+              <div className="absolute top-1/2 left-0 right-0 h-1 bg-secondary -translate-y-1/2 hidden md:block rounded-full" />
               <div className="flex justify-between relative z-10 overflow-x-auto pb-2 md:pb-0 gap-4 md:gap-0">
                 {timelineSteps.map((step, idx) => {
                   const statusMap: { [key: string]: number } = { 'pending': 1, 'confirmed': 2, 'preparing': 3, 'out_for_delivery': 4, 'delivered': 5 };
@@ -479,12 +482,12 @@ export default function OrdersPage() {
                   return (
                     <div key={step.id} className="flex flex-col items-center gap-2 min-w-[90px]">
                       <div className={`h-10 w-10 rounded-full flex items-center justify-center border-2 transition-all duration-300 ${isActive
-                        ? 'bg-blue-600 border-blue-500 text-white shadow-lg shadow-blue-500/50'
-                        : 'bg-gray-900 border-gray-700 text-gray-500'
+                        ? 'bg-blue-600 border-blue-500 text-foreground shadow-lg shadow-blue-500/50'
+                        : 'bg-card border-border/50 text-muted-foreground'
                         } ${isCurrent ? 'ring-2 ring-blue-400 ring-offset-2 ring-offset-gray-900' : ''}`}>
                         <Icon className="h-5 w-5" />
                       </div>
-                      <span className={`text-xs font-bold whitespace-nowrap ${isActive ? 'text-blue-300' : 'text-gray-500'}`}>
+                      <span className={`text-xs font-bold whitespace-nowrap ${isActive ? 'text-blue-300' : 'text-muted-foreground'}`}>
                         {step.label}
                       </span>
                     </div>
@@ -500,11 +503,11 @@ export default function OrdersPage() {
           </div>
 
           <ScrollArea className="max-h-[500px]">
-            <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-950/30">
+            <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6 bg-background/30">
               {/* Customer & Restaurant Info */}
               <div className="space-y-4">
-                <div className="bg-gradient-to-br from-gray-900 to-gray-800 border border-gray-700 rounded-xl p-5 shadow-lg">
-                  <h4 className="text-sm font-bold text-gray-200 uppercase tracking-wider mb-4 flex items-center gap-2">
+                <div className="bg-gradient-to-br from-gray-900 to-gray-800 border border-border/50 rounded-xl p-5 shadow-lg">
+                  <h4 className="text-sm font-bold text-foreground uppercase tracking-wider mb-4 flex items-center gap-2">
                     <User className="h-4 w-4" />
                     Customer Details
                   </h4>
@@ -513,21 +516,21 @@ export default function OrdersPage() {
                       <AvatarFallback className="bg-blue-900 text-blue-200 font-bold text-lg">{selectedOrder?.customerName?.charAt(0)}</AvatarFallback>
                     </Avatar>
                     <div>
-                      <p className="text-white font-bold text-lg">{selectedOrder?.customerName}</p>
+                      <p className="text-foreground font-bold text-lg">{selectedOrder?.customerName}</p>
                       <p className="text-sm text-blue-300 font-medium flex items-center gap-1">
                         <Phone className="h-3 w-3" />
                         {selectedOrder?.customerPhone}
                       </p>
                     </div>
                   </div>
-                  <div className="flex gap-2 text-sm text-gray-200 bg-gray-950/50 p-3 rounded-lg border border-gray-800/50">
+                  <div className="flex gap-2 text-sm text-foreground bg-background/50 p-3 rounded-lg border border-border/50/50">
                     <MapPin className="h-4 w-4 shrink-0 mt-0.5 text-blue-400" />
                     <span className="line-clamp-3 font-medium">{(selectedOrder?.deliveryAddress as any)?.address || (typeof selectedOrder?.deliveryAddress === 'string' ? selectedOrder?.deliveryAddress : '')}</span>
                   </div>
                 </div>
 
-                <div className="bg-gradient-to-br from-gray-900 to-gray-800 border border-gray-700 rounded-xl p-5 shadow-lg">
-                  <h4 className="text-sm font-bold text-gray-200 uppercase tracking-wider mb-4 flex items-center gap-2">
+                <div className="bg-gradient-to-br from-gray-900 to-gray-800 border border-border/50 rounded-xl p-5 shadow-lg">
+                  <h4 className="text-sm font-bold text-foreground uppercase tracking-wider mb-4 flex items-center gap-2">
                     <ChefHat className="h-4 w-4" />
                     Restaurant
                   </h4>
@@ -536,47 +539,47 @@ export default function OrdersPage() {
                       <ChefHat className="h-6 w-6 text-orange-400" />
                     </div>
                     <div>
-                      <p className="text-white font-bold text-lg">{selectedOrder?.restaurantName}</p>
-                      <p className="text-sm text-gray-400 font-mono">ID: {selectedOrder?.restaurantId?.slice(0, 8)}</p>
+                      <p className="text-foreground font-bold text-lg">{selectedOrder?.restaurantName}</p>
+                      <p className="text-sm text-muted-foreground font-mono">ID: {selectedOrder?.restaurantId?.slice(0, 8)}</p>
                     </div>
                   </div>
                 </div>
               </div>
 
               {/* Order Items */}
-              <div className="bg-gradient-to-br from-gray-900 to-gray-800 border border-gray-700 rounded-xl flex flex-col h-full shadow-lg">
-                <div className="p-5 border-b border-gray-700 flex justify-between items-center">
-                  <h4 className="text-sm font-bold text-gray-200 uppercase tracking-wider flex items-center gap-2">
+              <div className="bg-gradient-to-br from-gray-900 to-gray-800 border border-border/50 rounded-xl flex flex-col h-full shadow-lg">
+                <div className="p-5 border-b border-border/50 flex justify-between items-center">
+                  <h4 className="text-sm font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
                     <ShoppingBag className="h-4 w-4" />
                     Order Items
                   </h4>
-                  <span className="text-xs text-gray-400 bg-gray-950 px-2 py-1 rounded-full font-bold">{selectedOrder?.items?.length} Items</span>
+                  <span className="text-xs text-muted-foreground bg-background px-2 py-1 rounded-full font-bold">{selectedOrder?.items?.length} Items</span>
                 </div>
                 <div className="flex-1 overflow-y-auto max-h-[250px] p-3 space-y-2">
                   {selectedOrder?.items?.map((item, idx) => (
-                    <div key={idx} className="flex justify-between items-center bg-gray-800/30 hover:bg-gray-800/50 p-3 rounded-lg transition-colors border border-gray-700/50">
+                    <div key={idx} className="flex justify-between items-center bg-secondary/30 hover:bg-secondary/50 p-3 rounded-lg transition-colors border border-border/50/50">
                       <div className="flex items-center gap-3">
                         <span className="bg-blue-900/50 text-blue-200 h-7 w-7 rounded flex items-center justify-center text-xs font-bold border border-blue-700/50">
                           {item.quantity}x
                         </span>
-                        <span className="text-sm font-semibold text-gray-100">{item.name}</span>
+                        <span className="text-sm font-semibold text-foreground">{item.name}</span>
                       </div>
                       <span className="text-sm font-bold text-green-300">₹{item.price * item.quantity}</span>
                     </div>
                   ))}
                 </div>
-                <div className="p-5 bg-gray-950/70 border-t border-gray-700">
-                  <div className="flex justify-between items-center mb-2 text-gray-300">
+                <div className="p-5 bg-background/70 border-t border-border/50">
+                  <div className="flex justify-between items-center mb-2 text-muted-foreground">
                     <span className="font-medium">Subtotal</span>
                     <span className="font-bold">₹{selectedOrder?.total}</span>
                   </div>
-                  <div className="flex justify-between items-center mb-4 text-gray-300">
+                  <div className="flex justify-between items-center mb-4 text-muted-foreground">
                     <span className="font-medium">Delivery Fee</span>
                     <span className="text-green-400 font-bold">Free</span>
                   </div>
-                  <div className="w-full h-px bg-gray-700 mb-4" />
+                  <div className="w-full h-px bg-secondary mb-4" />
                   <div className="flex justify-between items-center">
-                    <span className="text-lg font-bold text-white">Total Amount</span>
+                    <span className="text-lg font-bold text-foreground">Total Amount</span>
                     <span className="text-2xl font-bold text-green-400">₹{selectedOrder?.total}</span>
                   </div>
                 </div>
@@ -584,9 +587,9 @@ export default function OrdersPage() {
             </div>
           </ScrollArea>
 
-          <div className="bg-gray-900 border-t border-gray-800 p-4">
+          <div className="bg-card border-t border-border/50 p-4">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="text-sm text-gray-300 font-medium">
+              <div className="text-sm text-muted-foreground font-medium">
                 Quick Status Update:
               </div>
               <div className="flex flex-wrap gap-2 justify-end">
@@ -596,7 +599,7 @@ export default function OrdersPage() {
                     variant="outline"
                     size="sm"
                     onClick={() => updateOrderStatus(selectedOrder?.id!, status)}
-                    className={`border-gray-700 bg-gray-800/50 hover:bg-gray-700 hover:text-white font-bold ${selectedOrder?.status === status ? 'bg-blue-600/30 border-blue-500 text-blue-300' : 'text-gray-300'}`}
+                    className={`border-border/50 bg-secondary/50 hover:bg-secondary hover:text-foreground font-bold ${selectedOrder?.status === status ? 'bg-blue-600/30 border-blue-500 text-blue-300' : 'text-muted-foreground'}`}
                   >
                     {statusConfig[status].label}
                   </Button>
@@ -607,5 +610,6 @@ export default function OrdersPage() {
         </DialogContent>
       </Dialog>
     </div>
+    </ProtectedRoute>
   );
 }

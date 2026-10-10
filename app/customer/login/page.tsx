@@ -170,6 +170,20 @@ export default function LoginPage() {
 
       await setDoc(customerRef, newCustomerData);
 
+      // Send Welcome Email via Resend
+      if (googleUser.email) {
+        fetch('/api/email/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'welcome',
+            email: googleUser.email,
+            name: googleUser.displayName || 'Foodie',
+            role: 'customer',
+          }),
+        }).catch((err) => console.error('[Resend] Google customer welcome email notice:', err));
+      }
+
       // Register new referral code
       await setDoc(doc(db, 'referralCodes', newReferralCode), {
         code: newReferralCode,
@@ -463,6 +477,20 @@ export default function LoginPage() {
       }
 
       await setDoc(doc(db, 'customers', newUid), customerData);
+
+      // Send Welcome Email via Resend
+      if (email) {
+        fetch('/api/email/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'welcome',
+            email,
+            name,
+            role: 'customer',
+          }),
+        }).catch((err) => console.error('[Resend] Customer welcome email notice:', err));
+      }
 
       // Register new referral code in referralCodes registry
       await setDoc(doc(db, 'referralCodes', myNewReferralCode), {

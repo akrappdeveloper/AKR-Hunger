@@ -196,6 +196,42 @@ export default function AvailableOrdersPage() {
                 deliveryStatus: 'going_to_restaurant',
                 updatedAt: serverTimestamp()
             });
+
+            // Send Email Update to Customer via Resend
+            (async () => {
+                try {
+                    let customerEmail = (targetOrder as any)?.customerEmail || '';
+                    let customerName = (targetOrder as any)?.customerName || 'Foodie';
+                    if (!customerEmail && targetOrder?.customerId) {
+                        const custSnap = await getDoc(doc(db, 'customers', targetOrder.customerId));
+                        if (custSnap.exists()) {
+                            customerEmail = custSnap.data()?.email || '';
+                            customerName = custSnap.data()?.name || customerName;
+                        }
+                    }
+
+                    if (customerEmail) {
+                        fetch('/api/email/send', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                type: 'delivery_assigned',
+                                orderId: orderId,
+                                customerEmail,
+                                customerName,
+                                deliveryPersonName: deliveryPartner?.name || 'Assigned Delivery Partner',
+                                deliveryPersonPhone: deliveryPartner?.phone || '',
+                                deliveryVehicle: deliveryPartner?.vehicle || 'Delivery Vehicle',
+                                restaurantName: targetOrder?.restaurantName || 'Restaurant',
+                                deliveryOtp: targetOrder?.deliveryOtp || '',
+                            }),
+                        }).catch((err) => console.error('[Resend] Rider assigned email notice:', err));
+                    }
+                } catch (emailErr) {
+                    console.warn('[Resend] Error resolving customer email for rider assignment:', emailErr);
+                }
+            })();
+
             toast.success("Order accepted! Go to Dashboard to start.");
             router.push('/delivery');
         } catch (error) {

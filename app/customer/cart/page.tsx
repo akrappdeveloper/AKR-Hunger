@@ -423,6 +423,7 @@ export default function CartPage() {
           updatedAt: new Date(),
           customerName: realtimeCustomer?.name || 'Guest',
           customerPhone: verifiedPhone || realtimeCustomer?.phone || '',
+          customerEmail: user.email || '',
           restaurantName: restaurant?.name || 'Unknown Restaurant',
           deliveryOtp: Math.floor(1000 + Math.random() * 9000).toString(),
         };
@@ -455,6 +456,43 @@ export default function CartPage() {
           method: 'POST',
           body: JSON.stringify({ orderId }),
         }).catch((err) => console.error('Failed to trigger notification', err));
+
+        // Send Order Confirmation & Wallet Payment Receipt Emails via Resend
+        if (user.email) {
+          fetch('/api/email/send', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              type: 'order_placed',
+              orderId,
+              customerEmail: user.email,
+              customerName: realtimeCustomer?.name || 'Foodie',
+              restaurantName: restaurant?.name || 'Restaurant',
+              items: orderItems,
+              total,
+              subtotal,
+              deliveryCharge,
+              taxes,
+              discountAmount,
+              paymentMethod: 'wallet',
+              deliveryAddress,
+            }),
+          }).catch((err) => console.error('[Resend] Order confirmation email notice:', err));
+
+          fetch('/api/email/send', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              type: 'payment_verified',
+              orderId,
+              customerEmail: user.email,
+              customerName: realtimeCustomer?.name || 'Foodie',
+              amount: total,
+              paymentMethod: 'wallet',
+              status: 'completed',
+            }),
+          }).catch((err) => console.error('[Resend] Wallet receipt email notice:', err));
+        }
 
         // Notify Customer of Order & Wallet Payment
         notifyOrderPlaced({
@@ -504,6 +542,7 @@ export default function CartPage() {
         updatedAt: new Date(),
         customerName: realtimeCustomer?.name || 'Guest',
         customerPhone: verifiedPhone || realtimeCustomer?.phone || '',
+        customerEmail: user.email || '',
         restaurantName: restaurant?.name || 'Unknown Restaurant',
         deliveryOtp: Math.floor(1000 + Math.random() * 9000).toString(),
       };
@@ -526,6 +565,29 @@ export default function CartPage() {
           method: 'POST',
           body: JSON.stringify({ orderId }),
         }).catch((err) => console.error('Failed to trigger notification', err));
+
+        // Send Order Confirmation Email via Resend
+        if (user.email) {
+          fetch('/api/email/send', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              type: 'order_placed',
+              orderId,
+              customerEmail: user.email,
+              customerName: realtimeCustomer?.name || 'Foodie',
+              restaurantName: restaurant?.name || 'Restaurant',
+              items: orderItems,
+              total,
+              subtotal,
+              deliveryCharge,
+              taxes,
+              discountAmount,
+              paymentMethod: 'cod',
+              deliveryAddress,
+            }),
+          }).catch((err) => console.error('[Resend] COD order confirmation email notice:', err));
+        }
 
         // Notify Customer of Order & COD Payment
         notifyOrderPlaced({
@@ -604,6 +666,44 @@ export default function CartPage() {
               method: 'POST',
               body: JSON.stringify({ orderId: orderId })
             }).catch(err => console.error("Failed to trigger notification", err));
+
+            // Send Order Confirmation & Payment Receipt Emails via Resend
+            if (user?.email) {
+              fetch('/api/email/send', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  type: 'order_placed',
+                  orderId,
+                  customerEmail: user.email,
+                  customerName: realtimeCustomer?.name || 'Foodie',
+                  restaurantName: restaurant?.name || 'Restaurant',
+                  items: orderItems,
+                  total: amount,
+                  subtotal,
+                  deliveryCharge,
+                  taxes,
+                  discountAmount,
+                  paymentMethod: 'online',
+                  deliveryAddress,
+                }),
+              }).catch((err) => console.error('[Resend] Online order confirmation email notice:', err));
+
+              fetch('/api/email/send', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  type: 'payment_verified',
+                  orderId,
+                  customerEmail: user.email,
+                  customerName: realtimeCustomer?.name || 'Foodie',
+                  amount,
+                  paymentMethod: 'online',
+                  paymentId: response.razorpay_payment_id,
+                  status: 'completed',
+                }),
+              }).catch((err) => console.error('[Resend] Online payment receipt email notice:', err));
+            }
 
             // Notify Customer of Payment Success & Confirmed Order
             notifyPaymentResult({

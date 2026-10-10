@@ -42,6 +42,7 @@ public class PartnerProfileFragment extends Fragment {
     private TextView tvName, tvPhone, tvKycBadge;
     private TextView tvRating, tvDeliveries;
     private TextView tvVehicleType, tvVehicleNumber, tvLicense, tvEmergency;
+    private TextView tvProfileRcStatus, tvProfileDlStatus;
     private View btnWallet, btnReviews, btnPincodes, btnRadar, btnSettings, btnSupport, btnSos;
     private View ratingLayoutClick;
     private MaterialButton btnLogout;
@@ -76,6 +77,8 @@ public class PartnerProfileFragment extends Fragment {
         tvVehicleNumber = view.findViewById(R.id.tv_profile_vehicle_number);
         tvLicense = view.findViewById(R.id.tv_profile_license);
         tvEmergency = view.findViewById(R.id.tv_profile_emergency);
+        tvProfileRcStatus = view.findViewById(R.id.tv_profile_rc_status);
+        tvProfileDlStatus = view.findViewById(R.id.tv_profile_dl_status);
 
         ratingLayoutClick = view.findViewById(R.id.layout_profile_rating_click);
         btnWallet = view.findViewById(R.id.btn_profile_wallet);
@@ -136,6 +139,18 @@ public class PartnerProfileFragment extends Fragment {
                         tvVehicleNumber.setText(partner.getVehicleNumber());
                         tvLicense.setText(partner.getLicenseNumber());
                         tvEmergency.setText(partner.getEmergencyContact() != null ? partner.getEmergencyContact() : "Not provided");
+
+                        if (tvProfileRcStatus != null) {
+                            boolean hasRc = partner.getVehicleImage() != null && !partner.getVehicleImage().isEmpty();
+                            tvProfileRcStatus.setText(hasRc ? "Uploaded • Verified" : "Pending Upload");
+                            tvProfileRcStatus.setTextColor(getResources().getColor(hasRc ? R.color.veg_green : R.color.warning));
+                        }
+
+                        if (tvProfileDlStatus != null) {
+                            boolean hasDl = partner.getDrivingLicense() != null && !partner.getDrivingLicense().isEmpty();
+                            tvProfileDlStatus.setText(hasDl ? "Uploaded • Verified" : "Pending Upload");
+                            tvProfileDlStatus.setTextColor(getResources().getColor(hasDl ? R.color.veg_green : R.color.warning));
+                        }
                     }
                 });
     }

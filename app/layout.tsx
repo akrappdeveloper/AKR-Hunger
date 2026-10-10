@@ -63,7 +63,7 @@ export const metadata: Metadata = {
     'flexible delivery jobs',
     'earn money delivery',
   ],
-  metadataBase: new URL('https://akrhunger.vercel.app'),
+  metadataBase: new URL('https://shunger.vercel.app'),
   applicationName: 'Hunger',
   authors: [{ name: 'Hunger' }],
   generator: 'Next.js',
@@ -75,13 +75,13 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     locale: 'en_IN',
-    url: 'https://akrhunger.vercel.app',
+    url: 'https://shunger.vercel.app',
     siteName: 'Hunger',
     title: 'Hunger - Food Delivery & Restaurant Platform',
     description: 'Order delicious food online, partner with us as a restaurant, or earn as a delivery partner. Join thousands using Hunger!',
     images: [
       {
-        url: 'https://akrhunger.vercel.app/hunger.png',
+        url: 'https://shunger.vercel.app/hunger.png',
         width: 1200,
         height: 630,
         alt: 'Hunger - Food Delivery Platform',
@@ -96,7 +96,7 @@ export const metadata: Metadata = {
     creator: '@Hunger',
     title: 'Hunger - Food Delivery & Restaurant Platform',
     description: 'Order food, grow your restaurant, or earn as delivery partner',
-    images: ['https://akrhunger.vercel.app/hunger.png'],
+    images: ['https://shunger.vercel.app/hunger.png'],
   },
 
   // Icons

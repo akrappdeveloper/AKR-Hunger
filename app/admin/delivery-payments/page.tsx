@@ -341,17 +341,17 @@ export default function DeliveryPaymentsPage() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen bg-gray-950 text-white">
+      <div className="flex justify-center items-center h-screen bg-background text-foreground">
         <div className="flex flex-col items-center gap-3">
           <Loader />
-          <p className="text-gray-300 font-medium">Loading Rider Wallets & Financial Ledger...</p>
+          <p className="text-muted-foreground font-medium">Loading Rider Wallets & Financial Ledger...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto p-4 md:p-6 text-white">
+    <div className="space-y-6 max-w-7xl mx-auto p-4 md:p-6 text-foreground">
       {/* ─── PAGE HEADER ─────────────────────────────────────────────────── */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
@@ -360,10 +360,10 @@ export default function DeliveryPaymentsPage() {
               Admin Financial Control
             </span>
           </div>
-          <h1 className="text-3xl font-black tracking-tight text-white">
+          <h1 className="text-3xl font-black tracking-tight text-foreground">
             Delivery Partner <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-amber-500">Wallet & Settlement Hub</span>
           </h1>
-          <p className="text-gray-400 text-sm mt-0.5">
+          <p className="text-muted-foreground text-sm mt-0.5">
             Real-time double-entry ledger, COD cash limit controls, withdrawal approvals & configurable platform splits.
           </p>
         </div>
@@ -372,7 +372,7 @@ export default function DeliveryPaymentsPage() {
           <Button
             onClick={exportRidersLedger}
             variant="outline"
-            className="border-gray-700 bg-gray-900/60 text-white hover:bg-gray-800 text-xs font-bold rounded-xl"
+            className="border-border/50 bg-card/60 text-foreground hover:bg-secondary text-xs font-bold rounded-xl"
           >
             <Download className="h-4 w-4 mr-2" />
             Export Ledger
@@ -380,7 +380,7 @@ export default function DeliveryPaymentsPage() {
           <Button
             onClick={() => window.location.reload()}
             variant="outline"
-            className="border-gray-700 bg-gray-900/60 text-white hover:bg-gray-800 text-xs font-bold rounded-xl"
+            className="border-border/50 bg-card/60 text-foreground hover:bg-secondary text-xs font-bold rounded-xl"
           >
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
@@ -392,55 +392,55 @@ export default function DeliveryPaymentsPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="bg-gradient-to-br from-orange-500/15 via-red-500/5 to-transparent border border-orange-500/30 rounded-3xl p-5 backdrop-blur-xl">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-bold text-gray-400 uppercase">Platform COD Held</span>
+            <span className="text-xs font-bold text-muted-foreground uppercase">Platform COD Held</span>
             <Banknote className="w-5 h-5 text-orange-400" />
           </div>
           <p className="text-3xl font-black font-mono text-orange-400">
             ₹{totalPlatformCodOutstanding.toLocaleString('en-IN')}
           </p>
-          <p className="text-[11px] text-gray-400 mt-1">Cash held by riders across network</p>
+          <p className="text-[11px] text-muted-foreground mt-1">Cash held by riders across network</p>
         </Card>
 
         <Card className="bg-gradient-to-br from-emerald-500/15 via-teal-500/5 to-transparent border border-emerald-500/30 rounded-3xl p-5 backdrop-blur-xl">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-bold text-gray-400 uppercase">Total Available Earnings</span>
+            <span className="text-xs font-bold text-muted-foreground uppercase">Total Available Earnings</span>
             <IndianRupee className="w-5 h-5 text-emerald-400" />
           </div>
           <p className="text-3xl font-black font-mono text-emerald-400">
             ₹{totalPlatformAvailableEarnings.toLocaleString('en-IN')}
           </p>
-          <p className="text-[11px] text-gray-400 mt-1">Total rider withdrawable balances</p>
+          <p className="text-[11px] text-muted-foreground mt-1">Total rider withdrawable balances</p>
         </Card>
 
-        <Card className="bg-white/5 border border-white/10 rounded-3xl p-5 backdrop-blur-xl">
+        <Card className="bg-card/5 border border-border/50 rounded-3xl p-5 backdrop-blur-xl">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-bold text-gray-400 uppercase">Pending Withdrawals</span>
+            <span className="text-xs font-bold text-muted-foreground uppercase">Pending Withdrawals</span>
             <ArrowDownToLine className="w-5 h-5 text-teal-400" />
           </div>
-          <p className="text-3xl font-black font-mono text-white">
+          <p className="text-3xl font-black font-mono text-foreground">
             {pendingWithdrawalsCount}
           </p>
-          <p className="text-[11px] text-gray-400 mt-1">Requests waiting for disbursement</p>
+          <p className="text-[11px] text-muted-foreground mt-1">Requests waiting for disbursement</p>
         </Card>
 
-        <Card className="bg-white/5 border border-white/10 rounded-3xl p-5 backdrop-blur-xl">
+        <Card className="bg-card/5 border border-border/50 rounded-3xl p-5 backdrop-blur-xl">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-bold text-gray-400 uppercase">Pending COD Deposits</span>
+            <span className="text-xs font-bold text-muted-foreground uppercase">Pending COD Deposits</span>
             <CheckCircle2 className="w-5 h-5 text-amber-400" />
           </div>
-          <p className="text-3xl font-black font-mono text-white">
+          <p className="text-3xl font-black font-mono text-foreground">
             {pendingSettlementsCount}
           </p>
-          <p className="text-[11px] text-gray-400 mt-1">Settlements requiring admin verification</p>
+          <p className="text-[11px] text-muted-foreground mt-1">Settlements requiring admin verification</p>
         </Card>
       </div>
 
       {/* ─── TABS NAVIGATION ──────────────────────────────────────────────── */}
       <Tabs value={activeTab} onValueChange={(val: any) => setActiveTab(val)} className="space-y-4">
-        <TabsList className="bg-white/5 border border-white/10 p-1 rounded-2xl flex flex-wrap h-auto gap-1">
+        <TabsList className="bg-card/5 border border-border/50 p-1 rounded-2xl flex flex-wrap h-auto gap-1">
           <TabsTrigger
             value="riders"
-            className="data-[state=active]:bg-orange-500 data-[state=active]:text-white rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 py-2 px-4"
+            className="data-[state=active]:bg-orange-500 data-[state=active]:text-foreground rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 py-2 px-4"
           >
             <Bike className="w-4 h-4" />
             Riders & Wallets ({riders.length})
@@ -448,12 +448,12 @@ export default function DeliveryPaymentsPage() {
 
           <TabsTrigger
             value="withdrawals"
-            className="data-[state=active]:bg-teal-600 data-[state=active]:text-white rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 py-2 px-4"
+            className="data-[state=active]:bg-teal-600 data-[state=active]:text-foreground rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 py-2 px-4"
           >
             <ArrowDownToLine className="w-4 h-4" />
             Withdrawals ({withdrawals.length})
             {pendingWithdrawalsCount > 0 && (
-              <Badge className="bg-teal-400 text-black text-[10px] px-1.5 py-0 rounded-full font-black ml-1">
+              <Badge className="bg-teal-400 text-foreground text-[10px] px-1.5 py-0 rounded-full font-black ml-1">
                 {pendingWithdrawalsCount}
               </Badge>
             )}
@@ -461,12 +461,12 @@ export default function DeliveryPaymentsPage() {
 
           <TabsTrigger
             value="settlements"
-            className="data-[state=active]:bg-amber-600 data-[state=active]:text-white rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 py-2 px-4"
+            className="data-[state=active]:bg-amber-600 data-[state=active]:text-foreground rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 py-2 px-4"
           >
             <Receipt className="w-4 h-4" />
             COD Settlements ({settlements.length})
             {pendingSettlementsCount > 0 && (
-              <Badge className="bg-amber-400 text-black text-[10px] px-1.5 py-0 rounded-full font-black ml-1">
+              <Badge className="bg-amber-400 text-foreground text-[10px] px-1.5 py-0 rounded-full font-black ml-1">
                 {pendingSettlementsCount}
               </Badge>
             )}
@@ -474,7 +474,7 @@ export default function DeliveryPaymentsPage() {
 
           <TabsTrigger
             value="settings"
-            className="data-[state=active]:bg-blue-600 data-[state=active]:text-white rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 py-2 px-4"
+            className="data-[state=active]:bg-blue-600 data-[state=active]:text-foreground rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 py-2 px-4"
           >
             <Settings className="w-4 h-4" />
             Earning & Limit Settings
@@ -485,15 +485,15 @@ export default function DeliveryPaymentsPage() {
         <TabsContent value="riders" className="space-y-4">
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
             <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 placeholder="Search riders by name, phone, or email..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 bg-black/40 border-white/10 rounded-2xl text-xs text-white"
+                className="pl-10 bg-background/40 border-border/50 rounded-2xl text-xs text-foreground"
               />
             </div>
-            <p className="text-xs text-gray-400 self-center">
+            <p className="text-xs text-muted-foreground self-center">
               Showing {filteredRiders.length} delivery partners
             </p>
           </div>
@@ -511,20 +511,20 @@ export default function DeliveryPaymentsPage() {
               return (
                 <Card
                   key={r.id}
-                  className={`bg-white/5 border rounded-3xl p-5 backdrop-blur-xl space-y-4 transition-all hover:border-orange-500/40 ${
-                    isBlocked ? 'border-red-500/40 bg-red-950/10' : 'border-white/10'
+                  className={`bg-card/5 border rounded-3xl p-5 backdrop-blur-xl space-y-4 transition-all hover:border-orange-500/40 ${
+                    isBlocked ? 'border-red-500/40 bg-red-950/10' : 'border-border/50'
                   }`}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3">
-                      <Avatar className="h-10 w-10 border border-white/20">
+                      <Avatar className="h-10 w-10 border border-border">
                         <AvatarFallback className="bg-orange-500/20 text-orange-300 font-bold text-xs">
                           {r.name?.slice(0, 2).toUpperCase() || 'DP'}
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <h3 className="font-bold text-white text-sm truncate max-w-[150px]">{r.name || 'Delivery Partner'}</h3>
-                        <p className="text-gray-400 text-[11px] font-mono">{r.phone || 'No phone'}</p>
+                        <h3 className="font-bold text-foreground text-sm truncate max-w-[150px]">{r.name || 'Delivery Partner'}</h3>
+                        <p className="text-muted-foreground text-[11px] font-mono">{r.phone || 'No phone'}</p>
                       </div>
                     </div>
 
@@ -539,14 +539,14 @@ export default function DeliveryPaymentsPage() {
 
                   {/* Financial Grid */}
                   <div className="grid grid-cols-2 gap-2 text-xs">
-                    <div className="p-2.5 rounded-xl bg-black/40 border border-white/5">
-                      <span className="text-gray-400 text-[10px] uppercase font-bold block">Available Earnings</span>
+                    <div className="p-2.5 rounded-xl bg-background/40 border border-border/50">
+                      <span className="text-muted-foreground text-[10px] uppercase font-bold block">Available Earnings</span>
                       <span className="font-mono font-bold text-emerald-400 text-base">₹{availableEarnings.toLocaleString('en-IN')}</span>
                     </div>
 
-                    <div className="p-2.5 rounded-xl bg-black/40 border border-white/5">
-                      <span className="text-gray-400 text-[10px] uppercase font-bold block">COD Outstanding</span>
-                      <span className={`font-mono font-bold text-base ${codOutstanding > 0 ? 'text-orange-400' : 'text-gray-300'}`}>
+                    <div className="p-2.5 rounded-xl bg-background/40 border border-border/50">
+                      <span className="text-muted-foreground text-[10px] uppercase font-bold block">COD Outstanding</span>
+                      <span className={`font-mono font-bold text-base ${codOutstanding > 0 ? 'text-orange-400' : 'text-muted-foreground'}`}>
                         ₹{codOutstanding.toLocaleString('en-IN')}
                       </span>
                     </div>
@@ -554,11 +554,11 @@ export default function DeliveryPaymentsPage() {
 
                   {/* COD Limit Progress */}
                   <div className="space-y-1 text-[11px]">
-                    <div className="flex justify-between text-gray-400">
+                    <div className="flex justify-between text-muted-foreground">
                       <span>COD Limit: ₹{codLimit}</span>
                       <span>Used: {Math.round((codOutstanding / codLimit) * 100)}%</span>
                     </div>
-                    <div className="w-full bg-white/10 h-1.5 rounded-full overflow-hidden">
+                    <div className="w-full bg-card/10 h-1.5 rounded-full overflow-hidden">
                       <div
                         className={`h-full rounded-full ${isBlocked ? 'bg-red-500' : 'bg-orange-500'}`}
                         style={{ width: `${Math.min(100, (codOutstanding / codLimit) * 100)}%` }}
@@ -567,7 +567,7 @@ export default function DeliveryPaymentsPage() {
                   </div>
 
                   {/* Withdrawn & Total */}
-                  <div className="flex justify-between text-[11px] text-gray-400 pt-1 border-t border-white/5">
+                  <div className="flex justify-between text-[11px] text-muted-foreground pt-1 border-t border-border/50">
                     <span>Withdrawn: ₹{withdrawn}</span>
                     <span>Lifetime: ₹{Number(r.totalEarnings || 0)}</span>
                   </div>
@@ -581,7 +581,7 @@ export default function DeliveryPaymentsPage() {
                         setSelectedRiderForLimit(r);
                         setNewCodLimit(codLimit.toString());
                       }}
-                      className="border-white/10 hover:bg-white/10 text-gray-300 text-[10px] h-8 rounded-xl font-bold"
+                      className="border-border/50 hover:bg-card/10 text-muted-foreground text-[10px] h-8 rounded-xl font-bold"
                     >
                       <Sliders className="w-3 h-3 mr-1" /> Limit
                     </Button>
@@ -594,7 +594,7 @@ export default function DeliveryPaymentsPage() {
                         setAdjustAmount('');
                         setAdjustReason('');
                       }}
-                      className="border-white/10 hover:bg-white/10 text-emerald-400 text-[10px] h-8 rounded-xl font-bold"
+                      className="border-border/50 hover:bg-card/10 text-emerald-400 text-[10px] h-8 rounded-xl font-bold"
                     >
                       <Plus className="w-3 h-3 mr-1" /> Adjust
                     </Button>
@@ -603,7 +603,7 @@ export default function DeliveryPaymentsPage() {
                       size="sm"
                       variant="outline"
                       onClick={() => setViewLedgerRider(r)}
-                      className="border-white/10 hover:bg-white/10 text-blue-400 text-[10px] h-8 rounded-xl font-bold"
+                      className="border-border/50 hover:bg-card/10 text-blue-400 text-[10px] h-8 rounded-xl font-bold"
                     >
                       <History className="w-3 h-3 mr-1" /> Ledger
                     </Button>
@@ -617,12 +617,12 @@ export default function DeliveryPaymentsPage() {
         {/* ─── TAB 2: WITHDRAWAL REQUESTS ──────────────────────────────────── */}
         <TabsContent value="withdrawals" className="space-y-4">
           <div className="flex justify-between items-center">
-            <h3 className="font-bold text-white text-base">Withdrawal Requests</h3>
-            <span className="text-xs text-gray-400">{withdrawals.length} total recorded requests</span>
+            <h3 className="font-bold text-foreground text-base">Withdrawal Requests</h3>
+            <span className="text-xs text-muted-foreground">{withdrawals.length} total recorded requests</span>
           </div>
 
           {withdrawals.length === 0 ? (
-            <Card className="bg-white/5 border border-white/10 rounded-3xl p-12 text-center text-gray-500 text-sm">
+            <Card className="bg-card/5 border border-border/50 rounded-3xl p-12 text-center text-muted-foreground text-sm">
               No withdrawal requests logged. When riders click "Withdraw Earnings", requests will appear here for one-click processing.
             </Card>
           ) : (
@@ -633,7 +633,7 @@ export default function DeliveryPaymentsPage() {
                 const isFailed = w.status === 'FAILED' || w.status === 'rejected';
 
                 return (
-                  <Card key={w.id || w.withdrawalId} className="bg-white/5 border border-white/10 rounded-2xl p-4 hover:bg-white/10 transition-colors">
+                  <Card key={w.id || w.withdrawalId} className="bg-card/5 border border-border/50 rounded-2xl p-4 hover:bg-card/10 transition-colors">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                       <div className="flex items-center gap-3.5">
                         <div className="w-11 h-11 rounded-xl bg-teal-500/15 border border-teal-500/30 flex items-center justify-center text-teal-400 shrink-0">
@@ -641,7 +641,7 @@ export default function DeliveryPaymentsPage() {
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
-                            <span className="font-bold text-white text-base">{w.riderName || w.userName || 'Delivery Partner'}</span>
+                            <span className="font-bold text-foreground text-base">{w.riderName || w.userName || 'Delivery Partner'}</span>
                             <Badge className={`text-[10px] font-bold ${
                               isCompleted
                                 ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
@@ -652,10 +652,10 @@ export default function DeliveryPaymentsPage() {
                               {w.status}
                             </Badge>
                           </div>
-                          <p className="text-gray-300 text-xs mt-0.5">
-                            Payout Dest: <span className="font-mono text-gray-200">{w.destinationReference || (w.bankDetails ? `${w.bankDetails.bankName} - ${w.bankDetails.accountNumber}` : 'Direct')}</span>
+                          <p className="text-muted-foreground text-xs mt-0.5">
+                            Payout Dest: <span className="font-mono text-foreground">{w.destinationReference || (w.bankDetails ? `${w.bankDetails.bankName} - ${w.bankDetails.accountNumber}` : 'Direct')}</span>
                           </p>
-                          <p className="text-gray-500 text-[11px] font-mono mt-0.5">
+                          <p className="text-muted-foreground text-[11px] font-mono mt-0.5">
                             ID: {w.withdrawalId || w.id} • {w.requestedAt?.toDate ? w.requestedAt.toDate().toLocaleString() : 'Recent'}
                           </p>
                         </div>
@@ -663,7 +663,7 @@ export default function DeliveryPaymentsPage() {
 
                       <div className="flex items-center gap-4 self-end sm:self-auto">
                         <div className="text-right">
-                          <span className="text-xs text-gray-400 block">Amount</span>
+                          <span className="text-xs text-muted-foreground block">Amount</span>
                           <span className="font-mono font-black text-emerald-400 text-xl">
                             ₹{Number(w.amount).toLocaleString('en-IN')}
                           </span>
@@ -674,7 +674,7 @@ export default function DeliveryPaymentsPage() {
                             <Button
                               size="sm"
                               onClick={() => handleReviewWithdrawal(w.id || w.withdrawalId, 'COMPLETED')}
-                              className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs h-9 rounded-xl"
+                              className="bg-emerald-600 hover:bg-emerald-500 text-foreground font-bold text-xs h-9 rounded-xl"
                             >
                               <Check className="w-4 h-4 mr-1" /> Approve
                             </Button>
@@ -700,12 +700,12 @@ export default function DeliveryPaymentsPage() {
         {/* ─── TAB 3: COD SETTLEMENTS ──────────────────────────────────────── */}
         <TabsContent value="settlements" className="space-y-4">
           <div className="flex justify-between items-center">
-            <h3 className="font-bold text-white text-base">COD Cash Settlements</h3>
-            <span className="text-xs text-gray-400">{settlements.length} total settlement entries</span>
+            <h3 className="font-bold text-foreground text-base">COD Cash Settlements</h3>
+            <span className="text-xs text-muted-foreground">{settlements.length} total settlement entries</span>
           </div>
 
           {settlements.length === 0 ? (
-            <Card className="bg-white/5 border border-white/10 rounded-3xl p-12 text-center text-gray-500 text-sm">
+            <Card className="bg-card/5 border border-border/50 rounded-3xl p-12 text-center text-muted-foreground text-sm">
               No COD settlement deposits recorded yet.
             </Card>
           ) : (
@@ -716,7 +716,7 @@ export default function DeliveryPaymentsPage() {
                 const isFailed = s.status === 'FAILED';
 
                 return (
-                  <Card key={s.id || s.settlementId} className="bg-white/5 border border-white/10 rounded-2xl p-4 hover:bg-white/10 transition-colors">
+                  <Card key={s.id || s.settlementId} className="bg-card/5 border border-border/50 rounded-2xl p-4 hover:bg-card/10 transition-colors">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                       <div className="flex items-center gap-3.5">
                         <div className="w-11 h-11 rounded-xl bg-orange-500/15 border border-orange-500/30 flex items-center justify-center text-orange-400 shrink-0">
@@ -724,7 +724,7 @@ export default function DeliveryPaymentsPage() {
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
-                            <span className="font-bold text-white text-base">{s.riderName || 'Rider'}</span>
+                            <span className="font-bold text-foreground text-base">{s.riderName || 'Rider'}</span>
                             <Badge className={`text-[10px] font-bold ${
                               isVerified
                                 ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
@@ -735,10 +735,10 @@ export default function DeliveryPaymentsPage() {
                               {s.status}
                             </Badge>
                           </div>
-                          <p className="text-gray-300 text-xs mt-0.5">
-                            Method: {s.paymentMethod} • Ref: <span className="font-mono text-gray-200">{s.transactionReference}</span>
+                          <p className="text-muted-foreground text-xs mt-0.5">
+                            Method: {s.paymentMethod} • Ref: <span className="font-mono text-foreground">{s.transactionReference}</span>
                           </p>
-                          <p className="text-gray-500 text-[11px] font-mono mt-0.5">
+                          <p className="text-muted-foreground text-[11px] font-mono mt-0.5">
                             ID: {s.settlementId || s.id} • {s.requestedAt?.toDate ? s.requestedAt.toDate().toLocaleString() : 'Recent'}
                           </p>
                         </div>
@@ -746,7 +746,7 @@ export default function DeliveryPaymentsPage() {
 
                       <div className="flex items-center gap-4 self-end sm:self-auto">
                         <div className="text-right">
-                          <span className="text-xs text-gray-400 block">Deposit Amount</span>
+                          <span className="text-xs text-muted-foreground block">Deposit Amount</span>
                           <span className="font-mono font-black text-orange-400 text-xl">
                             ₹{Number(s.amount).toLocaleString('en-IN')}
                           </span>
@@ -757,7 +757,7 @@ export default function DeliveryPaymentsPage() {
                             <Button
                               size="sm"
                               onClick={() => handleVerifySettlement(s.id || s.settlementId, 'VERIFIED')}
-                              className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs h-9 rounded-xl"
+                              className="bg-emerald-600 hover:bg-emerald-500 text-foreground font-bold text-xs h-9 rounded-xl"
                             >
                               <Check className="w-4 h-4 mr-1" /> Verify
                             </Button>
@@ -784,11 +784,11 @@ export default function DeliveryPaymentsPage() {
         <TabsContent value="settings" className="space-y-4">
           <Card className="bg-gradient-to-r from-blue-950/20 via-black to-indigo-950/20 border border-blue-500/30 rounded-3xl p-6 sm:p-7 backdrop-blur-2xl">
             <div className="mb-6">
-              <h3 className="text-xl font-black text-white flex items-center gap-2">
+              <h3 className="text-xl font-black text-foreground flex items-center gap-2">
                 <Sliders className="w-6 h-6 text-blue-400" />
                 Rider Earning & COD Parameters
               </h3>
-              <p className="text-xs text-gray-400 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 Configure platform commission shares and security limits. Stored securely on the backend; calculations strictly execute server-side.
               </p>
             </div>
@@ -796,7 +796,7 @@ export default function DeliveryPaymentsPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Rider Share % */}
               <div className="space-y-2">
-                <label className="text-xs font-bold text-gray-300">
+                <label className="text-xs font-bold text-muted-foreground">
                   Delivery Charge Rider Share (%):
                 </label>
                 <div className="relative">
@@ -813,18 +813,18 @@ export default function DeliveryPaymentsPage() {
                         platformShare: 100 - val,
                       }));
                     }}
-                    className="bg-black/60 border-white/20 h-12 rounded-xl text-white font-mono font-bold text-lg"
+                    className="bg-background/60 border-border h-12 rounded-xl text-foreground font-mono font-bold text-lg"
                   />
-                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold">%</span>
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground font-bold">%</span>
                 </div>
-                <p className="text-[11px] text-gray-500">
+                <p className="text-[11px] text-muted-foreground">
                   Currently: Rider receives {settings.deliveryChargeRiderShare}% of the delivery charge only.
                 </p>
               </div>
 
               {/* Platform Share % */}
               <div className="space-y-2">
-                <label className="text-xs font-bold text-gray-300">
+                <label className="text-xs font-bold text-muted-foreground">
                   Platform Share (%):
                 </label>
                 <div className="relative">
@@ -832,71 +832,71 @@ export default function DeliveryPaymentsPage() {
                     type="number"
                     disabled
                     value={settings.platformShare}
-                    className="bg-black/40 border-white/10 h-12 rounded-xl text-gray-400 font-mono font-bold text-lg"
+                    className="bg-background/40 border-border/50 h-12 rounded-xl text-muted-foreground font-mono font-bold text-lg"
                   />
-                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 font-bold">%</span>
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground font-bold">%</span>
                 </div>
-                <p className="text-[11px] text-gray-500">Automatically 100% minus rider share.</p>
+                <p className="text-[11px] text-muted-foreground">Automatically 100% minus rider share.</p>
               </div>
 
               {/* Default COD Limit */}
               <div className="space-y-2">
-                <label className="text-xs font-bold text-gray-300">
+                <label className="text-xs font-bold text-muted-foreground">
                   Default Rider COD Cash Limit (₹):
                 </label>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold">₹</span>
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground font-bold">₹</span>
                   <Input
                     type="number"
                     min="500"
                     step="500"
                     value={settings.defaultCodLimit}
                     onChange={(e) => setSettings(prev => ({ ...prev, defaultCodLimit: Number(e.target.value) }))}
-                    className="pl-8 bg-black/60 border-white/20 h-12 rounded-xl text-white font-mono font-bold text-lg"
+                    className="pl-8 bg-background/60 border-border h-12 rounded-xl text-foreground font-mono font-bold text-lg"
                   />
                 </div>
-                <p className="text-[11px] text-gray-500">Default limit applied to newly onboarded riders.</p>
+                <p className="text-[11px] text-muted-foreground">Default limit applied to newly onboarded riders.</p>
               </div>
 
               {/* Minimum Withdrawal */}
               <div className="space-y-2">
-                <label className="text-xs font-bold text-gray-300">
+                <label className="text-xs font-bold text-muted-foreground">
                   Minimum Withdrawal Amount (₹):
                 </label>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold">₹</span>
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground font-bold">₹</span>
                   <Input
                     type="number"
                     min="50"
                     value={settings.minWithdrawal}
                     onChange={(e) => setSettings(prev => ({ ...prev, minWithdrawal: Number(e.target.value) }))}
-                    className="pl-8 bg-black/60 border-white/20 h-12 rounded-xl text-white font-mono font-bold text-lg"
+                    className="pl-8 bg-background/60 border-border h-12 rounded-xl text-foreground font-mono font-bold text-lg"
                   />
                 </div>
-                <p className="text-[11px] text-gray-500">Riders cannot withdraw below this balance.</p>
+                <p className="text-[11px] text-muted-foreground">Riders cannot withdraw below this balance.</p>
               </div>
 
               {/* Max Daily Withdrawal */}
               <div className="space-y-2">
-                <label className="text-xs font-bold text-gray-300">
+                <label className="text-xs font-bold text-muted-foreground">
                   Maximum Daily Withdrawal Limit (₹):
                 </label>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold">₹</span>
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground font-bold">₹</span>
                   <Input
                     type="number"
                     min="1000"
                     value={settings.maxDailyWithdrawal}
                     onChange={(e) => setSettings(prev => ({ ...prev, maxDailyWithdrawal: Number(e.target.value) }))}
-                    className="pl-8 bg-black/60 border-white/20 h-12 rounded-xl text-white font-mono font-bold text-lg"
+                    className="pl-8 bg-background/60 border-border h-12 rounded-xl text-foreground font-mono font-bold text-lg"
                   />
                 </div>
-                <p className="text-[11px] text-gray-500">Security ceiling per rider per day.</p>
+                <p className="text-[11px] text-muted-foreground">Security ceiling per rider per day.</p>
               </div>
 
               {/* Allow Prepaid Orders When COD Blocked (Section 11) */}
               <div className="space-y-2 flex flex-col justify-center">
-                <label className="text-xs font-bold text-gray-300">
+                <label className="text-xs font-bold text-muted-foreground">
                   Allow Prepaid Orders When COD Limit Is Full:
                 </label>
                 <div className="flex items-center gap-3 pt-2">
@@ -905,13 +905,13 @@ export default function DeliveryPaymentsPage() {
                     onClick={() => setSettings(prev => ({ ...prev, allowPrepaidWhenCodBlocked: !prev.allowPrepaidWhenCodBlocked }))}
                     className={`font-bold text-xs h-10 rounded-xl px-4 ${
                       settings.allowPrepaidWhenCodBlocked
-                        ? 'bg-emerald-600 hover:bg-emerald-500 text-white'
-                        : 'bg-red-600 hover:bg-red-500 text-white'
+                        ? 'bg-emerald-600 hover:bg-emerald-500 text-foreground'
+                        : 'bg-red-600 hover:bg-red-500 text-foreground'
                     }`}
                   >
                     {settings.allowPrepaidWhenCodBlocked ? '✅ YES (Allow Prepaid)' : '❌ NO (Block All Orders)'}
                   </Button>
-                  <span className="text-[11px] text-gray-400">
+                  <span className="text-[11px] text-muted-foreground">
                     {settings.allowPrepaidWhenCodBlocked
                       ? 'Riders can continue delivering prepaid orders while settling COD cash.'
                       : 'Rider account paused completely until COD is settled.'}
@@ -920,11 +920,11 @@ export default function DeliveryPaymentsPage() {
               </div>
             </div>
 
-            <div className="pt-6 mt-6 border-t border-white/10 flex justify-end">
+            <div className="pt-6 mt-6 border-t border-border/50 flex justify-end">
               <Button
                 onClick={handleSaveSettings}
                 disabled={savingSettings}
-                className="bg-blue-600 hover:bg-blue-500 text-white font-bold h-12 px-8 rounded-xl"
+                className="bg-blue-600 hover:bg-blue-500 text-foreground font-bold h-12 px-8 rounded-xl"
               >
                 {savingSettings ? <Loader /> : 'Save System Settings'}
               </Button>
@@ -935,30 +935,30 @@ export default function DeliveryPaymentsPage() {
 
       {/* ─── MODAL: CHANGE RIDER COD LIMIT ─────────────────────────────────── */}
       <Dialog open={!!selectedRiderForLimit} onOpenChange={(open) => !open && setSelectedRiderForLimit(null)}>
-        <DialogContent className="bg-gray-950 border border-white/20 text-white max-w-sm rounded-3xl p-6">
+        <DialogContent className="bg-background border border-border text-foreground max-w-sm rounded-3xl p-6">
           <DialogHeader>
-            <DialogTitle className="text-lg font-bold text-white flex items-center gap-2">
+            <DialogTitle className="text-lg font-bold text-foreground flex items-center gap-2">
               <Sliders className="w-5 h-5 text-orange-400" />
               Adjust COD Limit
             </DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4 pt-2">
-            <p className="text-xs text-gray-300">
+            <p className="text-xs text-muted-foreground">
               Set custom COD cash limit for <strong>{selectedRiderForLimit?.name}</strong>.
             </p>
 
             <div className="space-y-2">
-              <label className="text-xs font-bold text-gray-400">New COD Limit (₹):</label>
+              <label className="text-xs font-bold text-muted-foreground">New COD Limit (₹):</label>
               <div className="relative">
-                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 font-bold">₹</span>
+                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground font-bold">₹</span>
                 <Input
                   type="number"
                   min="0"
                   step="500"
                   value={newCodLimit}
                   onChange={(e) => setNewCodLimit(e.target.value)}
-                  className="pl-8 bg-black/60 border-white/20 h-11 text-base font-mono font-bold text-white rounded-xl"
+                  className="pl-8 bg-background/60 border-border h-11 text-base font-mono font-bold text-foreground rounded-xl"
                 />
               </div>
 
@@ -968,7 +968,7 @@ export default function DeliveryPaymentsPage() {
                     key={amt}
                     type="button"
                     onClick={() => setNewCodLimit(amt)}
-                    className="text-xs px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 text-gray-300 font-bold"
+                    className="text-xs px-2.5 py-1 rounded-lg bg-card/5 border border-border/50 hover:bg-card/10 text-muted-foreground font-bold"
                   >
                     ₹{amt}
                   </button>
@@ -979,7 +979,7 @@ export default function DeliveryPaymentsPage() {
             <Button
               onClick={handleChangeCodLimit}
               disabled={updatingLimit}
-              className="w-full bg-orange-600 hover:bg-orange-500 text-white font-bold h-11 rounded-xl"
+              className="w-full bg-orange-600 hover:bg-orange-500 text-foreground font-bold h-11 rounded-xl"
             >
               {updatingLimit ? <Loader /> : 'Update Limit'}
             </Button>
@@ -989,25 +989,25 @@ export default function DeliveryPaymentsPage() {
 
       {/* ─── MODAL: FINANCIAL AUDIT ADJUSTMENT (Section 36) ─────────────────── */}
       <Dialog open={!!selectedRiderForAdjust} onOpenChange={(open) => !open && setSelectedRiderForAdjust(null)}>
-        <DialogContent className="bg-gray-950 border border-emerald-500/30 text-white max-w-md rounded-3xl p-6">
+        <DialogContent className="bg-background border border-emerald-500/30 text-foreground max-w-md rounded-3xl p-6">
           <DialogHeader>
-            <DialogTitle className="text-lg font-bold text-white flex items-center gap-2">
+            <DialogTitle className="text-lg font-bold text-foreground flex items-center gap-2">
               <ShieldCheck className="w-5 h-5 text-emerald-400" />
               Financial Audit Adjustment
             </DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4 pt-2">
-            <p className="text-xs text-gray-300">
+            <p className="text-xs text-muted-foreground">
               Apply ledger credit/debit for <strong>{selectedRiderForAdjust?.name}</strong>. Creates permanent immutable audit trail.
             </p>
 
             <div className="space-y-2">
-              <label className="text-xs font-bold text-gray-400">Adjustment Type:</label>
+              <label className="text-xs font-bold text-muted-foreground">Adjustment Type:</label>
               <select
                 value={adjustType}
                 onChange={(e) => setAdjustType(e.target.value)}
-                className="w-full bg-black/60 border border-white/20 h-10 rounded-xl px-3 text-xs text-white"
+                className="w-full bg-background/60 border border-border h-10 rounded-xl px-3 text-xs text-foreground"
               >
                 <option value="ADMIN_ADJUSTMENT">Admin Manual Adjustment</option>
                 <option value="INCENTIVE">Incentive Reward</option>
@@ -1018,31 +1018,31 @@ export default function DeliveryPaymentsPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-bold text-gray-400">Amount (₹): Use negative for debit (e.g. -50)</label>
+              <label className="text-xs font-bold text-muted-foreground">Amount (₹): Use negative for debit (e.g. -50)</label>
               <Input
                 type="number"
                 placeholder="e.g. 100 or -50"
                 value={adjustAmount}
                 onChange={(e) => setAdjustAmount(e.target.value)}
-                className="bg-black/60 border-white/20 h-11 text-base font-mono font-bold text-white rounded-xl"
+                className="bg-background/60 border-border h-11 text-base font-mono font-bold text-foreground rounded-xl"
               />
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-bold text-gray-400">Audit Reason / Justification (Required):</label>
+              <label className="text-xs font-bold text-muted-foreground">Audit Reason / Justification (Required):</label>
               <Input
                 type="text"
                 placeholder="e.g. Order #123 rain bonus compensation approved"
                 value={adjustReason}
                 onChange={(e) => setAdjustReason(e.target.value)}
-                className="bg-black/60 border-white/20 h-10 text-xs text-white rounded-xl"
+                className="bg-background/60 border-border h-10 text-xs text-foreground rounded-xl"
               />
             </div>
 
             <Button
               onClick={handlePerformAdjustment}
               disabled={adjusting || !adjustAmount || !adjustReason.trim()}
-              className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold h-11 rounded-xl"
+              className="w-full bg-emerald-600 hover:bg-emerald-500 text-foreground font-bold h-11 rounded-xl"
             >
               {adjusting ? <Loader /> : 'Post Audit Adjustment'}
             </Button>
@@ -1052,9 +1052,9 @@ export default function DeliveryPaymentsPage() {
 
       {/* ─── MODAL: VIEW RIDER LEDGER ───────────────────────────────────────── */}
       <Dialog open={!!viewLedgerRider} onOpenChange={(open) => !open && setViewLedgerRider(null)}>
-        <DialogContent className="bg-gray-950 border border-white/20 text-white max-w-2xl rounded-3xl p-6">
+        <DialogContent className="bg-background border border-border text-foreground max-w-2xl rounded-3xl p-6">
           <DialogHeader>
-            <DialogTitle className="text-lg font-bold text-white flex items-center justify-between">
+            <DialogTitle className="text-lg font-bold text-foreground flex items-center justify-between">
               <span className="flex items-center gap-2">
                 <History className="w-5 h-5 text-blue-400" />
                 Ledger: {viewLedgerRider?.name}
@@ -1071,14 +1071,14 @@ export default function DeliveryPaymentsPage() {
                 <Loader />
               </div>
             ) : ledgerTransactions.length === 0 ? (
-              <p className="text-center text-gray-500 text-xs py-10">No transactions recorded for this rider.</p>
+              <p className="text-center text-muted-foreground text-xs py-10">No transactions recorded for this rider.</p>
             ) : (
               <div className="space-y-2.5">
                 {ledgerTransactions.map((tx) => (
-                  <div key={tx.id || tx.transactionId} className="p-3 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-between gap-3 text-xs">
+                  <div key={tx.id || tx.transactionId} className="p-3 rounded-2xl bg-card/5 border border-border/50 flex items-center justify-between gap-3 text-xs">
                     <div className="min-w-0">
-                      <p className="font-bold text-white truncate">{tx.description || tx.type}</p>
-                      <p className="text-[10px] text-gray-500 font-mono mt-0.5">
+                      <p className="font-bold text-foreground truncate">{tx.description || tx.type}</p>
+                      <p className="text-[10px] text-muted-foreground font-mono mt-0.5">
                         {tx.createdAt?.toDate ? tx.createdAt.toDate().toLocaleString() : 'Just now'} • {tx.type}
                       </p>
                     </div>
@@ -1089,7 +1089,7 @@ export default function DeliveryPaymentsPage() {
                         {tx.direction === 'DEBIT' || tx.isDebit ? '-' : '+'}₹{Number(tx.amount || 0).toFixed(2)}
                       </span>
                       {tx.balanceAfter !== undefined && (
-                        <p className="text-[10px] text-gray-400 font-mono">Bal: ₹{tx.balanceAfter}</p>
+                        <p className="text-[10px] text-muted-foreground font-mono">Bal: ₹{tx.balanceAfter}</p>
                       )}
                     </div>
                   </div>

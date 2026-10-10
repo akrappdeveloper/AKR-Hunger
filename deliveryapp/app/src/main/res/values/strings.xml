@@ -23,10 +23,13 @@
     <string name="logout">Sign Out</string>
 
     <!-- Bottom Navigation -->
-    <string name="nav_dashboard">Orders</string>
+    <string name="nav_home">Home</string>
+    <string name="nav_orders">Orders</string>
     <string name="nav_earnings">Earnings</string>
-    <string name="nav_history">History</string>
+    <string name="nav_wallet">Wallet</string>
     <string name="nav_profile">Profile</string>
+    <string name="nav_dashboard">Home</string>
+    <string name="nav_history">Orders</string>
 
     <!-- Dashboard & Status -->
     <string name="status_online">ONLINE</string>

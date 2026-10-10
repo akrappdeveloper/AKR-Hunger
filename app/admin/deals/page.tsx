@@ -415,15 +415,15 @@ export default function AdminDealsPage() {
   return (
     <div className="space-y-6">
       {/* Top Header Bar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/10 pb-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border/50 pb-6">
         <div>
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-500 to-rose-600 flex items-center justify-center shadow-lg shadow-orange-500/20">
-              <Tag className="w-6 h-6 text-white" />
+              <Tag className="w-6 h-6 text-foreground" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-bold tracking-tight text-white">Deals & Offers Management</h1>
+                <h1 className="text-2xl font-bold tracking-tight text-foreground">Deals & Offers Management</h1>
                 <Badge
                   variant="outline"
                   className={
@@ -436,7 +436,7 @@ export default function AdminDealsPage() {
                   {isLiveConnected ? 'Live Realtime DB' : 'Connecting...'}
                 </Badge>
               </div>
-              <p className="text-sm text-gray-400">
+              <p className="text-sm text-muted-foreground">
                 Create and manage coupons live synced with Android App DealsActivity & Web
               </p>
             </div>
@@ -457,7 +457,7 @@ export default function AdminDealsPage() {
 
           <Button
             onClick={handleOpenCreate}
-            className="bg-gradient-to-r from-orange-500 to-rose-600 hover:from-orange-600 hover:to-rose-700 text-white shadow-lg shadow-orange-500/25"
+            className="bg-gradient-to-r from-orange-500 to-rose-600 hover:from-orange-600 hover:to-rose-700 text-foreground shadow-lg shadow-orange-500/25"
           >
             <Plus className="w-4 h-4 mr-2" />
             Add New Deal
@@ -467,64 +467,64 @@ export default function AdminDealsPage() {
 
       {/* Metrics Row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="bg-white/5 border-white/10 backdrop-blur-xl">
+        <Card className="bg-card/5 border-border/50 backdrop-blur-xl">
           <CardContent className="p-5 flex items-center gap-4">
             <div className="w-11 h-11 rounded-xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center text-orange-400">
               <Tag className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">Total Deals</p>
-              <h3 className="text-2xl font-bold text-white mt-0.5">{totalDeals}</h3>
+              <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Total Deals</p>
+              <h3 className="text-2xl font-bold text-foreground mt-0.5">{totalDeals}</h3>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-white/5 border-white/10 backdrop-blur-xl">
+        <Card className="bg-card/5 border-border/50 backdrop-blur-xl">
           <CardContent className="p-5 flex items-center gap-4">
             <div className="w-11 h-11 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
               <CheckCircle2 className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">Active Deals</p>
+              <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Active Deals</p>
               <h3 className="text-2xl font-bold text-emerald-400 mt-0.5">{activeDeals}</h3>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-white/5 border-white/10 backdrop-blur-xl">
+        <Card className="bg-card/5 border-border/50 backdrop-blur-xl">
           <CardContent className="p-5 flex items-center gap-4">
             <div className="w-11 h-11 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
               <Truck className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">Free Delivery</p>
-              <h3 className="text-2xl font-bold text-white mt-0.5">{freeDelDeals}</h3>
+              <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Free Delivery</p>
+              <h3 className="text-2xl font-bold text-foreground mt-0.5">{freeDelDeals}</h3>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-white/5 border-white/10 backdrop-blur-xl">
+        <Card className="bg-card/5 border-border/50 backdrop-blur-xl">
           <CardContent className="p-5 flex items-center gap-4">
             <div className="w-11 h-11 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400">
               <DollarSign className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">Flat ₹ Off</p>
-              <h3 className="text-2xl font-bold text-white mt-0.5">{flatDeals}</h3>
+              <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Flat ₹ Off</p>
+              <h3 className="text-2xl font-bold text-foreground mt-0.5">{flatDeals}</h3>
             </div>
           </CardContent>
         </Card>
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 bg-white/5 border border-white/10 p-4 rounded-2xl backdrop-blur-xl">
+      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 bg-card/5 border border-border/50 p-4 rounded-2xl backdrop-blur-xl">
         <div className="relative flex-1">
-          <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <Search className="w-4 h-4 text-muted-foreground absolute left-3.5 top-1/2 -translate-y-1/2" />
           <Input
             placeholder="Search deals by code, title, or keywords..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 bg-black/40 border-white/10 text-white placeholder:text-gray-500 rounded-xl"
+            className="pl-10 bg-background/40 border-border/50 text-foreground placeholder:text-muted-foreground rounded-xl"
           />
         </div>
 
@@ -542,8 +542,8 @@ export default function AdminDealsPage() {
               onClick={() => setSelectedCategory(cat.id)}
               className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
                 selectedCategory === cat.id
-                  ? 'bg-orange-500 text-white shadow-md shadow-orange-500/30'
-                  : 'bg-white/5 text-gray-400 hover:text-white hover:bg-white/10'
+                  ? 'bg-orange-500 text-foreground shadow-md shadow-orange-500/30'
+                  : 'bg-card/5 text-muted-foreground hover:text-foreground hover:bg-card/10'
               }`}
             >
               {cat.label}
@@ -554,17 +554,17 @@ export default function AdminDealsPage() {
 
       {/* Deals Grid */}
       {loading ? (
-        <div className="flex flex-col items-center justify-center p-12 text-gray-400">
+        <div className="flex flex-col items-center justify-center p-12 text-muted-foreground">
           <RefreshCw className="w-8 h-8 animate-spin text-orange-500 mb-3" />
           <p>Syncing deals from Firebase Realtime Database...</p>
         </div>
       ) : filteredDeals.length === 0 ? (
-        <Card className="bg-white/5 border-white/10 p-12 text-center">
+        <Card className="bg-card/5 border-border/50 p-12 text-center">
           <div className="w-16 h-16 rounded-2xl bg-orange-500/10 border border-orange-500/20 mx-auto flex items-center justify-center text-3xl mb-4">
             🎟️
           </div>
-          <h3 className="text-lg font-bold text-white mb-1">No Deals Found</h3>
-          <p className="text-sm text-gray-400 max-w-md mx-auto mb-6">
+          <h3 className="text-lg font-bold text-foreground mb-1">No Deals Found</h3>
+          <p className="text-sm text-muted-foreground max-w-md mx-auto mb-6">
             {deals.length === 0
               ? 'No deals currently active in Firebase. Click "Seed Top Deals" to quickly populate curated offers.'
               : 'No deals match your current search or category filter. Try clearing filters.'}
@@ -572,7 +572,7 @@ export default function AdminDealsPage() {
           {deals.length === 0 ? (
             <Button
               onClick={handleSeedStarterDeals}
-              className="bg-orange-500 hover:bg-orange-600 text-white"
+              className="bg-orange-500 hover:bg-orange-600 text-foreground"
             >
               <Sparkles className="w-4 h-4 mr-2" />
               Seed 5 Top Deals Now
@@ -584,7 +584,7 @@ export default function AdminDealsPage() {
                 setSearchQuery('');
                 setSelectedCategory('all');
               }}
-              className="border-white/10 text-white hover:bg-white/10"
+              className="border-border/50 text-foreground hover:bg-card/10"
             >
               Reset Filters
             </Button>
@@ -604,7 +604,7 @@ export default function AdminDealsPage() {
             return (
               <Card
                 key={deal.id}
-                className="bg-white/5 border-white/10 hover:border-orange-500/30 transition-all duration-300 rounded-2xl overflow-hidden backdrop-blur-xl group flex flex-col justify-between"
+                className="bg-card/5 border-border/50 hover:border-orange-500/30 transition-all duration-300 rounded-2xl overflow-hidden backdrop-blur-xl group flex flex-col justify-between"
               >
                 <CardHeader className="p-5 pb-3">
                   <div className="flex items-start justify-between gap-3">
@@ -613,10 +613,10 @@ export default function AdminDealsPage() {
                         {deal.emoji || '🎫'}
                       </div>
                       <div>
-                        <CardTitle className="text-base font-bold text-white group-hover:text-orange-400 transition-colors line-clamp-1">
+                        <CardTitle className="text-base font-bold text-foreground group-hover:text-orange-400 transition-colors line-clamp-1">
                           {deal.title}
                         </CardTitle>
-                        <p className="text-xs text-gray-400 mt-0.5 line-clamp-2">
+                        <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
                           {deal.description}
                         </p>
                       </div>
@@ -626,7 +626,7 @@ export default function AdminDealsPage() {
                       className={
                         deal.isActive
                           ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                          : 'bg-gray-500/10 text-gray-400 border border-gray-500/20'
+                          : 'bg-gray-500/10 text-muted-foreground border border-border/20'
                       }
                     >
                       {deal.isActive ? 'Active' : 'Inactive'}
@@ -638,16 +638,16 @@ export default function AdminDealsPage() {
                       {badgeText}
                     </Badge>
                     {deal.minOrder ? (
-                      <Badge variant="outline" className="border-white/10 text-gray-300 text-[11px]">
+                      <Badge variant="outline" className="border-border/50 text-muted-foreground text-[11px]">
                         Min ₹{deal.minOrder}
                       </Badge>
                     ) : (
-                      <Badge variant="outline" className="border-white/10 text-gray-300 text-[11px]">
+                      <Badge variant="outline" className="border-border/50 text-muted-foreground text-[11px]">
                         No Min Order
                       </Badge>
                     )}
                     {deal.maxDiscount ? (
-                      <Badge variant="outline" className="border-white/10 text-gray-300 text-[11px]">
+                      <Badge variant="outline" className="border-border/50 text-muted-foreground text-[11px]">
                         Max ₹{deal.maxDiscount}
                       </Badge>
                     ) : null}
@@ -655,7 +655,7 @@ export default function AdminDealsPage() {
                 </CardHeader>
 
                 <CardContent className="p-5 pt-0">
-                  <div className="border-t border-white/5 my-3" />
+                  <div className="border-t border-border/50 my-3" />
 
                   {/* Code Box & Actions */}
                   <div className="flex items-center justify-between gap-2">
@@ -663,7 +663,7 @@ export default function AdminDealsPage() {
                       <span>{deal.code}</span>
                       <button
                         onClick={() => handleCopy(deal.code)}
-                        className="hover:text-white transition-colors"
+                        className="hover:text-foreground transition-colors"
                         title="Copy Code"
                       >
                         {copiedCode === deal.code ? (
@@ -693,7 +693,7 @@ export default function AdminDealsPage() {
                         size="sm"
                         variant="ghost"
                         onClick={() => handleOpenEdit(deal)}
-                        className="h-8 w-8 p-0 text-gray-400 hover:text-white hover:bg-white/10"
+                        className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground hover:bg-card/10"
                         title="Edit Deal"
                       >
                         <Edit2 className="w-3.5 h-3.5" />
@@ -719,7 +719,7 @@ export default function AdminDealsPage() {
 
       {/* Add / Edit Deal Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="bg-gray-950 border-white/10 text-white max-w-xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="bg-background border-border/50 text-foreground max-w-xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold flex items-center gap-2">
               <Tag className="w-5 h-5 text-orange-500" />
@@ -730,7 +730,7 @@ export default function AdminDealsPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-3">
             {/* Promo Code */}
             <div>
-              <label className="text-xs font-semibold text-gray-300 uppercase tracking-wider block mb-1">
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
                 Coupon Code *
               </label>
               <Input
@@ -739,52 +739,52 @@ export default function AdminDealsPage() {
                 onChange={(e) =>
                   setFormData({ ...formData, code: e.target.value.toUpperCase() })
                 }
-                className="bg-black/40 border-white/10 text-white font-mono uppercase"
+                className="bg-background/40 border-border/50 text-foreground font-mono uppercase"
               />
             </div>
 
             {/* Emoji */}
             <div>
-              <label className="text-xs font-semibold text-gray-300 uppercase tracking-wider block mb-1">
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
                 Emoji Icon
               </label>
               <Input
                 placeholder="e.g. 🎉, 🍕, 🛵"
                 value={formData.emoji}
                 onChange={(e) => setFormData({ ...formData, emoji: e.target.value })}
-                className="bg-black/40 border-white/10 text-white"
+                className="bg-background/40 border-border/50 text-foreground"
               />
             </div>
 
             {/* Title */}
             <div className="md:col-span-2">
-              <label className="text-xs font-semibold text-gray-300 uppercase tracking-wider block mb-1">
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
                 Offer Title *
               </label>
               <Input
                 placeholder="e.g. 50% OFF on First Order"
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                className="bg-black/40 border-white/10 text-white"
+                className="bg-background/40 border-border/50 text-foreground"
               />
             </div>
 
             {/* Description */}
             <div className="md:col-span-2">
-              <label className="text-xs font-semibold text-gray-300 uppercase tracking-wider block mb-1">
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
                 Description
               </label>
               <Input
                 placeholder="e.g. New user exclusive! Save flat 50% up to ₹120."
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                className="bg-black/40 border-white/10 text-white"
+                className="bg-background/40 border-border/50 text-foreground"
               />
             </div>
 
             {/* Discount Type */}
             <div>
-              <label className="text-xs font-semibold text-gray-300 uppercase tracking-wider block mb-1">
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
                 Discount Type
               </label>
               <select
@@ -792,7 +792,7 @@ export default function AdminDealsPage() {
                 onChange={(e: any) =>
                   setFormData({ ...formData, discountType: e.target.value })
                 }
-                className="w-full h-10 px-3 rounded-lg bg-black/40 border border-white/10 text-white text-sm focus:outline-none focus:border-orange-500"
+                className="w-full h-10 px-3 rounded-lg bg-background/40 border border-border/50 text-foreground text-sm focus:outline-none focus:border-orange-500"
               >
                 <option value="percentage">Percentage Discount (%)</option>
                 <option value="flat">Flat Amount (₹)</option>
@@ -802,7 +802,7 @@ export default function AdminDealsPage() {
 
             {/* Discount Value */}
             <div>
-              <label className="text-xs font-semibold text-gray-300 uppercase tracking-wider block mb-1">
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
                 Discount Value {formData.discountType === 'percentage' ? '(%)' : '(₹)'}
               </label>
               <Input
@@ -812,14 +812,14 @@ export default function AdminDealsPage() {
                 onChange={(e) =>
                   setFormData({ ...formData, discountValue: Number(e.target.value) })
                 }
-                className="bg-black/40 border-white/10 text-white"
+                className="bg-background/40 border-border/50 text-foreground"
                 disabled={formData.discountType === 'free_delivery'}
               />
             </div>
 
             {/* Minimum Order */}
             <div>
-              <label className="text-xs font-semibold text-gray-300 uppercase tracking-wider block mb-1">
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
                 Min Order Amount (₹)
               </label>
               <Input
@@ -829,13 +829,13 @@ export default function AdminDealsPage() {
                 onChange={(e) =>
                   setFormData({ ...formData, minOrder: Number(e.target.value) })
                 }
-                className="bg-black/40 border-white/10 text-white"
+                className="bg-background/40 border-border/50 text-foreground"
               />
             </div>
 
             {/* Max Discount */}
             <div>
-              <label className="text-xs font-semibold text-gray-300 uppercase tracking-wider block mb-1">
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
                 Max Discount Cap (₹)
               </label>
               <Input
@@ -845,19 +845,19 @@ export default function AdminDealsPage() {
                 onChange={(e) =>
                   setFormData({ ...formData, maxDiscount: Number(e.target.value) })
                 }
-                className="bg-black/40 border-white/10 text-white"
+                className="bg-background/40 border-border/50 text-foreground"
               />
             </div>
 
             {/* Category */}
             <div>
-              <label className="text-xs font-semibold text-gray-300 uppercase tracking-wider block mb-1">
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
                 Category
               </label>
               <select
                 value={formData.category}
                 onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                className="w-full h-10 px-3 rounded-lg bg-black/40 border border-white/10 text-white text-sm focus:outline-none focus:border-orange-500"
+                className="w-full h-10 px-3 rounded-lg bg-background/40 border border-border/50 text-foreground text-sm focus:outline-none focus:border-orange-500"
               >
                 <option value="all">General / All</option>
                 <option value="percentage">Percentage Deal</option>
@@ -870,7 +870,7 @@ export default function AdminDealsPage() {
 
             {/* Expiry Date */}
             <div>
-              <label className="text-xs font-semibold text-gray-300 uppercase tracking-wider block mb-1">
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
                 Valid Until
               </label>
               <Input
@@ -879,7 +879,7 @@ export default function AdminDealsPage() {
                 onChange={(e) =>
                   setFormData({ ...formData, validUntil: e.target.value })
                 }
-                className="bg-black/40 border-white/10 text-white"
+                className="bg-background/40 border-border/50 text-foreground"
               />
             </div>
           </div>
@@ -888,13 +888,13 @@ export default function AdminDealsPage() {
             <Button
               variant="outline"
               onClick={() => setIsDialogOpen(false)}
-              className="border-white/10 text-gray-300 hover:bg-white/10"
+              className="border-border/50 text-muted-foreground hover:bg-card/10"
             >
               Cancel
             </Button>
             <Button
               onClick={handleSaveDeal}
-              className="bg-orange-500 hover:bg-orange-600 text-white"
+              className="bg-orange-500 hover:bg-orange-600 text-foreground"
             >
               {editingDeal ? 'Save Changes' : 'Create & Sync Deal'}
             </Button>

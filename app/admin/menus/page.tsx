@@ -177,7 +177,7 @@ export default function AdminMenusPage() {
       <div className="flex items-center justify-center h-[60vh]">
         <div className="text-center space-y-4">
           <div className="h-10 w-10 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-gray-400">Loading menu items...</p>
+          <p className="text-muted-foreground">Loading menu items...</p>
         </div>
       </div>
     );
@@ -190,7 +190,7 @@ export default function AdminMenusPage() {
         <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white via-gray-100 to-gray-400 tracking-tight mb-2">
           Menu Management
         </h1>
-        <p className="text-gray-400">Browse, edit, and manage menu items across all restaurants.</p>
+        <p className="text-muted-foreground">Browse, edit, and manage menu items across all restaurants.</p>
       </div>
 
       {/* Stats */}
@@ -220,8 +220,8 @@ export default function AdminMenusPage() {
                 <div className="flex items-center justify-between mb-3">
                   <Icon className={`w-5 h-5 ${iconColors[stat.color]}`} />
                 </div>
-                <p className="text-2xl font-bold text-white font-mono">{stat.value}</p>
-                <p className="text-[11px] text-gray-400 mt-1">{stat.title}</p>
+                <p className="text-2xl font-bold text-foreground font-mono">{stat.value}</p>
+                <p className="text-[11px] text-muted-foreground mt-1">{stat.title}</p>
               </CardContent>
             </Card>
           );
@@ -229,24 +229,24 @@ export default function AdminMenusPage() {
       </div>
 
       {/* Filters & Menu Table */}
-      <Card className="bg-black/40 border-white/10 backdrop-blur-md shadow-xl overflow-hidden">
-        <CardHeader className="border-b border-white/5 bg-white/5 pb-4">
+      <Card className="bg-background/40 border-border/50 backdrop-blur-md shadow-xl overflow-hidden">
+        <CardHeader className="border-b border-border/50 bg-card/5 pb-4">
           <div className="flex flex-col gap-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <CardTitle className="text-lg font-semibold text-white flex items-center gap-2">
+              <CardTitle className="text-lg font-semibold text-foreground flex items-center gap-2">
                 <Utensils className="w-5 h-5 text-blue-400" />
                 All Menu Items
-                <Badge variant="outline" className="bg-white/5 text-gray-400 border-white/10 text-xs ml-2">
+                <Badge variant="outline" className="bg-card/5 text-muted-foreground border-border/50 text-xs ml-2">
                   {filteredItems.length} of {totalItems}
                 </Badge>
               </CardTitle>
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
                   placeholder="Search items, restaurants..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 bg-black/20 border-white/10 text-white placeholder:text-gray-500 w-64"
+                  className="pl-10 bg-background/20 border-border/50 text-foreground placeholder:text-muted-foreground w-64"
                 />
               </div>
             </div>
@@ -254,7 +254,7 @@ export default function AdminMenusPage() {
               <select
                 value={restaurantFilter}
                 onChange={(e) => setRestaurantFilter(e.target.value)}
-                className="px-3 py-2 bg-black/20 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500/50"
+                className="px-3 py-2 bg-background/20 border border-border/50 rounded-lg text-foreground text-sm focus:outline-none focus:border-blue-500/50"
               >
                 <option value="all">All Restaurants</option>
                 {allRestaurants.map(r => (
@@ -264,7 +264,7 @@ export default function AdminMenusPage() {
               <select
                 value={categoryFilter}
                 onChange={(e) => setCategoryFilter(e.target.value)}
-                className="px-3 py-2 bg-black/20 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500/50"
+                className="px-3 py-2 bg-background/20 border border-border/50 rounded-lg text-foreground text-sm focus:outline-none focus:border-blue-500/50"
               >
                 <option value="all">All Categories</option>
                 {categories.map(cat => (
@@ -274,7 +274,7 @@ export default function AdminMenusPage() {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="px-3 py-2 bg-black/20 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500/50"
+                className="px-3 py-2 bg-background/20 border border-border/50 rounded-lg text-foreground text-sm focus:outline-none focus:border-blue-500/50"
               >
                 <option value="all">All Status</option>
                 <option value="available">Available</option>
@@ -288,7 +288,7 @@ export default function AdminMenusPage() {
         </CardHeader>
         <CardContent className="p-0">
           {filteredItems.length === 0 ? (
-            <div className="text-center py-12 text-gray-500">
+            <div className="text-center py-12 text-muted-foreground">
               <Utensils className="w-10 h-10 mx-auto mb-3 opacity-30" />
               <p className="text-lg font-medium">No menu items found</p>
               <p className="text-sm">Try adjusting your filters or search query.</p>
@@ -297,31 +297,31 @@ export default function AdminMenusPage() {
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow className="border-white/5 hover:bg-transparent">
-                    <TableHead className="text-gray-400">Item</TableHead>
-                    <TableHead className="text-gray-400">Restaurant</TableHead>
-                    <TableHead className="text-gray-400">Category</TableHead>
-                    <TableHead className="text-gray-400 text-right">Price</TableHead>
-                    <TableHead className="text-gray-400 text-center">Type</TableHead>
-                    <TableHead className="text-gray-400 text-center">Available</TableHead>
-                    <TableHead className="text-gray-400 text-center">Approval</TableHead>
-                    <TableHead className="text-gray-400 text-center">Actions</TableHead>
+                  <TableRow className="border-border/50 hover:bg-transparent">
+                    <TableHead className="text-muted-foreground">Item</TableHead>
+                    <TableHead className="text-muted-foreground">Restaurant</TableHead>
+                    <TableHead className="text-muted-foreground">Category</TableHead>
+                    <TableHead className="text-muted-foreground text-right">Price</TableHead>
+                    <TableHead className="text-muted-foreground text-center">Type</TableHead>
+                    <TableHead className="text-muted-foreground text-center">Available</TableHead>
+                    <TableHead className="text-muted-foreground text-center">Approval</TableHead>
+                    <TableHead className="text-muted-foreground text-center">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredItems.slice(0, 50).map((item) => (
-                    <TableRow key={item.id} className="border-white/5 hover:bg-white/5 transition-colors">
+                    <TableRow key={item.id} className="border-border/50 hover:bg-card/5 transition-colors">
                       <TableCell>
                         <div className="flex items-center gap-3">
                           {item.image ? (
-                            <img src={item.image} alt={item.name} className="w-10 h-10 rounded-lg object-cover border border-white/10" />
+                            <img src={item.image} alt={item.name} className="w-10 h-10 rounded-lg object-cover border border-border/50" />
                           ) : (
-                            <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center border border-white/10">
-                              <Image className="w-4 h-4 text-gray-600" />
+                            <div className="w-10 h-10 rounded-lg bg-card/5 flex items-center justify-center border border-border/50">
+                              <Image className="w-4 h-4 text-muted-foreground" />
                             </div>
                           )}
                           <div>
-                            <p className="text-white font-medium text-sm">{item.name}</p>
+                            <p className="text-foreground font-medium text-sm">{item.name}</p>
                             {item.isBestSeller && (
                               <Badge variant="outline" className="bg-yellow-500/10 text-yellow-400 border-yellow-500/20 text-[9px] mt-0.5">
                                 Best Seller
@@ -330,8 +330,8 @@ export default function AdminMenusPage() {
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell className="text-gray-300 text-sm">{item.restaurantName}</TableCell>
-                      <TableCell className="text-gray-400 text-sm">{item.category || '-'}</TableCell>
+                      <TableCell className="text-muted-foreground text-sm">{item.restaurantName}</TableCell>
+                      <TableCell className="text-muted-foreground text-sm">{item.category || '-'}</TableCell>
                       <TableCell className="text-emerald-400 text-right font-mono text-sm font-bold">₹{item.price}</TableCell>
                       <TableCell className="text-center">
                         <div className="flex items-center justify-center gap-1">
@@ -346,7 +346,7 @@ export default function AdminMenusPage() {
                             </span>
                           )}
                           {!item.vegetarian && !item.spicy && (
-                            <span className="text-gray-600">—</span>
+                            <span className="text-muted-foreground">—</span>
                           )}
                         </div>
                       </TableCell>
@@ -379,7 +379,7 @@ export default function AdminMenusPage() {
                               ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
                               : item.approvalStatus === 'rejected'
                                 ? 'bg-red-500/10 text-red-400 border-red-500/20'
-                                : 'bg-gray-500/10 text-gray-400 border-gray-500/20'
+                                : 'bg-gray-500/10 text-muted-foreground border-border/20'
                           }`}>
                             {item.approvalStatus || 'N/A'}
                           </Badge>
@@ -410,7 +410,7 @@ export default function AdminMenusPage() {
                 </TableBody>
               </Table>
               {filteredItems.length > 50 && (
-                <div className="text-center py-4 text-gray-500 text-sm border-t border-white/5">
+                <div className="text-center py-4 text-muted-foreground text-sm border-t border-border/50">
                   Showing first 50 of {filteredItems.length} items. Use filters to narrow down.
                 </div>
               )}
@@ -421,38 +421,38 @@ export default function AdminMenusPage() {
 
       {/* Edit Dialog */}
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-        <DialogContent className="bg-gray-900 border-white/10 text-white max-w-md">
+        <DialogContent className="bg-card border-border/50 text-foreground max-w-md">
           <DialogHeader>
             <DialogTitle>Edit Menu Item</DialogTitle>
-            <DialogDescription className="text-gray-400">
+            <DialogDescription className="text-muted-foreground">
               {selectedItem?.restaurantName}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 mt-4">
             <div>
-              <Label className="text-gray-300 text-sm">Item Name</Label>
+              <Label className="text-muted-foreground text-sm">Item Name</Label>
               <Input
                 value={editForm.name}
                 onChange={(e) => setEditForm(prev => ({ ...prev, name: e.target.value }))}
-                className="mt-1 bg-black/20 border-white/10 text-white"
+                className="mt-1 bg-background/20 border-border/50 text-foreground"
               />
             </div>
             <div>
-              <Label className="text-gray-300 text-sm">Price (₹)</Label>
+              <Label className="text-muted-foreground text-sm">Price (₹)</Label>
               <Input
                 type="number"
                 value={editForm.price}
                 onChange={(e) => setEditForm(prev => ({ ...prev, price: Number(e.target.value) }))}
-                className="mt-1 bg-black/20 border-white/10 text-white font-mono"
+                className="mt-1 bg-background/20 border-border/50 text-foreground font-mono"
               />
             </div>
             <div>
-              <Label className="text-gray-300 text-sm">Description</Label>
+              <Label className="text-muted-foreground text-sm">Description</Label>
               <textarea
                 value={editForm.description}
                 onChange={(e) => setEditForm(prev => ({ ...prev, description: e.target.value }))}
                 rows={3}
-                className="mt-1 w-full px-4 py-3 bg-black/20 border border-white/10 rounded-lg text-white focus:outline-none focus:border-blue-500/50 resize-none text-sm"
+                className="mt-1 w-full px-4 py-3 bg-background/20 border border-border/50 rounded-lg text-foreground focus:outline-none focus:border-blue-500/50 resize-none text-sm"
               />
             </div>
             <div className="flex items-center gap-6">
@@ -461,35 +461,35 @@ export default function AdminMenusPage() {
                   type="checkbox"
                   checked={editForm.available}
                   onChange={(e) => setEditForm(prev => ({ ...prev, available: e.target.checked }))}
-                  className="w-4 h-4 rounded bg-black/40 border-gray-600 text-blue-600"
+                  className="w-4 h-4 rounded bg-background/40 border-border text-blue-600"
                 />
-                <span className="text-gray-300 text-sm">Available</span>
+                <span className="text-muted-foreground text-sm">Available</span>
               </label>
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={editForm.vegetarian}
                   onChange={(e) => setEditForm(prev => ({ ...prev, vegetarian: e.target.checked }))}
-                  className="w-4 h-4 rounded bg-black/40 border-gray-600 text-green-600"
+                  className="w-4 h-4 rounded bg-background/40 border-border text-green-600"
                 />
-                <span className="text-gray-300 text-sm flex items-center gap-1"><Leaf size={12} className="text-green-400" /> Veg</span>
+                <span className="text-muted-foreground text-sm flex items-center gap-1"><Leaf size={12} className="text-green-400" /> Veg</span>
               </label>
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={editForm.spicy}
                   onChange={(e) => setEditForm(prev => ({ ...prev, spicy: e.target.checked }))}
-                  className="w-4 h-4 rounded bg-black/40 border-gray-600 text-red-600"
+                  className="w-4 h-4 rounded bg-background/40 border-border text-red-600"
                 />
-                <span className="text-gray-300 text-sm flex items-center gap-1"><Flame size={12} className="text-red-400" /> Spicy</span>
+                <span className="text-muted-foreground text-sm flex items-center gap-1"><Flame size={12} className="text-red-400" /> Spicy</span>
               </label>
             </div>
           </div>
           <DialogFooter className="mt-4">
-            <Button variant="outline" onClick={() => setEditDialogOpen(false)} className="border-white/10 text-white hover:bg-white/10">
+            <Button variant="outline" onClick={() => setEditDialogOpen(false)} className="border-border/50 text-foreground hover:bg-card/10">
               Cancel
             </Button>
-            <Button onClick={handleSaveEdit} className="bg-blue-600 hover:bg-blue-700 text-white">
+            <Button onClick={handleSaveEdit} className="bg-blue-600 hover:bg-blue-700 text-foreground">
               Save Changes
             </Button>
           </DialogFooter>
@@ -498,27 +498,27 @@ export default function AdminMenusPage() {
 
       {/* Detail Dialog */}
       <Dialog open={detailDialogOpen} onOpenChange={setDetailDialogOpen}>
-        <DialogContent className="bg-gray-900 border-white/10 text-white max-w-lg">
+        <DialogContent className="bg-card border-border/50 text-foreground max-w-lg">
           <DialogHeader>
             <DialogTitle>{detailItem?.name}</DialogTitle>
-            <DialogDescription className="text-gray-400">{detailItem?.restaurantName}</DialogDescription>
+            <DialogDescription className="text-muted-foreground">{detailItem?.restaurantName}</DialogDescription>
           </DialogHeader>
           {detailItem && (
             <div className="space-y-4 mt-4">
               {detailItem.image && (
-                <img src={detailItem.image} alt={detailItem.name} className="w-full h-48 object-cover rounded-xl border border-white/10" />
+                <img src={detailItem.image} alt={detailItem.name} className="w-full h-48 object-cover rounded-xl border border-border/50" />
               )}
               <div className="grid grid-cols-2 gap-4">
-                <div className="bg-black/20 rounded-xl p-4 border border-white/5">
-                  <p className="text-gray-500 text-xs uppercase tracking-wider mb-1">Price</p>
+                <div className="bg-background/20 rounded-xl p-4 border border-border/50">
+                  <p className="text-muted-foreground text-xs uppercase tracking-wider mb-1">Price</p>
                   <p className="text-emerald-400 font-bold font-mono text-lg">₹{detailItem.price}</p>
                 </div>
-                <div className="bg-black/20 rounded-xl p-4 border border-white/5">
-                  <p className="text-gray-500 text-xs uppercase tracking-wider mb-1">Category</p>
-                  <p className="text-white font-medium">{detailItem.category || 'Uncategorized'}</p>
+                <div className="bg-background/20 rounded-xl p-4 border border-border/50">
+                  <p className="text-muted-foreground text-xs uppercase tracking-wider mb-1">Category</p>
+                  <p className="text-foreground font-medium">{detailItem.category || 'Uncategorized'}</p>
                 </div>
-                <div className="bg-black/20 rounded-xl p-4 border border-white/5">
-                  <p className="text-gray-500 text-xs uppercase tracking-wider mb-1">Status</p>
+                <div className="bg-background/20 rounded-xl p-4 border border-border/50">
+                  <p className="text-muted-foreground text-xs uppercase tracking-wider mb-1">Status</p>
                   <div className="flex items-center gap-2 mt-1">
                     {detailItem.available ? (
                       <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 text-xs">Available</Badge>
@@ -527,42 +527,42 @@ export default function AdminMenusPage() {
                     )}
                   </div>
                 </div>
-                <div className="bg-black/20 rounded-xl p-4 border border-white/5">
-                  <p className="text-gray-500 text-xs uppercase tracking-wider mb-1">Type</p>
+                <div className="bg-background/20 rounded-xl p-4 border border-border/50">
+                  <p className="text-muted-foreground text-xs uppercase tracking-wider mb-1">Type</p>
                   <div className="flex items-center gap-2 mt-1">
                     {detailItem.vegetarian && <Badge className="bg-green-500/10 text-green-400 border-green-500/20 text-xs gap-1"><Leaf size={10} /> Veg</Badge>}
                     {detailItem.spicy && <Badge className="bg-red-500/10 text-red-400 border-red-500/20 text-xs gap-1"><Flame size={10} /> Spicy</Badge>}
-                    {!detailItem.vegetarian && !detailItem.spicy && <span className="text-gray-500 text-sm">Standard</span>}
+                    {!detailItem.vegetarian && !detailItem.spicy && <span className="text-muted-foreground text-sm">Standard</span>}
                   </div>
                 </div>
               </div>
               {detailItem.description && (
-                <div className="bg-black/20 rounded-xl p-4 border border-white/5">
-                  <p className="text-gray-500 text-xs uppercase tracking-wider mb-2">Description</p>
-                  <p className="text-gray-300 text-sm">{detailItem.description}</p>
+                <div className="bg-background/20 rounded-xl p-4 border border-border/50">
+                  <p className="text-muted-foreground text-xs uppercase tracking-wider mb-2">Description</p>
+                  <p className="text-muted-foreground text-sm">{detailItem.description}</p>
                 </div>
               )}
               {(detailItem.preparationTime || detailItem.calories || detailItem.servings) && (
                 <div className="grid grid-cols-3 gap-4">
                   {detailItem.preparationTime && (
-                    <div className="bg-black/20 rounded-xl p-3 border border-white/5 text-center">
+                    <div className="bg-background/20 rounded-xl p-3 border border-border/50 text-center">
                       <Clock className="w-4 h-4 text-orange-400 mx-auto mb-1" />
-                      <p className="text-white font-mono text-sm">{detailItem.preparationTime} min</p>
-                      <p className="text-gray-600 text-[10px]">Prep time</p>
+                      <p className="text-foreground font-mono text-sm">{detailItem.preparationTime} min</p>
+                      <p className="text-muted-foreground text-[10px]">Prep time</p>
                     </div>
                   )}
                   {detailItem.calories && (
-                    <div className="bg-black/20 rounded-xl p-3 border border-white/5 text-center">
+                    <div className="bg-background/20 rounded-xl p-3 border border-border/50 text-center">
                       <Activity className="w-4 h-4 text-blue-400 mx-auto mb-1" />
-                      <p className="text-white font-mono text-sm">{detailItem.calories}</p>
-                      <p className="text-gray-600 text-[10px]">Calories</p>
+                      <p className="text-foreground font-mono text-sm">{detailItem.calories}</p>
+                      <p className="text-muted-foreground text-[10px]">Calories</p>
                     </div>
                   )}
                   {detailItem.servings && (
-                    <div className="bg-black/20 rounded-xl p-3 border border-white/5 text-center">
+                    <div className="bg-background/20 rounded-xl p-3 border border-border/50 text-center">
                       <Users className="w-4 h-4 text-purple-400 mx-auto mb-1" />
-                      <p className="text-white font-mono text-sm">{detailItem.servings}</p>
-                      <p className="text-gray-600 text-[10px]">Servings</p>
+                      <p className="text-foreground font-mono text-sm">{detailItem.servings}</p>
+                      <p className="text-muted-foreground text-[10px]">Servings</p>
                     </div>
                   )}
                 </div>

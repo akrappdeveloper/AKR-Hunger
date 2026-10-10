@@ -196,7 +196,7 @@ export default function AdminMessagingSystemPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border pb-5">
         <div>
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center text-white shadow-xl shadow-purple-500/25">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center text-foreground shadow-xl shadow-purple-500/25">
               <Shield className="w-7 h-7" />
             </div>
             <div>
@@ -204,7 +204,7 @@ export default function AdminMessagingSystemPage() {
                 <h1 className="text-2xl font-black text-foreground tracking-tight">
                   Admin Realtime Power Messaging
                 </h1>
-                <Badge className="bg-purple-600 text-white font-bold text-xs uppercase px-2 py-0.5">
+                <Badge className="bg-purple-600 text-foreground font-bold text-xs uppercase px-2 py-0.5">
                   Super-Admin Oversight
                 </Badge>
               </div>
@@ -261,8 +261,8 @@ export default function AdminMessagingSystemPage() {
                 className={`text-[11px] font-bold px-2.5 py-1.5 rounded-lg whitespace-nowrap transition ${
                   filterType === f.id
                     ? f.danger
-                      ? 'bg-destructive text-white'
-                      : 'bg-purple-600 text-white'
+                      ? 'bg-destructive text-foreground'
+                      : 'bg-purple-600 text-foreground'
                     : f.danger && reportedCount > 0
                     ? 'bg-destructive/10 text-destructive border border-destructive/20'
                     : 'bg-muted/50 text-muted-foreground hover:text-foreground'
@@ -360,7 +360,7 @@ export default function AdminMessagingSystemPage() {
                       {selectedConversation.chatType?.replace('_', ' ')}
                     </Badge>
                     {selectedConversation.status === 'reported' && (
-                      <Badge className="bg-destructive text-white text-[10px] font-bold">
+                      <Badge className="bg-destructive text-foreground text-[10px] font-bold">
                         ⚠️ Reported Issue
                       </Badge>
                     )}
@@ -400,7 +400,7 @@ export default function AdminMessagingSystemPage() {
                   <Button
                     size="sm"
                     onClick={() => handleUpdateStatus('active')}
-                    className="h-8 px-2.5 text-xs rounded-xl bg-purple-600 hover:bg-purple-700 text-white"
+                    className="h-8 px-2.5 text-xs rounded-xl bg-purple-600 hover:bg-purple-700 text-foreground"
                   >
                     Resolve & Re-open
                   </Button>
@@ -447,7 +447,7 @@ export default function AdminMessagingSystemPage() {
                         <div
                           className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 text-xs shadow-xs break-words ${
                             isAdmin
-                              ? 'bg-purple-600 text-white rounded-br-none'
+                              ? 'bg-purple-600 text-foreground rounded-br-none'
                               : msg.senderRole === 'customer'
                               ? 'bg-amber-500/10 border border-amber-500/30 text-foreground rounded-bl-none'
                               : msg.senderRole === 'restaurant'
@@ -508,7 +508,7 @@ export default function AdminMessagingSystemPage() {
                 <Button
                   onClick={() => handleSendAdminMessage()}
                   disabled={!adminInput.trim() || sending}
-                  className="bg-purple-600 hover:bg-purple-700 text-white rounded-xl h-10 px-4 text-xs font-bold gap-1 shrink-0"
+                  className="bg-purple-600 hover:bg-purple-700 text-foreground rounded-xl h-10 px-4 text-xs font-bold gap-1 shrink-0"
                 >
                   <Send className="w-3.5 h-3.5" />
                   Intervene

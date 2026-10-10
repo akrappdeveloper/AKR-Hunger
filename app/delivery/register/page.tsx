@@ -96,6 +96,20 @@ export default function DeliveryRegisterPage() {
                 drivingLicense: licenseUrl
             });
 
+            // Send Welcome Email via Resend
+            if (formData.email) {
+                fetch('/api/email/send', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        type: 'welcome',
+                        email: formData.email,
+                        name: formData.name,
+                        role: 'delivery',
+                    }),
+                }).catch((err) => console.error('[Resend] Delivery partner welcome email notice:', err));
+            }
+
             router.push('/delivery/login?registered=true');
         } catch (err: any) {
             console.error(err);

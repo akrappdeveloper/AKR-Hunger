@@ -217,7 +217,7 @@ export default function AdminTrackingPage() {
       case 'ready': return 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20';
       case 'out_for_delivery': case 'going_to_customer': return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
       case 'going_to_restaurant': return 'bg-orange-500/10 text-orange-400 border-orange-500/20';
-      default: return 'bg-gray-500/10 text-gray-400 border-gray-500/20';
+      default: return 'bg-gray-500/10 text-muted-foreground border-border/20';
     }
   };
 
@@ -230,7 +230,7 @@ export default function AdminTrackingPage() {
       <div className="flex items-center justify-center h-[60vh]">
         <div className="text-center space-y-4">
           <div className="h-10 w-10 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-gray-400">Connecting to live tracking...</p>
+          <p className="text-muted-foreground">Connecting to live tracking...</p>
         </div>
       </div>
     );
@@ -244,14 +244,14 @@ export default function AdminTrackingPage() {
           <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white via-gray-100 to-gray-400 tracking-tight mb-2">
             Fleet Tracking
           </h1>
-          <p className="text-gray-400">Monitor all delivery partners and active orders on the live map.</p>
+          <p className="text-muted-foreground">Monitor all delivery partners and active orders on the live map.</p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 bg-white/5 rounded-full px-4 py-2 border border-white/10">
+          <div className="flex items-center gap-2 bg-card/5 rounded-full px-4 py-2 border border-border/50">
             <Satellite className="w-3.5 h-3.5 text-green-400" />
             <span className="text-sm font-medium text-green-400">{liveOnlineCount} GPS Active</span>
           </div>
-          <div className="flex items-center gap-2 bg-white/5 rounded-full px-4 py-2 border border-white/10">
+          <div className="flex items-center gap-2 bg-card/5 rounded-full px-4 py-2 border border-border/50">
             <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
             <span className="text-sm font-medium text-green-400">Live Updates</span>
           </div>
@@ -270,13 +270,13 @@ export default function AdminTrackingPage() {
         ].map((stat, i) => {
           const Icon = stat.icon;
           return (
-            <Card key={i} className="bg-white/5 border-white/10 backdrop-blur-md">
+            <Card key={i} className="bg-card/5 border-border/50 backdrop-blur-md">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between mb-2">
                   <Icon className={`w-4 h-4 text-${stat.color}-400`} />
                 </div>
-                <p className="text-2xl font-bold text-white font-mono">{stat.value}</p>
-                <p className="text-[10px] text-gray-500 mt-0.5 uppercase tracking-wider font-bold">{stat.title}</p>
+                <p className="text-2xl font-bold text-foreground font-mono">{stat.value}</p>
+                <p className="text-[10px] text-muted-foreground mt-0.5 uppercase tracking-wider font-bold">{stat.title}</p>
               </CardContent>
             </Card>
           );
@@ -284,10 +284,10 @@ export default function AdminTrackingPage() {
       </div>
 
       {/* Fleet Map */}
-      <Card className="bg-black/40 border-white/10 backdrop-blur-md shadow-xl overflow-hidden">
-        <CardHeader className="border-b border-white/5 bg-white/5 pb-4">
+      <Card className="bg-background/40 border-border/50 backdrop-blur-md shadow-xl overflow-hidden">
+        <CardHeader className="border-b border-border/50 bg-card/5 pb-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <CardTitle className="text-lg font-semibold text-white flex items-center gap-2">
+            <CardTitle className="text-lg font-semibold text-foreground flex items-center gap-2">
               <Navigation className="w-5 h-5 text-blue-400" />
               Live Fleet Map
               <Badge variant="outline" className="bg-green-500/10 text-green-400 border-green-500/20 text-xs gap-1">
@@ -297,7 +297,7 @@ export default function AdminTrackingPage() {
             </CardTitle>
             <div className="flex items-center gap-2">
               {/* Map Filter */}
-              <div className="flex bg-black/30 rounded-lg border border-white/10 p-0.5">
+              <div className="flex bg-background/30 rounded-lg border border-border/50 p-0.5">
                 {[
                   { key: 'all' as const, label: 'All' },
                   { key: 'delivering' as const, label: 'Delivering' },
@@ -307,8 +307,8 @@ export default function AdminTrackingPage() {
                     onClick={() => setMapFilter(f.key)}
                     className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
                       mapFilter === f.key
-                        ? 'bg-blue-600 text-white'
-                        : 'text-gray-400 hover:text-white'
+                        ? 'bg-blue-600 text-foreground'
+                        : 'text-muted-foreground hover:text-foreground'
                     }`}
                   >
                     {f.label}
@@ -319,7 +319,7 @@ export default function AdminTrackingPage() {
                 variant="outline"
                 size="sm"
                 onClick={() => setShowMap(!showMap)}
-                className="border-white/10 text-gray-400 hover:text-white text-xs"
+                className="border-border/50 text-muted-foreground hover:text-foreground text-xs"
               >
                 <Eye className="w-3.5 h-3.5 mr-1" />
                 {showMap ? 'Hide' : 'Show'} Map
@@ -354,9 +354,9 @@ export default function AdminTrackingPage() {
                   />
                 ) : (
                   <div className="h-full flex flex-col items-center justify-center text-center">
-                    <Satellite className="w-16 h-16 text-gray-700 mb-4" />
-                    <h3 className="text-lg font-bold text-gray-400 mb-1">No Drivers on Map</h3>
-                    <p className="text-gray-600 text-sm max-w-md">
+                    <Satellite className="w-16 h-16 text-muted-foreground mb-4" />
+                    <h3 className="text-lg font-bold text-muted-foreground mb-1">No Drivers on Map</h3>
+                    <p className="text-muted-foreground text-sm max-w-md">
                       No delivery partners have GPS tracking active. When drivers go online and share their location, they'll appear here.
                     </p>
                   </div>
@@ -381,7 +381,7 @@ export default function AdminTrackingPage() {
                     />
                     <button
                       onClick={() => setSelectedDriverId(null)}
-                      className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center text-white text-xs hover:bg-red-600 transition-colors"
+                      className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center text-foreground text-xs hover:bg-red-600 transition-colors"
                     >
                       ×
                     </button>
@@ -394,11 +394,11 @@ export default function AdminTrackingPage() {
       </Card>
 
       {/* Active Deliveries Board */}
-      <Card className="bg-black/40 border-white/10 backdrop-blur-md shadow-xl overflow-hidden">
-        <CardHeader className="border-b border-white/5 bg-white/5 pb-4">
+      <Card className="bg-background/40 border-border/50 backdrop-blur-md shadow-xl overflow-hidden">
+        <CardHeader className="border-b border-border/50 bg-card/5 pb-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <CardTitle className="text-lg font-semibold text-white flex items-center gap-2">
+              <CardTitle className="text-lg font-semibold text-foreground flex items-center gap-2">
                 <ShoppingBag className="w-5 h-5 text-blue-400" />
                 Active Deliveries
               </CardTitle>
@@ -408,18 +408,18 @@ export default function AdminTrackingPage() {
             </div>
             <div className="flex items-center gap-3">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
                   placeholder="Search orders..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 bg-black/20 border-white/10 text-white placeholder:text-gray-500 w-56"
+                  className="pl-10 bg-background/20 border-border/50 text-foreground placeholder:text-muted-foreground w-56"
                 />
               </div>
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="px-3 py-2 bg-black/20 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500/50"
+                className="px-3 py-2 bg-background/20 border border-border/50 rounded-lg text-foreground text-sm focus:outline-none focus:border-blue-500/50"
               >
                 <option value="all">All Status</option>
                 <option value="pending">Pending</option>
@@ -433,7 +433,7 @@ export default function AdminTrackingPage() {
         </CardHeader>
         <CardContent className="p-4">
           {filteredDeliveries.length === 0 ? (
-            <div className="text-center py-12 text-gray-500">
+            <div className="text-center py-12 text-muted-foreground">
               <Navigation className="w-10 h-10 mx-auto mb-3 opacity-30" />
               <p className="text-lg font-medium">No active deliveries</p>
               <p className="text-sm">All orders have been delivered or no orders match your filter.</p>
@@ -445,7 +445,7 @@ export default function AdminTrackingPage() {
                 return (
                   <div
                     key={delivery.id}
-                    className="bg-white/5 rounded-xl border border-white/10 p-4 hover:border-white/20 transition-all duration-200 group cursor-pointer"
+                    className="bg-card/5 rounded-xl border border-border/50 p-4 hover:border-border transition-all duration-200 group cursor-pointer"
                     onClick={() => {
                       if (delivery.deliveryPersonId) {
                         setSelectedDriverId(delivery.deliveryPersonId);
@@ -455,7 +455,7 @@ export default function AdminTrackingPage() {
                   >
                     {/* Header */}
                     <div className="flex items-center justify-between mb-3">
-                      <span className="text-white font-mono text-xs bg-white/10 px-2 py-1 rounded">
+                      <span className="text-foreground font-mono text-xs bg-card/10 px-2 py-1 rounded">
                         #{delivery.id.slice(0, 8)}
                       </span>
                       <div className="flex items-center gap-2">
@@ -486,7 +486,7 @@ export default function AdminTrackingPage() {
                         const isCurrent = i === currentIdx;
                         return (
                           <div key={step} className="flex-1">
-                            <div className={`h-1.5 w-full rounded-full transition-all ${isComplete ? 'bg-blue-500' : 'bg-white/10'} ${isCurrent ? 'animate-pulse bg-blue-400' : ''}`} />
+                            <div className={`h-1.5 w-full rounded-full transition-all ${isComplete ? 'bg-blue-500' : 'bg-card/10'} ${isCurrent ? 'animate-pulse bg-blue-400' : ''}`} />
                           </div>
                         );
                       })}
@@ -497,28 +497,28 @@ export default function AdminTrackingPage() {
                       <div className="flex items-start gap-2">
                         <Store className="w-3.5 h-3.5 text-orange-400 mt-0.5 shrink-0" />
                         <div>
-                          <p className="text-white text-sm font-medium">{delivery.restaurantName}</p>
+                          <p className="text-foreground text-sm font-medium">{delivery.restaurantName}</p>
                           {delivery.restaurantAddress && (
-                            <p className="text-gray-500 text-[10px] truncate max-w-[200px]">{delivery.restaurantAddress}</p>
+                            <p className="text-muted-foreground text-[10px] truncate max-w-[200px]">{delivery.restaurantAddress}</p>
                           )}
                         </div>
                       </div>
                       <div className="flex items-center justify-center">
-                        <ArrowRight className="w-3 h-3 text-gray-600" />
+                        <ArrowRight className="w-3 h-3 text-muted-foreground" />
                       </div>
                       <div className="flex items-start gap-2">
                         <MapPin className="w-3.5 h-3.5 text-emerald-400 mt-0.5 shrink-0" />
                         <div>
-                          <p className="text-white text-sm font-medium">{delivery.customerName}</p>
+                          <p className="text-foreground text-sm font-medium">{delivery.customerName}</p>
                           {delivery.deliveryAddress && (
-                            <p className="text-gray-500 text-[10px] truncate max-w-[200px]">{delivery.deliveryAddress}</p>
+                            <p className="text-muted-foreground text-[10px] truncate max-w-[200px]">{delivery.deliveryAddress}</p>
                           )}
                         </div>
                       </div>
                     </div>
 
                     {/* Driver & Total */}
-                    <div className="flex items-center justify-between pt-3 border-t border-white/5">
+                    <div className="flex items-center justify-between pt-3 border-t border-border/50">
                       <div className="flex items-center gap-2">
                         <div className="relative">
                           <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${
@@ -532,13 +532,13 @@ export default function AdminTrackingPage() {
                             }
                           </div>
                           {driverLoc && (
-                            <div className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-green-500 border border-black" />
+                            <div className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-green-500 border border-border" />
                           )}
                         </div>
                         <div>
-                          <p className="text-gray-300 text-xs">{delivery.deliveryPersonName}</p>
+                          <p className="text-muted-foreground text-xs">{delivery.deliveryPersonName}</p>
                           {driverLoc && (
-                            <p className="text-gray-600 text-[9px]">{driverLoc.speed} km/h</p>
+                            <p className="text-muted-foreground text-[9px]">{driverLoc.speed} km/h</p>
                           )}
                         </div>
                       </div>
@@ -553,9 +553,9 @@ export default function AdminTrackingPage() {
       </Card>
 
       {/* All Delivery Partners with GPS Status */}
-      <Card className="bg-black/40 border-white/10 backdrop-blur-md shadow-xl overflow-hidden">
-        <CardHeader className="border-b border-white/5 bg-white/5 pb-4">
-          <CardTitle className="text-lg font-semibold text-white flex items-center gap-2">
+      <Card className="bg-background/40 border-border/50 backdrop-blur-md shadow-xl overflow-hidden">
+        <CardHeader className="border-b border-border/50 bg-card/5 pb-4">
+          <CardTitle className="text-lg font-semibold text-foreground flex items-center gap-2">
             <Truck className="w-5 h-5 text-emerald-400" />
             Delivery Partners — GPS Status
           </CardTitle>
@@ -563,7 +563,7 @@ export default function AdminTrackingPage() {
         <CardContent className="p-0">
           <div className="divide-y divide-white/5">
             {partners.length === 0 ? (
-              <div className="text-center py-8 text-gray-500 text-sm">No delivery partners registered</div>
+              <div className="text-center py-8 text-muted-foreground text-sm">No delivery partners registered</div>
             ) : (
               partners
                 .sort((a, b) => {
@@ -577,7 +577,7 @@ export default function AdminTrackingPage() {
                   return (
                     <div
                       key={partner.id}
-                      className={`flex items-center justify-between p-4 hover:bg-white/5 transition-colors cursor-pointer ${
+                      className={`flex items-center justify-between p-4 hover:bg-card/5 transition-colors cursor-pointer ${
                         selectedDriverId === partner.id ? 'bg-blue-500/10' : ''
                       }`}
                       onClick={() => {
@@ -589,16 +589,16 @@ export default function AdminTrackingPage() {
                     >
                       <div className="flex items-center gap-4">
                         <div className="relative">
-                          <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white font-bold text-sm">
+                          <div className="w-10 h-10 rounded-full bg-card/10 flex items-center justify-center text-foreground font-bold text-sm">
                             {partner.name.charAt(0)}
                           </div>
-                          <div className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-black ${
+                          <div className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-border ${
                             driverLoc?.isOnline ? 'bg-green-500' : partner.status === 'online' ? 'bg-yellow-500' : 'bg-gray-600'
                           }`} />
                         </div>
                         <div>
-                          <p className="text-white font-medium text-sm">{partner.name}</p>
-                          <p className="text-gray-500 text-xs">{partner.vehicle} • {partner.vehicleNumber}</p>
+                          <p className="text-foreground font-medium text-sm">{partner.name}</p>
+                          <p className="text-muted-foreground text-xs">{partner.vehicle} • {partner.vehicleNumber}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-4">
@@ -615,7 +615,7 @@ export default function AdminTrackingPage() {
                             </div>
                           </div>
                         ) : (
-                          <span className="text-gray-600 text-xs">No GPS data</span>
+                          <span className="text-muted-foreground text-xs">No GPS data</span>
                         )}
 
                         {/* Active Order */}
@@ -639,13 +639,13 @@ export default function AdminTrackingPage() {
                             ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
                             : partner.status === 'online'
                               ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20'
-                              : 'bg-gray-500/10 text-gray-400 border-gray-500/20'
+                              : 'bg-gray-500/10 text-muted-foreground border-border/20'
                         }`}>
                           {driverLoc?.isOnline ? 'GPS Active' : partner.status.replace('_', ' ')}
                         </Badge>
 
                         {partner.phone && (
-                          <a href={`tel:${partner.phone}`} className="text-gray-500 hover:text-blue-400 transition-colors" onClick={(e) => e.stopPropagation()}>
+                          <a href={`tel:${partner.phone}`} className="text-muted-foreground hover:text-blue-400 transition-colors" onClick={(e) => e.stopPropagation()}>
                             <Phone size={14} />
                           </a>
                         )}

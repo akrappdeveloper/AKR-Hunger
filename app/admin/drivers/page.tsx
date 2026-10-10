@@ -1,335 +1,290 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { db } from '@/lib/firebase';
-import { collection, query, onSnapshot, orderBy, addDoc, updateDoc, deleteDoc, doc, serverTimestamp } from 'firebase/firestore';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { Switch } from '@/components/ui/switch';
-import {
-  Users, Star, MapPin, Phone, Mail, CheckCircle2, XCircle,
-  Loader2, Search, Plus, Filter, MoreVertical, Truck, Ban,
-  Shield, TrendingUp, AlertTriangle, Edit2, Eye
-} from 'lucide-react';
+import { Truck, Search, ShieldCheck, ShieldAlert, CheckCircle2, XCircle, MoreVertical, Ban, Check, Eye } from 'lucide-react';
 import { toast } from 'sonner';
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter
-} from '@/components/ui/dialog';
 
-interface Driver {
-  id: string;
-  name: string;
-  phone: string;
-  email?: string;
-  city: string;
-  vehicleType: string;
-  vehicleNumber?: string;
-  status: 'active' | 'inactive' | 'suspended' | 'pending';
-  isVerified: boolean;
-  isAvailable: boolean;
-  averageRating: number;
-  totalDeliveries: number;
-  totalEarnings: number;
-  todayDeliveries: number;
-  acceptanceRate: number;
-  createdAt: any;
-}
+import { DataTable, ColumnDef } from '@/components/admin/DataTable';
+import { AdminDialog } from '@/components/admin/AdminDialog';
+import { ProtectedRoute } from '@/components/admin/ProtectedRoute';
+import { DeliveryService } from '@/lib/services/DeliveryService';
+import { DeliveryPerson } from '@/lib/types';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 
 const STATUS_COLORS: Record<string, string> = {
-  active: 'bg-emerald-100 text-emerald-700 border-emerald-200',
-  inactive: 'bg-gray-100 text-gray-700 border-gray-200',
-  suspended: 'bg-rose-100 text-rose-700 border-rose-200',
-  pending: 'bg-amber-100 text-amber-700 border-amber-200',
+  active: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+  online: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+  inactive: 'bg-gray-500/10 text-muted-foreground border-border/20',
+  offline: 'bg-gray-500/10 text-muted-foreground border-border/20',
+  suspended: 'bg-rose-500/10 text-rose-400 border-rose-500/20',
+  pending: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
 };
 
 export default function AdminDriversPage() {
-  const [drivers, setDrivers] = useState<Driver[]>([]);
+  const [drivers, setDrivers] = useState<DeliveryPerson[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
-  const [viewDialogOpen, setViewDialogOpen] = useState(false);
-  const [updatingId, setUpdatingId] = useState<string | null>(null);
+  
+  const [viewDialogState, setViewDialogState] = useState<{ open: boolean; driver: DeliveryPerson | null }>({ open: false, driver: null });
 
   useEffect(() => {
-    const q = query(collection(db, 'delivery_partners'), orderBy('createdAt', 'desc'));
-    const unsub = onSnapshot(q, snap => {
-      setDrivers(snap.docs.map(d => ({ id: d.id, ...d.data() } as Driver)));
+    const unsub = DeliveryService.listenAllPartners(data => {
+      setDrivers(data);
       setLoading(false);
-    }, () => setLoading(false));
+    }, (error) => {
+      console.error(error);
+      toast.error('Failed to load drivers');
+      setLoading(false);
+    });
     return () => unsub();
   }, []);
 
-  const updateDriverStatus = async (id: string, status: string) => {
-    setUpdatingId(id);
+  const updateDriverStatus = async (id: string, status: DeliveryPerson['status']) => {
     try {
-      await updateDoc(doc(db, 'delivery_partners', id), { status, updatedAt: serverTimestamp() });
+      await DeliveryService.updatePartner(id, { status });
       toast.success(`Driver status updated to ${status}`);
     } catch {
       toast.error('Failed to update status');
-    } finally {
-      setUpdatingId(null);
     }
   };
 
-  const toggleVerification = async (driver: Driver) => {
-    setUpdatingId(driver.id);
+  const handleKycAction = async (id: string, action: 'approved' | 'rejected') => {
     try {
-      await updateDoc(doc(db, 'delivery_partners', driver.id), {
-        isVerified: !driver.isVerified,
-        updatedAt: serverTimestamp(),
-      });
-      toast.success(driver.isVerified ? 'Verification removed' : 'Driver verified!');
+      await DeliveryService.verifyKyc(id, action);
+      toast.success(`KYC ${action}`);
     } catch {
-      toast.error('Failed to update verification');
-    } finally {
-      setUpdatingId(null);
+      toast.error(`Failed to ${action} KYC`);
     }
   };
 
-  const filtered = drivers.filter(d => {
-    const matchSearch = !search ||
-      d.name.toLowerCase().includes(search.toLowerCase()) ||
-      d.phone.includes(search) ||
-      d.city?.toLowerCase().includes(search.toLowerCase());
-    const matchStatus = statusFilter === 'all' || d.status === statusFilter;
-    return matchSearch && matchStatus;
-  });
+  const columns: ColumnDef<DeliveryPerson>[] = [
+    {
+      header: 'Driver',
+      cell: (row) => (
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 font-bold border border-blue-500/30">
+            {row.name.charAt(0)}
+          </div>
+          <div>
+            <p className="font-semibold text-foreground">{row.name}</p>
+            <p className="text-xs text-muted-foreground">{row.phone}</p>
+          </div>
+        </div>
+      ),
+    },
+    {
+      header: 'Vehicle',
+      cell: (row) => (
+        <div>
+          <p className="text-sm text-foreground capitalize">{row.vehicle || 'Unknown'}</p>
+          <p className="text-xs text-muted-foreground uppercase">{row.vehicleNumber}</p>
+        </div>
+      ),
+    },
+    {
+      header: 'Status',
+      cell: (row) => (
+        <Badge variant="outline" className={STATUS_COLORS[row.status || 'pending'] || STATUS_COLORS['pending']}>
+          {row.status?.toUpperCase() || 'PENDING'}
+        </Badge>
+      ),
+    },
+    {
+      header: 'Verification',
+      cell: (row) => (
+        <div className="flex items-center gap-2">
+          {row.isVerified ? (
+            <Badge variant="outline" className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
+              <ShieldCheck className="w-3 h-3 mr-1" /> Verified
+            </Badge>
+          ) : (
+            <Badge variant="outline" className="bg-amber-500/10 text-amber-400 border-amber-500/20">
+              <ShieldAlert className="w-3 h-3 mr-1" /> Unverified
+            </Badge>
+          )}
+        </div>
+      ),
+    },
+    {
+      header: 'Actions',
+      className: 'text-right',
+      cell: (row) => (
+        <div onClick={(e) => e.stopPropagation()}>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-card/10 text-muted-foreground">
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48 bg-card border-border/50 text-foreground">
+              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setViewDialogState({ open: true, driver: row }); }} className="hover:bg-secondary hover:text-foreground cursor-pointer">
+                <Eye className="w-4 h-4 mr-2" /> View Details
+              </DropdownMenuItem>
+              
+              <DropdownMenuSeparator className="bg-secondary" />
+              
+              <DropdownMenuLabel>KYC Verification</DropdownMenuLabel>
+              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleKycAction(row.id, 'approved'); }} disabled={row.isVerified} className="hover:bg-secondary hover:text-foreground cursor-pointer">
+                <CheckCircle2 className="w-4 h-4 mr-2 text-emerald-400" /> Approve KYC
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleKycAction(row.id, 'rejected'); }} disabled={row.kycStatus === 'rejected'} className="hover:bg-secondary hover:text-foreground cursor-pointer">
+                <XCircle className="w-4 h-4 mr-2 text-rose-400" /> Reject KYC
+              </DropdownMenuItem>
+              
+              <DropdownMenuSeparator className="bg-secondary" />
+              
+              <DropdownMenuLabel>Status</DropdownMenuLabel>
+              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); updateDriverStatus(row.id, 'online'); }} disabled={row.status === 'online'} className="hover:bg-secondary hover:text-foreground cursor-pointer">
+                <Check className="w-4 h-4 mr-2 text-blue-400" /> Set Active
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); updateDriverStatus(row.id, 'offline'); }} disabled={row.status === 'offline' || row.status === 'suspended'} className="hover:bg-secondary hover:text-foreground cursor-pointer">
+                <Ban className="w-4 h-4 mr-2 text-amber-400" /> Suspend
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      ),
+    },
+  ];
+
+  const filteredDrivers = drivers.filter(d => 
+    d.name?.toLowerCase().includes(search.toLowerCase()) || 
+    d.phone?.includes(search)
+  );
 
   const stats = {
     total: drivers.length,
-    active: drivers.filter(d => d.status === 'active').length,
-    available: drivers.filter(d => d.isAvailable).length,
-    pending: drivers.filter(d => d.status === 'pending').length,
-    avgRating: drivers.length ? (drivers.reduce((acc, d) => acc + (d.averageRating || 0), 0) / drivers.length).toFixed(1) : '0.0',
+    active: drivers.filter(d => d.status === 'active' || d.status === 'online').length,
+    verified: drivers.filter(d => d.isVerified).length,
+    pendingKyc: drivers.filter(d => d.kycStatus === 'pending' || !d.isVerified).length,
   };
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-black flex items-center gap-2">
-            <Truck className="w-6 h-6 text-blue-500" /> Delivery Drivers
-          </h1>
-          <p className="text-muted-foreground text-sm mt-1">Manage all delivery partner accounts</p>
+    <ProtectedRoute allowedRoles={['super_admin', 'operations_admin']}>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight text-foreground mb-2 flex items-center gap-2">
+              <Truck className="w-8 h-8 text-blue-500" /> Driver Fleet
+            </h1>
+            <p className="text-muted-foreground">Manage delivery partners, approve KYC, and track performance.</p>
+          </div>
         </div>
-      </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        {[
-          { label: 'Total Drivers', value: stats.total, icon: '🛵', color: 'from-blue-500 to-indigo-600' },
-          { label: 'Active', value: stats.active, icon: '✅', color: 'from-emerald-500 to-teal-600' },
-          { label: 'Online Now', value: stats.available, icon: '🟢', color: 'from-cyan-500 to-blue-600' },
-          { label: 'Pending Review', value: stats.pending, icon: '⏳', color: 'from-amber-500 to-orange-600' },
-          { label: 'Avg Rating', value: `⭐ ${stats.avgRating}`, icon: '⭐', color: 'from-yellow-400 to-amber-500' },
-        ].map((stat, i) => (
-          <Card key={i} className="rounded-2xl border-0 shadow-md">
-            <CardContent className="p-4">
-              <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${stat.color} flex items-center justify-center text-sm mb-2`}>
-                {stat.icon}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <Card className="bg-background/40 border-border/50 backdrop-blur-md">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center">
+                  <Truck className="w-6 h-6 text-blue-400" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Total Fleet</p>
+                  <p className="text-2xl font-bold text-foreground">{stats.total}</p>
+                </div>
               </div>
-              <p className="text-2xl font-black">{stat.value}</p>
-              <p className="text-xs text-muted-foreground">{stat.label}</p>
             </CardContent>
           </Card>
-        ))}
-      </div>
-
-      {/* Search & Filters */}
-      <div className="flex gap-3 flex-wrap">
-        <div className="relative flex-1 min-w-48">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input placeholder="Search by name, phone, city..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 rounded-xl" />
+          <Card className="bg-background/40 border-border/50 backdrop-blur-md">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center">
+                  <CheckCircle2 className="w-6 h-6 text-emerald-400" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Active</p>
+                  <p className="text-2xl font-bold text-foreground">{stats.active}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="bg-background/40 border-border/50 backdrop-blur-md">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-cyan-500/20 flex items-center justify-center">
+                  <ShieldCheck className="w-6 h-6 text-cyan-400" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Verified</p>
+                  <p className="text-2xl font-bold text-foreground">{stats.verified}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="bg-background/40 border-border/50 backdrop-blur-md">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-amber-500/20 flex items-center justify-center">
+                  <ShieldAlert className="w-6 h-6 text-amber-400" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Pending KYC</p>
+                  <p className="text-2xl font-bold text-foreground">{stats.pendingKyc}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
-        <div className="flex gap-2">
-          {['all', 'active', 'pending', 'inactive', 'suspended'].map(s => (
-            <button
-              key={s}
-              onClick={() => setStatusFilter(s)}
-              className={`px-3 py-2 rounded-xl text-xs font-medium capitalize transition-all ${
-                statusFilter === s ? 'bg-blue-500 text-white' : 'bg-muted text-foreground hover:bg-muted/70'
-              }`}
-            >
-              {s}
-            </button>
-          ))}
-        </div>
-      </div>
 
-      {/* Driver Table / Cards */}
-      {loading ? (
-        <div className="flex items-center justify-center py-16">
-          <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
-        </div>
-      ) : filtered.length === 0 ? (
-        <Card className="rounded-2xl border-dashed">
-          <CardContent className="py-12 text-center">
-            <div className="text-5xl mb-3">🛵</div>
-            <p className="text-muted-foreground">No drivers found</p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="space-y-3">
-          <AnimatePresence>
-            {filtered.map((driver, i) => (
-              <motion.div
-                key={driver.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.03 }}
-              >
-                <Card className="rounded-2xl border-0 shadow-sm hover:shadow-md transition-shadow">
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-4 flex-wrap">
-                      {/* Avatar */}
-                      <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-400 to-indigo-600 flex items-center justify-center text-xl flex-shrink-0">
-                        🛵
-                      </div>
+        <DataTable
+          columns={columns}
+          data={filteredDrivers}
+          loading={loading}
+          searchValue={search}
+          onSearch={setSearch}
+          searchPlaceholder="Search drivers by name or phone..."
+          onRowClick={(row) => setViewDialogState({ open: true, driver: row })}
+        />
 
-                      {/* Info */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-bold">{driver.name}</span>
-                          {driver.isVerified && (
-                            <CheckCircle2 className="w-4 h-4 text-blue-500 fill-blue-500" />
-                          )}
-                          <Badge className={`text-xs ${STATUS_COLORS[driver.status] || ''}`}>
-                            {driver.status}
-                          </Badge>
-                          {driver.isAvailable && (
-                            <Badge className="bg-emerald-100 text-emerald-700 border-0 text-xs">Online</Badge>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground flex-wrap">
-                          <span>📞 {driver.phone}</span>
-                          <span>📍 {driver.city}</span>
-                          <span>🏍️ {driver.vehicleType}</span>
-                          {driver.vehicleNumber && <span>{driver.vehicleNumber}</span>}
-                        </div>
-                      </div>
-
-                      {/* Stats */}
-                      <div className="flex items-center gap-4 text-center flex-shrink-0">
-                        <div>
-                          <p className="font-bold text-sm">{driver.totalDeliveries || 0}</p>
-                          <p className="text-xs text-muted-foreground">Deliveries</p>
-                        </div>
-                        <div>
-                          <p className="font-bold text-sm flex items-center gap-0.5">
-                            ⭐ {(driver.averageRating || 0).toFixed(1)}
-                          </p>
-                          <p className="text-xs text-muted-foreground">Rating</p>
-                        </div>
-                        <div>
-                          <p className="font-bold text-sm">₹{driver.totalEarnings?.toFixed(0) || '0'}</p>
-                          <p className="text-xs text-muted-foreground">Earnings</p>
-                        </div>
-                      </div>
-
-                      {/* Actions */}
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => { setSelectedDriver(driver); setViewDialogOpen(true); }}
-                          className="rounded-xl text-xs gap-1"
-                        >
-                          <Eye className="w-3 h-3" /> View
-                        </Button>
-                        {driver.status === 'pending' && (
-                          <Button
-                            size="sm"
-                            onClick={() => updateDriverStatus(driver.id, 'active')}
-                            disabled={updatingId === driver.id}
-                            className="rounded-xl text-xs gap-1 bg-emerald-500 hover:bg-emerald-600 text-white"
-                          >
-                            {updatingId === driver.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCircle2 className="w-3 h-3" />}
-                            Approve
-                          </Button>
-                        )}
-                        {driver.status === 'active' && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => updateDriverStatus(driver.id, 'suspended')}
-                            disabled={updatingId === driver.id}
-                            className="rounded-xl text-xs gap-1 text-rose-600 border-rose-200 hover:bg-rose-50"
-                          >
-                            <Ban className="w-3 h-3" /> Suspend
-                          </Button>
-                        )}
-                        {driver.status === 'suspended' && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => updateDriverStatus(driver.id, 'active')}
-                            disabled={updatingId === driver.id}
-                            className="rounded-xl text-xs gap-1 text-emerald-600 border-emerald-200 hover:bg-emerald-50"
-                          >
-                            <CheckCircle2 className="w-3 h-3" /> Reinstate
-                          </Button>
-                        )}
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => toggleVerification(driver)}
-                          disabled={updatingId === driver.id}
-                          className={`rounded-xl text-xs gap-1 ${driver.isVerified ? 'text-amber-600 border-amber-200 hover:bg-amber-50' : 'text-blue-600 border-blue-200 hover:bg-blue-50'}`}
-                        >
-                          <Shield className="w-3 h-3" />
-                          {driver.isVerified ? 'Unverify' : 'Verify'}
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        </div>
-      )}
-
-      {/* View Driver Dialog */}
-      <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
-        <DialogContent className="max-w-lg rounded-3xl">
-          <DialogHeader>
-            <DialogTitle>Driver Details — {selectedDriver?.name}</DialogTitle>
-          </DialogHeader>
-          {selectedDriver && (
+        <AdminDialog
+          title="Driver Details"
+          description={`Details for ${viewDialogState.driver?.name}`}
+          isOpen={viewDialogState.open}
+          onClose={() => setViewDialogState({ open: false, driver: null })}
+        >
+          {viewDialogState.driver && (
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-3">
-                {[
-                  { label: 'Status', value: selectedDriver.status },
-                  { label: 'Verified', value: selectedDriver.isVerified ? 'Yes ✓' : 'No' },
-                  { label: 'Phone', value: selectedDriver.phone },
-                  { label: 'City', value: selectedDriver.city },
-                  { label: 'Vehicle', value: selectedDriver.vehicleType },
-                  { label: 'Vehicle No.', value: selectedDriver.vehicleNumber || 'N/A' },
-                  { label: 'Total Deliveries', value: selectedDriver.totalDeliveries || 0 },
-                  { label: 'Rating', value: `⭐ ${(selectedDriver.averageRating || 0).toFixed(2)}` },
-                  { label: 'Acceptance Rate', value: `${selectedDriver.acceptanceRate || 0}%` },
-                  { label: 'Total Earnings', value: `₹${selectedDriver.totalEarnings?.toFixed(0) || '0'}` },
-                  { label: 'Joined', value: selectedDriver.createdAt?.toDate?.()?.toLocaleDateString() || 'N/A' },
-                ].map((item, i) => (
-                  <div key={i} className="p-3 rounded-xl bg-muted/40">
-                    <p className="text-xs text-muted-foreground">{item.label}</p>
-                    <p className="font-semibold text-sm capitalize">{String(item.value)}</p>
-                  </div>
-                ))}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-muted-foreground">Name</p>
+                  <p className="font-medium text-foreground">{viewDialogState.driver.name}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Phone</p>
+                  <p className="font-medium text-foreground">{viewDialogState.driver.phone}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Vehicle Type</p>
+                  <p className="font-medium text-foreground capitalize">{viewDialogState.driver.vehicle || 'N/A'}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Vehicle Number</p>
+                  <p className="font-medium text-foreground uppercase">{viewDialogState.driver.vehicleNumber || 'N/A'}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Total Earnings</p>
+                  <p className="font-medium text-foreground">₹{viewDialogState.driver.totalEarnings || 0}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Wallet Balance</p>
+                  <p className="font-medium text-foreground">₹{viewDialogState.driver.walletBalance || 0}</p>
+                </div>
               </div>
             </div>
           )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setViewDialogOpen(false)} className="rounded-xl">Close</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
+        </AdminDialog>
+      </div>
+    </ProtectedRoute>
   );
 }

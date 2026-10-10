@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Hunger Delivery Brand Colors (Primary Orange - Night Mode) -->
+    <color name="primary">#FF6B00</color>
+    <color name="primary_dark">#E85D04</color>
+    <color name="primary_light">#FF8533</color>
+    <color name="primary_variant">#E85D04</color>
+    <color name="primary_tint">#2C1D13</color>
+    <color name="primary_tint_border">#4D2C16</color>
+    <color name="on_primary">#FFFFFF</color>
+
+    <!-- Secondary / Accent Brand Colors (Warm Amber - Night Mode) -->
+    <color name="secondary">#E9A23B</color>
+    <color name="secondary_dark">#F59E0B</color>
+    <color name="secondary_light">#2C2213</color>
+    <color name="on_secondary">#FFFFFF</color>
+
+    <!-- Backgrounds & Surfaces (Dark Theme: Deep Charcoal & Elevated Slate) -->
+    <color name="background">#101318</color>
+    <color name="surface">#1A2029</color>
+    <color name="surface_variant">#242B36</color>
+    <color name="surface_container">#242B36</color>
+    <color name="surface_container_high">#2C3542</color>
+    <color name="surface_elevated">#242B36</color>
+    <color name="on_background">#F5F7FA</color>
+    <color name="on_surface">#F5F7FA</color>
+    <color name="ripple_dark">#26FFFFFF</color>
+    <color name="ripple_light">#1FFFFFFF</color>
+
+    <!-- Card Backgrounds & Borders -->
+    <color name="card_background">#1A2029</color>
+    <color name="card_border">#293342</color>
+    <color name="card_border_subtle">#222A35</color>
+
+    <!-- Status & Feedback Colors -->
+    <color name="success">#16A34A</color>
+    <color name="success_light">#143823</color>
+    <color name="warning">#E9A23B</color>
+    <color name="warning_light">#3A2A10</color>
+    <color name="error">#DC2626</color>
+    <color name="error_light">#3B1818</color>
+    <color name="info">#3B82F6</color>
+    <color name="info_light">#172A45</color>
+
+    <!-- Professional Typography Tokens (Dark Mode) -->
+    <color name="text_primary">#F5F7FA</color>
+    <color name="text_secondary">#9CA3AF</color>
+    <color name="text_tertiary">#6B7280</color>
+    <color name="text_hint">#4B5563</color>
+    <color name="text_disabled">#374151</color>
+
+    <!-- Veg / Non-Veg Indicators -->
+    <color name="veg_green">#16A34A</color>
+    <color name="veg_bg">#143823</color>
+    <color name="non_veg_red">#DC2626</color>
+    <color name="non_veg_bg">#3B1818</color>
+
+    <!-- Ratings -->
+    <color name="rating_star">#E9A23B</color>
+    <color name="rating_bg">#16A34A</color>
+
+    <!-- Dividers & Hairlines -->
+    <color name="divider">#242B36</color>
+    <color name="divider_hairline">#1E252F</color>
+
+    <!-- Shimmer Skeleton Loading -->
+    <color name="shimmer_base">#1F2631</color>
+    <color name="shimmer_highlight">#2A3442</color>
+
+    <!-- Cuisine & Category Palette -->
+    <color name="cat_pizza">#FF6B00</color>
+    <color name="cat_burger">#E9A23B</color>
+    <color name="cat_biryani">#DC2626</color>
+    <color name="cat_chinese">#3B82F6</color>
+    <color name="cat_dessert">#F472B6</color>
+    <color name="cat_healthy">#22C55E</color>
+    <color name="cat_drinks">#A78BFA</color>
+    <color name="cat_kebabs">#FBBF24</color>
+
+    <!-- Order Workflow Status Colors -->
+    <color name="status_pending">#6B7280</color>
+    <color name="status_confirmed">#A78BFA</color>
+    <color name="status_preparing">#FBBF24</color>
+    <color name="status_out_delivery">#FF6B00</color>
+    <color name="status_delivered">#22C55E</color>
+    <color name="status_cancelled">#EF4444</color>
+
+    <!-- Alpha Overlays -->
+    <color name="black_overlay">#B3000000</color>
+    <color name="black_scrim_light">#4D000000</color>
+    <color name="white_overlay">#26FFFFFF</color>
+    <color name="primary_08">#1EFF6B00</color>
+    <color name="primary_10">#26FF6B00</color>
+    <color name="primary_15">#33FF6B00</color>
+    <color name="primary_20">#40FF6B00</color>
+    <color name="primary_30">#59FF6B00</color>
+
+    <!-- Pills & Controls -->
+    <color name="pill_bg">#242B36</color>
+    <color name="pill_bg_active">#FF6B00</color>
+    <color name="pill_text_active">#FFFFFF</color>
+    <color name="pill_border">#293342</color>
+
+    <!-- App Icon & Splash -->
+    <color name="ic_launcher_background">#101318</color>
+    <color name="splash_bg">#101318</color>
+    <color name="splash_glow">#26FF6B00</color>
+
+    <!-- Standard & Backward Compatibility -->
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+    <color name="primary_orange">#FF6B00</color>
+    <color name="deep_slate">#1E293B</color>
+    <color name="deep_purple">#6B21A8</color>
+    <color name="amber_star">#E9A23B</color>
+    <color name="amber_dark">#B45309</color>
+</resources>

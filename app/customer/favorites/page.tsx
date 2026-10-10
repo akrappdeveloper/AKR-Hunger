@@ -10,6 +10,7 @@ import { Card } from '@/components/ui/card';
 import { Heart, ShoppingCart, ArrowRight, Star } from 'lucide-react';
 import Link from 'next/link';
 import SafeImage from '@/components/ui/safe-image';
+import RestaurantCard from '@/components/customer/RestaurantCard';
 
 export default function FavoritesPage() {
     const { user, customer } = useAuth();
@@ -130,23 +131,11 @@ export default function FavoritesPage() {
                                 <h2 className="text-lg sm:text-xl font-bold mb-4 sm:mb-6 text-foreground">Favorite Restaurants</h2>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                                     {favoriteRestaurants.map((restaurant) => (
-                                        <Link key={restaurant.id} href={`/customer/restaurant/${restaurant.id}`} className="group block">
-                                            <div className="rounded-2xl sm:rounded-3xl bg-card border border-border/60 hover:border-primary/40 hover:shadow-md transition-all duration-300 overflow-hidden">
-                                                <div className="h-40 sm:h-44 relative bg-muted">
-                                                    <SafeImage
-                                                        src={restaurant.image}
-                                                        alt={restaurant.name}
-                                                        className="object-cover group-hover:scale-105 transition-transform duration-500"
-                                                        fill
-                                                    />
-                                                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
-                                                    <div className="absolute bottom-3.5 left-4 right-4">
-                                                        <h3 className="font-bold text-lg sm:text-xl text-white mb-0.5 group-hover:text-amber-400 transition-colors drop-shadow-sm">{restaurant.name}</h3>
-                                                        <p className="text-xs sm:text-sm text-gray-200 line-clamp-1 drop-shadow-xs">{restaurant.cuisineType?.join(', ') || 'Multi-cuisine'}</p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </Link>
+                                        <RestaurantCard
+                                            key={restaurant.id}
+                                            restaurant={restaurant}
+                                            variant="grid"
+                                        />
                                     ))}
                                 </div>
                             </div>

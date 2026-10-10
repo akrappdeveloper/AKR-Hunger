@@ -131,17 +131,17 @@ export default function AdminKycPage() {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-black text-white tracking-tight flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-600 to-purple-700 flex items-center justify-center"><ShieldCheck className="w-5 h-5 text-white" /></div>
+          <h1 className="text-3xl font-black text-foreground tracking-tight flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-600 to-purple-700 flex items-center justify-center"><ShieldCheck className="w-5 h-5 text-foreground" /></div>
             KYC Verification
           </h1>
-          <p className="text-gray-400 mt-1 text-sm">Review and approve delivery partner KYC documents</p>
+          <p className="text-muted-foreground mt-1 text-sm">Review and approve delivery partner KYC documents</p>
         </div>
         <div className="flex gap-3">
-          <div className="relative"><Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" /><Input placeholder="Search..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 bg-white/5 border-white/10 text-white placeholder:text-gray-500 w-60" /></div>
+          <div className="relative"><Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" /><Input placeholder="Search..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 bg-card/5 border-border/50 text-foreground placeholder:text-muted-foreground w-60" /></div>
           <Select value={filter} onValueChange={v => setFilter(v as any)}>
-            <SelectTrigger className="bg-white/5 border-white/10 text-white w-36"><Filter className="w-4 h-4 mr-2 text-gray-400" /><SelectValue /></SelectTrigger>
-            <SelectContent className="bg-gray-900 border-white/10 text-white"><SelectItem value="all">All</SelectItem><SelectItem value="pending">Pending</SelectItem><SelectItem value="approved">Approved</SelectItem><SelectItem value="rejected">Rejected</SelectItem></SelectContent>
+            <SelectTrigger className="bg-card/5 border-border/50 text-foreground w-36"><Filter className="w-4 h-4 mr-2 text-muted-foreground" /><SelectValue /></SelectTrigger>
+            <SelectContent className="bg-card border-border/50 text-foreground"><SelectItem value="all">All</SelectItem><SelectItem value="pending">Pending</SelectItem><SelectItem value="approved">Approved</SelectItem><SelectItem value="rejected">Rejected</SelectItem></SelectContent>
           </Select>
         </div>
       </div>
@@ -149,27 +149,27 @@ export default function AdminKycPage() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[{label:'Total',value:stats.total,icon:User,color:'from-blue-600 to-indigo-600'},{label:'Pending',value:stats.pending,icon:Clock,color:'from-amber-500 to-orange-600'},{label:'Approved',value:stats.approved,icon:CheckCircle2,color:'from-emerald-500 to-teal-600'},{label:'Rejected',value:stats.rejected,icon:XCircle,color:'from-rose-500 to-red-600'}].map((s,i) => (
           <motion.div key={s.label} initial={{opacity:0,y:20}} animate={{opacity:1,y:0}} transition={{delay:i*0.1}}>
-            <Card className="bg-white/5 border-white/10"><CardContent className="p-4 flex items-center gap-3"><div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${s.color} flex items-center justify-center flex-shrink-0`}><s.icon className="w-5 h-5 text-white" /></div><div><p className="text-2xl font-black text-white">{s.value}</p><p className="text-xs text-gray-400">{s.label}</p></div></CardContent></Card>
+            <Card className="bg-card/5 border-border/50"><CardContent className="p-4 flex items-center gap-3"><div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${s.color} flex items-center justify-center flex-shrink-0`}><s.icon className="w-5 h-5 text-foreground" /></div><div><p className="text-2xl font-black text-foreground">{s.value}</p><p className="text-xs text-muted-foreground">{s.label}</p></div></CardContent></Card>
           </motion.div>
         ))}
       </div>
 
-      <Card className="bg-white/5 border-white/10">
-        <CardHeader className="border-b border-white/5 pb-4"><CardTitle className="text-white flex items-center gap-2"><FileText className="w-4 h-4 text-violet-400" />Applications ({filtered.length})</CardTitle></CardHeader>
+      <Card className="bg-card/5 border-border/50">
+        <CardHeader className="border-b border-border/50 pb-4"><CardTitle className="text-foreground flex items-center gap-2"><FileText className="w-4 h-4 text-violet-400" />Applications ({filtered.length})</CardTitle></CardHeader>
         <CardContent className="p-0">
           {loading ? (<div className="flex items-center justify-center py-20"><RefreshCw className="w-8 h-8 text-violet-400 animate-spin" /></div>) : filtered.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16"><ShieldCheck className="w-12 h-12 text-gray-600 mb-3" /><p className="text-gray-400">No applications found</p></div>
+            <div className="flex flex-col items-center justify-center py-16"><ShieldCheck className="w-12 h-12 text-muted-foreground mb-3" /><p className="text-muted-foreground">No applications found</p></div>
           ) : (
             <AnimatePresence mode="popLayout">
               {filtered.map((app, i) => {
                 const status = getStatus(app);
                 return (
-                  <motion.div key={app.id} initial={{opacity:0}} animate={{opacity:1}} transition={{delay:i*0.03}} className="flex items-center gap-4 px-6 py-4 border-b border-white/5 hover:bg-white/5 transition-colors cursor-pointer group" onClick={() => { setSelected(app); setDetailOpen(true); }}>
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-violet-600/30 to-purple-700/30 flex items-center justify-center text-white font-bold border border-violet-500/20 flex-shrink-0">{app.name?.charAt(0)?.toUpperCase() || 'D'}</div>
-                    <div className="flex-1 min-w-0"><p className="text-white font-semibold text-sm truncate">{app.name}</p><p className="text-gray-500 text-xs">{app.phone} • {app.vehicleType || app.vehicle || 'Vehicle N/A'}</p></div>
+                  <motion.div key={app.id} initial={{opacity:0}} animate={{opacity:1}} transition={{delay:i*0.03}} className="flex items-center gap-4 px-6 py-4 border-b border-border/50 hover:bg-card/5 transition-colors cursor-pointer group" onClick={() => { setSelected(app); setDetailOpen(true); }}>
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-violet-600/30 to-purple-700/30 flex items-center justify-center text-foreground font-bold border border-violet-500/20 flex-shrink-0">{app.name?.charAt(0)?.toUpperCase() || 'D'}</div>
+                    <div className="flex-1 min-w-0"><p className="text-foreground font-semibold text-sm truncate">{app.name}</p><p className="text-muted-foreground text-xs">{app.phone} • {app.vehicleType || app.vehicle || 'Vehicle N/A'}</p></div>
                     <div className="flex items-center gap-3">
                       <Badge className={status==='approved'?'bg-emerald-500/20 text-emerald-400 border-emerald-500/30':status==='rejected'?'bg-rose-500/20 text-rose-400 border-rose-500/30':'bg-amber-500/20 text-amber-400 border-amber-500/30'}>{status==='approved'?'Approved':status==='rejected'?'Rejected':'Pending'}</Badge>
-                      <ChevronRight className="w-4 h-4 text-gray-600 group-hover:text-white transition-colors" />
+                      <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
                     </div>
                   </motion.div>
                 );
@@ -181,7 +181,7 @@ export default function AdminKycPage() {
 
       {/* Detail Dialog */}
       <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
-        <DialogContent className="bg-gray-950 border-white/10 text-white max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="bg-background border-border/50 text-foreground max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle className="flex items-center gap-3 text-xl"><ShieldCheck className="w-6 h-6 text-violet-400" />KYC Review: {selected?.name}</DialogTitle></DialogHeader>
           {selected && (
             <div className="space-y-6">
@@ -193,42 +193,42 @@ export default function AdminKycPage() {
               </div>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                 {[{label:'Name',value:selected.name},{label:'Phone',value:selected.phone},{label:'Email',value:selected.email},{label:'Vehicle',value:selected.vehicleType||selected.vehicle},{label:'Vehicle No.',value:selected.vehicleNumber},{label:'Applied',value:selected.createdAt?.toDate?.()?selected.createdAt.toDate().toLocaleDateString():'N/A'}].map(item => (
-                  <div key={item.label} className="bg-white/5 rounded-xl p-3 border border-white/5"><p className="text-gray-500 text-xs mb-1">{item.label}</p><p className="text-white text-sm font-medium">{item.value||'—'}</p></div>
+                  <div key={item.label} className="bg-card/5 rounded-xl p-3 border border-border/50"><p className="text-muted-foreground text-xs mb-1">{item.label}</p><p className="text-foreground text-sm font-medium">{item.value||'—'}</p></div>
                 ))}
               </div>
               <div>
-                <h3 className="text-white font-semibold mb-3 flex items-center gap-2"><FileText className="w-4 h-4 text-violet-400" />Submitted Documents</h3>
+                <h3 className="text-foreground font-semibold mb-3 flex items-center gap-2"><FileText className="w-4 h-4 text-violet-400" />Submitted Documents</h3>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                   {Object.entries(DOC_LABELS).map(([key, label]) => {
                     const url = (selected as any)[key];
                     return (
-                      <div key={key} className={`rounded-xl border ${url?'border-violet-500/30 bg-violet-500/5':'border-white/5 bg-white/5'} p-3`}>
-                        <p className="text-gray-400 text-xs mb-2">{label}</p>
-                        {url ? (<button onClick={() => setDocViewer({url,title:label})} className="flex items-center gap-2 text-violet-400 hover:text-violet-300 text-sm font-medium"><Eye className="w-4 h-4" />View<ExternalLink className="w-3 h-3" /></button>) : (<span className="text-gray-600 text-sm flex items-center gap-1"><AlertTriangle className="w-3 h-3 text-amber-500" />Not submitted</span>)}
+                      <div key={key} className={`rounded-xl border ${url?'border-violet-500/30 bg-violet-500/5':'border-border/50 bg-card/5'} p-3`}>
+                        <p className="text-muted-foreground text-xs mb-2">{label}</p>
+                        {url ? (<button onClick={() => setDocViewer({url,title:label})} className="flex items-center gap-2 text-violet-400 hover:text-violet-300 text-sm font-medium"><Eye className="w-4 h-4" />View<ExternalLink className="w-3 h-3" /></button>) : (<span className="text-muted-foreground text-sm flex items-center gap-1"><AlertTriangle className="w-3 h-3 text-amber-500" />Not submitted</span>)}
                       </div>
                     );
                   })}
                 </div>
               </div>
               <div className="bg-gradient-to-r from-blue-900/30 to-violet-900/30 rounded-2xl p-4 border border-blue-500/20">
-                <h3 className="text-white font-semibold mb-2 flex items-center gap-2"><Video className="w-4 h-4 text-blue-400" />Live Video Verification (WebRTC)</h3>
-                <p className="text-gray-400 text-sm mb-3">Conduct a live video call to verify the applicant identity in real-time.</p>
-                <Button onClick={startVideoCall} className="bg-blue-600 hover:bg-blue-700 text-white gap-2"><Video className="w-4 h-4" />Start Video Call</Button>
+                <h3 className="text-foreground font-semibold mb-2 flex items-center gap-2"><Video className="w-4 h-4 text-blue-400" />Live Video Verification (WebRTC)</h3>
+                <p className="text-muted-foreground text-sm mb-3">Conduct a live video call to verify the applicant identity in real-time.</p>
+                <Button onClick={startVideoCall} className="bg-blue-600 hover:bg-blue-700 text-foreground gap-2"><Video className="w-4 h-4" />Start Video Call</Button>
               </div>
               {getStatus(selected) === 'pending' && (
                 <div className="space-y-3">
-                  <Textarea placeholder="Rejection reason (required if rejecting)..." value={rejectionReason} onChange={e => setRejectionReason(e.target.value)} className="bg-white/5 border-white/10 text-white placeholder:text-gray-600 resize-none" rows={3} />
+                  <Textarea placeholder="Rejection reason (required if rejecting)..." value={rejectionReason} onChange={e => setRejectionReason(e.target.value)} className="bg-card/5 border-border/50 text-foreground placeholder:text-muted-foreground resize-none" rows={3} />
                   <div className="flex gap-3">
-                    <Button onClick={() => approveKyc(selected.id)} disabled={approving} className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white gap-2">{approving?<RefreshCw className="w-4 h-4 animate-spin" />:<CheckCircle2 className="w-4 h-4" />}Approve KYC</Button>
+                    <Button onClick={() => approveKyc(selected.id)} disabled={approving} className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-foreground gap-2">{approving?<RefreshCw className="w-4 h-4 animate-spin" />:<CheckCircle2 className="w-4 h-4" />}Approve KYC</Button>
                     <Button onClick={() => rejectKyc(selected.id)} disabled={rejecting} variant="outline" className="flex-1 border-rose-500/50 text-rose-400 hover:bg-rose-500/10 gap-2">{rejecting?<RefreshCw className="w-4 h-4 animate-spin" />:<XCircle className="w-4 h-4" />}Reject KYC</Button>
                   </div>
                 </div>
               )}
               {getStatus(selected) !== 'pending' && (
                 <div className="space-y-3">
-                  <Textarea placeholder="New rejection reason..." value={rejectionReason} onChange={e => setRejectionReason(e.target.value)} className="bg-white/5 border-white/10 text-white placeholder:text-gray-600 resize-none" rows={2} />
+                  <Textarea placeholder="New rejection reason..." value={rejectionReason} onChange={e => setRejectionReason(e.target.value)} className="bg-card/5 border-border/50 text-foreground placeholder:text-muted-foreground resize-none" rows={2} />
                   <div className="flex gap-3">
-                    <Button onClick={() => approveKyc(selected.id)} disabled={approving||getStatus(selected)==='approved'} className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2 disabled:opacity-50"><CheckCircle2 className="w-4 h-4" />Re-Approve</Button>
+                    <Button onClick={() => approveKyc(selected.id)} disabled={approving||getStatus(selected)==='approved'} className="bg-emerald-600 hover:bg-emerald-700 text-foreground gap-2 disabled:opacity-50"><CheckCircle2 className="w-4 h-4" />Re-Approve</Button>
                     <Button onClick={() => rejectKyc(selected.id)} disabled={rejecting} variant="outline" className="border-rose-500/50 text-rose-400 hover:bg-rose-500/10 gap-2"><XCircle className="w-4 h-4" />Reject</Button>
                   </div>
                 </div>
@@ -240,11 +240,11 @@ export default function AdminKycPage() {
 
       {/* Document Viewer */}
       <Dialog open={!!docViewer} onOpenChange={() => setDocViewer(null)}>
-        <DialogContent className="bg-gray-950 border-white/10 text-white max-w-2xl">
+        <DialogContent className="bg-background border-border/50 text-foreground max-w-2xl">
           <DialogHeader><DialogTitle className="flex items-center gap-2"><ZoomIn className="w-5 h-5 text-violet-400" />{docViewer?.title}</DialogTitle></DialogHeader>
           {docViewer && (
             <div className="flex flex-col items-center">
-              <img src={docViewer.url} alt={docViewer.title} className="max-w-full max-h-[70vh] object-contain rounded-xl border border-white/10" />
+              <img src={docViewer.url} alt={docViewer.title} className="max-w-full max-h-[70vh] object-contain rounded-xl border border-border/50" />
               <a href={docViewer.url} target="_blank" rel="noopener noreferrer" className="mt-4 text-violet-400 hover:text-violet-300 flex items-center gap-2 text-sm"><ExternalLink className="w-4 h-4" />Open in new tab</a>
             </div>
           )}

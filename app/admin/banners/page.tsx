@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { db } from '@/lib/firebase';
-import { collection, query, onSnapshot, addDoc, updateDoc, deleteDoc, doc, orderBy, serverTimestamp } from 'firebase/firestore';
+import { serverTimestamp } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -17,6 +16,8 @@ import {
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { toast } from 'sonner';
+import { ProtectedRoute } from '@/components/admin/ProtectedRoute';
+import { ContentService } from '@/lib/services/ContentService';
 
 interface Banner {
   id: string;
@@ -72,11 +73,10 @@ export default function AdminBannersPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
-    const q = query(collection(db, 'banners'), orderBy('position', 'asc'));
-    const unsub = onSnapshot(q, snap => {
-      setBanners(snap.docs.map(d => ({ id: d.id, ...d.data() } as Banner)));
+    const unsub = ContentService.listenBanners(data => {
+      setBanners(data as Banner[]);
       setLoading(false);
-    }, () => setLoading(false));
+    });
     return () => unsub();
   }, []);
 
@@ -118,10 +118,10 @@ export default function AdminBannersPage() {
         updatedAt: serverTimestamp(),
       };
       if (editing) {
-        await updateDoc(doc(db, 'banners', editing.id), data);
+        await ContentService.updateBanner(editing.id, data);
         toast.success('Banner updated');
       } else {
-        await addDoc(collection(db, 'banners'), { ...data, createdAt: serverTimestamp() });
+        await ContentService.addBanner({ ...data, createdAt: serverTimestamp() });
         toast.success('Banner created!');
       }
       setDialogOpen(false);
@@ -135,7 +135,7 @@ export default function AdminBannersPage() {
   const toggleBanner = async (b: Banner) => {
     setTogglingId(b.id);
     try {
-      await updateDoc(doc(db, 'banners', b.id), { isActive: !b.isActive });
+      await ContentService.toggleBannerStatus(b.id, b.isActive);
       toast.success(b.isActive ? 'Banner hidden' : 'Banner activated');
     } catch {
       toast.error('Failed to update');
@@ -147,7 +147,7 @@ export default function AdminBannersPage() {
   const deleteBanner = async (id: string) => {
     setDeletingId(id);
     try {
-      await deleteDoc(doc(db, 'banners', id));
+      await ContentService.deleteBanner(id);
       toast.success('Banner deleted');
     } catch {
       toast.error('Failed to delete');
@@ -164,6 +164,7 @@ export default function AdminBannersPage() {
   };
 
   return (
+    <ProtectedRoute allowedRoles={['super_admin', 'content_manager']}>
     <div className="p-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -173,7 +174,7 @@ export default function AdminBannersPage() {
           </h1>
           <p className="text-muted-foreground text-sm mt-1">Manage homepage banners and promotional images</p>
         </div>
-        <Button onClick={openAdd} className="bg-gradient-to-r from-rose-500 to-pink-600 text-white rounded-2xl gap-2">
+        <Button onClick={openAdd} className="bg-gradient-to-r from-rose-500 to-pink-600 text-foreground rounded-2xl gap-2">
           <Plus className="w-4 h-4" /> New Banner
         </Button>
       </div>
@@ -189,7 +190,7 @@ export default function AdminBannersPage() {
           <p className="text-xs text-muted-foreground">Active</p>
         </Card>
         <Card className="rounded-2xl border-0 shadow-sm text-center p-4">
-          <p className="text-3xl font-black text-gray-400">{banners.filter(b => !b.isActive).length}</p>
+          <p className="text-3xl font-black text-muted-foreground">{banners.filter(b => !b.isActive).length}</p>
           <p className="text-xs text-muted-foreground">Hidden</p>
         </Card>
       </div>
@@ -203,7 +204,7 @@ export default function AdminBannersPage() {
           <CardContent className="py-12 text-center">
             <div className="text-5xl mb-3">🖼️</div>
             <p className="text-muted-foreground mb-4">No banners yet. Create your first banner!</p>
-            <Button onClick={openAdd} className="bg-rose-500 text-white rounded-xl">Create Banner</Button>
+            <Button onClick={openAdd} className="bg-rose-500 text-foreground rounded-xl">Create Banner</Button>
           </CardContent>
         </Card>
       ) : (
@@ -227,7 +228,7 @@ export default function AdminBannersPage() {
                         <div className="flex-1 min-w-0 mr-4">
                           <div className="flex items-center gap-2 mb-1">
                             <span className="font-bold truncate">{banner.title}</span>
-                            <Badge className={banner.isActive ? 'bg-emerald-100 text-emerald-700 border-0 text-xs' : 'bg-gray-100 text-gray-600 border-0 text-xs'}>
+                            <Badge className={banner.isActive ? 'bg-emerald-100 text-emerald-700 border-0 text-xs' : 'bg-secondary text-muted-foreground border-0 text-xs'}>
                               {banner.isActive ? 'Active' : 'Hidden'}
                             </Badge>
                           </div>
@@ -249,7 +250,7 @@ export default function AdminBannersPage() {
                             variant="outline"
                             onClick={() => toggleBanner(banner)}
                             disabled={togglingId === banner.id}
-                            className={`rounded-xl text-xs gap-1 ${banner.isActive ? 'text-gray-600' : 'text-emerald-600'}`}
+                            className={`rounded-xl text-xs gap-1 ${banner.isActive ? 'text-muted-foreground' : 'text-emerald-600'}`}
                           >
                             {togglingId === banner.id ? <Loader2 className="w-3 h-3 animate-spin" /> : (banner.isActive ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />)}
                             {banner.isActive ? 'Hide' : 'Show'}
@@ -325,7 +326,7 @@ export default function AdminBannersPage() {
                     key={p.value}
                     onClick={() => togglePage(p.value)}
                     className={`px-3 py-1.5 rounded-xl text-xs border transition-all ${
-                      form.displayPages?.includes(p.value) ? 'bg-rose-500 text-white border-rose-500' : 'border-border'
+                      form.displayPages?.includes(p.value) ? 'bg-rose-500 text-foreground border-rose-500' : 'border-border'
                     }`}
                   >
                     {p.label}
@@ -340,7 +341,7 @@ export default function AdminBannersPage() {
           </div>
           <DialogFooter className="gap-3">
             <Button variant="outline" onClick={() => setDialogOpen(false)} className="rounded-xl">Cancel</Button>
-            <Button onClick={handleSave} disabled={saving} className="rounded-xl bg-rose-500 hover:bg-rose-600 text-white gap-2">
+            <Button onClick={handleSave} disabled={saving} className="rounded-xl bg-rose-500 hover:bg-rose-600 text-foreground gap-2">
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
               {editing ? 'Update' : 'Create Banner'}
             </Button>
@@ -348,5 +349,6 @@ export default function AdminBannersPage() {
         </DialogContent>
       </Dialog>
     </div>
+    </ProtectedRoute>
   );
 }

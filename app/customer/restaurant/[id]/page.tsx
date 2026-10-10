@@ -57,7 +57,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       title: `${restaurant.name} - Order Online`,
       description: description,
       images: restaurant.image ? [{ url: restaurant.image }] : [],
-      url: `https://akrhunger.vercel.app/customer/restaurant/${id}`,
+      url: `https://shunger.vercel.app/customer/restaurant/${id}`,
     },
   };
 }

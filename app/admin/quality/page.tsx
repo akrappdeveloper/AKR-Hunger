@@ -190,7 +190,7 @@ export default function AdminQualityPage() {
       <div className="flex items-center justify-center h-[60vh]">
         <div className="text-center space-y-4">
           <div className="h-10 w-10 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-gray-400">Analyzing quality metrics...</p>
+          <p className="text-muted-foreground">Analyzing quality metrics...</p>
         </div>
       </div>
     );
@@ -203,7 +203,7 @@ export default function AdminQualityPage() {
         <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white via-gray-100 to-gray-400 tracking-tight mb-2">
           Quality Control
         </h1>
-        <p className="text-gray-400">Monitor food quality, restaurant performance, and customer satisfaction.</p>
+        <p className="text-muted-foreground">Monitor food quality, restaurant performance, and customer satisfaction.</p>
       </div>
 
       {/* Overview Stats */}
@@ -232,9 +232,9 @@ export default function AdminQualityPage() {
                 <div className="flex items-center justify-between mb-3">
                   <Icon className={`w-5 h-5 ${iconColors[stat.color]}`} />
                 </div>
-                <p className="text-2xl font-bold text-white font-mono">{stat.value}</p>
-                <p className="text-[11px] text-gray-400 mt-1">{stat.title}</p>
-                <p className="text-[10px] text-gray-500 mt-0.5">{stat.sub}</p>
+                <p className="text-2xl font-bold text-foreground font-mono">{stat.value}</p>
+                <p className="text-[11px] text-muted-foreground mt-1">{stat.title}</p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">{stat.sub}</p>
               </CardContent>
             </Card>
           );
@@ -242,9 +242,9 @@ export default function AdminQualityPage() {
       </div>
 
       {/* Quality Distribution Chart */}
-      <Card className="bg-black/40 border-white/10 backdrop-blur-md shadow-xl overflow-hidden">
-        <CardHeader className="border-b border-white/5 bg-white/5 pb-4">
-          <CardTitle className="text-lg font-semibold text-white flex items-center gap-2">
+      <Card className="bg-background/40 border-border/50 backdrop-blur-md shadow-xl overflow-hidden">
+        <CardHeader className="border-b border-border/50 bg-card/5 pb-4">
+          <CardTitle className="text-lg font-semibold text-foreground flex items-center gap-2">
             <BarChart3 className="w-5 h-5 text-blue-400" />
             Quality Score Distribution
           </CardTitle>
@@ -292,16 +292,16 @@ export default function AdminQualityPage() {
                 <TableBody>
                   {flaggedItems.slice(0, 10).map((item) => (
                     <TableRow key={item.id} className="border-red-500/10 hover:bg-red-500/5 transition-colors">
-                      <TableCell className="text-white font-medium text-sm">{item.name}</TableCell>
-                      <TableCell className="text-gray-300 text-sm">{item.restaurantName}</TableCell>
+                      <TableCell className="text-foreground font-medium text-sm">{item.name}</TableCell>
+                      <TableCell className="text-muted-foreground text-sm">{item.restaurantName}</TableCell>
                       <TableCell>
                         <span className={`font-mono text-sm ${item.avgRating < 2.5 ? 'text-red-400' : 'text-yellow-400'}`}>
                           {item.avgRating > 0 ? `${item.avgRating} ★` : 'N/A'}
                         </span>
                       </TableCell>
-                      <TableCell className="text-gray-400 text-sm">{item.totalReviews}</TableCell>
+                      <TableCell className="text-muted-foreground text-sm">{item.totalReviews}</TableCell>
                       <TableCell>
-                        <span className={`font-mono text-sm ${item.cancelRate > 30 ? 'text-red-400' : 'text-gray-300'}`}>
+                        <span className={`font-mono text-sm ${item.cancelRate > 30 ? 'text-red-400' : 'text-muted-foreground'}`}>
                           {item.cancelRate}%
                         </span>
                       </TableCell>
@@ -320,27 +320,27 @@ export default function AdminQualityPage() {
       )}
 
       {/* Restaurant Quality Table */}
-      <Card className="bg-black/40 border-white/10 backdrop-blur-md shadow-xl overflow-hidden">
-        <CardHeader className="border-b border-white/5 bg-white/5 pb-4">
+      <Card className="bg-background/40 border-border/50 backdrop-blur-md shadow-xl overflow-hidden">
+        <CardHeader className="border-b border-border/50 bg-card/5 pb-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <CardTitle className="text-lg font-semibold text-white flex items-center gap-2">
+            <CardTitle className="text-lg font-semibold text-foreground flex items-center gap-2">
               <Store className="w-5 h-5 text-blue-400" />
               Restaurant Quality Scores
             </CardTitle>
             <div className="flex items-center gap-3">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
                   placeholder="Search restaurants..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 bg-black/20 border-white/10 text-white placeholder:text-gray-500 w-56"
+                  className="pl-10 bg-background/20 border-border/50 text-foreground placeholder:text-muted-foreground w-56"
                 />
               </div>
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as any)}
-                className="px-3 py-2 bg-black/20 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500/50"
+                className="px-3 py-2 bg-background/20 border border-border/50 rounded-lg text-foreground text-sm focus:outline-none focus:border-blue-500/50"
               >
                 <option value="qualityScore">Quality Score</option>
                 <option value="successRate">Success Rate</option>
@@ -353,26 +353,26 @@ export default function AdminQualityPage() {
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow className="border-white/5 hover:bg-transparent">
-                  <TableHead className="text-gray-400">Restaurant</TableHead>
-                  <TableHead className="text-gray-400 text-center">Quality Score</TableHead>
-                  <TableHead className="text-gray-400 text-right">Orders</TableHead>
-                  <TableHead className="text-gray-400 text-right">Success Rate</TableHead>
-                  <TableHead className="text-gray-400 text-right">Avg Rating</TableHead>
-                  <TableHead className="text-gray-400 text-right">Reviews</TableHead>
-                  <TableHead className="text-gray-400 text-center">Status</TableHead>
+                <TableRow className="border-border/50 hover:bg-transparent">
+                  <TableHead className="text-muted-foreground">Restaurant</TableHead>
+                  <TableHead className="text-muted-foreground text-center">Quality Score</TableHead>
+                  <TableHead className="text-muted-foreground text-right">Orders</TableHead>
+                  <TableHead className="text-muted-foreground text-right">Success Rate</TableHead>
+                  <TableHead className="text-muted-foreground text-right">Avg Rating</TableHead>
+                  <TableHead className="text-muted-foreground text-right">Reviews</TableHead>
+                  <TableHead className="text-muted-foreground text-center">Status</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredRestaurants.map((rest) => (
-                  <TableRow key={rest.id} className="border-white/5 hover:bg-white/5 transition-colors">
-                    <TableCell className="text-white font-medium text-sm">{rest.name}</TableCell>
+                  <TableRow key={rest.id} className="border-border/50 hover:bg-card/5 transition-colors">
+                    <TableCell className="text-foreground font-medium text-sm">{rest.name}</TableCell>
                     <TableCell className="text-center">
                       <Badge variant="outline" className={`${getScoreBg(rest.qualityScore)} ${getScoreColor(rest.qualityScore)} font-mono font-bold text-xs`}>
                         {rest.qualityScore}/100
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-gray-300 text-right font-mono text-sm">{rest.totalOrders}</TableCell>
+                    <TableCell className="text-muted-foreground text-right font-mono text-sm">{rest.totalOrders}</TableCell>
                     <TableCell className="text-right">
                       <span className={`font-mono text-sm ${rest.successRate >= 90 ? 'text-emerald-400' : rest.successRate >= 70 ? 'text-yellow-400' : 'text-red-400'}`}>
                         {rest.successRate}%
@@ -381,7 +381,7 @@ export default function AdminQualityPage() {
                     <TableCell className="text-right">
                       <span className="text-yellow-400 font-mono text-sm">{rest.avgRating > 0 ? `${rest.avgRating} ★` : 'N/A'}</span>
                     </TableCell>
-                    <TableCell className="text-gray-300 text-right font-mono text-sm">{rest.totalReviews}</TableCell>
+                    <TableCell className="text-muted-foreground text-right font-mono text-sm">{rest.totalReviews}</TableCell>
                     <TableCell className="text-center">
                       {rest.flagged ? (
                         <Badge variant="outline" className="bg-red-500/10 text-red-400 border-red-500/20 text-xs gap-1">

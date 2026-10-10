@@ -109,7 +109,15 @@ public class DriverLocationService extends Service {
             }
         }
 
-        startForeground(NOTIFICATION_ID, buildNotification());
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                startForeground(NOTIFICATION_ID, buildNotification(), android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION);
+            } else {
+                startForeground(NOTIFICATION_ID, buildNotification());
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error starting foreground service: " + e.getMessage(), e);
+        }
         startLocationUpdates();
 
         return START_STICKY;
@@ -291,29 +299,44 @@ public class DriverLocationService extends Service {
 
     // Static Helpers
     public static void startTracking(Context context, String driverId, String orderId, boolean isActive) {
-        Intent intent = new Intent(context, DriverLocationService.class);
-        intent.putExtra(EXTRA_DRIVER_ID, driverId);
-        intent.putExtra(EXTRA_ORDER_ID, orderId);
-        intent.putExtra(EXTRA_IS_ACTIVE, isActive);
+        if (context == null) return;
+        try {
+            Intent intent = new Intent(context, DriverLocationService.class);
+            intent.putExtra(EXTRA_DRIVER_ID, driverId);
+            intent.putExtra(EXTRA_ORDER_ID, orderId);
+            intent.putExtra(EXTRA_IS_ACTIVE, isActive);
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            context.startForegroundService(intent);
-        } else {
-            context.startService(intent);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                context.startForegroundService(intent);
+            } else {
+                context.startService(intent);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to start tracking service: " + e.getMessage());
         }
     }
 
     public static void stopTracking(Context context) {
-        Intent intent = new Intent(context, DriverLocationService.class);
-        intent.setAction(ACTION_STOP);
-        context.startService(intent);
+        if (context == null) return;
+        try {
+            Intent intent = new Intent(context, DriverLocationService.class);
+            intent.setAction(ACTION_STOP);
+            context.startService(intent);
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to stop tracking service: " + e.getMessage());
+        }
     }
 
     public static void updateActiveOrder(Context context, String orderId, boolean isActive) {
-        Intent intent = new Intent(context, DriverLocationService.class);
-        intent.setAction(ACTION_UPDATE_ORDER);
-        intent.putExtra(EXTRA_ORDER_ID, orderId);
-        intent.putExtra(EXTRA_IS_ACTIVE, isActive);
-        context.startService(intent);
+        if (context == null) return;
+        try {
+            Intent intent = new Intent(context, DriverLocationService.class);
+            intent.setAction(ACTION_UPDATE_ORDER);
+            intent.putExtra(EXTRA_ORDER_ID, orderId);
+            intent.putExtra(EXTRA_IS_ACTIVE, isActive);
+            context.startService(intent);
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to update active order: " + e.getMessage());
+        }
     }
 }

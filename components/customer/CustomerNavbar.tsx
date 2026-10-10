@@ -41,13 +41,20 @@ export default function CustomerNavbar() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isAddressDialogOpen, setIsAddressDialogOpen] = useState(false);
 
-  // Auto-select default address
+  // Auto-select default address or prompt dialog for new users without address
   useEffect(() => {
     if (!deliveryAddress && customer?.addresses && customer.addresses.length > 0) {
       const defaultAddr = customer.addresses.find(a => a.isDefault) || customer.addresses[0];
       setDeliveryAddress(defaultAddr);
+      localStorage.setItem('deliveryAddress', JSON.stringify(defaultAddr));
+    } else if (user && !deliveryAddress && (!customer?.addresses || customer.addresses.length === 0)) {
+      // First time user or newly created account: prompt to select/enter address immediately
+      const timer = setTimeout(() => {
+        setIsAddressDialogOpen(true);
+      }, 700);
+      return () => clearTimeout(timer);
     }
-  }, [customer, deliveryAddress, setDeliveryAddress]);
+  }, [user, customer, deliveryAddress, setDeliveryAddress]);
 
   // Handle scroll effect
   useEffect(() => {
@@ -146,55 +153,6 @@ export default function CustomerNavbar() {
             {/* Fullscreen Toggle */}
             <FullscreenToggle className="hidden sm:flex" />
 
-            {/* More Features Dropdown Menu */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="hidden sm:flex items-center gap-1.5 rounded-full px-3 h-9 text-xs font-bold text-foreground hover:text-primary hover:bg-primary/10 border border-border/60 transition-colors">
-                  <Sparkles className="w-3.5 h-3.5 text-primary" />
-                  <span>More</span>
-                  <ChevronDown className="w-3 h-3 text-muted-foreground" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-64 bg-card border-border p-2 shadow-2xl rounded-2xl">
-                <DropdownMenuLabel className="text-xs font-bold text-muted-foreground px-2 py-1">
-                  Hunger Specials
-                </DropdownMenuLabel>
-                <DropdownMenuItem onClick={() => router.push('/customer/more')} className="cursor-pointer rounded-xl p-2 bg-primary/10 text-primary font-bold mb-1 hover:bg-primary/20">
-                  <Sparkles className="w-4 h-4 mr-2 text-primary" />
-                  Open More Features Hub →
-                </DropdownMenuItem>
-                <DropdownMenuSeparator className="bg-border/60" />
-                <DropdownMenuItem onClick={() => router.push('/customer/more?feature=student')} className="cursor-pointer rounded-xl p-2">
-                  <span className="text-base mr-2.5">🎓</span>
-                  <div>
-                    <p className="text-xs font-bold text-foreground">Student Mode</p>
-                    <p className="text-[10px] text-muted-foreground">Deals from ₹99 & hostel perks</p>
-                  </div>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => router.push('/customer/more?feature=group')} className="cursor-pointer rounded-xl p-2">
-                  <span className="text-base mr-2.5">👥</span>
-                  <div>
-                    <p className="text-xs font-bold text-foreground">Group Order</p>
-                    <p className="text-[10px] text-muted-foreground">Order & split bill with friends</p>
-                  </div>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => router.push('/customer/more?feature=subscriptions')} className="cursor-pointer rounded-xl p-2">
-                  <span className="text-base mr-2.5">📅</span>
-                  <div>
-                    <p className="text-xs font-bold text-foreground">Meal Plans</p>
-                    <p className="text-[10px] text-muted-foreground">Subscribe & save on daily meals</p>
-                  </div>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => router.push('/customer/more?feature=circle')} className="cursor-pointer rounded-xl p-2">
-                  <span className="text-base mr-2.5">❤️</span>
-                  <div>
-                    <p className="text-xs font-bold text-foreground">Hunger Circle</p>
-                    <p className="text-[10px] text-muted-foreground">Order for family & shared addresses</p>
-                  </div>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
             {/* Notification Bell - Logged in customer */}
             {user && (
               <Link href="/customer/notifications">
@@ -241,65 +199,61 @@ export default function CustomerNavbar() {
                     <ChevronDown className="w-3 h-3 text-muted-foreground" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56 bg-card border-border text-card-foreground p-1.5 shadow-2xl rounded-2xl">
+                <DropdownMenuContent align="end" className="w-60 bg-popover text-popover-foreground border border-border/80 p-1.5 shadow-2xl rounded-2xl z-50">
                   <DropdownMenuLabel className="font-normal border-b border-border/60 pb-2 mb-1">
                     <div className="flex flex-col space-y-1">
                       <p className="text-sm font-bold leading-none text-foreground">{user.displayName || 'User'}</p>
-                      <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+                      <p className="text-xs leading-none text-muted-foreground truncate">{user.email}</p>
                     </div>
                   </DropdownMenuLabel>
-                  <DropdownMenuItem onClick={() => router.push('/customer/more')} className="cursor-pointer rounded-xl my-0.5 bg-primary/10 text-primary font-bold">
-                    <Sparkles className="w-4 h-4 mr-2 text-primary" />
-                    More Features Hub
+                  <DropdownMenuItem onClick={() => router.push('/customer/profile')} className="cursor-pointer rounded-xl my-0.5 hover:bg-muted/60">
+                    <User className="w-4 h-4 mr-2.5 text-blue-500 dark:text-blue-400" />
+                    <span>Profile</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => router.push('/customer/profile')} className="cursor-pointer rounded-xl my-0.5">
-                    <User className="w-4 h-4 mr-2 text-muted-foreground" />
-                    Profile
+                  <DropdownMenuItem onClick={() => router.push('/customer/orders')} className="cursor-pointer rounded-xl my-0.5 hover:bg-muted/60">
+                    <Package className="w-4 h-4 mr-2.5 text-orange-500 dark:text-orange-400" />
+                    <span>My Orders</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => router.push('/customer/orders')} className="cursor-pointer rounded-xl my-0.5">
-                    <Package className="w-4 h-4 mr-2 text-muted-foreground" />
-                    My Orders
+                  <DropdownMenuItem onClick={() => router.push('/customer/wallet')} className="cursor-pointer rounded-xl my-0.5 hover:bg-muted/60">
+                    <Wallet className="w-4 h-4 mr-2.5 text-emerald-500 dark:text-emerald-400" />
+                    <span>Wallet & Points</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => router.push('/customer/wallet')} className="cursor-pointer rounded-xl my-0.5">
-                    <Wallet className="w-4 h-4 mr-2 text-muted-foreground" />
-                    Wallet & Points
+                  <DropdownMenuItem onClick={() => router.push('/customer/addresses')} className="cursor-pointer rounded-xl my-0.5 hover:bg-muted/60">
+                    <MapPin className="w-4 h-4 mr-2.5 text-rose-500 dark:text-rose-400" />
+                    <span>Saved Addresses</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => router.push('/customer/addresses')} className="cursor-pointer rounded-xl my-0.5">
-                    <MapPin className="w-4 h-4 mr-2 text-muted-foreground" />
-                    Saved Addresses
+                  <DropdownMenuItem onClick={() => router.push('/customer/favorites')} className="cursor-pointer rounded-xl my-0.5 hover:bg-muted/60">
+                    <Heart className="w-4 h-4 mr-2.5 text-pink-500 dark:text-pink-400" />
+                    <span>Favorites</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => router.push('/customer/favorites')} className="cursor-pointer rounded-xl my-0.5">
-                    <Heart className="w-4 h-4 mr-2 text-muted-foreground" />
-                    Favorites
+                  <DropdownMenuItem onClick={() => router.push('/customer/deals')} className="cursor-pointer rounded-xl my-0.5 hover:bg-muted/60">
+                    <Tag className="w-4 h-4 mr-2.5 text-amber-500 dark:text-amber-400" />
+                    <span>Deals & Offers</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => router.push('/customer/deals')} className="cursor-pointer rounded-xl my-0.5">
-                    <Tag className="w-4 h-4 mr-2 text-amber-500" />
-                    Deals & Offers
+                  <DropdownMenuItem onClick={() => router.push('/customer/rewards')} className="cursor-pointer rounded-xl my-0.5 hover:bg-muted/60">
+                    <Gift className="w-4 h-4 mr-2.5 text-purple-500 dark:text-purple-400" />
+                    <span>Rewards & Points</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => router.push('/customer/rewards')} className="cursor-pointer rounded-xl my-0.5">
-                    <Gift className="w-4 h-4 mr-2 text-primary" />
-                    Rewards & Points
+                  <DropdownMenuItem onClick={() => router.push('/customer/membership')} className="cursor-pointer rounded-xl my-0.5 hover:bg-muted/60">
+                    <Crown className="w-4 h-4 mr-2.5 text-yellow-500 dark:text-yellow-400" />
+                    <span>VIP Membership</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => router.push('/customer/membership')} className="cursor-pointer rounded-xl my-0.5">
-                    <Crown className="w-4 h-4 mr-2 text-yellow-500" />
-                    VIP Membership
+                  <DropdownMenuItem onClick={() => router.push('/customer/reviews')} className="cursor-pointer rounded-xl my-0.5 hover:bg-muted/60">
+                    <Star className="w-4 h-4 mr-2.5 text-amber-400 dark:text-amber-300" />
+                    <span>My Reviews</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => router.push('/customer/reviews')} className="cursor-pointer rounded-xl my-0.5">
-                    <Star className="w-4 h-4 mr-2 text-muted-foreground" />
-                    My Reviews
+                  <DropdownMenuItem onClick={() => router.push('/customer/search/history')} className="cursor-pointer rounded-xl my-0.5 hover:bg-muted/60">
+                    <Clock className="w-4 h-4 mr-2.5 text-cyan-500 dark:text-cyan-400" />
+                    <span>Search History</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => router.push('/customer/search/history')} className="cursor-pointer rounded-xl my-0.5">
-                    <Clock className="w-4 h-4 mr-2 text-muted-foreground" />
-                    Search History
+                  <DropdownMenuItem onClick={() => router.push('/customer/support')} className="cursor-pointer rounded-xl my-0.5 hover:bg-muted/60">
+                    <HelpCircle className="w-4 h-4 mr-2.5 text-teal-500 dark:text-teal-400" />
+                    <span>Help & Support</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => router.push('/customer/support')} className="cursor-pointer rounded-xl my-0.5">
-                    <HelpCircle className="w-4 h-4 mr-2 text-muted-foreground" />
-                    Help & Support
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => router.push('/customer/notifications')} className="cursor-pointer rounded-xl my-0.5 justify-between">
+                  <DropdownMenuItem onClick={() => router.push('/customer/notifications')} className="cursor-pointer rounded-xl my-0.5 justify-between hover:bg-muted/60">
                     <div className="flex items-center">
-                      <Bell className="w-4 h-4 mr-2 text-muted-foreground" />
-                      Notifications
+                      <Bell className="w-4 h-4 mr-2.5 text-red-500 dark:text-red-400" />
+                      <span>Notifications</span>
                     </div>
                     {unreadCount > 0 && (
                       <Badge className="bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">
@@ -307,10 +261,15 @@ export default function CustomerNavbar() {
                       </Badge>
                     )}
                   </DropdownMenuItem>
+                  {/* More Features Hub placed directly in bottom of Notifications */}
+                  <DropdownMenuItem onClick={() => router.push('/customer/more')} className="cursor-pointer rounded-xl my-1 bg-primary/10 text-primary font-bold hover:bg-primary/20">
+                    <Sparkles className="w-4 h-4 mr-2.5 text-primary" />
+                    <span>More Features Hub</span>
+                  </DropdownMenuItem>
                   <DropdownMenuSeparator className="bg-border/60" />
                   <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer rounded-xl my-0.5" onClick={handleLogout}>
-                    <LogOut className="w-4 h-4 mr-2" />
-                    Logout
+                    <LogOut className="w-4 h-4 mr-2.5" />
+                    <span>Logout</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

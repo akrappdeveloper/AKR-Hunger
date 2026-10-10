@@ -233,10 +233,10 @@ export default function EditIssuedCardDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-zinc-950 border-zinc-800 text-white max-w-xl max-h-[90vh] overflow-y-auto p-6 rounded-3xl shadow-2xl">
+      <DialogContent className="bg-zinc-950 border-zinc-800 text-foreground max-w-xl max-h-[90vh] overflow-y-auto p-6 rounded-3xl shadow-2xl">
         <DialogHeader className="space-y-1">
           <div className="flex items-center justify-between">
-            <DialogTitle className="text-xl font-bold flex items-center gap-2 text-white">
+            <DialogTitle className="text-xl font-bold flex items-center gap-2 text-foreground">
               <CreditCard className="w-5 h-5 text-blue-400" />
               Edit Issued Membership Card
             </DialogTitle>
@@ -260,21 +260,21 @@ export default function EditIssuedCardDialog({
 
         {/* Live Virtual Card Preview */}
         <div className="my-2">
-          <div className="relative overflow-hidden rounded-2xl p-5 aspect-[1.7/1] flex flex-col justify-between shadow-2xl border border-white/10 bg-gradient-to-br from-neutral-900 via-zinc-900 to-black text-white">
+          <div className="relative overflow-hidden rounded-2xl p-5 aspect-[1.7/1] flex flex-col justify-between shadow-2xl border border-border/50 bg-gradient-to-br from-neutral-900 via-zinc-900 to-black text-foreground">
             {/* Ambient Lighting */}
             <div className="absolute top-[-30%] left-[-30%] w-[70%] h-[70%] bg-blue-500/20 blur-[60px] rounded-full pointer-events-none" />
             <div className="absolute bottom-[-30%] right-[-30%] w-[70%] h-[70%] bg-purple-500/20 blur-[60px] rounded-full pointer-events-none" />
 
             <div className="relative z-10 flex justify-between items-start">
               <div>
-                <h4 className="font-black text-sm tracking-wider text-white">
+                <h4 className="font-black text-sm tracking-wider text-foreground">
                   HUNGER<span className="text-blue-400">PREMIUM</span>
                 </h4>
                 <span className="text-[9px] text-zinc-400 uppercase tracking-widest font-semibold">
                   {tier} {cardType} Card
                 </span>
               </div>
-              <div className="px-2 py-0.5 rounded bg-white/10 border border-white/10 text-[9px] font-mono font-bold uppercase tracking-wider text-zinc-300">
+              <div className="px-2 py-0.5 rounded bg-card/10 border border-border/50 text-[9px] font-mono font-bold uppercase tracking-wider text-zinc-300">
                 {status}
               </div>
             </div>
@@ -283,7 +283,7 @@ export default function EditIssuedCardDialog({
             <div className="relative z-10 my-auto">
               <div className="flex items-center gap-2">
                 <CreditCard className="w-4 h-4 text-blue-400" />
-                <div className="text-lg sm:text-xl font-mono text-white font-bold tracking-widest drop-shadow-sm">
+                <div className="text-lg sm:text-xl font-mono text-foreground font-bold tracking-widest drop-shadow-sm">
                   {cardNumber || '•••• •••• •••• ••••'}
                 </div>
               </div>
@@ -294,7 +294,7 @@ export default function EditIssuedCardDialog({
             </div>
 
             {/* Cardholder Bottom */}
-            <div className="relative z-10 flex justify-between items-end border-t border-white/10 pt-2.5">
+            <div className="relative z-10 flex justify-between items-end border-t border-border/50 pt-2.5">
               <div>
                 <div className="text-[9px] text-zinc-400 uppercase tracking-wider">Card Holder</div>
                 <div className="font-bold text-xs sm:text-sm text-zinc-100 uppercase truncate max-w-[200px]">
@@ -334,7 +334,7 @@ export default function EditIssuedCardDialog({
               onChange={(e) => handleCardNumberChange(e.target.value)}
               placeholder="4532 8901 2345 6789"
               maxLength={19}
-              className="font-mono bg-zinc-900 border-zinc-800 text-white placeholder:text-zinc-600 rounded-xl h-10 tracking-widest text-sm focus:border-blue-500"
+              className="font-mono bg-zinc-900 border-zinc-800 text-foreground placeholder:text-zinc-600 rounded-xl h-10 tracking-widest text-sm focus:border-blue-500"
             />
             <p className="text-[11px] text-zinc-500">
               Enter 16 digits. Spacing is automatically formatted for clarity.
@@ -350,7 +350,7 @@ export default function EditIssuedCardDialog({
               value={customerName}
               onChange={(e) => setCustomerName(e.target.value)}
               placeholder="e.g. John Doe"
-              className="bg-zinc-900 border-zinc-800 text-white placeholder:text-zinc-600 rounded-xl h-10 text-sm focus:border-blue-500"
+              className="bg-zinc-900 border-zinc-800 text-foreground placeholder:text-zinc-600 rounded-xl h-10 text-sm focus:border-blue-500"
             />
           </div>
 
@@ -376,7 +376,7 @@ export default function EditIssuedCardDialog({
                   onChange={(e) => setExpiryMonth(e.target.value.replace(/\D/g, '').slice(0, 2))}
                   placeholder="MM"
                   maxLength={2}
-                  className="w-16 font-mono text-center bg-zinc-900 border-zinc-800 text-white rounded-xl h-10 text-sm focus:border-blue-500"
+                  className="w-16 font-mono text-center bg-zinc-900 border-zinc-800 text-foreground rounded-xl h-10 text-sm focus:border-blue-500"
                 />
                 <span className="text-zinc-500 font-bold">/</span>
                 <Input
@@ -384,7 +384,7 @@ export default function EditIssuedCardDialog({
                   onChange={(e) => setExpiryYear(e.target.value.replace(/\D/g, '').slice(0, 4))}
                   placeholder="YYYY"
                   maxLength={4}
-                  className="flex-1 font-mono text-center bg-zinc-900 border-zinc-800 text-white rounded-xl h-10 text-sm focus:border-blue-500"
+                  className="flex-1 font-mono text-center bg-zinc-900 border-zinc-800 text-foreground rounded-xl h-10 text-sm focus:border-blue-500"
                 />
               </div>
             </div>
@@ -410,7 +410,7 @@ export default function EditIssuedCardDialog({
                 onChange={(e) => setCvv(e.target.value.replace(/\D/g, '').slice(0, 4))}
                 placeholder="123"
                 maxLength={4}
-                className="font-mono bg-zinc-900 border-zinc-800 text-white rounded-xl h-10 text-sm focus:border-blue-500"
+                className="font-mono bg-zinc-900 border-zinc-800 text-foreground rounded-xl h-10 text-sm focus:border-blue-500"
               />
             </div>
           </div>
@@ -425,7 +425,7 @@ export default function EditIssuedCardDialog({
               <select
                 value={status}
                 onChange={(e) => setStatus(e.target.value as any)}
-                className="w-full bg-zinc-900 border border-zinc-800 text-white rounded-xl h-10 px-3 text-xs focus:outline-none focus:border-blue-500 font-medium"
+                className="w-full bg-zinc-900 border border-zinc-800 text-foreground rounded-xl h-10 px-3 text-xs focus:outline-none focus:border-blue-500 font-medium"
               >
                 <option value="active">Active (Usable)</option>
                 <option value="blocked">Blocked (Suspended)</option>
@@ -441,7 +441,7 @@ export default function EditIssuedCardDialog({
               <select
                 value={tier}
                 onChange={(e) => setTier(e.target.value)}
-                className="w-full bg-zinc-900 border border-zinc-800 text-white rounded-xl h-10 px-3 text-xs focus:outline-none focus:border-blue-500 font-medium"
+                className="w-full bg-zinc-900 border border-zinc-800 text-foreground rounded-xl h-10 px-3 text-xs focus:outline-none focus:border-blue-500 font-medium"
               >
                 <option value="VIP">VIP</option>
                 <option value="Gold">Gold</option>
@@ -459,7 +459,7 @@ export default function EditIssuedCardDialog({
               <select
                 value={cardType}
                 onChange={(e) => setCardType(e.target.value)}
-                className="w-full bg-zinc-900 border border-zinc-800 text-white rounded-xl h-10 px-3 text-xs focus:outline-none focus:border-blue-500 font-medium"
+                className="w-full bg-zinc-900 border border-zinc-800 text-foreground rounded-xl h-10 px-3 text-xs focus:outline-none focus:border-blue-500 font-medium"
               >
                 <option value="Virtual">Virtual Digital</option>
                 <option value="Physical Metal">Physical Metal</option>
@@ -483,7 +483,7 @@ export default function EditIssuedCardDialog({
             type="button"
             onClick={handleSave}
             disabled={isSaving}
-            className="bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold h-10 px-5 gap-1.5 shadow-lg shadow-blue-600/20 cursor-pointer"
+            className="bg-blue-600 hover:bg-blue-500 text-foreground rounded-xl text-xs font-bold h-10 px-5 gap-1.5 shadow-lg shadow-blue-600/20 cursor-pointer"
           >
             {isSaving ? (
               <>

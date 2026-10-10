@@ -94,6 +94,8 @@ const STARTER_REDEEM_CODES: Omit<RedeemCodeItem, 'id'>[] = [
   },
 ];
 
+import { ProtectedRoute } from '@/components/admin/ProtectedRoute';
+
 export default function AdminRedeemCodesPage() {
   const { toast } = useToast();
   const [codes, setCodes] = useState<RedeemCodeItem[]>([]);
@@ -356,17 +358,18 @@ export default function AdminRedeemCodesPage() {
     .reduce((acc, c) => acc + c.value, 0);
 
   return (
+    <ProtectedRoute allowedRoles={['super_admin', 'marketing_admin']}>
     <div className="space-y-6">
       {/* Top Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/10 pb-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border/50 pb-6">
         <div>
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-lg shadow-amber-500/20">
-              <Gift className="w-6 h-6 text-white" />
+              <Gift className="w-6 h-6 text-foreground" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-bold tracking-tight text-white">Redeem Codes & Vouchers</h1>
+                <h1 className="text-2xl font-bold tracking-tight text-foreground">Redeem Codes & Vouchers</h1>
                 <Badge
                   variant="outline"
                   className={
@@ -379,7 +382,7 @@ export default function AdminRedeemCodesPage() {
                   {isLiveConnected ? 'Live Realtime DB' : 'Connecting...'}
                 </Badge>
               </div>
-              <p className="text-sm text-gray-400">
+              <p className="text-sm text-muted-foreground">
                 Generate redeemable vouchers synced with Android App RewardsActivity & Web
               </p>
             </div>
@@ -400,7 +403,7 @@ export default function AdminRedeemCodesPage() {
 
           <Button
             onClick={handleOpenCreate}
-            className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white shadow-lg shadow-amber-500/25"
+            className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-foreground shadow-lg shadow-amber-500/25"
           >
             <Plus className="w-4 h-4 mr-2" />
             Add Redeem Code
@@ -410,49 +413,49 @@ export default function AdminRedeemCodesPage() {
 
       {/* Metrics Row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="bg-white/5 border-white/10 backdrop-blur-xl">
+        <Card className="bg-card/5 border-border/50 backdrop-blur-xl">
           <CardContent className="p-5 flex items-center gap-4">
             <div className="w-11 h-11 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
               <Gift className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">Total Codes</p>
-              <h3 className="text-2xl font-bold text-white mt-0.5">{totalCodes}</h3>
+              <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Total Codes</p>
+              <h3 className="text-2xl font-bold text-foreground mt-0.5">{totalCodes}</h3>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-white/5 border-white/10 backdrop-blur-xl">
+        <Card className="bg-card/5 border-border/50 backdrop-blur-xl">
           <CardContent className="p-5 flex items-center gap-4">
             <div className="w-11 h-11 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
               <CheckCircle2 className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">Active Codes</p>
+              <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Active Codes</p>
               <h3 className="text-2xl font-bold text-emerald-400 mt-0.5">{activeCodes}</h3>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-white/5 border-white/10 backdrop-blur-xl">
+        <Card className="bg-card/5 border-border/50 backdrop-blur-xl">
           <CardContent className="p-5 flex items-center gap-4">
             <div className="w-11 h-11 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400">
               <Zap className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">Times Redeemed</p>
-              <h3 className="text-2xl font-bold text-white mt-0.5">{totalRedemptions}</h3>
+              <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Times Redeemed</p>
+              <h3 className="text-2xl font-bold text-foreground mt-0.5">{totalRedemptions}</h3>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-white/5 border-white/10 backdrop-blur-xl">
+        <Card className="bg-card/5 border-border/50 backdrop-blur-xl">
           <CardContent className="p-5 flex items-center gap-4">
             <div className="w-11 h-11 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400">
               <Coins className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">Points Pool</p>
+              <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Points Pool</p>
               <h3 className="text-2xl font-bold text-cyan-400 mt-0.5">{totalPointsValue} pts</h3>
             </div>
           </CardContent>
@@ -460,14 +463,14 @@ export default function AdminRedeemCodesPage() {
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 bg-white/5 border border-white/10 p-4 rounded-2xl backdrop-blur-xl">
+      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 bg-card/5 border border-border/50 p-4 rounded-2xl backdrop-blur-xl">
         <div className="relative flex-1">
-          <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <Search className="w-4 h-4 text-muted-foreground absolute left-3.5 top-1/2 -translate-y-1/2" />
           <Input
             placeholder="Search code (e.g. WELCOME2026, FESTIVE)..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 bg-black/40 border-white/10 text-white placeholder:text-gray-500 rounded-xl"
+            className="pl-10 bg-background/40 border-border/50 text-foreground placeholder:text-muted-foreground rounded-xl"
           />
         </div>
 
@@ -482,8 +485,8 @@ export default function AdminRedeemCodesPage() {
               onClick={() => setSelectedType(item.id)}
               className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
                 selectedType === item.id
-                  ? 'bg-amber-500 text-white shadow-md shadow-amber-500/30'
-                  : 'bg-white/5 text-gray-400 hover:text-white hover:bg-white/10'
+                  ? 'bg-amber-500 text-foreground shadow-md shadow-amber-500/30'
+                  : 'bg-card/5 text-muted-foreground hover:text-foreground hover:bg-card/10'
               }`}
             >
               {item.label}
@@ -494,17 +497,17 @@ export default function AdminRedeemCodesPage() {
 
       {/* Codes Grid */}
       {loading ? (
-        <div className="flex flex-col items-center justify-center p-12 text-gray-400">
+        <div className="flex flex-col items-center justify-center p-12 text-muted-foreground">
           <RefreshCw className="w-8 h-8 animate-spin text-amber-500 mb-3" />
           <p>Syncing redeem codes from Firebase Realtime Database...</p>
         </div>
       ) : filteredCodes.length === 0 ? (
-        <Card className="bg-white/5 border-white/10 p-12 text-center">
+        <Card className="bg-card/5 border-border/50 p-12 text-center">
           <div className="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/20 mx-auto flex items-center justify-center text-3xl mb-4">
             🎁
           </div>
-          <h3 className="text-lg font-bold text-white mb-1">No Redeem Codes</h3>
-          <p className="text-sm text-gray-400 max-w-md mx-auto mb-6">
+          <h3 className="text-lg font-bold text-foreground mb-1">No Redeem Codes</h3>
+          <p className="text-sm text-muted-foreground max-w-md mx-auto mb-6">
             {codes.length === 0
               ? 'No redeem codes created yet. Click "Seed 4 Gift Codes" to add starter loyalty and cash codes.'
               : 'No redeem codes match your current search.'}
@@ -512,7 +515,7 @@ export default function AdminRedeemCodesPage() {
           {codes.length === 0 ? (
             <Button
               onClick={handleSeedStarterCodes}
-              className="bg-amber-500 hover:bg-amber-600 text-white"
+              className="bg-amber-500 hover:bg-amber-600 text-foreground"
             >
               <Sparkles className="w-4 h-4 mr-2" />
               Seed 4 Gift Codes
@@ -524,7 +527,7 @@ export default function AdminRedeemCodesPage() {
                 setSearchQuery('');
                 setSelectedType('all');
               }}
-              className="border-white/10 text-white hover:bg-white/10"
+              className="border-border/50 text-foreground hover:bg-card/10"
             >
               Clear Filter
             </Button>
@@ -539,7 +542,7 @@ export default function AdminRedeemCodesPage() {
             return (
               <Card
                 key={item.id}
-                className="bg-white/5 border-white/10 hover:border-amber-500/30 transition-all duration-300 rounded-2xl overflow-hidden backdrop-blur-xl group flex flex-col justify-between"
+                className="bg-card/5 border-border/50 hover:border-amber-500/30 transition-all duration-300 rounded-2xl overflow-hidden backdrop-blur-xl group flex flex-col justify-between"
               >
                 <CardHeader className="p-5 pb-3">
                   <div className="flex items-start justify-between gap-3">
@@ -549,12 +552,12 @@ export default function AdminRedeemCodesPage() {
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <CardTitle className="text-base font-bold text-white group-hover:text-amber-400 transition-colors font-mono tracking-wider">
+                          <CardTitle className="text-base font-bold text-foreground group-hover:text-amber-400 transition-colors font-mono tracking-wider">
                             {item.code}
                           </CardTitle>
                           <button
                             onClick={() => handleCopy(item.code)}
-                            className="text-gray-400 hover:text-white"
+                            className="text-muted-foreground hover:text-foreground"
                             title="Copy code"
                           >
                             {copiedCode === item.code ? (
@@ -564,7 +567,7 @@ export default function AdminRedeemCodesPage() {
                             )}
                           </button>
                         </div>
-                        <p className="text-xs text-gray-400 mt-1 line-clamp-2">
+                        <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
                           {item.description || 'Promotional gift voucher code'}
                         </p>
                       </div>
@@ -574,7 +577,7 @@ export default function AdminRedeemCodesPage() {
                       className={
                         item.isActive
                           ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                          : 'bg-gray-500/10 text-gray-400 border border-gray-500/20'
+                          : 'bg-gray-500/10 text-muted-foreground border border-border/20'
                       }
                     >
                       {item.isActive ? 'Active' : 'Paused'}
@@ -585,11 +588,11 @@ export default function AdminRedeemCodesPage() {
                     <Badge className="bg-amber-500/10 text-amber-400 border border-amber-500/20 font-bold">
                       {valueBadge}
                     </Badge>
-                    <Badge variant="outline" className="border-white/10 text-gray-300 text-[11px]">
+                    <Badge variant="outline" className="border-border/50 text-muted-foreground text-[11px]">
                       {item.redemptionCount || 0} / {item.maxRedemptions || '∞'} Uses
                     </Badge>
                     {item.expiresAt ? (
-                      <Badge variant="outline" className="border-white/10 text-gray-300 text-[11px]">
+                      <Badge variant="outline" className="border-border/50 text-muted-foreground text-[11px]">
                         Exp: {item.expiresAt}
                       </Badge>
                     ) : null}
@@ -597,10 +600,10 @@ export default function AdminRedeemCodesPage() {
                 </CardHeader>
 
                 <CardContent className="p-5 pt-0">
-                  <div className="border-t border-white/5 my-3" />
+                  <div className="border-t border-border/50 my-3" />
 
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-[11px] text-gray-400">
+                    <span className="text-[11px] text-muted-foreground">
                       Redeemable in Android & Web
                     </span>
 
@@ -622,7 +625,7 @@ export default function AdminRedeemCodesPage() {
                         size="sm"
                         variant="ghost"
                         onClick={() => handleOpenEdit(item)}
-                        className="h-8 w-8 p-0 text-gray-400 hover:text-white hover:bg-white/10"
+                        className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground hover:bg-card/10"
                         title="Edit Code"
                       >
                         <Edit2 className="w-3.5 h-3.5" />
@@ -648,7 +651,7 @@ export default function AdminRedeemCodesPage() {
 
       {/* Add / Edit Code Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="bg-gray-950 border-white/10 text-white max-w-lg">
+        <DialogContent className="bg-background border-border/50 text-foreground max-w-lg">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold flex items-center gap-2">
               <Gift className="w-5 h-5 text-amber-500" />
@@ -660,7 +663,7 @@ export default function AdminRedeemCodesPage() {
             {/* Code Field with Random Generator */}
             <div>
               <div className="flex items-center justify-between mb-1">
-                <label className="text-xs font-semibold text-gray-300 uppercase tracking-wider">
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                   Redeem Code *
                 </label>
                 <button
@@ -678,14 +681,14 @@ export default function AdminRedeemCodesPage() {
                 onChange={(e) =>
                   setFormData({ ...formData, code: e.target.value.toUpperCase() })
                 }
-                className="bg-black/40 border-white/10 text-white font-mono uppercase text-base tracking-wider"
+                className="bg-background/40 border-border/50 text-foreground font-mono uppercase text-base tracking-wider"
               />
             </div>
 
             {/* Type & Value */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-xs font-semibold text-gray-300 uppercase tracking-wider block mb-1">
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
                   Benefit Type
                 </label>
                 <select
@@ -693,7 +696,7 @@ export default function AdminRedeemCodesPage() {
                   onChange={(e: any) =>
                     setFormData({ ...formData, type: e.target.value })
                   }
-                  className="w-full h-10 px-3 rounded-lg bg-black/40 border border-white/10 text-white text-sm focus:outline-none focus:border-amber-500"
+                  className="w-full h-10 px-3 rounded-lg bg-background/40 border border-border/50 text-foreground text-sm focus:outline-none focus:border-amber-500"
                 >
                   <option value="points">Reward Points (Loyalty)</option>
                   <option value="wallet">Wallet Cash (₹)</option>
@@ -701,7 +704,7 @@ export default function AdminRedeemCodesPage() {
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-gray-300 uppercase tracking-wider block mb-1">
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
                   Value {formData.type === 'points' ? '(Points)' : '(₹)'}
                 </label>
                 <Input
@@ -711,28 +714,28 @@ export default function AdminRedeemCodesPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, value: Number(e.target.value) })
                   }
-                  className="bg-black/40 border-white/10 text-white"
+                  className="bg-background/40 border-border/50 text-foreground"
                 />
               </div>
             </div>
 
             {/* Description */}
             <div>
-              <label className="text-xs font-semibold text-gray-300 uppercase tracking-wider block mb-1">
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
                 Description / Purpose
               </label>
               <Input
                 placeholder="e.g. Festive season surprise gift for all active customers"
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                className="bg-black/40 border-white/10 text-white"
+                className="bg-background/40 border-border/50 text-foreground"
               />
             </div>
 
             {/* Max Redemptions & Expiry */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-xs font-semibold text-gray-300 uppercase tracking-wider block mb-1">
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
                   Max Redemptions
                 </label>
                 <Input
@@ -742,12 +745,12 @@ export default function AdminRedeemCodesPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, maxRedemptions: Number(e.target.value) })
                   }
-                  className="bg-black/40 border-white/10 text-white"
+                  className="bg-background/40 border-border/50 text-foreground"
                 />
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-gray-300 uppercase tracking-wider block mb-1">
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
                   Expiry Date
                 </label>
                 <Input
@@ -756,7 +759,7 @@ export default function AdminRedeemCodesPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, expiresAt: e.target.value })
                   }
-                  className="bg-black/40 border-white/10 text-white"
+                  className="bg-background/40 border-border/50 text-foreground"
                 />
               </div>
             </div>
@@ -766,13 +769,13 @@ export default function AdminRedeemCodesPage() {
             <Button
               variant="outline"
               onClick={() => setIsDialogOpen(false)}
-              className="border-white/10 text-gray-300 hover:bg-white/10"
+              className="border-border/50 text-muted-foreground hover:bg-card/10"
             >
               Cancel
             </Button>
             <Button
               onClick={handleSaveCode}
-              className="bg-amber-500 hover:bg-amber-600 text-white"
+              className="bg-amber-500 hover:bg-amber-600 text-foreground"
             >
               {editingCode ? 'Save Changes' : 'Create & Sync Code'}
             </Button>
@@ -780,5 +783,6 @@ export default function AdminRedeemCodesPage() {
         </DialogContent>
       </Dialog>
     </div>
+    </ProtectedRoute>
   );
 }

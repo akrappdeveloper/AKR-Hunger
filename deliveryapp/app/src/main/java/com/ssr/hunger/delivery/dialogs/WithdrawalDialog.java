@@ -108,24 +108,47 @@ public class WithdrawalDialog extends Dialog {
         if (auth.getCurrentUser() == null) return;
         String uid = auth.getCurrentUser().getUid();
 
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+        // 1. Write to top-level 'withdrawals' collection (matching web app)
+        Map<String, Object> withdrawalReq = new HashMap<>();
+        withdrawalReq.put("riderId", uid);
+        withdrawalReq.put("amount", amount);
+        withdrawalReq.put("paymentMethod", isUpi ? "upi" : "bank");
+        withdrawalReq.put("destinationReference", isUpi ? upi : "Linked Bank Account");
+        withdrawalReq.put("status", "pending");
+        withdrawalReq.put("requestedAt", FieldValue.serverTimestamp());
+        db.collection("withdrawals").add(withdrawalReq);
+
+        // 2. Write to walletTransactions subcollection & global collection
         Map<String, Object> req = new HashMap<>();
         req.put("driverId", uid);
+        req.put("riderId", uid);
         req.put("amount", amount);
         req.put("method", isUpi ? "upi" : "bank");
         req.put("upiId", isUpi ? upi : "");
         req.put("status", "pending");
         req.put("createdAt", FieldValue.serverTimestamp());
         req.put("type", "withdrawal");
+        req.put("description", "Payout Withdrawal Request (" + (isUpi ? upi : "Bank") + ")");
 
-        FirebaseFirestore.getInstance()
-                .collection(Constants.COLLECTION_WALLET_TRANSACTIONS)
+        db.collection(Constants.COLLECTION_DELIVERY_PERSONS)
+                .document(uid)
+                .collection("walletTransactions")
+                .add(req);
+
+        db.collection(Constants.COLLECTION_WALLET_TRANSACTIONS)
                 .add(req)
                 .addOnSuccessListener(docRef -> {
-                    // Deduct from wallet balance
-                    FirebaseFirestore.getInstance()
-                            .collection(Constants.COLLECTION_DELIVERY_PERSONS)
+                    // 3. Deduct from wallet balance and available earnings
+                    Map<String, Object> balanceUpdates = new HashMap<>();
+                    balanceUpdates.put("walletBalance", FieldValue.increment(-amount));
+                    balanceUpdates.put("availableEarnings", FieldValue.increment(-amount));
+                    balanceUpdates.put("withdrawnAmount", FieldValue.increment(amount));
+
+                    db.collection(Constants.COLLECTION_DELIVERY_PERSONS)
                             .document(uid)
-                            .update("walletBalance", FieldValue.increment(-amount));
+                            .update(balanceUpdates);
 
                     AnalyticsHelper.getInstance(getContext()).logPayoutRequested(amount, isUpi ? "upi" : "bank");
                     Toast.makeText(getContext(), "🎉 Withdrawal request for " + LocationUtils.formatCurrency(amount) + " submitted!", Toast.LENGTH_LONG).show();

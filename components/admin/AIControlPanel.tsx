@@ -133,7 +133,7 @@ export default function AIControlPanel() {
         <Button
           onClick={saveConfig}
           disabled={isSaving}
-          className="bg-gradient-to-r from-violet-500 to-purple-600 text-white"
+          className="bg-gradient-to-r from-violet-500 to-purple-600 text-foreground"
         >
           {isSaving ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
           Save

@@ -343,6 +343,38 @@ export default function RestaurantLoginPage() {
         updatedAt: new Date(),
       });
 
+      // 1. Notify Platform Admin via Resend Email
+      fetch('/api/email/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'restaurant_registration_admin',
+          restaurantName: restaurantName.trim(),
+          ownerName: ownerName.trim(),
+          email: cleanEmail,
+          phone: cleanPhone,
+          address: address.trim(),
+          city: city.trim(),
+          state: stateName.trim(),
+          cuisines: cuisineArray,
+          fssaiNumber: cleanFssai,
+          fssaiDocument: fssaiDocumentUrl,
+          gstNumber: cleanGst,
+        }),
+      }).catch((adminErr) => console.error('[Resend] Admin notification notice:', adminErr));
+
+      // 2. Send Partner Welcome Email to Restaurant Owner via Resend
+      fetch('/api/email/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'welcome',
+          email: cleanEmail,
+          name: ownerName.trim() || restaurantName.trim(),
+          role: 'restaurant',
+        }),
+      }).catch((ownerErr) => console.error('[Resend] Restaurant welcome email notice:', ownerErr));
+
       router.push('/restaurant');
     } catch (err: any) {
       console.error('[Restaurant Signup] Error:', err);

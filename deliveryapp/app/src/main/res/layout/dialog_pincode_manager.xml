@@ -5,34 +5,107 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:padding="20dp"
+    android:padding="22dp"
     android:background="@drawable/bg_dialog_rounded">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="📍 Delivery Service Areas"
-        android:textColor="@color/text_primary"
-        android:textSize="18sp"
-        android:textStyle="bold" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
-        android:text="Set up to 10 pincodes where you want to receive delivery requests."
-        android:textColor="@color/text_secondary"
-        android:textSize="13sp" />
-
-    <!-- Strict Filter Toggle -->
-    <com.google.android.material.materialswitch.MaterialSwitch
-        android:id="@+id/switch_pincode_filter"
+    <!-- Header with Icon Badge -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <ImageView
+            android:layout_width="46dp"
+            android:layout_height="46dp"
+            android:background="@drawable/bg_pill_primary"
+            android:backgroundTint="@color/primary_tint"
+            android:padding="11dp"
+            android:src="@drawable/ic_location"
+            app:tint="@color/primary"
+            android:contentDescription="Delivery Areas" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="14dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Delivery Service Areas"
+                android:textColor="@color/text_primary"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:letterSpacing="-0.01" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="Set up to 10 active service pincodes for dispatch"
+                android:textColor="@color/text_secondary"
+                android:textSize="12.5sp" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
         android:layout_marginTop="16dp"
-        android:text="Strict Pincode Filter"
-        android:textColor="@color/text_primary"
-        android:textSize="14sp" />
+        android:layout_marginBottom="16dp"
+        android:background="@color/divider" />
+
+    <!-- Strict Filter Toggle in Soft Container Card -->
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:cardCornerRadius="14dp"
+        app:cardElevation="0dp"
+        app:strokeColor="@color/card_border"
+        app:strokeWidth="1dp"
+        app:cardBackgroundColor="@color/surface_variant">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingHorizontal="14dp"
+            android:paddingVertical="12dp"
+            android:gravity="center_vertical">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginEnd="12dp"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Strict Pincode Filter"
+                    android:textColor="@color/text_primary"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="1dp"
+                    android:text="Only receive orders matching selected areas"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="11.5sp" />
+            </LinearLayout>
+
+            <com.google.android.material.materialswitch.MaterialSwitch
+                android:id="@+id/switch_pincode_filter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
 
     <!-- Input Row -->
     <LinearLayout
@@ -40,22 +113,31 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:layout_marginTop="12dp">
+        android:layout_marginTop="16dp">
 
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:layout_marginEnd="8dp"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+            android:layout_marginEnd="10dp"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            app:boxCornerRadiusTopStart="14dp"
+            app:boxCornerRadiusTopEnd="14dp"
+            app:boxCornerRadiusBottomStart="14dp"
+            app:boxCornerRadiusBottomEnd="14dp"
+            app:boxStrokeColor="@color/primary"
+            app:startIconDrawable="@drawable/ic_location"
+            app:startIconTint="@color/text_secondary">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/et_pincode_input"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="6-digit Pincode"
+                android:hint="6-Digit Pincode"
                 android:inputType="number"
-                android:maxLength="6" />
+                android:maxLength="6"
+                android:textColor="@color/text_primary"
+                android:textSize="14sp" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.button.MaterialButton
@@ -65,8 +147,11 @@
             android:layout_height="52dp"
             android:text="Add"
             android:textColor="@color/on_primary"
+            android:textSize="14sp"
+            android:textStyle="bold"
             app:backgroundTint="@color/primary"
-            app:cornerRadius="12dp" />
+            app:cornerRadius="14dp"
+            app:elevation="2dp" />
     </LinearLayout>
 
     <!-- Chips Container -->
@@ -74,10 +159,11 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:text="Active Service Pincodes:"
+        android:text="Active Service Pincodes"
         android:textColor="@color/text_secondary"
         android:textSize="12sp"
-        android:textStyle="bold" />
+        android:textStyle="bold"
+        android:letterSpacing="0.02" />
 
     <com.google.android.material.chip.ChipGroup
         android:id="@+id/chip_group_pincodes"
@@ -90,10 +176,13 @@
         android:id="@+id/btn_close_pincodes"
         style="@style/Widget.Material3.Button"
         android:layout_width="match_parent"
-        android:layout_height="48dp"
-        android:layout_marginTop="20dp"
-        android:text="Save &amp; Close"
+        android:layout_height="50dp"
+        android:layout_marginTop="22dp"
+        android:text="Save &amp; Apply Areas"
         android:textColor="@color/on_primary"
+        android:textSize="14.5sp"
+        android:textStyle="bold"
         app:backgroundTint="@color/primary"
-        app:cornerRadius="24dp" />
+        app:cornerRadius="25dp"
+        app:elevation="2dp" />
 </LinearLayout>

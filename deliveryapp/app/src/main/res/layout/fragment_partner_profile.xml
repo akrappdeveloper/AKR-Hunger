@@ -11,13 +11,15 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="16dp">
+        android:paddingHorizontal="16dp"
+        android:paddingTop="16dp"
+        android:paddingBottom="36dp">
 
         <!-- Profile Header Card -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:cardCornerRadius="18dp"
+            app:cardCornerRadius="22dp"
             app:cardElevation="2dp"
             app:strokeColor="@color/card_border"
             app:strokeWidth="1dp"
@@ -27,28 +29,34 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="20dp"
+                android:padding="22dp"
                 android:gravity="center_horizontal">
 
-                <ImageView
-                    android:id="@+id/iv_partner_avatar"
-                    android:layout_width="80dp"
-                    android:layout_height="80dp"
-                    android:src="@drawable/ic_profile"
-                    app:tint="@color/primary"
-                    android:background="@drawable/bg_pill_primary"
-                    android:backgroundTint="@color/primary_tint"
-                    android:padding="16dp" />
+                <FrameLayout
+                    android:layout_width="84dp"
+                    android:layout_height="84dp">
+
+                    <ImageView
+                        android:id="@+id/iv_partner_avatar"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:src="@drawable/ic_profile"
+                        app:tint="@color/primary"
+                        android:background="@drawable/bg_pill_primary"
+                        android:backgroundTint="@color/primary_tint"
+                        android:padding="18dp" />
+                </FrameLayout>
 
                 <TextView
                     android:id="@+id/tv_profile_name"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:text="Partner Name"
+                    android:layout_marginTop="14dp"
+                    android:text="Delivery Partner"
                     android:textColor="@color/text_primary"
                     android:textSize="20sp"
-                    android:textStyle="bold" />
+                    android:textStyle="bold"
+                    android:letterSpacing="-0.02" />
 
                 <TextView
                     android:id="@+id/tv_profile_phone"
@@ -57,18 +65,17 @@
                     android:layout_marginTop="2dp"
                     android:text="+91 98765 43210"
                     android:textColor="@color/text_secondary"
-                    android:textSize="14sp" />
+                    android:textSize="13.5sp" />
 
                 <!-- KYC Badge -->
                 <TextView
                     android:id="@+id/tv_kyc_badge"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:background="@drawable/bg_pill_primary"
-                    android:backgroundTint="@color/veg_bg"
-                    android:paddingHorizontal="12dp"
-                    android:paddingVertical="4dp"
+                    android:layout_marginTop="10dp"
+                    android:background="@drawable/bg_pill_emerald_soft"
+                    android:paddingHorizontal="14dp"
+                    android:paddingVertical="5dp"
                     android:text="🛡️ Verified Partner"
                     android:textColor="@color/veg_green"
                     android:textSize="12sp"
@@ -79,7 +86,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
-                    android:layout_marginTop="16dp"
+                    android:layout_marginTop="20dp"
                     android:gravity="center">
 
                     <LinearLayout
@@ -89,13 +96,14 @@
                         android:layout_weight="1"
                         android:orientation="vertical"
                         android:gravity="center"
-                        android:background="?attr/selectableItemBackground">
+                        android:background="?attr/selectableItemBackground"
+                        android:paddingVertical="6dp">
 
                         <TextView
                             android:id="@+id/tv_profile_rating"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="4.9 ⭐"
+                            android:text="5.0 ⭐"
                             android:textColor="@color/text_primary"
                             android:textSize="18sp"
                             android:textStyle="bold" />
@@ -103,14 +111,15 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
                             android:text="Rating (Reviews)"
-                            android:textColor="@color/text_tertiary"
-                            android:textSize="12sp" />
+                            android:textColor="@color/text_secondary"
+                            android:textSize="11.5sp" />
                     </LinearLayout>
 
                     <View
                         android:layout_width="1dp"
-                        android:layout_height="24dp"
+                        android:layout_height="32dp"
                         android:background="@color/divider" />
 
                     <LinearLayout
@@ -118,13 +127,14 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:orientation="vertical"
-                        android:gravity="center">
+                        android:gravity="center"
+                        android:paddingVertical="6dp">
 
                         <TextView
                             android:id="@+id/tv_profile_deliveries"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="148"
+                            android:text="0"
                             android:textColor="@color/text_primary"
                             android:textSize="18sp"
                             android:textStyle="bold" />
@@ -132,9 +142,10 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
                             android:text="Total Trips"
-                            android:textColor="@color/text_tertiary"
-                            android:textSize="12sp" />
+                            android:textColor="@color/text_secondary"
+                            android:textSize="11.5sp" />
                     </LinearLayout>
                 </LinearLayout>
             </LinearLayout>
@@ -145,7 +156,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            app:cardCornerRadius="16dp"
+            app:cardCornerRadius="20dp"
             app:cardElevation="2dp"
             app:strokeColor="@color/card_border"
             app:strokeWidth="1dp"
@@ -155,15 +166,38 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="16dp">
+                android:padding="20dp">
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Vehicle &amp; Legal Info"
                     android:textColor="@color/text_primary"
-                    android:textSize="15sp"
+                    android:textSize="15.5sp"
                     android:textStyle="bold" />
+
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Vehicle Type"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="13.5sp" />
+
+                    <TextView
+                        android:id="@+id/tv_profile_vehicle_type"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentEnd="true"
+                        android:text="Motorcycle"
+                        android:textColor="@color/text_primary"
+                        android:textSize="13.5sp"
+                        android:textStyle="bold" />
+                </RelativeLayout>
 
                 <RelativeLayout
                     android:layout_width="match_parent"
@@ -173,32 +207,9 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Vehicle Type"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="14sp" />
-
-                    <TextView
-                        android:id="@+id/tv_profile_vehicle_type"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_alignParentEnd="true"
-                        android:text="Motorcycle"
-                        android:textColor="@color/text_primary"
-                        android:textSize="14sp"
-                        android:textStyle="bold" />
-                </RelativeLayout>
-
-                <RelativeLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
                         android:text="Registration Number"
                         android:textColor="@color/text_secondary"
-                        android:textSize="14sp" />
+                        android:textSize="13.5sp" />
 
                     <TextView
                         android:id="@+id/tv_profile_vehicle_number"
@@ -207,21 +218,21 @@
                         android:layout_alignParentEnd="true"
                         android:text="MH 12 AB 1234"
                         android:textColor="@color/text_primary"
-                        android:textSize="14sp"
+                        android:textSize="13.5sp"
                         android:textStyle="bold" />
                 </RelativeLayout>
 
                 <RelativeLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp">
+                    android:layout_marginTop="12dp">
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Driving License"
                         android:textColor="@color/text_secondary"
-                        android:textSize="14sp" />
+                        android:textSize="13.5sp" />
 
                     <TextView
                         android:id="@+id/tv_profile_license"
@@ -230,21 +241,67 @@
                         android:layout_alignParentEnd="true"
                         android:text="MH12-2021-0098765"
                         android:textColor="@color/text_primary"
-                        android:textSize="14sp"
+                        android:textSize="13.5sp"
                         android:textStyle="bold" />
                 </RelativeLayout>
 
                 <RelativeLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp">
+                    android:layout_marginTop="12dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="RC Document (Vehicle)"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="13.5sp" />
+
+                    <TextView
+                        android:id="@+id/tv_profile_rc_status"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentEnd="true"
+                        android:text="Uploaded • Verified"
+                        android:textColor="@color/veg_green"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+                </RelativeLayout>
+
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Driving License Doc"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="13.5sp" />
+
+                    <TextView
+                        android:id="@+id/tv_profile_dl_status"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentEnd="true"
+                        android:text="Uploaded • Verified"
+                        android:textColor="@color/veg_green"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+                </RelativeLayout>
+
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp">
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Emergency Contact"
                         android:textColor="@color/text_secondary"
-                        android:textSize="14sp" />
+                        android:textSize="13.5sp" />
 
                     <TextView
                         android:id="@+id/tv_profile_emergency"
@@ -253,7 +310,7 @@
                         android:layout_alignParentEnd="true"
                         android:text="+91 9988776655"
                         android:textColor="@color/text_primary"
-                        android:textSize="14sp"
+                        android:textSize="13.5sp"
                         android:textStyle="bold" />
                 </RelativeLayout>
             </LinearLayout>
@@ -264,7 +321,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            app:cardCornerRadius="16dp"
+            app:cardCornerRadius="20dp"
             app:cardElevation="2dp"
             app:strokeColor="@color/card_border"
             app:strokeWidth="1dp"
@@ -295,7 +352,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:layout_marginStart="12dp"
+                        android:layout_marginStart="14dp"
                         android:text="Wallet, Withdrawals &amp; COD"
                         android:textColor="@color/text_primary"
                         android:textSize="14sp"
@@ -333,7 +390,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:layout_marginStart="12dp"
+                        android:layout_marginStart="14dp"
                         android:text="Customer Ratings &amp; Reviews"
                         android:textColor="@color/text_primary"
                         android:textSize="14sp"
@@ -371,7 +428,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:layout_marginStart="12dp"
+                        android:layout_marginStart="14dp"
                         android:text="Service Areas (Pincodes)"
                         android:textColor="@color/text_primary"
                         android:textSize="14sp"
@@ -409,7 +466,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:layout_marginStart="12dp"
+                        android:layout_marginStart="14dp"
                         android:text="Live GPS Radar &amp; Telemetry"
                         android:textColor="@color/text_primary"
                         android:textSize="14sp"
@@ -447,7 +504,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:layout_marginStart="12dp"
+                        android:layout_marginStart="14dp"
                         android:text="App Settings &amp; Bank Details"
                         android:textColor="@color/text_primary"
                         android:textSize="14sp"
@@ -485,7 +542,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:layout_marginStart="12dp"
+                        android:layout_marginStart="14dp"
                         android:text="Help Center, Tickets &amp; FAQs"
                         android:textColor="@color/text_primary"
                         android:textSize="14sp"
@@ -523,7 +580,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:layout_marginStart="12dp"
+                        android:layout_marginStart="14dp"
                         android:text="🚨 Rider Safety SOS Helpline"
                         android:textColor="@color/error"
                         android:textSize="14sp"
@@ -544,15 +601,18 @@
             android:id="@+id/btn_profile_logout"
             style="@style/Widget.Material3.Button.OutlinedButton"
             android:layout_width="match_parent"
-            android:layout_height="50dp"
+            android:layout_height="52dp"
             android:layout_marginTop="24dp"
-            android:layout_marginBottom="28dp"
             android:text="Sign Out"
             android:textColor="@color/error"
+            android:textSize="15sp"
+            android:textStyle="bold"
             app:strokeColor="@color/error"
+            app:strokeWidth="1.5dp"
             app:icon="@drawable/ic_logout"
             app:iconTint="@color/error"
-            app:cornerRadius="25dp" />
+            app:iconPadding="8dp"
+            app:cornerRadius="26dp" />
 
     </LinearLayout>
 </androidx.core.widget.NestedScrollView>

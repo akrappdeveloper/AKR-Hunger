@@ -3,7 +3,7 @@ import { db } from '@/lib/firebase'
 import { collection, getDocs, query, where } from 'firebase/firestore'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-    const baseUrl = 'https://akrhunger.vercel.app'
+    const baseUrl = 'https://shunger.vercel.app'
 
     // Static Routes
     const staticRoutes: MetadataRoute.Sitemap = [

@@ -180,24 +180,24 @@ export default function MenuApprovalsPage() {
     const rejectedItems = menuItems.filter(item => item.approvalStatus === 'rejected');
 
     const renderItemCard = (item: MenuItem) => (
-        <div key={item.id} className="group bg-gray-900 border border-gray-800 rounded-xl overflow-hidden hover:bg-gray-800 transition-all shadow-md">
+        <div key={item.id} className="group bg-card border border-border/50 rounded-xl overflow-hidden hover:bg-secondary transition-all shadow-md">
             <div className="flex flex-col sm:flex-row h-full">
                 {/* Image Section */}
-                <div className="w-full sm:w-48 h-48 sm:h-auto bg-black relative shrink-0">
+                <div className="w-full sm:w-48 h-48 sm:h-auto bg-background relative shrink-0">
                     <Avatar className="w-full h-full rounded-none">
                         <AvatarImage src={item.image} className="object-cover w-full h-full opacity-90 hover:opacity-100 transition-opacity" />
-                        <AvatarFallback className="rounded-none text-4xl bg-gray-800 text-gray-500">
+                        <AvatarFallback className="rounded-none text-4xl bg-secondary text-muted-foreground">
                             <Utensils />
                         </AvatarFallback>
                     </Avatar>
                     <div className="absolute top-2 left-2 flex flex-col gap-1.5">
                         {item.vegetarian && (
-                            <Badge className="bg-green-600 text-white hover:bg-green-700 w-fit shadow-md border-none">
+                            <Badge className="bg-green-600 text-foreground hover:bg-green-700 w-fit shadow-md border-none">
                                 <Leaf className="h-3 w-3 mr-1" /> Veg
                             </Badge>
                         )}
                         {item.spicy && (
-                            <Badge className="bg-red-600 text-white hover:bg-red-700 w-fit shadow-md border-md border-none">
+                            <Badge className="bg-red-600 text-foreground hover:bg-red-700 w-fit shadow-md border-md border-none">
                                 <Flame className="h-3 w-3 mr-1" /> Spicy
                             </Badge>
                         )}
@@ -209,8 +209,8 @@ export default function MenuApprovalsPage() {
                     <div className="space-y-4">
                         <div className="flex justify-between items-start">
                             <div className="space-y-1">
-                                <h3 className="text-2xl font-bold text-white tracking-tight leading-none">{item.name}</h3>
-                                <p className="text-sm text-gray-300 font-semibold bg-gray-800 px-3 py-1 rounded-md w-fit capitalize flex items-center gap-2">
+                                <h3 className="text-2xl font-bold text-foreground tracking-tight leading-none">{item.name}</h3>
+                                <p className="text-sm text-muted-foreground font-semibold bg-secondary px-3 py-1 rounded-md w-fit capitalize flex items-center gap-2">
                                     <Utensils className="h-3 w-3" /> {item.category}
                                 </p>
                             </div>
@@ -218,7 +218,7 @@ export default function MenuApprovalsPage() {
                                 <span className="text-2xl font-bold text-green-400 text-right">₹{item.price}</span>
                                 {item.approvalStatus === 'approved' && (
                                     <Badge variant={item.isLive ? 'default' : 'secondary'} className={
-                                        item.isLive ? "bg-green-900/40 text-green-300 hover:bg-green-900/60 border-green-800" : "bg-gray-800 text-gray-400 border-gray-700"
+                                        item.isLive ? "bg-green-900/40 text-green-300 hover:bg-green-900/60 border-green-800" : "bg-secondary text-muted-foreground border-border/50"
                                     }>
                                         {item.isLive ? 'Live on App' : 'Offline'}
                                     </Badge>
@@ -226,16 +226,16 @@ export default function MenuApprovalsPage() {
                             </div>
                         </div>
 
-                        <p className="text-gray-200 text-base leading-relaxed line-clamp-2">
+                        <p className="text-foreground text-base leading-relaxed line-clamp-2">
                             {item.description || 'No description provided.'}
                         </p>
 
-                        <div className="flex items-center gap-6 text-sm text-gray-400 pt-3 border-t border-gray-800">
+                        <div className="flex items-center gap-6 text-sm text-muted-foreground pt-3 border-t border-border/50">
                             <span className="flex items-center gap-2">
                                 <Clock className="h-4 w-4 text-blue-400" />
-                                <span className="text-gray-300">Submitted:</span> {formatDate(item.createdAt || (item as any).submittedAt)}
+                                <span className="text-muted-foreground">Submitted:</span> {formatDate(item.createdAt || (item as any).submittedAt)}
                             </span>
-                            <span className="font-mono text-gray-500 text-xs bg-gray-950 px-2 py-1 rounded">ID: {item.id?.slice(0, 8)}</span>
+                            <span className="font-mono text-muted-foreground text-xs bg-background px-2 py-1 rounded">ID: {item.id?.slice(0, 8)}</span>
                         </div>
 
                         {item.approvalStatus === 'rejected' && item.rejectionReason && (
@@ -262,7 +262,7 @@ export default function MenuApprovalsPage() {
                                     <XCircle className="h-4 w-4" /> Reject
                                 </Button>
                                 <Button
-                                    className="gap-2 bg-green-600 hover:bg-green-500 text-white font-semibold shadow-lg shadow-green-900/20 px-6"
+                                    className="gap-2 bg-green-600 hover:bg-green-500 text-foreground font-semibold shadow-lg shadow-green-900/20 px-6"
                                     onClick={() => setApprovingItem(item)}
                                     disabled={!!processingId}
                                 >
@@ -292,8 +292,8 @@ export default function MenuApprovalsPage() {
         <div className="space-y-8 p-1">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight text-white mb-2">Menu Approvals</h1>
-                    <p className="text-gray-400 text-lg">Review and manage restaurant menu submissions.</p>
+                    <h1 className="text-3xl font-bold tracking-tight text-foreground mb-2">Menu Approvals</h1>
+                    <p className="text-muted-foreground text-lg">Review and manage restaurant menu submissions.</p>
                 </div>
             </div>
 
@@ -306,8 +306,8 @@ export default function MenuApprovalsPage() {
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-4xl font-bold text-white tracking-tight">{pendingItems.length}</div>
-                        <p className="text-xs text-gray-400 font-medium mt-1">Awaiting decision</p>
+                        <div className="text-4xl font-bold text-foreground tracking-tight">{pendingItems.length}</div>
+                        <p className="text-xs text-muted-foreground font-medium mt-1">Awaiting decision</p>
                     </CardContent>
                 </Card>
                 <Card className="bg-gradient-to-br from-green-900/20 to-black/40 border-green-500/20 backdrop-blur-md shadow-[0_0_30px_rgba(34,197,94,0.1)] group hover:shadow-[0_0_40px_rgba(34,197,94,0.2)] transition-all duration-300">
@@ -317,8 +317,8 @@ export default function MenuApprovalsPage() {
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-4xl font-bold text-white tracking-tight">{approvedItems.length}</div>
-                        <p className="text-xs text-gray-400 font-medium mt-1">Live on platform</p>
+                        <div className="text-4xl font-bold text-foreground tracking-tight">{approvedItems.length}</div>
+                        <p className="text-xs text-muted-foreground font-medium mt-1">Live on platform</p>
                     </CardContent>
                 </Card>
                 <Card className="bg-gradient-to-br from-red-900/20 to-black/40 border-red-500/20 backdrop-blur-md shadow-[0_0_30px_rgba(239,68,68,0.1)] group hover:shadow-[0_0_40px_rgba(239,68,68,0.2)] transition-all duration-300">
@@ -328,31 +328,31 @@ export default function MenuApprovalsPage() {
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-4xl font-bold text-white tracking-tight">{rejectedItems.length}</div>
-                        <p className="text-xs text-gray-400 font-medium mt-1">Requires changes</p>
+                        <div className="text-4xl font-bold text-foreground tracking-tight">{rejectedItems.length}</div>
+                        <p className="text-xs text-muted-foreground font-medium mt-1">Requires changes</p>
                     </CardContent>
                 </Card>
             </div>
 
-            <div className="bg-black/40 border border-white/10 rounded-xl p-6 backdrop-blur-xl shadow-2xl">
+            <div className="bg-background/40 border border-border/50 rounded-xl p-6 backdrop-blur-xl shadow-2xl">
                 <Tabs defaultValue="pending" className="w-full">
-                    <TabsList className="grid w-full grid-cols-3 bg-gray-900/50 p-1 mb-8 rounded-lg border border-white/5 h-14">
-                        <TabsTrigger value="pending" className="data-[state=active]:bg-orange-500 data-[state=active]:text-white text-gray-400 h-12 text-base transition-all">Pending Approval</TabsTrigger>
-                        <TabsTrigger value="approved" className="data-[state=active]:bg-green-600 data-[state=active]:text-white text-gray-400 h-12 text-base transition-all">Approved History</TabsTrigger>
-                        <TabsTrigger value="rejected" className="data-[state=active]:bg-red-600 data-[state=active]:text-white text-gray-400 h-12 text-base transition-all">Rejected History</TabsTrigger>
+                    <TabsList className="grid w-full grid-cols-3 bg-card/50 p-1 mb-8 rounded-lg border border-border/50 h-14">
+                        <TabsTrigger value="pending" className="data-[state=active]:bg-orange-500 data-[state=active]:text-foreground text-muted-foreground h-12 text-base transition-all">Pending Approval</TabsTrigger>
+                        <TabsTrigger value="approved" className="data-[state=active]:bg-green-600 data-[state=active]:text-foreground text-muted-foreground h-12 text-base transition-all">Approved History</TabsTrigger>
+                        <TabsTrigger value="rejected" className="data-[state=active]:bg-red-600 data-[state=active]:text-foreground text-muted-foreground h-12 text-base transition-all">Rejected History</TabsTrigger>
                     </TabsList>
 
                     <TabsContent value="pending" className="space-y-6 m-0 focus-visible:ring-0 focus-visible:outline-none">
                         {loading ? (
-                            <div className="text-center py-20 text-gray-500 flex flex-col items-center">
+                            <div className="text-center py-20 text-muted-foreground flex flex-col items-center">
                                 <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-orange-500 mb-4"></div>
                                 <p className="animate-pulse">Loading menu items...</p>
                             </div>
                         ) : pendingItems.length === 0 ? (
-                            <div className="flex flex-col items-center justify-center py-20 text-gray-500 border-2 border-dashed border-white/10 rounded-xl bg-gray-900/20">
-                                <CheckCircle className="h-16 w-16 mb-4 text-gray-700" />
-                                <p className="text-xl font-medium text-gray-400">All caught up!</p>
-                                <p className="text-sm text-gray-600">No pending menu items to review.</p>
+                            <div className="flex flex-col items-center justify-center py-20 text-muted-foreground border-2 border-dashed border-border/50 rounded-xl bg-card/20">
+                                <CheckCircle className="h-16 w-16 mb-4 text-muted-foreground" />
+                                <p className="text-xl font-medium text-muted-foreground">All caught up!</p>
+                                <p className="text-sm text-muted-foreground">No pending menu items to review.</p>
                             </div>
                         ) : (
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -377,22 +377,22 @@ export default function MenuApprovalsPage() {
 
             {/* Approval Confirmation Dialog */}
             <AlertDialog open={!!approvingItem} onOpenChange={(open) => !open && setApprovingItem(null)}>
-                <AlertDialogContent className="bg-gray-900 border-gray-800 text-white">
+                <AlertDialogContent className="bg-card border-border/50 text-foreground">
                     <AlertDialogHeader>
                         <AlertDialogTitle className="flex items-center gap-2 text-green-400">
                             <CheckCircle className="h-5 w-5" /> Confirm Approval
                         </AlertDialogTitle>
-                        <AlertDialogDescription className="text-gray-300">
+                        <AlertDialogDescription className="text-muted-foreground">
                             Are you sure you want to approve <strong>{approvingItem?.name}</strong>?
                             <br />
                             This item will become live on the app immediately.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel className="bg-transparent border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white">Cancel</AlertDialogCancel>
+                        <AlertDialogCancel className="bg-transparent border-border/50 text-muted-foreground hover:bg-secondary hover:text-foreground">Cancel</AlertDialogCancel>
                         <AlertDialogAction
                             onClick={executeApproval}
-                            className="bg-green-600 hover:bg-green-700 text-white"
+                            className="bg-green-600 hover:bg-green-700 text-foreground"
                         >
                             Approve Item
                         </AlertDialogAction>
@@ -407,12 +407,12 @@ export default function MenuApprovalsPage() {
                     setRejectionReason('');
                 }
             }}>
-                <DialogContent className="bg-gray-900 border-gray-800 text-white sm:max-w-[500px]">
+                <DialogContent className="bg-card border-border/50 text-foreground sm:max-w-[500px]">
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2 text-red-400">
                             <XCircle className="h-5 w-5" /> Reject Menu Item
                         </DialogTitle>
-                        <DialogDescription className="text-gray-400">
+                        <DialogDescription className="text-muted-foreground">
                             Please provide a reason for rejecting "{rejectingItem?.name}". This will be visible to the restaurant owner.
                         </DialogDescription>
                     </DialogHeader>
@@ -421,11 +421,11 @@ export default function MenuApprovalsPage() {
                             placeholder="Ex: Image quality is low, Price is invalid..."
                             value={rejectionReason}
                             onChange={(e) => setRejectionReason(e.target.value)}
-                            className="bg-gray-800 border-gray-700 text-white min-h-[100px] placeholder:text-gray-500 focus-visible:ring-red-500"
+                            className="bg-secondary border-border/50 text-foreground min-h-[100px] placeholder:text-muted-foreground focus-visible:ring-red-500"
                         />
                     </div>
                     <DialogFooter>
-                        <Button variant="ghost" onClick={() => setRejectingItem(null)} className="text-gray-400 hover:text-white hover:bg-gray-800">
+                        <Button variant="ghost" onClick={() => setRejectingItem(null)} className="text-muted-foreground hover:text-foreground hover:bg-secondary">
                             Cancel
                         </Button>
                         <Button
@@ -442,7 +442,7 @@ export default function MenuApprovalsPage() {
 
             {/* Feedback Dialog (Success/Error) */}
             <Dialog open={!!feedback} onOpenChange={(open) => !open && setFeedback(null)}>
-                <DialogContent className={`border text-white sm:max-w-[400px] ${feedback?.type === 'success' ? 'bg-gray-900 border-green-900' : 'bg-gray-900 border-red-900'
+                <DialogContent className={`border text-foreground sm:max-w-[400px] ${feedback?.type === 'success' ? 'bg-card border-green-900' : 'bg-card border-red-900'
                     }`}>
                     <DialogHeader>
                         <DialogTitle className={`flex items-center gap-3 text-xl ${feedback?.type === 'success' ? 'text-green-400' : 'text-red-400'
@@ -450,7 +450,7 @@ export default function MenuApprovalsPage() {
                             {feedback?.type === 'success' ? <CheckCircle className="h-6 w-6" /> : <AlertTriangle className="h-6 w-6" />}
                             {feedback?.title}
                         </DialogTitle>
-                        <DialogDescription className="text-gray-300 pt-2 text-base leading-relaxed">
+                        <DialogDescription className="text-muted-foreground pt-2 text-base leading-relaxed">
                             {feedback?.message}
                         </DialogDescription>
                     </DialogHeader>

@@ -1,48 +1,106 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout
+<FrameLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/surface"
-    android:gravity="center">
+    android:background="@drawable/bg_splash">
 
+    <!-- Ambient Glow Orbs for Modern Premium Depth -->
+    <View
+        android:layout_width="280dp"
+        android:layout_height="280dp"
+        android:layout_gravity="top|end"
+        android:layout_marginTop="-70dp"
+        android:layout_marginEnd="-70dp"
+        android:alpha="0.08"
+        android:background="@drawable/bg_orb_primary" />
+
+    <View
+        android:layout_width="240dp"
+        android:layout_height="240dp"
+        android:layout_gravity="bottom|start"
+        android:layout_marginStart="-60dp"
+        android:layout_marginBottom="-60dp"
+        android:alpha="0.06"
+        android:background="@drawable/bg_orb_secondary" />
+
+    <!-- Center Hero Branding: Perfectly Centered on Screen -->
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:gravity="center"
         android:orientation="vertical"
-        android:gravity="center">
+        android:paddingStart="24dp"
+        android:paddingEnd="24dp">
 
+        <!-- Official Hunger Delivery Partner Logo (Clean, Frameless, No Background Color) -->
         <ImageView
-            android:layout_width="100dp"
-            android:layout_height="100dp"
-            android:src="@drawable/ic_scooter_fast"
-            app:tint="@color/primary"
-            android:background="@drawable/bg_pill_primary"
-            android:backgroundTint="@color/primary_tint"
-            android:padding="20dp" />
+            android:id="@+id/iv_splash_logo"
+            android:layout_width="120dp"
+            android:layout_height="120dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_hunger_delivery_partner"
+            android:contentDescription="Hunger Delivery Partner Logo" />
 
+        <!-- App Brand Title -->
         <TextView
+            android:id="@+id/tv_splash_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
+            android:fontFamily="sans-serif-black"
             android:text="Hunger Delivery"
             android:textColor="@color/text_primary"
-            android:textSize="26sp"
-            android:textStyle="bold" />
+            android:textSize="28sp"
+            android:textStyle="bold"
+            android:letterSpacing="-0.02" />
+
+        <!-- Premium Fleet Badge -->
+        <TextView
+            android:id="@+id/tv_splash_subtitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/bg_splash_badge"
+            android:fontFamily="sans-serif-medium"
+            android:text="PARTNER &amp; RIDER FLEET"
+            android:textColor="@color/primary"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.06" />
+
+    </LinearLayout>
+
+    <!-- Bottom Fleet Status & Branding -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:layout_marginBottom="36dp"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <com.google.android.material.progressindicator.LinearProgressIndicator
+            android:id="@+id/progress_splash"
+            android:layout_width="120dp"
+            android:layout_height="wrap_content"
+            android:indeterminate="true"
+            app:indicatorColor="@color/primary"
+            app:trackColor="@color/primary_tint"
+            app:trackCornerRadius="4dp"
+            app:trackThickness="4dp" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:text="Partner &amp; Rider Fleet"
-            android:textColor="@color/text_secondary"
-            android:textSize="14sp" />
-
-        <ProgressBar
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:layout_marginTop="32dp"
-            android:indeterminateTint="@color/primary" />
+            android:layout_marginTop="16dp"
+            android:fontFamily="sans-serif"
+            android:text="Powered by Hunger Delivery Platform"
+            android:textColor="@color/text_hint"
+            android:textSize="12sp"
+            android:letterSpacing="0.01" />
     </LinearLayout>
-</RelativeLayout>
+
+</FrameLayout>

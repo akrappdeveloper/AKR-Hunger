@@ -18,7 +18,7 @@ export default function AdminTicketRedirectPage() {
 
   return (
     <div className="flex items-center justify-center min-h-[50vh]">
-      <div className="text-gray-400 text-sm">Opening ticket workspace...</div>
+      <div className="text-muted-foreground text-sm">Opening ticket workspace...</div>
     </div>
   );
 }

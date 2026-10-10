@@ -54,6 +54,33 @@ export async function POST(request: NextRequest) {
             performedBy: 'RAZORPAY_WEBHOOK',
             timestamp: FieldValue.serverTimestamp()
           });
+
+          // Send Payment Receipt Email via Resend
+          try {
+            const oData = orderDoc.data();
+            let customerEmail = oData?.customerEmail;
+            if (!customerEmail && oData?.customerId) {
+              const custDoc = await adminDb.collection('customers').doc(oData.customerId).get();
+              if (custDoc.exists) {
+                customerEmail = custDoc.data()?.email;
+              }
+            }
+
+            if (customerEmail) {
+              const { sendPaymentVerifiedEmail } = await import('@/lib/email/service');
+              await sendPaymentVerifiedEmail({
+                orderId: orderDoc.id,
+                customerEmail,
+                customerName: oData?.customerName || 'Foodie',
+                amount: payment.amount / 100,
+                paymentMethod: payment.method || 'online',
+                paymentId: payment.id,
+                status: 'completed',
+              });
+            }
+          } catch (emailErr) {
+            console.warn('[webhook] Payment receipt email notice:', emailErr);
+          }
         }
         break;
       }

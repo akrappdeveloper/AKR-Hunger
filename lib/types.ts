@@ -81,6 +81,7 @@ export interface Restaurant {
   totalReviews?: number;
   popularItems?: string[]; // Menu item IDs
   imageUrl?: string; // Primary display image URL
+  bannerUrl?: string; // Banner cover image URL
   // Bank details for settlements
   bankDetails?: {
     bankName: string;
@@ -328,6 +329,7 @@ export interface Order {
   updatedAt?: Date;
   customerName?: string;
   customerPhone?: string;
+  customerEmail?: string;
   restaurantName?: string;
   // Enhanced for promotions and reviews
   promotionId?: string;

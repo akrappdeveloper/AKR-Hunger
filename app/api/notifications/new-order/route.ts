@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { admin, messaging } from '@/lib/firebase-admin';
+import { sendNewOrderRestaurantEmail } from '@/lib/email/service';
 
 export async function POST(request: Request) {
     try {
@@ -47,13 +48,16 @@ export async function POST(request: Request) {
             timestamp: admin.firestore.FieldValue.serverTimestamp(),
         });
 
-        // 3. Fetch the Restaurant to get FCM Token
+        // 3. Fetch the Restaurant to get FCM Token & Email
         let fcmSent = false;
+        let emailSent = false;
         try {
             const restaurantSnap = await admin.firestore().collection('restaurants').doc(restaurantId).get();
             const restaurantData = restaurantSnap.data();
             const fcmToken = restaurantData?.fcmToken;
+            const restaurantEmail = restaurantData?.email;
 
+            // Send FCM Push Notification
             if (fcmToken && messaging) {
                 const message = {
                     notification: {
@@ -70,11 +74,30 @@ export async function POST(request: Request) {
                 await messaging.send(message);
                 fcmSent = true;
             }
+
+            // Send Restaurant Order Notification Email via Resend
+            if (restaurantEmail) {
+                const emailResult = await sendNewOrderRestaurantEmail({
+                    orderId,
+                    restaurantEmail,
+                    restaurantName: restaurantData?.name || orderData?.restaurantName || 'Restaurant Kitchen',
+                    items: orderData?.items || [],
+                    total: totalAmount,
+                    customerName: orderData?.customerName,
+                    specialInstructions: orderData?.specialInstructions,
+                });
+                emailSent = emailResult.success;
+            }
         } catch (fcmErr) {
-            console.warn('FCM delivery notice for restaurant:', fcmErr);
+            console.warn('Notification delivery notice for restaurant:', fcmErr);
         }
 
-        return NextResponse.json({ success: true, message: 'Notification created in Firestore', fcmSent });
+        return NextResponse.json({
+            success: true,
+            message: 'Notification created in Firestore',
+            fcmSent,
+            emailSent
+        });
     } catch (error: any) {
         console.error('Error creating new order notification:', error);
         return NextResponse.json({ error: error.message }, { status: 500 });
