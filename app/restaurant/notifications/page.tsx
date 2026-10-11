@@ -61,6 +61,8 @@ import {
   SAMPLE_NOTIFICATIONS,
   RestaurantNotificationType
 } from '@/lib/restaurantNotifications';
+import WebPushManagerCard from '@/components/notifications/WebPushManagerCard';
+import { playNotificationSound } from '@/lib/web-push';
 
 const NOTIFICATION_TABS: { key: string; label: string; icon: any; color: string }[] = [
   { key: 'all', label: 'All Types', icon: Bell, color: 'text-primary' },
@@ -246,7 +248,26 @@ export default function NotificationsPage() {
         orderId: newNotifType === 'order' ? 'SALRAXCT5509' : undefined,
       });
 
-      toast.success(`🎉 Test "${newNotifType.toUpperCase()}" notification created!`);
+      // Also dispatch live Web Push to browser (Chrome, Safari, Edge, etc.)
+      fetch('/api/notifications/send-push', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.uid,
+          role: 'restaurant',
+          title: effectiveTitle,
+          body: effectiveMessage,
+          actionUrl: effectiveAction,
+          data: {
+            type: newNotifType,
+            orderId: newNotifType === 'order' ? 'SALRAXCT5509' : undefined,
+          },
+        }),
+      }).catch((pushErr) => console.warn('[Restaurant] Web push dispatch notice:', pushErr));
+
+      playNotificationSound();
+
+      toast.success(`🎉 Live "${newNotifType.toUpperCase()}" alert created & Web Push dispatched!`);
       setCreateModalOpen(false);
       setNewNotifTitle('');
       setNewNotifMessage('');
@@ -434,6 +455,9 @@ export default function NotificationsPage() {
           )}
         </div>
       </div>
+
+      {/* Web Push Management & Testing Card for Restaurant Merchants */}
+      <WebPushManagerCard role="restaurant" className="mb-6" />
 
       {/* Primary Category Filter Bar: "All Types", "order", "menu", "review", "payment", "campaign" */}
       <div className="p-3 bg-card/80 backdrop-blur-xl border border-border/80 rounded-2xl shadow-sm flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">

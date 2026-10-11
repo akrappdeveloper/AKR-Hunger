@@ -52,21 +52,38 @@ public class OrderHistoryAdapter extends RecyclerView.Adapter<OrderHistoryAdapte
         DeliveryOrder order = orders.get(position);
 
         holder.tvOrderId.setText(order.getFormattedOrderId());
-        holder.tvDate.setText(LocationUtils.formatDateTime(order.getDeliveredAt() != null ? order.getDeliveredAt() : order.getCreatedAt()));
+        java.util.Date displayDate = order.getDeliveredAt() != null ? order.getDeliveredAt()
+                : (order.getAcceptedAt() != null ? order.getAcceptedAt() : order.getCreatedAt());
+        holder.tvDate.setText(LocationUtils.formatDateTime(displayDate));
         holder.tvRestaurant.setText(order.getRestaurantName());
-        holder.tvAddress.setText("Delivered to: " + order.getFullDeliveryAddress());
+
+        boolean isDelivered = Constants.STATUS_DELIVERED.equalsIgnoreCase(order.getStatus());
+        holder.tvAddress.setText((isDelivered ? "Delivered to: " : "Drop: ") + order.getFullDeliveryAddress());
         holder.tvEarning.setText("+" + LocationUtils.formatCurrency(order.getEstimatedEarning()));
 
-        if (Constants.STATUS_DELIVERED.equalsIgnoreCase(order.getStatus())) {
-            holder.tvStatus.setText("Delivered");
+        String status = order.getStatus();
+        if (Constants.STATUS_DELIVERED.equalsIgnoreCase(status)) {
+            holder.tvStatus.setText("✅ Delivered");
             holder.tvStatus.setTextColor(ContextCompat.getColor(holder.itemView.getContext(), R.color.veg_green));
             holder.tvStatus.setBackgroundResource(R.drawable.bg_pill_emerald_soft);
-        } else if (Constants.STATUS_CANCELLED.equalsIgnoreCase(order.getStatus())) {
-            holder.tvStatus.setText("Cancelled");
+        } else if (Constants.STATUS_CANCELLED.equalsIgnoreCase(status) || "returned".equalsIgnoreCase(status)) {
+            holder.tvStatus.setText("❌ " + (status != null ? status.substring(0, 1).toUpperCase() + status.substring(1) : "Cancelled"));
             holder.tvStatus.setTextColor(ContextCompat.getColor(holder.itemView.getContext(), R.color.error));
             holder.tvStatus.setBackgroundResource(R.drawable.bg_pill_error_soft);
+        } else if (Constants.STATUS_OUT_FOR_DELIVERY.equalsIgnoreCase(status)) {
+            holder.tvStatus.setText("⚡ On the Way");
+            holder.tvStatus.setTextColor(ContextCompat.getColor(holder.itemView.getContext(), R.color.warning));
+            holder.tvStatus.setBackgroundResource(R.drawable.bg_pill_amber_soft);
+        } else if (Constants.STATUS_READY.equalsIgnoreCase(status)
+                || Constants.STATUS_PREPARING.equalsIgnoreCase(status)
+                || Constants.STATUS_CONFIRMED.equalsIgnoreCase(status)) {
+            holder.tvStatus.setText("📦 Accepted (" + (status != null ? status : "") + ")");
+            holder.tvStatus.setTextColor(ContextCompat.getColor(holder.itemView.getContext(), R.color.primary));
+            holder.tvStatus.setBackgroundResource(R.drawable.bg_pill_primary);
         } else {
-            holder.tvStatus.setText(order.getStatus());
+            holder.tvStatus.setText(status != null ? status : "Order");
+            holder.tvStatus.setTextColor(ContextCompat.getColor(holder.itemView.getContext(), R.color.text_secondary));
+            holder.tvStatus.setBackgroundResource(R.drawable.bg_pill_soft);
         }
 
         String paymentInfo = "cod".equalsIgnoreCase(order.getPaymentMethod()) ? "Cash Collected" : "Online";

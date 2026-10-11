@@ -19,7 +19,6 @@ import com.ssr.hunger.delivery.R;
 import com.ssr.hunger.delivery.activities.LiveTrackingRadarActivity;
 import com.ssr.hunger.delivery.activities.MainActivity;
 import com.ssr.hunger.delivery.activities.OrderActiveDetailActivity;
-import com.ssr.hunger.delivery.activities.WalletActivity;
 import com.ssr.hunger.delivery.utils.Constants;
 import com.ssr.hunger.delivery.utils.SoundHelper;
 
@@ -137,7 +136,8 @@ public class DeliveryFCMService extends FirebaseMessagingService {
         NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         if (manager == null) return;
 
-        Intent walletIntent = new Intent(this, WalletActivity.class);
+        Intent walletIntent = new Intent(this, MainActivity.class);
+        walletIntent.putExtra("navigate_to", "wallet");
         walletIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
 
         PendingIntent pIntent = PendingIntent.getActivity(

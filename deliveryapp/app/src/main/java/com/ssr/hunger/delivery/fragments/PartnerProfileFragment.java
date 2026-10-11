@@ -24,7 +24,6 @@ import com.ssr.hunger.delivery.activities.LoginActivity;
 import com.ssr.hunger.delivery.activities.ReviewsActivity;
 import com.ssr.hunger.delivery.activities.SettingsActivity;
 import com.ssr.hunger.delivery.activities.SupportActivity;
-import com.ssr.hunger.delivery.activities.WalletActivity;
 import com.ssr.hunger.delivery.dialogs.EmergencySosDialog;
 import com.ssr.hunger.delivery.dialogs.PincodeManagerDialog;
 import com.ssr.hunger.delivery.models.DeliveryPartner;
@@ -95,7 +94,12 @@ public class PartnerProfileFragment extends Fragment {
         ratingLayoutClick.setOnClickListener(openReviews);
         btnReviews.setOnClickListener(openReviews);
 
-        btnWallet.setOnClickListener(v -> startActivity(new Intent(getContext(), WalletActivity.class)));
+        btnWallet.setOnClickListener(v -> {
+            if (getActivity() != null) {
+                com.google.android.material.bottomnavigation.BottomNavigationView nav = getActivity().findViewById(R.id.bottom_navigation);
+                if (nav != null) nav.setSelectedItemId(R.id.nav_wallet);
+            }
+        });
         btnRadar.setOnClickListener(v -> startActivity(new Intent(getContext(), LiveTrackingRadarActivity.class)));
         btnSettings.setOnClickListener(v -> startActivity(new Intent(getContext(), SettingsActivity.class)));
         btnSupport.setOnClickListener(v -> startActivity(new Intent(getContext(), SupportActivity.class)));
@@ -157,24 +161,7 @@ public class PartnerProfileFragment extends Fragment {
 
     private void openPincodeManager() {
         if (partner == null || getContext() == null) return;
-        PincodeManagerDialog dialog = new PincodeManagerDialog(
-                getContext(),
-                partner.getServicePincodes(),
-                partner.isPincodeFilterActive(),
-                (pincodes, filterActive) -> {
-                    if (auth.getCurrentUser() == null) return;
-                    String uid = auth.getCurrentUser().getUid();
-
-                    Map<String, Object> update = new HashMap<>();
-                    update.put("servicePincodes", pincodes);
-                    update.put("pincodeFilterActive", filterActive);
-
-                    db.collection(Constants.COLLECTION_DELIVERY_PERSONS)
-                            .document(uid)
-                            .set(update, SetOptions.merge())
-                            .addOnSuccessListener(v -> Toast.makeText(getContext(), "Service pincodes updated", Toast.LENGTH_SHORT).show());
-                }
-        );
+        PincodeManagerDialog dialog = new PincodeManagerDialog(getContext());
         dialog.show();
     }
 

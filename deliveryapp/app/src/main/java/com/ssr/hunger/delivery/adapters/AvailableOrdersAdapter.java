@@ -48,24 +48,9 @@ public class AvailableOrdersAdapter extends RecyclerView.Adapter<AvailableOrders
         DeliveryOrder order = orders.get(position);
 
         holder.tvOrderId.setText(order.getFormattedOrderId());
-        holder.tvEarnings.setText(LocationUtils.formatCurrency(order.getEstimatedEarning()) + " Earn");
+        holder.tvEarnings.setText(LocationUtils.formatCurrency(order.getEstimatedEarning()));
         holder.tvRestaurantName.setText(order.getRestaurantName());
-        holder.tvRestaurantAddress.setText(order.getRestaurantAddress());
-        holder.tvCustomerName.setText("Drop: " + order.getCustomerName());
-        holder.tvDeliveryAddress.setText(order.getFullDeliveryAddress());
-
-        // Calculate distance if coordinates available
-        double distanceKm = LocationUtils.calculateDistanceKm(
-                order.getRestaurantLatitude(), order.getRestaurantLongitude(),
-                order.getDeliveryLatitude(), order.getDeliveryLongitude()
-        );
-        holder.tvDistance.setText("📍 " + LocationUtils.formatDistance(distanceKm) + " trip");
-
-        int itemCount = order.getItems() != null ? order.getItems().size() : 0;
-        holder.tvItemsCount.setText(itemCount + " item" + (itemCount == 1 ? "" : "s"));
-
-        String paymentMode = "cod".equalsIgnoreCase(order.getPaymentMethod()) ? "Cash On Delivery (COD)" : "Paid Online";
-        holder.tvPaymentMode.setText(paymentMode);
+        holder.tvCustomerName.setText(order.getCustomerName());
 
         holder.btnAccept.setOnClickListener(v -> {
             if (listener != null) listener.onAccept(order);
@@ -82,8 +67,8 @@ public class AvailableOrdersAdapter extends RecyclerView.Adapter<AvailableOrders
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
-        TextView tvOrderId, tvEarnings, tvRestaurantName, tvRestaurantAddress;
-        TextView tvCustomerName, tvDeliveryAddress, tvDistance, tvItemsCount, tvPaymentMode;
+        TextView tvOrderId, tvEarnings, tvRestaurantName;
+        TextView tvCustomerName;
         MaterialButton btnDecline, btnAccept;
 
         public ViewHolder(@NonNull View itemView) {
@@ -91,12 +76,7 @@ public class AvailableOrdersAdapter extends RecyclerView.Adapter<AvailableOrders
             tvOrderId = itemView.findViewById(R.id.tv_order_id);
             tvEarnings = itemView.findViewById(R.id.tv_earnings_estimate);
             tvRestaurantName = itemView.findViewById(R.id.tv_restaurant_name);
-            tvRestaurantAddress = itemView.findViewById(R.id.tv_restaurant_address);
             tvCustomerName = itemView.findViewById(R.id.tv_customer_name);
-            tvDeliveryAddress = itemView.findViewById(R.id.tv_delivery_address);
-            tvDistance = itemView.findViewById(R.id.tv_distance);
-            tvItemsCount = itemView.findViewById(R.id.tv_items_count);
-            tvPaymentMode = itemView.findViewById(R.id.tv_payment_mode);
             btnDecline = itemView.findViewById(R.id.btn_decline);
             btnAccept = itemView.findViewById(R.id.btn_accept);
         }

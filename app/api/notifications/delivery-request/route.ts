@@ -43,15 +43,42 @@ export async function POST(request: Request) {
             return NextResponse.json({ message: 'No valid tokens found for partners', success: false });
         }
 
-        // Send Multicast
+        // Send Multicast with Web Push configuration (Chrome, Safari, Edge, Android/iOS)
+        const actionUrl = '/delivery/available';
+        const notifTitle = 'New Delivery Request! 🛵';
+        const notifBody = `New order #${orderId.slice(0, 6).toUpperCase()} is ready for pickup! Tap to accept.`;
+
         const message = {
             notification: {
-                title: 'New Delivery Request 🛵',
-                body: `New order #${orderId.slice(0, 6).toUpperCase()} is ready for pickup!`,
+                title: notifTitle,
+                body: notifBody,
+            },
+            webpush: {
+                headers: {
+                    Urgency: 'high',
+                    TTL: '3600',
+                },
+                notification: {
+                    title: notifTitle,
+                    body: notifBody,
+                    icon: '/hunger.png',
+                    badge: '/icon-light-32x32.png',
+                    vibrate: [300, 150, 300, 150, 300],
+                    requireInteraction: true,
+                    tag: `delivery-${orderId}`,
+                    actions: [
+                        { action: 'open', title: 'View Request' }
+                    ]
+                },
+                fcmOptions: {
+                    link: actionUrl,
+                }
             },
             data: {
                 orderId: orderId,
-                type: 'delivery_request'
+                type: 'delivery_request',
+                actionUrl: actionUrl,
+                click_action: actionUrl,
             },
             tokens: tokens,
         };

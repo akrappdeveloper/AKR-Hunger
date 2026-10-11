@@ -1,92 +1,138 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { messaging, db, auth } from '@/lib/firebase';
+import { useEffect, useState, useCallback } from 'react';
+import {
+  detectBrowserInfo,
+  requestWebPushSubscription,
+  setupForegroundWebPushListener,
+  persistPushToken,
+  sendTestWebPushNotification,
+  BrowserInfo,
+  UserRole,
+} from '@/lib/web-push';
+import { auth, messaging } from '@/lib/firebase';
 import { getToken } from 'firebase/messaging';
 import { onAuthStateChanged } from 'firebase/auth';
-import { doc, updateDoc, getDoc, setDoc } from 'firebase/firestore';
 
-const VAPID_KEY = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY;
+const VAPID_KEY = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY || 'BKBieUeVIq-2sW74jzr6egToaP1jfnzBZd4sJav8VgnSH90t9yt8y5UpdMC3pBvIOWLn2WKf1R-wnHUJfsDZs';
 
-const useFcmToken = () => {
-    const [token, setToken] = useState<string | null>(null);
-    const [permission, setPermission] = useState<NotificationPermission>('default');
+interface UseFcmTokenOptions {
+  role?: UserRole;
+  autoRequest?: boolean;
+}
 
-    useEffect(() => {
-        if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
-            if (Notification.permission === 'granted') {
-                setPermission('granted');
-                retrieveToken();
-            } else if (Notification.permission !== 'denied') {
-                requestPermission();
-            }
-        }
-    }, []);
+export const useFcmToken = (options: UseFcmTokenOptions = {}) => {
+  const { role = 'customer', autoRequest = false } = options;
 
-    const requestPermission = async () => {
-        try {
-            const permission = await Notification.requestPermission();
-            setPermission(permission);
-            if (permission === 'granted') {
-                retrieveToken();
-            }
-        } catch (error) {
-            console.error('An error occurred while requesting permission. ', error);
-        }
-    };
+  const [token, setToken] = useState<string | null>(null);
+  const [permission, setPermission] = useState<NotificationPermission | 'unsupported'>('default');
+  const [loading, setLoading] = useState(false);
+  const [browserInfo, setBrowserInfo] = useState<BrowserInfo>({
+    browser: 'Loading...',
+    os: 'Loading...',
+    isSupported: true,
+    isIOS: false,
+    isStandalone: false,
+    permission: 'default',
+    userAgent: '',
+  });
 
-    const retrieveToken = async () => {
-        try {
-            const msg = await messaging;
-            if (msg) {
-                const currentToken = await getToken(msg, {
-                    vapidKey: VAPID_KEY,
-                });
-                if (currentToken) {
-                    setToken(currentToken);
-                    console.log('FCM Token:', currentToken);
-                    saveTokenToFirestore(currentToken);
-                } else {
-                    console.log('No registration token available. Request permission to generate one.');
-                }
-            }
-        } catch (error) {
-            console.error('An error occurred while retrieving token. ', error);
-        }
-    };
+  // Initialize browser detection & check existing permission on mount
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
 
-    const saveTokenToFirestore = async (currentToken: string) => {
-        // Wait for auth to be ready
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                try {
-                    // Try to update in users collection first
-                    const userRef = doc(db, 'users', user.uid);
-                    // We use setDoc with merge: true to avoid errors if doc doesn't exist, though it should for a logged in user
-                    // However, updateDoc is safer if we strictly expect the doc to exist.
-                    // Given the app structure, let's try to determine if it's a restaurant or user.
-                    // A simple way is to check if 'users' doc exists.
+    const info = detectBrowserInfo();
+    setBrowserInfo(info);
+    setPermission(info.permission);
 
-                    const userSnap = await getDoc(userRef);
+    // If already granted, silently retrieve token and set up listeners
+    if (info.isSupported && info.permission === 'granted') {
+      silentRetrieveToken();
+    } else if (autoRequest && info.isSupported && info.permission === 'default') {
+      // Only auto-request if explicitly specified (not recommended by Safari/Chrome without gesture)
+      requestPermission();
+    }
 
-                    if (userSnap.exists()) {
-                        await updateDoc(userRef, { fcmToken: currentToken });
-                    } else {
-                        // Check restaurants
-                        const restRef = doc(db, 'restaurants', user.uid);
-                        const restSnap = await getDoc(restRef);
-                        if (restSnap.exists()) {
-                            await updateDoc(restRef, { fcmToken: currentToken });
-                        }
-                    }
-                } catch (error) {
-                    console.error("Error saving FCM token to Firestore:", error);
-                }
-            }
+    // Set up foreground listener if permitted
+    if (info.permission === 'granted') {
+      setupForegroundWebPushListener(role);
+    }
+  }, [role, autoRequest]);
+
+  // Silent token retrieval for users who already granted permission
+  const silentRetrieveToken = useCallback(async () => {
+    try {
+      if (typeof window === 'undefined' || !('serviceWorker' in navigator)) return;
+
+      const reg = await navigator.serviceWorker.ready;
+      const msg = await messaging;
+      if (msg && reg) {
+        const currentToken = await getToken(msg, {
+          vapidKey: VAPID_KEY,
+          serviceWorkerRegistration: reg,
         });
-    };
 
-    return { fcmToken: token, permission, requestPermission };
+        if (currentToken) {
+          setToken(currentToken);
+          persistPushToken(currentToken, role);
+        }
+      }
+    } catch (err) {
+      console.warn('[useFcmToken] Silent token retrieval notice:', err);
+    }
+  }, [role]);
+
+  // Listen for auth changes to ensure token is synced when user logs in
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user && token) {
+        persistPushToken(token, role, user.uid);
+      }
+    });
+    return () => unsubscribe();
+  }, [token, role]);
+
+  // Explicit user-gesture permission request (compatible with Chrome, Safari, Edge)
+  const requestPermission = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await requestWebPushSubscription(role);
+      setPermission(res.permission);
+      if (res.success && res.token) {
+        setToken(res.token);
+      }
+      // Refresh browser info
+      setBrowserInfo(detectBrowserInfo());
+      return res;
+    } finally {
+      setLoading(false);
+    }
+  }, [role]);
+
+  // Trigger test push
+  const sendTestPush = useCallback(
+    async (title?: string, body?: string, actionUrl?: string) => {
+      return sendTestWebPushNotification({
+        token: token || undefined,
+        role,
+        userId: auth.currentUser?.uid,
+        title,
+        body,
+        actionUrl,
+      });
+    },
+    [token, role]
+  );
+
+  return {
+    fcmToken: token,
+    permission,
+    loading,
+    browserInfo,
+    isSupported: browserInfo.isSupported,
+    requestPermission,
+    sendTestPush,
+  };
 };
 
 export default useFcmToken;

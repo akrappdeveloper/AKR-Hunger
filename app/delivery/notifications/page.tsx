@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
+import WebPushManagerCard from '@/components/notifications/WebPushManagerCard';
 
 const NOTIF_ICONS: Record<string, { icon: any; color: string; bg: string }> = {
   wallet:    { icon: Wallet,       color: 'text-emerald-400', bg: 'bg-emerald-500/15' },
@@ -81,6 +82,11 @@ export default function DeliveryNotificationsPage() {
             <Trash2 className="w-3.5 h-3.5 text-rose-400" /> Clear old
           </Button>
         </motion.div>
+      </motion.div>
+
+      {/* Web Push Management & Testing Card for Delivery Partners */}
+      <motion.div variants={itemVariants}>
+        <WebPushManagerCard role="delivery" />
       </motion.div>
 
       {/* Filter Tabs */}

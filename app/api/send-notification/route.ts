@@ -13,12 +13,40 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Firebase Cloud Messaging is not initialized. Check server logs for config errors.' }, { status: 500 });
         }
 
+        const actionUrl = data?.actionUrl || data?.url || '/';
+        const notifTitle = title || 'Test Notification 🔔';
+        const notifBody = body || 'This is a test notification from the server';
+
         const message = {
             notification: {
-                title: title || 'Test Notification',
-                body: body || 'This is a test notification from the server',
+                title: notifTitle,
+                body: notifBody,
             },
-            data: data || {},
+            webpush: {
+                headers: {
+                    Urgency: 'high',
+                    TTL: '86400',
+                },
+                notification: {
+                    title: notifTitle,
+                    body: notifBody,
+                    icon: '/hunger.png',
+                    badge: '/icon-light-32x32.png',
+                    vibrate: [200, 100, 200],
+                    requireInteraction: true,
+                    actions: [
+                        { action: 'open', title: 'Open Hunger' }
+                    ]
+                },
+                fcmOptions: {
+                    link: actionUrl,
+                }
+            },
+            data: {
+                ...(data || {}),
+                actionUrl,
+                click_action: actionUrl,
+            },
             token: token,
         };
 

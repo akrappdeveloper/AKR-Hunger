@@ -40,6 +40,7 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG_HOME = "tag_nav_home";
     private static final String TAG_ORDERS = "tag_nav_orders";
     private static final String TAG_EARNINGS = "tag_nav_earnings";
+    private static final String TAG_WALLET = "tag_nav_wallet";
     private static final String TAG_PROFILE = "tag_nav_profile";
 
     private BottomNavigationView bottomNav;
@@ -117,14 +118,6 @@ public class MainActivity extends AppCompatActivity {
         bottomNav.setOnItemSelectedListener(item -> {
             int id = item.getItemId();
 
-            if (id == R.id.nav_wallet) {
-                // Launch dedicated WalletActivity without duplicating activities or desyncing tabs
-                Intent walletIntent = new Intent(MainActivity.this, WalletActivity.class);
-                walletIntent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-                startActivity(walletIntent);
-                return false;
-            }
-
             if (id == currentTabId) {
                 // Tab already displayed, avoid reload flicker or duplicate state
                 return true;
@@ -141,6 +134,10 @@ public class MainActivity extends AppCompatActivity {
             } else if (id == R.id.nav_earnings) {
                 currentTabId = R.id.nav_earnings;
                 loadFragment(new EarningsFragment(), TAG_EARNINGS);
+                return true;
+            } else if (id == R.id.nav_wallet) {
+                currentTabId = R.id.nav_wallet;
+                loadFragment(new com.ssr.hunger.delivery.fragments.WalletFragment(), TAG_WALLET);
                 return true;
             } else if (id == R.id.nav_profile) {
                 currentTabId = R.id.nav_profile;

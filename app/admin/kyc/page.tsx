@@ -66,6 +66,7 @@ export default function AdminKycPage() {
   // WebRTC
   const [callOpen, setCallOpen] = useState(false);
 
+  useEffect(() => {
     const q = query(collection(db, 'deliveryPersons'), orderBy('createdAt', 'desc'));
     const unsub = onSnapshot(q, snap => {
       setApplications(snap.docs.map(d => ({ id: d.id, ...d.data() } as KycApplication)));

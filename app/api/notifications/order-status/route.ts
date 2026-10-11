@@ -127,16 +127,39 @@ export async function POST(request: Request) {
             const fcmToken = customerData?.fcmToken;
 
             if (fcmToken && messaging) {
+                const actionUrl = `/customer/orders/${orderId}`;
                 const message = {
                     notification: {
                         title: notifTitle,
                         body: notifBody,
                     },
+                    webpush: {
+                        headers: {
+                            Urgency: 'high',
+                            TTL: '86400',
+                        },
+                        notification: {
+                            title: notifTitle,
+                            body: notifBody,
+                            icon: '/hunger.png',
+                            badge: '/icon-light-32x32.png',
+                            vibrate: [200, 100, 200, 100, 200],
+                            requireInteraction: true,
+                            tag: `order-${orderId}`,
+                            actions: [
+                                { action: 'open', title: 'Track Order' }
+                            ]
+                        },
+                        fcmOptions: {
+                            link: actionUrl,
+                        }
+                    },
                     data: {
                         orderId: orderId,
                         type: 'order_status',
                         status: status,
-                        actionUrl: `/customer/orders/${orderId}`
+                        actionUrl: actionUrl,
+                        click_action: actionUrl,
                     },
                     token: fcmToken,
                 };

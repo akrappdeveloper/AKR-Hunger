@@ -20,14 +20,14 @@
             android:paddingTop="16dp"
             android:paddingBottom="32dp">
 
-            <!-- Hero Earnings Banner (Brand Orange Gradient) -->
+            <!-- Hero Earnings Banner (Dark Theme + Neon Green) -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardCornerRadius="24dp"
-                app:cardElevation="3dp"
+                app:cardCornerRadius="22dp"
+                app:cardElevation="4dp"
                 app:strokeWidth="0dp"
-                app:cardBackgroundColor="@color/primary">
+                app:cardBackgroundColor="@color/dark_card_bg">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -47,8 +47,7 @@
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:text="Today's Performance"
-                            android:textColor="@color/on_primary"
-                            android:alpha="0.9"
+                            android:textColor="#A0A0A0"
                             android:textSize="13.5sp"
                             android:letterSpacing="0.01" />
 
@@ -60,7 +59,7 @@
                             android:paddingHorizontal="10dp"
                             android:paddingVertical="3dp"
                             android:text="80% Share + 100% Tips"
-                            android:textColor="@color/on_primary"
+                            android:textColor="@color/white"
                             android:textSize="11sp"
                             android:textStyle="bold" />
                     </LinearLayout>
@@ -71,7 +70,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="6dp"
                         android:text="₹0"
-                        android:textColor="@color/on_primary"
+                        android:textColor="@color/neon_green"
                         android:textSize="42sp"
                         android:textStyle="bold"
                         android:letterSpacing="-0.03" />
@@ -88,11 +87,11 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:background="@drawable/bg_pill_primary"
-                            android:backgroundTint="#26FFFFFF"
+                            android:backgroundTint="#33FFFFFF"
                             android:paddingHorizontal="12dp"
                             android:paddingVertical="5dp"
                             android:text="🛵 0 Deliveries"
-                            android:textColor="@color/on_primary"
+                            android:textColor="@color/white"
                             android:textSize="12.5sp"
                             android:textStyle="bold" />
 
@@ -102,11 +101,11 @@
                             android:layout_height="wrap_content"
                             android:layout_marginStart="8dp"
                             android:background="@drawable/bg_pill_primary"
-                            android:backgroundTint="#26FFFFFF"
+                            android:backgroundTint="#33FFFFFF"
                             android:paddingHorizontal="12dp"
                             android:paddingVertical="5dp"
                             android:text="📍 0.0 km"
-                            android:textColor="@color/on_primary"
+                            android:textColor="@color/white"
                             android:textSize="12.5sp"
                             android:textStyle="bold" />
                     </LinearLayout>
@@ -310,17 +309,17 @@
                 android:id="@+id/btn_request_payout"
                 style="@style/Widget.Material3.Button"
                 android:layout_width="match_parent"
-                android:layout_height="52dp"
+                android:layout_height="48dp"
                 android:layout_marginTop="22dp"
                 android:text="Request Payout to Bank / UPI"
-                android:textColor="@color/on_primary"
-                android:textSize="15sp"
+                android:textColor="@color/black"
+                android:textSize="14sp"
                 android:textStyle="bold"
                 app:icon="@drawable/ic_wallet"
-                app:iconTint="@color/on_primary"
+                app:iconTint="@color/black"
                 app:iconPadding="8dp"
-                app:backgroundTint="@color/primary"
-                app:cornerRadius="26dp" />
+                app:backgroundTint="@color/neon_green"
+                app:cornerRadius="24dp" />
 
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>

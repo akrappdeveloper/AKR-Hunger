@@ -48,6 +48,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { toast } from 'sonner';
+import WebPushManagerCard from '@/components/notifications/WebPushManagerCard';
 
 type CategoryFilter = 'all' | 'order' | 'payment' | 'promo' | 'system';
 type ReadFilter = 'all' | 'unread';
@@ -386,6 +387,9 @@ export default function NotificationsPage() {
             )}
           </div>
         </div>
+
+        {/* Web Push Management & Testing Card */}
+        <WebPushManagerCard role="customer" className="mb-6" />
 
         {/* Filter and Search Bar */}
         <div className="bg-card/70 backdrop-blur-md rounded-2xl p-3 sm:p-4 border border-border/70 shadow-sm mb-6 space-y-3">

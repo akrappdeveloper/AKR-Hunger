@@ -1,0 +1,109 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="64dp"
+    android:height="64dp"
+    android:viewportWidth="64"
+    android:viewportHeight="64">
+
+    <!-- Ground Drop Shadow -->
+    <path
+        android:fillColor="#33000000"
+        android:pathData="M32,32m-24,0a24,24 0,1 1,48 0a24,24 0,1 1,-48 0" />
+
+    <!-- Forward Headlight Beam Cone (Pointing Forward/North) -->
+    <path
+        android:fillColor="#33FEF08A"
+        android:pathData="M32,16 L22,2 L42,2 Z" />
+
+    <!-- Front Wheel / Tire -->
+    <path
+        android:fillColor="#1E293B"
+        android:pathData="M30,8 h4 c1,0 1.5,1 1.5,2 v7 c0,1 -0.5,2 -1.5,2 h-4 c-1,0 -1.5,-1 -1.5,-2 v-7 c0,-1 0.5,-2 1.5,-2 Z" />
+
+    <!-- Front Fender / Mudguard -->
+    <path
+        android:fillColor="#E2E8F0"
+        android:pathData="M30.5,10 h3 c0.5,0 1,0.5 1,1 v5 c0,0.5 -0.5,1 -1,1 h-3 c-0.5,0 -1,-0.5 -1,-1 v-5 c0,-0.5 0.5,-1 1,-1 Z" />
+
+    <!-- Handlebars and Mirrors -->
+    <path
+        android:fillColor="#334155"
+        android:pathData="M20,18 h24 c0.8,0 1.5,0.7 1.5,1.5 s-0.7,1.5 -1.5,1.5 h-24 c-0.8,0 -1.5,-0.7 -1.5,-1.5 s0.7,-1.5 1.5,-1.5 Z" />
+
+    <!-- Left & Right Mirrors -->
+    <path
+        android:fillColor="#94A3B8"
+        android:pathData="M18.5,16 h3 c0.5,0 1,0.5 1,1 v2 c0,0.5 -0.5,1 -1,1 h-3 c-0.5,0 -1,-0.5 -1,-1 v-2 c0,-0.5 0.5,-1 1,-1 Z" />
+    <path
+        android:fillColor="#94A3B8"
+        android:pathData="M42.5,16 h3 c0.5,0 1,0.5 1,1 v2 c0,0.5 -0.5,1 -1,1 h-3 c-0.5,0 -1,-0.5 -1,-1 v-2 c0,-0.5 0.5,-1 1,-1 Z" />
+
+    <!-- Bike Front Body & Windshield -->
+    <path
+        android:fillColor="#FF6B00"
+        android:pathData="M28,17 h8 c1.5,0 2.5,1 2.5,2.5 L37,25 H27 L25.5,19.5 c0,-1.5 1,-2.5 2.5,-2.5 Z" />
+
+    <!-- Headlight Lamp (Bright Glow) -->
+    <path
+        android:fillColor="#FEF08A"
+        android:pathData="M29.5,16.5 h5 c0.8,0 1.5,0.7 1.5,1.5 s-0.7,1.5 -1.5,1.5 h-5 c-0.8,0 -1.5,-0.7 -1.5,-1.5 s0.7,-1.5 1.5,-1.5 Z" />
+
+    <!-- Fuel Tank & Chassis -->
+    <path
+        android:fillColor="#E85D04"
+        android:pathData="M27.5,24 h9 c1,0 2,1 2,2.5 L38,33 H26 L25.5,26.5 c0,-1.5 1,-2.5 2,-2.5 Z" />
+
+    <!-- Rider Torso / Jacket -->
+    <path
+        android:fillColor="#1E293B"
+        android:pathData="M24,28 c0,-2 2.5,-4 8,-4 s8,2 8,4 L39,39 H25 Z" />
+
+    <!-- Rider Arms on Handlebars -->
+    <path
+        android:fillColor="#334155"
+        android:pathData="M21,20 L25,27 L23,28 L19,21 Z" />
+    <path
+        android:fillColor="#334155"
+        android:pathData="M43,20 L39,27 L41,28 L45,21 Z" />
+
+    <!-- Rider Helmet (Top-Down View) -->
+    <path
+        android:fillColor="#0F172A"
+        android:pathData="M32,25m-6,0a6,7 0,1 1,12 0a6,7 0,1 1,-12 0" />
+
+    <!-- Helmet Visor / Shield (Front facing) -->
+    <path
+        android:fillColor="#38BDF8"
+        android:pathData="M28,21 h8 c1,0 1.8,0.6 1.8,1.4 L37.5,24 H26.5 L26.2,22.4 c0,-0.8 0.8,-1.4 1.8,-1.4 Z" />
+
+    <!-- Delivery Food Cargo Box (Square Thermal Bag mounted on rear rack) -->
+    <path
+        android:fillColor="#FF6B00"
+        android:pathData="M23,38 h18 c1.5,0 2.5,1 2.5,2.5 v14 c0,1.5 -1,2.5 -2.5,2.5 h-18 c-1.5,0 -2.5,-1 -2.5,-2.5 v-14 c0,-1.5 1,-2.5 2.5,-2.5 Z" />
+
+    <!-- Delivery Box Lid Rim -->
+    <path
+        android:fillColor="#E85D04"
+        android:pathData="M22,37 h20 c1,0 1.5,0.7 1.5,1.5 v2 c0,0.8 -0.5,1.5 -1.5,1.5 h-20 c-1,0 -1.5,-0.7 -1.5,-1.5 v-2 c0,-0.8 0.5,-1.5 1.5,-1.5 Z" />
+
+    <!-- Delivery Box Reflective Safety Strips -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M23,43 h18 v2 h-18 Z" />
+    <path
+        android:fillColor="#CCFF00"
+        android:pathData="M23,51 h18 v2 h-18 Z" />
+
+    <!-- Delivery Box Logo Icon / Branding ("H" emblem) -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M30,46 h1.5 v2 h1 v-2 h1.5 v5 h-1.5 v-2 h-1 v2 h-1.5 Z" />
+
+    <!-- Rear Dual Tail Lights (Red LED glow) -->
+    <path
+        android:fillColor="#EF4444"
+        android:pathData="M24,57 h4 c0.5,0 1,0.5 1,1 s-0.5,1 -1,1 h-4 c-0.5,0 -1,-0.5 -1,-1 s0.5,-1 1,-1 Z" />
+    <path
+        android:fillColor="#EF4444"
+        android:pathData="M36,57 h4 c0.5,0 1,0.5 1,1 s-0.5,1 -1,1 h-4 c-0.5,0 -1,-0.5 -1,-1 s0.5,-1 1,-1 Z" />
+
+</vector>

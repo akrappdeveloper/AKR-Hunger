@@ -9,6 +9,7 @@ import RestaurantBottomNav from '@/components/restaurant/RestaurantBottomNav';
 import FloatingAIChatWidget from '@/components/ai/FloatingAIChatWidget';
 import { ShieldAlert, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import FCMInitializer from '@/components/fcm-initializer';
 
 const ROUTE_PERMISSION_MAP: Record<string, string> = {
   '/restaurant/orders': 'orders',
@@ -57,6 +58,7 @@ export function RestaurantLayoutWrapper({ children }: { children: React.ReactNod
 
   return (
     <div className="flex h-screen bg-background text-foreground transition-colors duration-300">
+      <FCMInitializer role="restaurant" />
       {user && <RestaurantSidebar />}
       <main className="flex-1 overflow-y-auto mb-16 md:mb-0 bg-background">
         <div className="max-w-screen-2xl mx-auto min-h-full">

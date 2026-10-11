@@ -96,11 +96,7 @@
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
 
-        <!-- Partner Wallet & COD Management Activity -->
-        <activity
-            android:name=".activities.WalletActivity"
-            android:exported="false"
-            android:windowSoftInputMode="adjustResize" />
+
 
         <!-- Customer Reviews & Rating Activity -->
         <activity

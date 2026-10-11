@@ -4,20 +4,19 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginBottom="14dp"
-    app:cardCornerRadius="20dp"
-    app:cardElevation="2dp"
+    android:layout_marginBottom="12dp"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="0dp"
+    app:strokeWidth="1dp"
     app:strokeColor="@color/card_border"
-    app:strokeWidth="1.2dp"
-    app:cardBackgroundColor="@color/surface">
+    app:cardBackgroundColor="@color/white">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="18dp">
+        android:padding="16dp">
 
-        <!-- Header: Order ID & Earnings Badge -->
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
@@ -26,27 +25,54 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignParentStart="true"
-                android:layout_centerVertical="true"
-                android:orientation="horizontal"
-                android:gravity="center_vertical">
+                android:layout_toStartOf="@+id/tv_earnings_estimate"
+                android:orientation="vertical">
 
-                <ImageView
-                    android:layout_width="22dp"
-                    android:layout_height="22dp"
-                    android:src="@drawable/ic_scooter_fast"
-                    app:tint="@color/primary"
-                    android:contentDescription="New Order" />
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+                    
+                    <TextView
+                        android:id="@+id/tv_restaurant_name"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="The Spice Bistro"
+                        android:textColor="@color/black"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:maxLines="1"
+                        android:ellipsize="end" />
+
+                    <ImageView
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:layout_marginHorizontal="6dp"
+                        android:src="@drawable/ic_arrow_back"
+                        android:rotation="180"
+                        app:tint="@color/black" />
+
+                    <TextView
+                        android:id="@+id/tv_customer_name"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Drop"
+                        android:textColor="@color/black"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:maxLines="1"
+                        android:ellipsize="end" />
+                </LinearLayout>
 
                 <TextView
                     android:id="@+id/tv_order_id"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
-                    android:text="#ORD-8921"
-                    android:textColor="@color/text_primary"
-                    android:textSize="15.5sp"
-                    android:textStyle="bold"
-                    android:letterSpacing="-0.01" />
+                    android:layout_marginTop="2dp"
+                    android:text="Order ID #8921"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="12sp" />
             </LinearLayout>
 
             <TextView
@@ -55,173 +81,16 @@
                 android:layout_height="wrap_content"
                 android:layout_alignParentEnd="true"
                 android:layout_centerVertical="true"
-                android:background="@drawable/bg_pill_emerald_soft"
-                android:paddingHorizontal="14dp"
-                android:paddingVertical="5dp"
-                android:text="₹65 Earn"
-                android:textColor="@color/veg_green"
-                android:textSize="13.5sp"
+                android:background="@drawable/bg_pill_primary"
+                android:backgroundTint="@color/soft_lavender"
+                android:paddingHorizontal="10dp"
+                android:paddingVertical="6dp"
+                android:text="₹65"
+                android:textColor="@color/soft_lavender_text"
+                android:textSize="12sp"
                 android:textStyle="bold" />
         </RelativeLayout>
 
-        <!-- Divider -->
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:layout_marginVertical="12dp"
-            android:background="@color/divider" />
-
-        <!-- Route Path: Pickup -> Drop -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical">
-
-            <!-- Pickup Restaurant Info -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="top">
-
-                <ImageView
-                    android:layout_width="18dp"
-                    android:layout_height="18dp"
-                    android:layout_marginTop="2dp"
-                    android:src="@drawable/ic_restaurant_modern"
-                    app:tint="@color/primary" />
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="12dp"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:id="@+id/tv_restaurant_name"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="The Spice Bistro"
-                        android:textColor="@color/text_primary"
-                        android:textSize="14.5sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:id="@+id/tv_restaurant_address"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
-                        android:text="FC Road, Pune - 411005"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="12sp"
-                        android:maxLines="1"
-                        android:ellipsize="end" />
-                </LinearLayout>
-            </LinearLayout>
-
-            <!-- Connector Dot Line -->
-            <View
-                android:layout_width="2dp"
-                android:layout_height="16dp"
-                android:layout_marginStart="8dp"
-                android:layout_marginVertical="2dp"
-                android:background="@color/divider" />
-
-            <!-- Drop Customer Info -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="top">
-
-                <ImageView
-                    android:layout_width="18dp"
-                    android:layout_height="18dp"
-                    android:layout_marginTop="2dp"
-                    android:src="@drawable/ic_location"
-                    app:tint="@color/secondary" />
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="12dp"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:id="@+id/tv_customer_name"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Drop: Rahul Sharma"
-                        android:textColor="@color/text_primary"
-                        android:textSize="14.5sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:id="@+id/tv_delivery_address"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
-                        android:text="Flat 402, Green Avenue, Kothrud"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="12sp"
-                        android:maxLines="1"
-                        android:ellipsize="end" />
-                </LinearLayout>
-            </LinearLayout>
-        </LinearLayout>
-
-        <!-- Distance, Item Count, Payment Details -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginTop="16dp"
-            android:background="@drawable/bg_doc_card"
-            android:paddingHorizontal="14dp"
-            android:paddingVertical="9dp"
-            android:gravity="center_vertical">
-
-            <TextView
-                android:id="@+id/tv_distance"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="📍 3.2 km trip"
-                android:textColor="@color/text_secondary"
-                android:textSize="12.5sp" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text=" • "
-                android:textColor="@color/text_hint" />
-
-            <TextView
-                android:id="@+id/tv_items_count"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="3 items"
-                android:textColor="@color/text_secondary"
-                android:textSize="12.5sp" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text=" • "
-                android:textColor="@color/text_hint" />
-
-            <TextView
-                android:id="@+id/tv_payment_mode"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Online Paid"
-                android:textColor="@color/primary"
-                android:textSize="12.5sp"
-                android:textStyle="bold" />
-        </LinearLayout>
-
-        <!-- Action Buttons: Decline / Accept -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -232,29 +101,29 @@
                 android:id="@+id/btn_decline"
                 style="@style/Widget.Material3.Button.OutlinedButton"
                 android:layout_width="0dp"
-                android:layout_height="48dp"
+                android:layout_height="40dp"
                 android:layout_weight="1"
                 android:layout_marginEnd="8dp"
                 android:text="Decline"
-                android:textColor="@color/error"
-                app:strokeColor="@color/error"
-                app:strokeWidth="1.5dp"
-                android:textSize="13.5sp"
+                android:textColor="@color/text_secondary"
+                app:strokeColor="@color/card_border"
+                app:strokeWidth="1dp"
+                android:textSize="12sp"
                 android:textStyle="bold"
-                app:cornerRadius="24dp" />
+                app:cornerRadius="12dp" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_accept"
                 style="@style/Widget.Material3.Button"
                 android:layout_width="0dp"
-                android:layout_height="48dp"
+                android:layout_height="40dp"
                 android:layout_weight="1.5"
-                android:text="Accept Order"
-                android:textColor="@color/on_primary"
-                android:textSize="13.5sp"
+                android:text="Accept"
+                android:textColor="@color/black"
+                android:textSize="12sp"
                 android:textStyle="bold"
-                app:backgroundTint="@color/primary"
-                app:cornerRadius="24dp" />
+                app:backgroundTint="@color/neon_green"
+                app:cornerRadius="12dp" />
         </LinearLayout>
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

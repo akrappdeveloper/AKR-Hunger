@@ -1,4 +1,4 @@
-package com.ssr.hunger.delivery.activities;
+package com.ssr.hunger.delivery.fragments;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -10,8 +10,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -52,7 +52,7 @@ import java.util.Map;
  * - Period breakdown (Today, Week, Lifetime, Tips)
  * - Multi-tab filter (All Transactions, Withdrawal Requests, COD Orders)
  */
-public class WalletActivity extends AppCompatActivity {
+public class WalletFragment extends Fragment {
 
     private static final int TAB_TRANSACTIONS = 0;
     private static final int TAB_WITHDRAWALS = 1;
@@ -118,72 +118,69 @@ public class WalletActivity extends AppCompatActivity {
     private ListenerRegistration subTransactionsListener;
     private ListenerRegistration globalTransactionsListener;
 
+    @Nullable
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_wallet);
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        View view = inflater.inflate(R.layout.fragment_wallet, container, false);
 
         auth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
 
-        initViews();
+        initViews(view);
         setupListeners();
+        return view;
     }
 
-    private void initViews() {
-        Toolbar toolbar = findViewById(R.id.toolbar_wallet);
-        setSupportActionBar(toolbar);
-        if (getSupportActionBar() != null) getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        toolbar.setNavigationOnClickListener(v -> finish());
+    private void initViews(View view) {
 
-        tvWalletBalance = findViewById(R.id.tv_wallet_balance);
-        tvNetSettlement = findViewById(R.id.tv_net_settlement);
-        tvCodInHand = findViewById(R.id.tv_cod_in_hand);
-        progressCashLimit = findViewById(R.id.progress_cash_limit);
-        tvCashLimitStatus = findViewById(R.id.tv_cash_limit_status);
-        cardCashLimitWarning = findViewById(R.id.card_cash_limit_warning);
-        tvCashLimitWarningText = findViewById(R.id.tv_cash_limit_warning_text);
+        tvWalletBalance = view.findViewById(R.id.tv_wallet_balance);
+        tvNetSettlement = view.findViewById(R.id.tv_net_settlement);
+        tvCodInHand = view.findViewById(R.id.tv_cod_in_hand);
+        progressCashLimit = view.findViewById(R.id.progress_cash_limit);
+        tvCashLimitStatus = view.findViewById(R.id.tv_cash_limit_status);
+        cardCashLimitWarning = view.findViewById(R.id.card_cash_limit_warning);
+        tvCashLimitWarningText = view.findViewById(R.id.tv_cash_limit_warning_text);
 
-        btnWithdraw = findViewById(R.id.btn_wallet_withdraw);
-        btnDepositCod = findViewById(R.id.btn_deposit_cod);
+        btnWithdraw = view.findViewById(R.id.btn_wallet_withdraw);
+        btnDepositCod = view.findViewById(R.id.btn_deposit_cod);
 
-        tvTodayEarnings = findViewById(R.id.tv_today_earnings);
-        tvWeekEarnings = findViewById(R.id.tv_week_earnings);
-        tvLifetimeEarnings = findViewById(R.id.tv_lifetime_earnings);
-        tvTipsEarnings = findViewById(R.id.tv_tips_earnings);
+        tvTodayEarnings = view.findViewById(R.id.tv_today_earnings);
+        tvWeekEarnings = view.findViewById(R.id.tv_week_earnings);
+        tvLifetimeEarnings = view.findViewById(R.id.tv_lifetime_earnings);
+        tvTipsEarnings = view.findViewById(R.id.tv_tips_earnings);
 
-        cardLinkedBank = findViewById(R.id.card_linked_bank);
-        tvBankTitle = findViewById(R.id.tv_bank_summary_title);
-        tvBankDesc = findViewById(R.id.tv_bank_summary_desc);
+        cardLinkedBank = view.findViewById(R.id.card_linked_bank);
+        tvBankTitle = view.findViewById(R.id.tv_bank_summary_title);
+        tvBankDesc = view.findViewById(R.id.tv_bank_summary_desc);
 
-        chipGroupTabs = findViewById(R.id.chip_group_wallet_tabs);
-        chipTabTransactions = findViewById(R.id.chip_tab_transactions);
-        chipTabWithdrawals = findViewById(R.id.chip_tab_withdrawals);
-        chipTabCodOrders = findViewById(R.id.chip_tab_cod_orders);
+        chipGroupTabs = view.findViewById(R.id.chip_group_wallet_tabs);
+        chipTabTransactions = view.findViewById(R.id.chip_tab_transactions);
+        chipTabWithdrawals = view.findViewById(R.id.chip_tab_withdrawals);
+        chipTabCodOrders = view.findViewById(R.id.chip_tab_cod_orders);
 
-        rvTransactions = findViewById(R.id.rv_wallet_transactions);
-        cardEmptyTxContainer = findViewById(R.id.card_empty_tx_container);
-        tvEmptyTransactions = findViewById(R.id.tv_empty_transactions);
+        rvTransactions = view.findViewById(R.id.rv_wallet_transactions);
+        cardEmptyTxContainer = view.findViewById(R.id.card_empty_tx_container);
+        tvEmptyTransactions = view.findViewById(R.id.tv_empty_transactions);
 
-        rvTransactions.setLayoutManager(new LinearLayoutManager(this));
+        rvTransactions.setLayoutManager(new LinearLayoutManager(requireContext()));
         ledgerAdapter = new LedgerAdapter();
         rvTransactions.setAdapter(ledgerAdapter);
 
         // Withdrawal Action
         btnWithdraw.setOnClickListener(v -> {
-            WithdrawalDialog dialog = new WithdrawalDialog(this, availableEarnings);
+            WithdrawalDialog dialog = new WithdrawalDialog(requireActivity(), availableEarnings);
             dialog.show();
         });
 
         // Deposit COD Action
         btnDepositCod.setOnClickListener(v -> {
-            DepositCodDialog dialog = new DepositCodDialog(this, remainingCodPayable, amount -> recalculateAndRefreshUI());
+            DepositCodDialog dialog = new DepositCodDialog(requireActivity(), remainingCodPayable, amount -> recalculateAndRefreshUI());
             dialog.show();
         });
 
         // Linked Bank Account
         cardLinkedBank.setOnClickListener(v -> {
-            BankDetailsDialog dialog = new BankDetailsDialog(this, bankDetailsMap);
+            BankDetailsDialog dialog = new BankDetailsDialog(requireActivity(), bankDetailsMap);
             dialog.show();
         });
 
@@ -428,10 +425,10 @@ public class WalletActivity extends AppCompatActivity {
         tvWalletBalance.setText(LocationUtils.formatCurrency(availableEarnings));
         if (netSettlementBalance < 0) {
             tvNetSettlement.setText("Net: -" + LocationUtils.formatCurrency(Math.abs(netSettlementBalance)));
-            tvNetSettlement.setTextColor(ContextCompat.getColor(this, R.color.warning_light));
+            if (getContext() != null) tvNetSettlement.setTextColor(ContextCompat.getColor(getContext(), R.color.warning_light));
         } else {
             tvNetSettlement.setText("Net: +" + LocationUtils.formatCurrency(netSettlementBalance));
-            tvNetSettlement.setTextColor(ContextCompat.getColor(this, R.color.on_primary));
+            if (getContext() != null) tvNetSettlement.setTextColor(ContextCompat.getColor(getContext(), R.color.white));
         }
 
         // Render COD In Hand & Cash Limit Meter
@@ -578,14 +575,18 @@ public class WalletActivity extends AppCompatActivity {
 
             if (item.isPositive) {
                 holder.tvAmount.setText("+" + LocationUtils.formatCurrency(item.amount));
-                holder.tvAmount.setTextColor(ContextCompat.getColor(WalletActivity.this, R.color.veg_green));
+                if (getContext() != null) {
+                    holder.tvAmount.setTextColor(ContextCompat.getColor(getContext(), R.color.veg_green));
+                    holder.ivIcon.setColorFilter(ContextCompat.getColor(getContext(), R.color.veg_green));
+                }
                 holder.ivIcon.setImageResource(R.drawable.ic_arrow_down_left);
-                holder.ivIcon.setColorFilter(ContextCompat.getColor(WalletActivity.this, R.color.veg_green));
             } else {
                 holder.tvAmount.setText("-" + LocationUtils.formatCurrency(item.amount));
-                holder.tvAmount.setTextColor(ContextCompat.getColor(WalletActivity.this, R.color.error));
+                if (getContext() != null) {
+                    holder.tvAmount.setTextColor(ContextCompat.getColor(getContext(), R.color.error));
+                    holder.ivIcon.setColorFilter(ContextCompat.getColor(getContext(), R.color.error));
+                }
                 holder.ivIcon.setImageResource(R.drawable.ic_arrow_up_right);
-                holder.ivIcon.setColorFilter(ContextCompat.getColor(WalletActivity.this, R.color.error));
             }
 
             // Status Pill
@@ -593,13 +594,13 @@ public class WalletActivity extends AppCompatActivity {
             holder.tvStatus.setText(st);
             if ("PENDING".equals(st)) {
                 holder.tvStatus.setBackgroundResource(R.drawable.bg_pill_amber_soft);
-                holder.tvStatus.setTextColor(ContextCompat.getColor(WalletActivity.this, R.color.warning));
+                if (getContext() != null) holder.tvStatus.setTextColor(ContextCompat.getColor(getContext(), R.color.warning));
             } else if ("REJECTED".equals(st) || "FAILED".equals(st)) {
                 holder.tvStatus.setBackgroundResource(R.drawable.bg_pill_error_soft);
-                holder.tvStatus.setTextColor(ContextCompat.getColor(WalletActivity.this, R.color.error));
+                if (getContext() != null) holder.tvStatus.setTextColor(ContextCompat.getColor(getContext(), R.color.error));
             } else {
                 holder.tvStatus.setBackgroundResource(R.drawable.bg_pill_emerald_soft);
-                holder.tvStatus.setTextColor(ContextCompat.getColor(WalletActivity.this, R.color.veg_green));
+                if (getContext() != null) holder.tvStatus.setTextColor(ContextCompat.getColor(getContext(), R.color.veg_green));
             }
         }
 
@@ -625,8 +626,8 @@ public class WalletActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onDestroy() {
-        super.onDestroy();
+    public void onDestroyView() {
+        super.onDestroyView();
         if (partnerListener != null) partnerListener.remove();
         if (ordersListener != null) ordersListener.remove();
         if (withdrawalsListener != null) withdrawalsListener.remove();

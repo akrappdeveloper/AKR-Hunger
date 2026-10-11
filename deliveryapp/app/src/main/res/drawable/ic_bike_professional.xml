@@ -1,0 +1,86 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+
+    <!-- Front & Rear Wheels (Heavy-Duty Tires with Alloy Rims) -->
+    <path
+        android:fillColor="#1E293B"
+        android:pathData="M11,36 C6.6,36 3,32.4 3,28 C3,23.6 6.6,20 11,20 C15.4,20 19,23.6 19,28 C19,32.4 15.4,36 11,36 Z M11,24 C8.8,24 7,25.8 7,28 C7,30.2 8.8,32 11,32 C13.2,32 15,30.2 15,28 C15,25.8 13.2,24 11,24 Z" />
+    <path
+        android:fillColor="#1E293B"
+        android:pathData="M37,36 C32.6,36 29,32.4 29,28 C29,23.6 32.6,20 37,20 C41.4,20 45,23.6 45,28 C45,32.4 41.4,36 37,36 Z M37,24 C34.8,24 33,25.8 33,28 C33,30.2 34.8,32 37,32 C39.2,32 41,30.2 41,28 C41,25.8 39.2,24 37,24 Z" />
+
+    <!-- Wheel Hubs with Hunger Orange Accent -->
+    <path
+        android:fillColor="#FF6B00"
+        android:pathData="M11,26 A2,2 0 1,1 11,30 A2,2 0 1,1 11,26 Z" />
+    <path
+        android:fillColor="#FF6B00"
+        android:pathData="M37,26 A2,2 0 1,1 37,30 A2,2 0 1,1 37,26 Z" />
+
+    <!-- Telescopic Front Fork -->
+    <path
+        android:fillColor="#64748B"
+        android:pathData="M36,28 L32,15 L30,15 L34,28 Z" />
+
+    <!-- Rear Swingarm & Chain Drive -->
+    <path
+        android:fillColor="#64748B"
+        android:pathData="M11,28 L23,28 L21,26 L11,26 Z" />
+
+    <!-- Twin-Spar Chassis Frame -->
+    <path
+        android:fillColor="#334155"
+        android:pathData="M18,28 L24,18 L30,18 L26,28 Z" />
+
+    <!-- High-Performance Engine Block & Exhaust -->
+    <path
+        android:fillColor="#475569"
+        android:pathData="M18,24 H26 V28 H18 Z M16,30 H26 L29,28 H31 L27,32 H15 Z" />
+
+    <!-- Sculpted Sport Fuel Tank -->
+    <path
+        android:fillColor="#FF6B00"
+        android:pathData="M23,17 C23,17 25,14 29,14 C32,14 33,16 33,18 L25,19 Z" />
+
+    <!-- Low-Slung Driver Saddle -->
+    <path
+        android:fillColor="#0F172A"
+        android:pathData="M17,19 C17,19 19,17 23,17 L25,19 L19,21 Z" />
+
+    <!-- Front Headlamp Cowling & Aerodynamic Visor -->
+    <path
+        android:fillColor="#E85D04"
+        android:pathData="M33,14 L37,14 L36,18 L32,18 Z" />
+    <path
+        android:fillColor="#38BDF8"
+        android:pathData="M34,11 L37,14 L34,14 Z" />
+
+    <!-- Clip-On Racing Handlebars -->
+    <path
+        android:fillColor="#1E293B"
+        android:pathData="M31,11 H34 V13 H31 Z" />
+
+    <!-- Professional Thermal Food Delivery Backpack/Box -->
+    <path
+        android:fillColor="#FF6B00"
+        android:pathData="M9,10 H18 C19.1,10 20,10.9 20,12 V19 C20,19.6 19.6,20 19,20 H8 C7.4,20 7,19.6 7,19 V12 C7,10.9 7.9,10 9,10 Z" />
+
+    <!-- Cargo Box Reinforced Top Lid -->
+    <path
+        android:fillColor="#E85D04"
+        android:pathData="M7,12 H20 V13 H7 Z" />
+
+    <!-- Hi-Vis Neon Green Reflective Stripe -->
+    <path
+        android:fillColor="#CCFF00"
+        android:pathData="M8,15 H19 V16.5 H8 Z" />
+
+    <!-- Official Hunger Partner Monogram ("H") -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M12.5,13.5 H13.5 V14.5 H14.5 V13.5 H15.5 V16.5 H14.5 V15.5 H13.5 V16.5 H12.5 Z" />
+
+</vector>

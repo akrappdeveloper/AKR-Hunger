@@ -19,9 +19,9 @@
             android:layout_height="wrap_content"
             android:text="Delivery History"
             android:textColor="@color/text_primary"
-            android:textSize="22sp"
+            android:textSize="24sp"
             android:textStyle="bold"
-            android:letterSpacing="-0.02" />
+            android:layout_marginBottom="16dp" />
 
         <TextView
             android:layout_width="wrap_content"
@@ -50,8 +50,16 @@
                     style="@style/Widget.MaterialComponents.Chip.Choice"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="All Deliveries"
+                    android:text="All Orders"
                     android:checked="true"
+                    app:chipCornerRadius="16dp" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chip_filter_active"
+                    style="@style/Widget.MaterialComponents.Chip.Choice"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="⚡ Active / Accepted"
                     app:chipCornerRadius="16dp" />
 
                 <com.google.android.material.chip.Chip
@@ -101,6 +109,7 @@
                     app:tint="@color/text_hint" />
 
                 <TextView
+                    android:id="@+id/tv_empty_history_title"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="14dp"
@@ -110,10 +119,11 @@
                     android:textStyle="bold" />
 
                 <TextView
+                    android:id="@+id/tv_empty_history_sub"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
-                    android:text="Delivered orders will appear here automatically."
+                    android:text="Accepted and delivered orders will appear here automatically."
                     android:textColor="@color/text_secondary"
                     android:textSize="12.5sp"
                     android:textAlignment="center" />

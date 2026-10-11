@@ -678,7 +678,7 @@ export default function CartPage() {
                   customerEmail: user.email,
                   customerName: realtimeCustomer?.name || 'Foodie',
                   restaurantName: restaurant?.name || 'Restaurant',
-                  items: orderItems,
+                  items: items,
                   total: amount,
                   subtotal,
                   deliveryCharge,

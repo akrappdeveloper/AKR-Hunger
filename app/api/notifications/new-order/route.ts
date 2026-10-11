@@ -57,17 +57,40 @@ export async function POST(request: Request) {
             const fcmToken = restaurantData?.fcmToken;
             const restaurantEmail = restaurantData?.email;
 
-            // Send FCM Push Notification
+            // Send FCM Push Notification with Web Push configuration (Chrome, Safari, Edge, etc.)
             if (fcmToken && messaging) {
+                const actionUrl = `/restaurant/orders/${orderId}`;
                 const message = {
                     notification: {
                         title: notifTitle,
                         body: notifBody,
                     },
+                    webpush: {
+                        headers: {
+                            Urgency: 'high',
+                            TTL: '86400',
+                        },
+                        notification: {
+                            title: notifTitle,
+                            body: notifBody,
+                            icon: '/hunger.png',
+                            badge: '/icon-light-32x32.png',
+                            vibrate: [200, 100, 200, 100, 200],
+                            requireInteraction: true,
+                            tag: `order-${orderId}`,
+                            actions: [
+                                { action: 'open', title: 'Open Kitchen' }
+                            ]
+                        },
+                        fcmOptions: {
+                            link: actionUrl,
+                        }
+                    },
                     data: {
                         orderId: orderId,
                         type: 'new_order',
-                        actionUrl: `/restaurant/orders/${orderId}`
+                        actionUrl: actionUrl,
+                        click_action: actionUrl,
                     },
                     token: fcmToken,
                 };

@@ -9,10 +9,12 @@ import FloatingAIChatWidget from '@/components/ai/FloatingAIChatWidget';
 import { usePathname, useRouter } from 'next/navigation';
 import { AlertCircle, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import FCMInitializer from '@/components/fcm-initializer';
 
 export function DeliveryLayoutWrapper({ children }: { children: React.ReactNode }) {
     return (
         <DeliveryAuthProvider>
+            <FCMInitializer role="delivery" />
             <NotificationProvider>
                 <DeliveryLayoutContent>
                     {children}

@@ -1,4 +1,4 @@
-import { collection, doc, getDoc, getDocs, updateDoc, setDoc, query, orderBy, onSnapshot, deleteDoc } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, updateDoc, setDoc, query, orderBy, onSnapshot, deleteDoc, addDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Promotion, AdCampaign } from '@/lib/types';
 

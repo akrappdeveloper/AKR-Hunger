@@ -43,6 +43,7 @@ public class DeliveryOrder implements Serializable {
     private String returnOtp;
     private String returnStatus;
     private Date createdAt;
+    private Date acceptedAt;
     private Date deliveredAt;
     private String specialInstructions;
     private List<String> targetDeliveryIds;
@@ -158,6 +159,9 @@ public class DeliveryOrder implements Serializable {
 
     public Date getDeliveredAt() { return deliveredAt != null ? deliveredAt : createdAt; }
     public void setDeliveredAt(Date deliveredAt) { this.deliveredAt = deliveredAt; }
+
+    public Date getAcceptedAt() { return acceptedAt != null ? acceptedAt : createdAt; }
+    public void setAcceptedAt(Date acceptedAt) { this.acceptedAt = acceptedAt; }
 
     public String getPaymentMethod() { return paymentMethod != null ? paymentMethod : "online"; }
     public void setPaymentMethod(String paymentMethod) { this.paymentMethod = paymentMethod; }

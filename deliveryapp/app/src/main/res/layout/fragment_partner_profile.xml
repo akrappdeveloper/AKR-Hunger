@@ -15,15 +15,14 @@
         android:paddingTop="16dp"
         android:paddingBottom="36dp">
 
-        <!-- Profile Header Card -->
+        <!-- Profile Header Card (Dark Theme + Neon Green) -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:cardCornerRadius="22dp"
-            app:cardElevation="2dp"
-            app:strokeColor="@color/card_border"
-            app:strokeWidth="1dp"
-            app:cardBackgroundColor="@color/surface">
+            app:cardElevation="4dp"
+            app:strokeWidth="0dp"
+            app:cardBackgroundColor="@color/dark_card_bg">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -41,9 +40,9 @@
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:src="@drawable/ic_profile"
-                        app:tint="@color/primary"
+                        app:tint="@color/black"
                         android:background="@drawable/bg_pill_primary"
-                        android:backgroundTint="@color/primary_tint"
+                        android:backgroundTint="@color/neon_green"
                         android:padding="18dp" />
                 </FrameLayout>
 
@@ -53,7 +52,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="14dp"
                     android:text="Delivery Partner"
-                    android:textColor="@color/text_primary"
+                    android:textColor="@color/white"
                     android:textSize="20sp"
                     android:textStyle="bold"
                     android:letterSpacing="-0.02" />
@@ -64,7 +63,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
                     android:text="+91 98765 43210"
-                    android:textColor="@color/text_secondary"
+                    android:textColor="#A0A0A0"
                     android:textSize="13.5sp" />
 
                 <!-- KYC Badge -->
@@ -104,7 +103,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="5.0 ⭐"
-                            android:textColor="@color/text_primary"
+                            android:textColor="@color/neon_green"
                             android:textSize="18sp"
                             android:textStyle="bold" />
 
@@ -113,7 +112,7 @@
                             android:layout_height="wrap_content"
                             android:layout_marginTop="2dp"
                             android:text="Rating (Reviews)"
-                            android:textColor="@color/text_secondary"
+                            android:textColor="#A0A0A0"
                             android:textSize="11.5sp" />
                     </LinearLayout>
 
@@ -135,7 +134,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="0"
-                            android:textColor="@color/text_primary"
+                            android:textColor="@color/neon_green"
                             android:textSize="18sp"
                             android:textStyle="bold" />
 
@@ -144,7 +143,7 @@
                             android:layout_height="wrap_content"
                             android:layout_marginTop="2dp"
                             android:text="Total Trips"
-                            android:textColor="@color/text_secondary"
+                            android:textColor="#A0A0A0"
                             android:textSize="11.5sp" />
                     </LinearLayout>
                 </LinearLayout>

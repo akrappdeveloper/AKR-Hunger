@@ -1,10 +1,17 @@
 package com.ssr.hunger.delivery;
 
+import android.app.Activity;
 import android.app.Application;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.os.Build;
+import android.os.Bundle;
 import android.util.Log;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentActivity;
+import androidx.fragment.app.FragmentManager;
 
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.messaging.FirebaseMessaging;
@@ -55,6 +62,9 @@ public class AKRDeliveryApp extends Application {
         // 6. Global Uncaught Exception Handler
         setupGlobalExceptionHandler(crashlytics);
 
+        // 6.5. Automatic Screen Tracking for all Activities, Fragments, and Dialogs
+        setupGlobalLifecycleTracking(crashlytics);
+
         // 7. Setup Notification Channels
         createNotificationChannels();
 
@@ -77,6 +87,52 @@ public class AKRDeliveryApp extends Application {
             }
             if (defaultHandler != null) {
                 defaultHandler.uncaughtException(thread, throwable);
+            }
+        });
+    }
+
+    private void setupGlobalLifecycleTracking(CrashlyticsHelper crashlytics) {
+        registerActivityLifecycleCallbacks(new ActivityLifecycleCallbacks() {
+            @Override
+            public void onActivityCreated(@NonNull Activity activity, @Nullable Bundle savedInstanceState) {
+                crashlytics.log("Activity Created: " + activity.getClass().getSimpleName());
+                if (activity instanceof FragmentActivity) {
+                    ((FragmentActivity) activity).getSupportFragmentManager()
+                            .registerFragmentLifecycleCallbacks(new FragmentManager.FragmentLifecycleCallbacks() {
+                                @Override
+                                public void onFragmentCreated(@NonNull FragmentManager fm, @NonNull Fragment f, @Nullable Bundle savedInstanceState) {
+                                    crashlytics.log("Fragment/Dialog Created: " + f.getClass().getSimpleName());
+                                }
+
+                                @Override
+                                public void onFragmentResumed(@NonNull FragmentManager fm, @NonNull Fragment f) {
+                                    crashlytics.log("Fragment/Dialog Resumed: " + f.getClass().getSimpleName());
+                                }
+                            }, true);
+                }
+            }
+
+            @Override
+            public void onActivityStarted(@NonNull Activity activity) {}
+
+            @Override
+            public void onActivityResumed(@NonNull Activity activity) {
+                crashlytics.log("Activity Resumed: " + activity.getClass().getSimpleName());
+                crashlytics.setCustomKey("current_screen", activity.getClass().getSimpleName());
+            }
+
+            @Override
+            public void onActivityPaused(@NonNull Activity activity) {}
+
+            @Override
+            public void onActivityStopped(@NonNull Activity activity) {}
+
+            @Override
+            public void onActivitySaveInstanceState(@NonNull Activity activity, @NonNull Bundle outState) {}
+
+            @Override
+            public void onActivityDestroyed(@NonNull Activity activity) {
+                crashlytics.log("Activity Destroyed: " + activity.getClass().getSimpleName());
             }
         });
     }

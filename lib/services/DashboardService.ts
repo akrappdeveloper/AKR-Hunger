@@ -94,7 +94,7 @@ export class DashboardService {
       let discountGiven = 0;
 
       allOrdersSnap.forEach(doc => {
-        const data = doc.data();
+        const data: any = doc.data();
         totalRevenue += data.total || 0;
         platformFees += data.platformFee || 0;
         packagingFees += data.packagingCharges || 0;
@@ -111,7 +111,7 @@ export class DashboardService {
       const timeGroupedData: Record<string, { orders: number; revenue: number }> = {};
 
       allOrdersSnap.forEach(doc => {
-        const data = doc.data();
+        const data: any = doc.data();
         if (!data.createdAt) return;
         const date = data.createdAt.toDate();
         // If range is <= 2 days, group by hour. If <= 31 days, group by day. Else group by month.

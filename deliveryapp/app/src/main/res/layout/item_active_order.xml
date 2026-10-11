@@ -5,272 +5,230 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginBottom="14dp"
-    app:cardCornerRadius="20dp"
-    app:cardElevation="2dp"
-    app:strokeColor="@color/card_border"
-    app:strokeWidth="1.2dp"
-    app:cardBackgroundColor="@color/surface">
+    app:cardCornerRadius="24dp"
+    app:cardElevation="4dp"
+    app:strokeWidth="0dp"
+    app:cardBackgroundColor="@color/dark_card_bg">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="18dp">
+        android:padding="20dp">
 
-        <!-- Top Stage Banner -->
-        <RelativeLayout
+        <!-- Stage Badge (Neon Green) -->
+        <TextView
+            android:id="@+id/tv_active_stage_badge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_pill_primary"
+            android:backgroundTint="@color/neon_green"
+            android:paddingHorizontal="14dp"
+            android:paddingVertical="6dp"
+            android:text="IN TRANSIT"
+            android:textColor="@color/black"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.05" />
+
+        <!-- Origin -> Destination -->
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+            
+            <TextView
+                android:id="@+id/tv_active_restaurant_address"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Norra Nynäshamn"
+                android:textColor="@color/white"
+                android:textSize="17sp"
+                android:textStyle="bold"
+                android:maxLines="1"
+                android:ellipsize="end" />
+
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_marginHorizontal="8dp"
+                android:src="@drawable/ic_arrow_back"
+                android:rotation="180"
+                app:tint="@color/white" />
+
+            <TextView
+                android:id="@+id/tv_active_delivery_address"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Stockholm"
+                android:textColor="@color/white"
+                android:textSize="17sp"
+                android:textStyle="bold"
+                android:maxLines="1"
+                android:ellipsize="end" />
+        </LinearLayout>
+
+        <!-- Order ID -->
+        <TextView
+            android:id="@+id/tv_active_order_id"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="Order ID #29698-98971"
+            android:textColor="#A0A0A0"
+            android:textSize="13sp" />
+
+        <!-- Neon Green Progress Line -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="3dp"
+            android:layout_marginTop="20dp"
+            android:layout_marginEnd="60dp"
+            android:background="@color/neon_green" />
+        
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="3dp"
+            android:layout_marginTop="-3dp"
+            android:layout_marginStart="280dp"
+            android:background="#404040" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:orientation="horizontal">
+            
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Earning"
+                    android:textColor="#A0A0A0"
+                    android:textSize="11sp" />
+                <TextView
+                    android:id="@+id/tv_active_earnings"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="₹65"
+                    android:textColor="@color/white"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
 
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_alignParentStart="true"
-                android:layout_centerVertical="true"
-                android:orientation="horizontal"
-                android:gravity="center_vertical">
-
-                <View
-                    android:layout_width="9dp"
-                    android:layout_height="9dp"
-                    android:background="@drawable/bg_circle_primary"
-                    android:backgroundTint="@color/primary" />
-
+                android:orientation="vertical">
                 <TextView
-                    android:id="@+id/tv_active_order_id"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
-                    android:text="#ORD-8921"
-                    android:textColor="@color/text_primary"
-                    android:textSize="15.5sp"
-                    android:textStyle="bold"
-                    android:letterSpacing="-0.01" />
+                    android:text="Payment"
+                    android:textColor="#A0A0A0"
+                    android:textSize="11sp" />
+                <TextView
+                    android:id="@+id/tv_active_payment_badge"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Online Paid"
+                    android:textColor="@color/white"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
             </LinearLayout>
-
-            <TextView
-                android:id="@+id/tv_active_stage_badge"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignParentEnd="true"
-                android:layout_centerVertical="true"
-                android:background="@drawable/bg_pill_primary"
-                android:backgroundTint="@color/primary_tint"
-                android:paddingHorizontal="12dp"
-                android:paddingVertical="5dp"
-                android:text="On the Way"
-                android:textColor="@color/primary"
-                android:textSize="11.5sp"
-                android:textStyle="bold" />
-        </RelativeLayout>
-
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:layout_marginVertical="12dp"
-            android:background="@color/divider" />
-
-        <!-- Route Details: Pickup & Delivery Steps -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical">
-
-            <!-- Step 1: Restaurant Pickup -->
-            <RelativeLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <ImageView
-                    android:id="@+id/iv_pickup_dot"
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
-                    android:layout_alignParentStart="true"
-                    android:layout_marginTop="2dp"
-                    android:src="@drawable/ic_restaurant_modern"
-                    app:tint="@color/primary" />
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_toEndOf="@id/iv_pickup_dot"
-                    android:layout_toStartOf="@id/btn_call_restaurant"
-                    android:layout_marginStart="12dp"
-                    android:layout_marginEnd="10dp"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:id="@+id/tv_active_restaurant_name"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="The Spice Bistro"
-                        android:textColor="@color/text_primary"
-                        android:textSize="14.5sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:id="@+id/tv_active_restaurant_address"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
-                        android:text="FC Road, Deccan Gymkhana"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="12sp"
-                        android:maxLines="1"
-                        android:ellipsize="end" />
-                </LinearLayout>
-
-                <ImageButton
-                    android:id="@+id/btn_call_restaurant"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:layout_alignParentEnd="true"
-                    android:layout_centerVertical="true"
-                    android:background="@drawable/bg_pill_primary"
-                    android:backgroundTint="@color/primary_tint"
-                    android:src="@drawable/ic_phone"
-                    app:tint="@color/primary"
-                    android:contentDescription="Call Restaurant" />
-            </RelativeLayout>
-
-            <!-- Connector Line -->
-            <View
-                android:layout_width="2dp"
-                android:layout_height="18dp"
-                android:layout_marginStart="9dp"
-                android:layout_marginVertical="2dp"
-                android:background="@color/divider" />
-
-            <!-- Step 2: Customer Dropoff -->
-            <RelativeLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <ImageView
-                    android:id="@+id/iv_drop_dot"
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
-                    android:layout_alignParentStart="true"
-                    android:layout_marginTop="2dp"
-                    android:src="@drawable/ic_location"
-                    app:tint="@color/secondary" />
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_toEndOf="@id/iv_drop_dot"
-                    android:layout_toStartOf="@id/btn_call_customer"
-                    android:layout_marginStart="12dp"
-                    android:layout_marginEnd="10dp"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:id="@+id/tv_active_customer_name"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Rahul Sharma"
-                        android:textColor="@color/text_primary"
-                        android:textSize="14.5sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:id="@+id/tv_active_delivery_address"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
-                        android:text="Flat 402, Green Avenue, Kothrud"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="12sp"
-                        android:maxLines="1"
-                        android:ellipsize="end" />
-                </LinearLayout>
-
-                <ImageButton
-                    android:id="@+id/btn_call_customer"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:layout_alignParentEnd="true"
-                    android:layout_centerVertical="true"
-                    android:background="@drawable/bg_pill_primary"
-                    android:backgroundTint="@color/primary_tint"
-                    android:src="@drawable/ic_phone"
-                    app:tint="@color/primary"
-                    android:contentDescription="Call Customer" />
-            </RelativeLayout>
         </LinearLayout>
 
-        <!-- Earnings & Status Bar -->
+        <!-- Actions: Google Maps, In-App Route, Call & Manage -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginTop="16dp"
-            android:background="@drawable/bg_doc_card"
-            android:paddingHorizontal="14dp"
-            android:paddingVertical="9dp"
-            android:gravity="center_vertical">
-
-            <TextView
-                android:id="@+id/tv_active_earnings"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Earning: ₹65"
-                android:textColor="@color/veg_green"
-                android:textSize="13.5sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text=" • "
-                android:textColor="@color/text_hint" />
-
-            <TextView
-                android:id="@+id/tv_active_payment_badge"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Online Paid"
-                android:textColor="@color/text_secondary"
-                android:textSize="12.5sp" />
-        </LinearLayout>
-
-        <!-- Actions: Navigate Map + View / Action Button -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
+            android:orientation="vertical"
             android:layout_marginTop="16dp">
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btn_navigate_map"
-                style="@style/Widget.Material3.Button.OutlinedButton"
-                android:layout_width="0dp"
-                android:layout_height="48dp"
-                android:layout_weight="1"
-                android:layout_marginEnd="8dp"
-                android:text="Navigation"
-                app:icon="@drawable/ic_map"
-                app:iconTint="@color/primary"
-                app:iconSize="16dp"
-                app:strokeColor="@color/primary"
-                app:strokeWidth="1.5dp"
-                android:textColor="@color/primary"
-                android:textSize="13.5sp"
-                android:textStyle="bold"
-                app:cornerRadius="24dp" />
+            <!-- Row 1: Google Maps & In-App Route -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btn_manage_order"
-                style="@style/Widget.Material3.Button"
-                android:layout_width="0dp"
-                android:layout_height="48dp"
-                android:layout_weight="1.5"
-                android:text="Manage Order"
-                android:textColor="@color/on_primary"
-                android:textSize="13.5sp"
-                android:textStyle="bold"
-                app:backgroundTint="@color/primary"
-                app:cornerRadius="24dp" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_open_google_maps"
+                    style="@style/Widget.Material3.Button"
+                    android:layout_width="0dp"
+                    android:layout_height="46dp"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="5dp"
+                    android:text="🗺️ Google Maps"
+                    android:textColor="@color/white"
+                    android:textSize="12.5sp"
+                    android:textStyle="bold"
+                    app:backgroundTint="#2563EB"
+                    app:cornerRadius="22dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_navigate_map"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="46dp"
+                    android:layout_weight="1"
+                    android:layout_marginStart="5dp"
+                    android:text="📍 View on Map"
+                    app:icon="@drawable/ic_map"
+                    app:iconTint="@color/neon_green"
+                    app:iconSize="16dp"
+                    app:strokeColor="@color/neon_green"
+                    app:strokeWidth="1.2dp"
+                    android:textColor="@color/neon_green"
+                    android:textSize="12.5sp"
+                    android:textStyle="bold"
+                    app:cornerRadius="22dp" />
+            </LinearLayout>
+
+            <!-- Row 2: Call Contact & Manage Order -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="8dp">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_call_order"
+                    style="@style/Widget.Material3.Button"
+                    android:layout_width="0dp"
+                    android:layout_height="46dp"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="5dp"
+                    android:text="📞 Call Contact"
+                    app:icon="@drawable/ic_phone"
+                    app:iconTint="@color/white"
+                    app:iconSize="16dp"
+                    android:textColor="@color/white"
+                    android:textSize="12.5sp"
+                    android:textStyle="bold"
+                    app:backgroundTint="#10B981"
+                    app:cornerRadius="22dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_manage_order"
+                    style="@style/Widget.Material3.Button"
+                    android:layout_width="0dp"
+                    android:layout_height="46dp"
+                    android:layout_weight="1"
+                    android:layout_marginStart="5dp"
+                    android:text="⚡ Manage Order"
+                    android:textColor="@color/black"
+                    android:textSize="12.5sp"
+                    android:textStyle="bold"
+                    app:backgroundTint="@color/neon_green"
+                    app:cornerRadius="22dp" />
+            </LinearLayout>
         </LinearLayout>
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>
