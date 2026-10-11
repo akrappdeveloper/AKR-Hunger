@@ -31,6 +31,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { getAccurateCurrentLocation, lookupPostalPincode } from '@/lib/reverse-geocode';
 
 interface DeliveryLocationDialogProps {
   open: boolean;
@@ -63,17 +64,18 @@ export default function DeliveryLocationDialog({
 
   // Auto-fetch city & state on pincode entry
   const handlePincodeChange = async (val: string) => {
-    setPincode(val);
-    if (val.length === 6 && /^\d+$/.test(val)) {
+    const clean = val.replace(/\D/g, '').slice(0, 6);
+    setPincode(clean);
+    if (clean.length === 6) {
       setPincodeLoading(true);
       try {
-        const res = await fetch(`https://api.postalpincode.in/pincode/${val}`);
-        const data = await res.json();
-        if (data && data[0] && data[0].Status === 'Success') {
-          const po = data[0].PostOffice[0];
-          setCity(po.District || po.Division || '');
-          setState(po.State || '');
-          toast.success(`Location detected: ${po.District}, ${po.State}`);
+        const details = await lookupPostalPincode(clean);
+        if (details.verified) {
+          setCity(details.district);
+          setState(details.state);
+          toast.success(details.message || `Location: ${details.district}, ${details.state}`);
+        } else {
+          toast.info(details.message || 'Pincode not recognized in postal circle');
         }
       } catch (err) {
         console.error('Error fetching pincode:', err);
@@ -87,80 +89,68 @@ export default function DeliveryLocationDialog({
   const handleSelectAddress = (addr: Address) => {
     setDeliveryAddress(addr);
     localStorage.setItem('deliveryAddress', JSON.stringify(addr));
-    toast.success(`Delivering to ${addr.type.toUpperCase()}: ${addr.city}`);
+    toast.success(`Delivering to ${addr.type.toUpperCase()}: ${addr.city} (${addr.pincode})`);
     onOpenChange(false);
   };
 
-  // Use Current Location (GPS)
-  const handleUseCurrentLocation = () => {
-    if (!navigator.geolocation) {
-      toast.error('Geolocation is not supported by your browser');
-      return;
-    }
-
+  // Use Current Location (High-Accuracy GPS + Verified Postal Geocoding)
+  const handleUseCurrentLocation = async (fillFormOnly = false) => {
     setGpsLoading(true);
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const { latitude, longitude } = position.coords;
+    try {
+      toast.info('Acquiring high-accuracy GPS & postal address...');
+      const geo = await getAccurateCurrentLocation();
+
+      if (isAddingNew || fillFormOnly) {
+        setIsAddingNew(true);
+        setStreet(geo.street);
+        setCity(geo.city);
+        setState(geo.state);
+        setPincode(geo.pincode);
+        if (geo.area) setLandmark(geo.area);
+        toast.success(`📍 GPS location auto-filled: ${geo.city} ${geo.pincode ? `(${geo.pincode})` : ''}`);
+        return;
+      }
+
+      const liveAddress: Address = {
+        id: `gps-${Date.now()}`,
+        customerId: user?.uid || 'guest',
+        type: 'other',
+        street: geo.street,
+        city: geo.city,
+        state: geo.state,
+        pincode: geo.pincode || '000000',
+        latitude: geo.latitude,
+        longitude: geo.longitude,
+        plusCode: geo.plusCode,
+        isDefault: false,
+        createdAt: new Date(),
+      };
+
+      setDeliveryAddress(liveAddress);
+      localStorage.setItem('deliveryAddress', JSON.stringify(liveAddress));
+
+      // Also persist to customer's saved addresses in Firestore if logged in
+      if (user) {
         try {
-          // Attempt reverse geocoding via OpenStreetMap Nominatim
-          const res = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`
-          );
-          const data = await res.json();
-          const road = data?.address?.road || data?.address?.suburb || 'Current Location';
-          const detectedCity = data?.address?.city || data?.address?.state_district || data?.address?.county || 'Your City';
-          const detectedState = data?.address?.state || '';
-          const detectedPincode = data?.address?.postcode || '000000';
-
-          const liveAddress: Address = {
-            id: `gps-${Date.now()}`,
-            customerId: user?.uid || 'guest',
-            type: 'other',
-            street: `${road} (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`,
-            city: detectedCity,
-            state: detectedState,
-            pincode: detectedPincode,
-            latitude,
-            longitude,
-            plusCode: `${latitude.toFixed(4)},${longitude.toFixed(4)}`,
-            isDefault: false,
-            createdAt: new Date(),
-          };
-
-          setDeliveryAddress(liveAddress);
-          localStorage.setItem('deliveryAddress', JSON.stringify(liveAddress));
-          toast.success(`Set to current location: ${detectedCity}`);
-          onOpenChange(false);
-        } catch (e) {
-          // Fallback if reverse geocode fails
-          const liveAddress: Address = {
-            id: `gps-${Date.now()}`,
-            customerId: user?.uid || 'guest',
-            type: 'other',
-            street: `GPS Location (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`,
-            city: 'Live GPS Location',
-            state: '',
-            pincode: '000000',
-            latitude,
-            longitude,
-            isDefault: false,
-            createdAt: new Date(),
-          };
-          setDeliveryAddress(liveAddress);
-          localStorage.setItem('deliveryAddress', JSON.stringify(liveAddress));
-          toast.success('Live GPS coordinates set!');
-          onOpenChange(false);
-        } finally {
-          setGpsLoading(false);
+          const existingAddresses: Address[] = customer?.addresses || [];
+          const nonGps = existingAddresses.filter((a) => !a.id.startsWith('gps-'));
+          const updatedList = [liveAddress, ...nonGps.slice(0, 8)];
+          await updateDoc(doc(db, 'customers', user.uid), {
+            addresses: updatedList,
+            updatedAt: new Date(),
+          });
+        } catch (dbErr) {
+          console.warn('Could not archive GPS address to customer profile:', dbErr);
         }
-      },
-      (error) => {
-        setGpsLoading(false);
-        toast.error('Unable to retrieve location. Please check browser permissions.');
-      },
-      { timeout: 10000 }
-    );
+      }
+
+      toast.success(`📍 Set to current location: ${geo.city} ${geo.pincode ? `(${geo.pincode})` : ''}`);
+      onOpenChange(false);
+    } catch (err: any) {
+      toast.error(err?.message || 'Unable to retrieve location. Please check browser permissions.');
+    } finally {
+      setGpsLoading(false);
+    }
   };
 
   // Save new address and select it
@@ -280,7 +270,7 @@ export default function DeliveryLocationDialog({
             {/* GPS Button */}
             <button
               type="button"
-              onClick={handleUseCurrentLocation}
+              onClick={() => handleUseCurrentLocation(false)}
               disabled={gpsLoading}
               className="flex items-center gap-3 p-3.5 rounded-2xl border border-primary/30 bg-primary/5 hover:bg-primary/10 transition-all text-left group cursor-pointer shadow-sm hover:border-primary/60"
             >
@@ -331,11 +321,29 @@ export default function DeliveryLocationDialog({
           {/* Inline Add Address Form */}
           {isAddingNew && (
             <form onSubmit={handleSaveNewAddress} className="p-4 sm:p-5 rounded-2xl bg-muted/40 border border-border space-y-4 animate-in fade-in-50 duration-300">
-              <div className="flex items-center justify-between">
-                <h4 className="text-sm font-bold text-foreground flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-primary" />
-                  New Address Details
-                </h4>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <h4 className="text-sm font-bold text-foreground flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-primary" />
+                    New Address Details
+                  </h4>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleUseCurrentLocation(true)}
+                    disabled={gpsLoading}
+                    className="h-7 px-2.5 rounded-lg text-[11px] font-bold border-primary/40 text-primary hover:bg-primary/10 gap-1 cursor-pointer"
+                    title="Auto-fill form using current GPS coordinates & postal registry"
+                  >
+                    {gpsLoading ? (
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                    ) : (
+                      <Navigation className="w-3 h-3" />
+                    )}
+                    <span>Auto-fill GPS</span>
+                  </Button>
+                </div>
                 <div className="flex gap-1.5 bg-card p-1 rounded-xl border border-border">
                   {(['home', 'work', 'other'] as const).map((type) => (
                     <button

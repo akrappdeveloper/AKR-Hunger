@@ -165,6 +165,13 @@ export async function persistPushToken(
   role: UserRole,
   userId?: string
 ): Promise<void> {
+  // 1. Immediately cache in localStorage for instant access across tabs
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.setItem('hunger_fcm_token', token);
+    } catch (e) {}
+  }
+
   const effectiveUid = userId || auth.currentUser?.uid;
   if (!effectiveUid) {
     console.log('[WebPush] No authenticated user ID available yet to persist token');
@@ -174,17 +181,6 @@ export async function persistPushToken(
   const browserInfo = detectBrowserInfo();
 
   try {
-    // 1. Direct Firestore client SDK update
-    let targetCollection = 'users';
-    if (role === 'restaurant') {
-      targetCollection = 'restaurants';
-    } else if (role === 'delivery') {
-      targetCollection = 'deliveryPersons';
-    }
-
-    const docRef = doc(db, targetCollection, effectiveUid);
-    const docSnap = await getDoc(docRef);
-
     const tokenPayload = {
       fcmToken: token,
       fcmTokenUpdatedAt: serverTimestamp(),
@@ -195,10 +191,24 @@ export async function persistPushToken(
       },
     };
 
-    if (docSnap.exists()) {
-      await updateDoc(docRef, tokenPayload);
-    } else {
-      await setDoc(docRef, tokenPayload, { merge: true });
+    let targetCollection = 'users';
+    if (role === 'customer') {
+      targetCollection = 'customers';
+    } else if (role === 'restaurant') {
+      targetCollection = 'restaurants';
+    } else if (role === 'delivery') {
+      targetCollection = 'deliveryPersons';
+    }
+
+    // Direct Firestore update to primary role collection
+    const docRef = doc(db, targetCollection, effectiveUid);
+    await setDoc(docRef, tokenPayload, { merge: true });
+
+    // Also sync to users collection if different
+    if (targetCollection !== 'users') {
+      try {
+        await setDoc(doc(db, 'users', effectiveUid), tokenPayload, { merge: true });
+      } catch (e) {}
     }
 
     // 2. Also notify backend API endpoint for multi-collection sync
@@ -383,11 +393,25 @@ export async function sendTestWebPushNotification(params: {
   actionUrl?: string;
 }): Promise<{ success: boolean; messageId?: string; error?: string }> {
   try {
+    const cachedToken =
+      typeof window !== 'undefined'
+        ? localStorage.getItem('hunger_fcm_token') || undefined
+        : undefined;
+    const effectiveToken = params.token || cachedToken;
+
+    if (!effectiveToken && !params.userId) {
+      return {
+        success: false,
+        error:
+          'Please click "Enable Push Notifications" on your browser first to generate a notification token.',
+      };
+    }
+
     const res = await fetch('/api/notifications/send-push', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        token: params.token,
+        token: effectiveToken,
         role: params.role,
         userId: params.userId,
         title: params.title || '🔔 Test Notification from Hunger',
@@ -397,8 +421,8 @@ export async function sendTestWebPushNotification(params: {
     });
 
     const data = await res.json();
-    if (!res.ok) {
-      return { success: false, error: data.error || 'Server returned an error' };
+    if (!res.ok || !data.success) {
+      return { success: false, error: data.error || 'Failed to dispatch notification' };
     }
 
     return { success: true, messageId: data.messageId };

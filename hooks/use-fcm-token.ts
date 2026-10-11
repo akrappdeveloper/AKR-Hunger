@@ -24,7 +24,16 @@ interface UseFcmTokenOptions {
 export const useFcmToken = (options: UseFcmTokenOptions = {}) => {
   const { role = 'customer', autoRequest = false } = options;
 
-  const [token, setToken] = useState<string | null>(null);
+  const [token, setToken] = useState<string | null>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        return localStorage.getItem('hunger_fcm_token');
+      } catch (e) {
+        return null;
+      }
+    }
+    return null;
+  });
   const [permission, setPermission] = useState<NotificationPermission | 'unsupported'>('default');
   const [loading, setLoading] = useState(false);
   const [browserInfo, setBrowserInfo] = useState<BrowserInfo>({
@@ -112,8 +121,15 @@ export const useFcmToken = (options: UseFcmTokenOptions = {}) => {
   // Trigger test push
   const sendTestPush = useCallback(
     async (title?: string, body?: string, actionUrl?: string) => {
+      let activeToken = token;
+      if (!activeToken && typeof window !== 'undefined') {
+        try {
+          activeToken = localStorage.getItem('hunger_fcm_token');
+        } catch (e) {}
+      }
+
       return sendTestWebPushNotification({
-        token: token || undefined,
+        token: activeToken || undefined,
         role,
         userId: auth.currentUser?.uid,
         title,

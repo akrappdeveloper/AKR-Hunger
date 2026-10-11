@@ -249,10 +249,13 @@ export default function NotificationsPage() {
       });
 
       // Also dispatch live Web Push to browser (Chrome, Safari, Edge, etc.)
+      const cachedToken =
+        typeof window !== 'undefined' ? localStorage.getItem('hunger_fcm_token') : null;
       fetch('/api/notifications/send-push', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          token: cachedToken || undefined,
           userId: user.uid,
           role: 'restaurant',
           title: effectiveTitle,

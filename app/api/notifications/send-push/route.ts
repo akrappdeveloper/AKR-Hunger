@@ -16,26 +16,46 @@ export async function POST(request: NextRequest) {
 
     let targetToken = directToken;
 
-    // If no direct token provided, attempt to look up from Firestore by userId and role
+    // Multi-collection token lookup across users, customers, restaurants, deliveryPersons
     if (!targetToken && userId && adminDb) {
       try {
-        let collectionName = 'users';
-        if (role === 'restaurant') {
-          collectionName = 'restaurants';
+        // 1. Role-specific collection lookup
+        if (role === 'customer') {
+          const custSnap = await adminDb.collection('customers').doc(userId).get();
+          if (custSnap.exists && custSnap.data()?.fcmToken) {
+            targetToken = custSnap.data()?.fcmToken;
+          }
+        } else if (role === 'restaurant') {
+          const restSnap = await adminDb.collection('restaurants').doc(userId).get();
+          if (restSnap.exists && restSnap.data()?.fcmToken) {
+            targetToken = restSnap.data()?.fcmToken;
+          } else {
+            // Check by ownerId
+            const ownerSnap = await adminDb.collection('restaurants').where('ownerId', '==', userId).limit(1).get();
+            if (!ownerSnap.empty && ownerSnap.docs[0].data()?.fcmToken) {
+              targetToken = ownerSnap.docs[0].data()?.fcmToken;
+            }
+          }
         } else if (role === 'delivery') {
-          collectionName = 'deliveryPersons';
+          const delSnap = await adminDb.collection('deliveryPersons').doc(userId).get();
+          if (delSnap.exists && delSnap.data()?.fcmToken) {
+            targetToken = delSnap.data()?.fcmToken;
+          }
         }
 
-        const docSnap = await adminDb.collection(collectionName).doc(userId).get();
-        if (docSnap.exists) {
-          targetToken = docSnap.data()?.fcmToken;
-        }
-
-        // Fallback for delivery or restaurant if stored in users
-        if (!targetToken && role !== 'customer') {
+        // 2. Global users collection fallback
+        if (!targetToken) {
           const userSnap = await adminDb.collection('users').doc(userId).get();
-          if (userSnap.exists) {
+          if (userSnap.exists && userSnap.data()?.fcmToken) {
             targetToken = userSnap.data()?.fcmToken;
+          }
+        }
+
+        // 3. Fallback to customers collection if still not found
+        if (!targetToken && role !== 'customer') {
+          const custSnap = await adminDb.collection('customers').doc(userId).get();
+          if (custSnap.exists && custSnap.data()?.fcmToken) {
+            targetToken = custSnap.data()?.fcmToken;
           }
         }
       } catch (lookupErr) {
@@ -43,25 +63,29 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // If no target token is available, return 200 with skipped: true instead of 400
+    // This avoids triggering browser-level unhandled Bad Request console errors
     if (!targetToken) {
       return NextResponse.json(
         {
-          error:
-            'No Web Push registration token found. Please click "Enable Push Notifications" on your browser first.',
           success: false,
+          skipped: true,
+          error:
+            'No Web Push registration token found for this device or user. Please click "Enable Push Notifications" first.',
         },
-        { status: 400 }
+        { status: 200 }
       );
     }
 
     if (!messaging) {
       return NextResponse.json(
         {
+          success: false,
+          skipped: true,
           error:
             'Firebase Cloud Messaging is not initialized on the server. Please check FIREBASE_PRIVATE_KEY and credentials.',
-          success: false,
         },
-        { status: 500 }
+        { status: 200 }
       );
     }
 
@@ -147,11 +171,11 @@ export async function POST(request: NextRequest) {
     console.error('[send-push] Push delivery error:', error);
     return NextResponse.json(
       {
+        success: false,
         error: error?.message || 'Failed to send Web Push notification',
         code: error?.code,
-        success: false,
       },
-      { status: 500 }
+      { status: 200 }
     );
   }
 }

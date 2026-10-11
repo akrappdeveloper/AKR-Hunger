@@ -201,6 +201,10 @@ export default function WebPushManagerCard({
 
   // Handle Quick Test Push
   const handleQuickTest = async (preset?: { title: string; body: string; actionUrl: string }) => {
+    if (!isGranted) {
+      toast.info('Please click "Enable Push Notifications" first to receive notifications on this browser.');
+      return;
+    }
     setSendingPush(true);
     try {
       const pushTitle = preset?.title || customTitle || '🔔 Test Web Push from Hunger';

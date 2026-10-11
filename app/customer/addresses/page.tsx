@@ -23,6 +23,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
+import { getAccurateCurrentLocation, lookupPostalPincode } from '@/lib/reverse-geocode';
 import {
   MapPin,
   Plus,
@@ -62,6 +63,7 @@ interface Address {
   landmark?: string;
   latitude?: number;
   longitude?: number;
+  plusCode?: string;
   isDefault: boolean;
   createdAt?: any;
 }
@@ -72,8 +74,19 @@ const ADDRESS_TYPES = [
   { value: 'other', label: 'Other', icon: Building2, color: 'text-purple-500 bg-purple-500/10 border-purple-500/20' },
 ];
 
-const emptyForm = {
-  type: 'home' as 'home' | 'work' | 'other',
+const emptyForm: {
+  type: 'home' | 'work' | 'other';
+  street: string;
+  city: string;
+  state: string;
+  pincode: string;
+  landmark: string;
+  latitude?: number;
+  longitude?: number;
+  plusCode?: string;
+  isDefault: boolean;
+} = {
+  type: 'home',
   street: '',
   city: '',
   state: '',
@@ -170,20 +183,21 @@ export default function AddressesPage() {
 
   // Pincode auto-lookup
   const handlePincodeChange = async (val: string) => {
-    setForm((prev) => ({ ...prev, pincode: val }));
-    if (val.length === 6 && /^\d+$/.test(val)) {
+    const clean = val.replace(/\D/g, '').slice(0, 6);
+    setForm((prev) => ({ ...prev, pincode: clean }));
+    if (clean.length === 6) {
       setPincodeLoading(true);
       try {
-        const res = await fetch(`https://api.postalpincode.in/pincode/${val}`);
-        const data = await res.json();
-        if (data && data[0] && data[0].Status === 'Success') {
-          const po = data[0].PostOffice[0];
+        const details = await lookupPostalPincode(clean);
+        if (details.verified) {
           setForm((prev) => ({
             ...prev,
-            city: po.District || po.Division || prev.city,
-            state: po.State || prev.state,
+            city: details.district || prev.city,
+            state: details.state || prev.state,
           }));
-          toast.success(`Detected: ${po.District}, ${po.State}`);
+          toast.success(details.message || `Detected: ${details.district}, ${details.state}`);
+        } else {
+          toast.info(details.message || 'Pincode not recognized in postal circle');
         }
       } catch (err) {
         console.warn('Pincode fetch error:', err);
@@ -193,50 +207,30 @@ export default function AddressesPage() {
     }
   };
 
-  // GPS auto-locate
-  const handleUseCurrentLocation = () => {
-    if (!navigator.geolocation) {
-      toast.error('Geolocation is not supported by your browser');
-      return;
-    }
-
+  // High-accuracy GPS auto-locate with verified postal reverse geocoding
+  const handleUseCurrentLocation = async () => {
     setGpsLoading(true);
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        const { latitude, longitude } = pos.coords;
-        try {
-          const res = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`
-          );
-          const data = await res.json();
-          if (data && data.address) {
-            const addr = data.address;
-            const road = addr.road || addr.suburb || addr.neighbourhood || '';
-            const detectedCity = addr.city || addr.town || addr.county || '';
-            const detectedState = addr.state || '';
-            const detectedPostcode = (addr.postcode || '').replace(/\D/g, '').slice(0, 6);
+    try {
+      toast.info('Acquiring high-accuracy GPS & postal address...');
+      const geo = await getAccurateCurrentLocation();
 
-            setForm((prev) => ({
-              ...prev,
-              street: road || prev.street || data.display_name.split(',')[0],
-              city: detectedCity || prev.city,
-              state: detectedState || prev.state,
-              pincode: detectedPostcode || prev.pincode,
-            }));
-            toast.success('Live GPS address detected!');
-          }
-        } catch (err) {
-          toast.error('Could not reverse geocode location');
-        } finally {
-          setGpsLoading(false);
-        }
-      },
-      (err) => {
-        setGpsLoading(false);
-        toast.error('Unable to fetch GPS position. Check browser permissions.');
-      },
-      { timeout: 10000 }
-    );
+      setForm((prev) => ({
+        ...prev,
+        street: geo.street || prev.street,
+        city: geo.city || prev.city,
+        state: geo.state || prev.state,
+        pincode: geo.pincode || prev.pincode,
+        latitude: geo.latitude,
+        longitude: geo.longitude,
+        plusCode: geo.plusCode || prev.plusCode,
+      }));
+
+      toast.success(`📍 Live GPS address detected: ${geo.city} ${geo.pincode ? `(${geo.pincode})` : ''}`);
+    } catch (err: any) {
+      toast.error(err?.message || 'Unable to fetch GPS position. Check browser permissions.');
+    } finally {
+      setGpsLoading(false);
+    }
   };
 
   // Save or Update Address in Firebase

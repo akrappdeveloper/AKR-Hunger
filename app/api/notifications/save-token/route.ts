@@ -20,16 +20,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    let targetCollection = 'users';
-    if (role === 'restaurant') {
-      targetCollection = 'restaurants';
-    } else if (role === 'delivery') {
-      targetCollection = 'deliveryPersons';
-    }
-
-    const docRef = adminDb.collection(targetCollection).doc(userId);
-    const docSnap = await docRef.get();
-
     const updateData: Record<string, any> = {
       fcmToken: token,
       fcmTokenUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -41,31 +31,61 @@ export async function POST(request: NextRequest) {
       },
     };
 
-    if (docSnap.exists) {
-      await docRef.update(updateData);
-    } else {
-      await docRef.set(updateData, { merge: true });
+    // Primary target collection
+    let primaryCollection = 'users';
+    if (role === 'customer') {
+      primaryCollection = 'customers';
+    } else if (role === 'restaurant') {
+      primaryCollection = 'restaurants';
+    } else if (role === 'delivery') {
+      primaryCollection = 'deliveryPersons';
     }
 
-    // Also sync to users collection if delivery or restaurant user exists in both
-    if (role !== 'customer') {
+    // 1. Save to primary role collection
+    try {
+      const docRef = adminDb.collection(primaryCollection).doc(userId);
+      const docSnap = await docRef.get();
+      if (docSnap.exists) {
+        await docRef.update(updateData);
+      } else {
+        await docRef.set(updateData, { merge: true });
+      }
+    } catch (e) {
+      console.warn(`[save-token] Notice saving to ${primaryCollection}:`, e);
+    }
+
+    // 2. Also save to users collection for cross-collection lookup
+    try {
+      const userRef = adminDb.collection('users').doc(userId);
+      const userSnap = await userRef.get();
+      if (userSnap.exists) {
+        await userRef.update(updateData);
+      } else {
+        await userRef.set(updateData, { merge: true });
+      }
+    } catch (e) {
+      console.warn('[save-token] Notice saving to users:', e);
+    }
+
+    // 3. If restaurant, also check if there is a restaurant doc with ownerId == userId
+    if (role === 'restaurant') {
       try {
-        const userRef = adminDb.collection('users').doc(userId);
-        const userSnap = await userRef.get();
-        if (userSnap.exists) {
-          await userRef.update({
-            fcmToken: token,
-            fcmTokenUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
-          });
+        const ownerSnap = await adminDb
+          .collection('restaurants')
+          .where('ownerId', '==', userId)
+          .limit(1)
+          .get();
+        if (!ownerSnap.empty) {
+          await ownerSnap.docs[0].ref.update(updateData);
         }
       } catch (e) {
-        // Silent catch for secondary sync
+        // silent
       }
     }
 
     return NextResponse.json({
       success: true,
-      message: `Token registered in ${targetCollection} for user ${userId}`,
+      message: `Token registered for ${role} (${userId})`,
     });
   } catch (error: any) {
     console.error('[save-token] Error persisting token:', error);

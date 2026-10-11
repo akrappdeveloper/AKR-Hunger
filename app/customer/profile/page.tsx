@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Link from 'next/link';
-import { Camera, MapPin, Phone, Mail, User, Save, Edit2, Plus, Home, Briefcase, Trash2, LogOut, ChevronRight, CheckCircle2, Loader2, Sparkles, LifeBuoy, ShieldCheck, AlertCircle, Gift } from 'lucide-react';
+import { Camera, MapPin, Phone, Mail, User, Save, Edit2, Plus, Home, Briefcase, Trash2, LogOut, ChevronRight, CheckCircle2, Loader2, Sparkles, LifeBuoy, ShieldCheck, AlertCircle, Gift, Navigation } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { uploadImage } from '@/lib/imageUpload';
 import ImageUploadDialog from '@/components/ImageUploadDialog';
@@ -29,6 +29,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { toast } from 'sonner';
+import { getAccurateCurrentLocation, lookupPostalPincode } from '@/lib/reverse-geocode';
 
 export default function ProfilePage() {
   const { user, customer, logout } = useAuth();
@@ -189,6 +190,30 @@ export default function ProfilePage() {
   };
 
 
+  // GPS Auto-detect State
+  const [gpsLoading, setGpsLoading] = useState(false);
+
+  const handleGpsAutoLocate = async () => {
+    setGpsLoading(true);
+    try {
+      toast.info('Acquiring high-accuracy GPS & postal address...');
+      const geo = await getAccurateCurrentLocation();
+      setNewAddress((prev) => ({
+        ...prev,
+        street: geo.street || prev.street,
+        city: geo.city || prev.city,
+        state: geo.state || prev.state,
+        pincode: geo.pincode || prev.pincode,
+        plusCode: geo.plusCode || prev.plusCode,
+      }));
+      toast.success(`📍 Location detected: ${geo.city} ${geo.pincode ? `(${geo.pincode})` : ''}`);
+    } catch (err: any) {
+      toast.error(err?.message || 'Unable to fetch location. Please check browser permissions.');
+    } finally {
+      setGpsLoading(false);
+    }
+  };
+
   // Pincode Auto-fill Effect
   useEffect(() => {
     if (newAddress.pincode.length === 6) {
@@ -198,19 +223,17 @@ export default function ProfilePage() {
 
   const fetchCityStateFromPincode = async (pincode: string) => {
     try {
-      const response = await fetch(`https://api.postalpincode.in/pincode/${pincode}`);
-      const data = await response.json();
-      if (data && data[0] && data[0].Status === 'Success') {
-        const postOffice = data[0].PostOffice[0];
-        setNewAddress(prev => ({
+      const details = await lookupPostalPincode(pincode);
+      if (details.verified) {
+        setNewAddress((prev) => ({
           ...prev,
-          city: postOffice.District,
-          state: postOffice.State
+          city: details.district,
+          state: details.state,
         }));
-        toast.success(`Location found: ${postOffice.District}, ${postOffice.State}`);
+        toast.success(details.message || `Location found: ${details.district}, ${details.state}`);
       }
     } catch (error) {
-      console.error("Error fetching pincode details:", error);
+      console.error('Error fetching pincode details:', error);
     }
   };
 
@@ -605,6 +628,21 @@ export default function ProfilePage() {
                       </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-3">
+                      {/* GPS Quick Detect Button */}
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={handleGpsAutoLocate}
+                        disabled={gpsLoading}
+                        className="w-full gap-2 text-xs font-bold border-primary/40 text-primary hover:bg-primary/10 rounded-xl h-10 cursor-pointer shadow-sm"
+                      >
+                        {gpsLoading ? (
+                          <Spinner className="w-3.5 h-3.5" />
+                        ) : (
+                          <Navigation className="w-3.5 h-3.5 text-primary" />
+                        )}
+                        <span>{gpsLoading ? 'Detecting Coordinates...' : 'Auto-fill Current Location (GPS)'}</span>
+                      </Button>
 
                       {/* Search / Pincode Section */}
                       <div className="grid grid-cols-2 gap-3 sm:gap-4">

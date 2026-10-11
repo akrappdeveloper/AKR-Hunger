@@ -64,7 +64,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
             let initialAddress = null;
 
             if (savedAddress) {
-              initialAddress = JSON.parse(savedAddress);
+              try {
+                initialAddress = JSON.parse(savedAddress);
+                if (initialAddress?.pincode === '000000' && data.addresses && data.addresses.length > 0) {
+                  const betterAddr = data.addresses.find((a: any) => a.pincode && a.pincode !== '000000' && a.isDefault) || data.addresses.find((a: any) => a.pincode && a.pincode !== '000000');
+                  if (betterAddr) initialAddress = betterAddr;
+                }
+              } catch (e) {
+                initialAddress = null;
+              }
             }
 
             // If no saved address or it's invalid, fallback to profile default
@@ -75,7 +83,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
             if (initialAddress) {
               setDeliveryAddressState(initialAddress);
               // Ensure local storage is synced if we fell back to default
-              if (!savedAddress) {
+              if (!savedAddress || initialAddress.pincode !== '000000') {
                 localStorage.setItem('deliveryAddress', JSON.stringify(initialAddress));
               }
             }
@@ -87,7 +95,20 @@ export function CartProvider({ children }: { children: ReactNode }) {
           if (!deliveryAddress && data.addresses && data.addresses.length > 0) {
             const savedAddress = localStorage.getItem('deliveryAddress');
             if (savedAddress) {
-              setDeliveryAddressState(JSON.parse(savedAddress));
+              try {
+                const parsed = JSON.parse(savedAddress);
+                if (parsed?.pincode === '000000' && data.addresses && data.addresses.length > 0) {
+                  const betterAddr = data.addresses.find((a: any) => a.pincode && a.pincode !== '000000' && a.isDefault) || data.addresses.find((a: any) => a.pincode && a.pincode !== '000000');
+                  setDeliveryAddressState(betterAddr || parsed);
+                  if (betterAddr) localStorage.setItem('deliveryAddress', JSON.stringify(betterAddr));
+                } else {
+                  setDeliveryAddressState(parsed);
+                }
+              } catch (e) {
+                const defaultAddr = data.addresses.find((a: any) => a.isDefault) || data.addresses[0];
+                setDeliveryAddressState(defaultAddr);
+                localStorage.setItem('deliveryAddress', JSON.stringify(defaultAddr));
+              }
             } else {
               const defaultAddr = data.addresses.find((a: any) => a.isDefault) || data.addresses[0];
               setDeliveryAddressState(defaultAddr);

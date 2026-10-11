@@ -123,7 +123,11 @@ export default function CustomerNavbar() {
               </span>
               <span className="text-xs sm:text-sm font-bold text-foreground flex items-center gap-1 group-hover:text-primary transition-colors truncate w-full">
                 <MapPin className="w-3 h-3 md:hidden text-primary flex-shrink-0" />
-                <span className="truncate">{deliveryAddress ? `${deliveryAddress.street}, ${deliveryAddress.city}` : 'Select Location'}</span>
+                <span className="truncate" title={deliveryAddress ? `${deliveryAddress.street}, ${deliveryAddress.city} - ${deliveryAddress.pincode}` : 'Select Location'}>
+                  {deliveryAddress
+                    ? `${deliveryAddress.city || deliveryAddress.street}${deliveryAddress.pincode && deliveryAddress.pincode !== '000000' ? ` • ${deliveryAddress.pincode}` : ''}`
+                    : 'Select Location'}
+                </span>
                 <ChevronDown className="w-3 h-3 text-muted-foreground flex-shrink-0" />
               </span>
             </button>
