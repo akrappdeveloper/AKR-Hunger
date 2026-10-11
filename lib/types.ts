@@ -852,11 +852,17 @@ export interface DealItem {
   usageCount?: number;
 }
 
+export type RedeemBenefitType = 'wallet' | 'points' | 'discount' | 'delivery';
+
 export interface RedeemCodeItem {
   id: string;
   code: string;
-  type: 'points' | 'wallet' | 'discount';
-  value: number;
+  type: RedeemBenefitType;
+  benefitType?: RedeemBenefitType;
+  value: number; // Amount in ₹, points count, or discount percentage
+  discountType?: 'flat' | 'percentage';
+  minOrderValue?: number;
+  maxDiscount?: number;
   description?: string;
   maxRedemptions?: number;
   redemptionCount?: number;

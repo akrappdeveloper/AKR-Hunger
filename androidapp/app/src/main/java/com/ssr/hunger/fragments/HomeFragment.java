@@ -158,6 +158,12 @@ public class HomeFragment extends Fragment {
                 tvLocation.setText("Select Delivery Location");
             }
         }
+
+        // Live filter restaurants & menu dishes based on selected location/pincode
+        if (!allRestaurants.isEmpty()) {
+            filterRestaurants();
+            filterItems();
+        }
     }
 
     private void setupCategories() {
@@ -313,7 +319,7 @@ public class HomeFragment extends Fragment {
                             restaurantNameMap.put(doc.getId(), r.getName());
                         }
                     }
-                    restaurantAdapter.updateData(allRestaurants.subList(0, Math.min(6, allRestaurants.size())));
+                    filterRestaurants();
 
                     // Update restaurant names on loaded menu items if needed
                     boolean updated = false;
@@ -333,6 +339,27 @@ public class HomeFragment extends Fragment {
                         fetchFromRestaurantSubcollections();
                     }
                 });
+    }
+
+    private void filterRestaurants() {
+        if (restaurantAdapter == null) return;
+        String userPincode = null;
+        if (getContext() != null) {
+            com.ssr.hunger.models.Address addr = CartManager.getInstance(getContext()).getDeliveryAddress();
+            if (addr != null && addr.getPincode() != null && !addr.getPincode().trim().isEmpty()) {
+                userPincode = addr.getPincode().trim();
+            }
+        }
+
+        List<Restaurant> deliverable = new ArrayList<>();
+        for (Restaurant r : allRestaurants) {
+            if (r.isServingPincode(userPincode)) {
+                deliverable.add(r);
+            }
+        }
+
+        List<Restaurant> toShow = !deliverable.isEmpty() ? deliverable : allRestaurants;
+        restaurantAdapter.updateData(toShow.subList(0, Math.min(8, toShow.size())));
     }
 
     private void listenToMenuItems() {
@@ -438,15 +465,33 @@ public class HomeFragment extends Fragment {
 
     private void filterItems() {
         List<MenuItem> filtered = new ArrayList<>();
+        String userPincode = null;
+        if (getContext() != null) {
+            com.ssr.hunger.models.Address addr = CartManager.getInstance(getContext()).getDeliveryAddress();
+            if (addr != null && addr.getPincode() != null && !addr.getPincode().trim().isEmpty()) {
+                userPincode = addr.getPincode().trim();
+            }
+        }
+
+        Map<String, Boolean> restServingMap = new HashMap<>();
+        for (Restaurant r : allRestaurants) {
+            restServingMap.put(r.getId(), r.isServingPincode(userPincode));
+        }
 
         for (MenuItem item : allMenuItems) {
-            if ("all".equals(selectedCategory)) {
-                if (item.isVisibleToCustomers()) {
-                    filtered.add(item);
-                }
-            } else {
-                if (!item.isVisibleToCustomers()) continue;
+            if (!item.isVisibleToCustomers()) continue;
 
+            // Check if item's restaurant serves user's delivery pincode (matching customer web panel)
+            if (userPincode != null && !userPincode.isEmpty()) {
+                Boolean serves = restServingMap.get(item.getRestaurantId());
+                if (serves != null && !serves) {
+                    continue; // Skip dish if outside service area
+                }
+            }
+
+            if ("all".equals(selectedCategory)) {
+                filtered.add(item);
+            } else {
                 String cat = item.getCategory() != null ? item.getCategory().toLowerCase() : "";
                 String name = item.getName() != null ? item.getName().toLowerCase() : "";
                 String desc = item.getDescription() != null ? item.getDescription().toLowerCase() : "";
@@ -465,7 +510,7 @@ public class HomeFragment extends Fragment {
             }
         }
 
-        // If strict visibility filtering removed everything, show all catalog items so user ALWAYS sees food
+        // If strict pincode filtering removed everything, fallback to all so screen is never blank
         if (filtered.isEmpty() && "all".equals(selectedCategory) && !allMenuItems.isEmpty()) {
             filtered.addAll(allMenuItems);
         }
@@ -483,6 +528,8 @@ public class HomeFragment extends Fragment {
         if (titleView != null) {
             if (!"all".equals(selectedCategory)) {
                 titleView.setText(selectedCategory + " Items");
+            } else if (userPincode != null && !userPincode.isEmpty()) {
+                titleView.setText("🔥 Serving in PIN " + userPincode);
             } else {
                 titleView.setText("🔥 Popular Near You");
             }

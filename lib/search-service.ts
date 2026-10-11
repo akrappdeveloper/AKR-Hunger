@@ -1,4 +1,4 @@
-import { db } from '@/lib/firebase';
+import { db, auth } from '@/lib/firebase';
 import {
   collection,
   doc,
@@ -50,8 +50,9 @@ export async function recordSearchQuery(term: string, userId?: string | null): P
     console.warn('Could not save search to localStorage:', err);
   }
 
-  // 2. If logged in, save to Firestore customers/{userId}/searchHistory
-  if (userId) {
+  // 2. If logged in and authenticated, save to Firestore customers/{userId}/searchHistory
+  const activeUid = auth?.currentUser?.uid;
+  if (userId && activeUid && activeUid === userId) {
     try {
       const historyCol = collection(db, 'customers', userId, 'searchHistory');
       
@@ -68,8 +69,8 @@ export async function recordSearchQuery(term: string, userId?: string | null): P
         query: cleanTerm,
         timestamp: serverTimestamp(),
       });
-    } catch (err) {
-      console.warn('Could not save search to Firestore:', err);
+    } catch (_) {
+      // Graceful fallback to LocalStorage
     }
   }
 }
@@ -78,8 +79,9 @@ export async function recordSearchQuery(term: string, userId?: string | null): P
  * Get Search History (from Firestore if logged in, fallback to LocalStorage)
  */
 export async function getSearchHistory(userId?: string | null): Promise<SearchHistoryItem[]> {
-  // If user is logged in, try fetching from Firestore
-  if (userId) {
+  // If user is logged in and authenticated, try fetching from Firestore
+  const activeUid = auth?.currentUser?.uid;
+  if (userId && activeUid && activeUid === userId) {
     try {
       const historyCol = collection(db, 'customers', userId, 'searchHistory');
       const q = query(historyCol, orderBy('timestamp', 'desc'), limit(30));
@@ -92,8 +94,8 @@ export async function getSearchHistory(userId?: string | null): Promise<SearchHi
           timestamp: d.data().timestamp,
         }));
       }
-    } catch (err) {
-      console.warn('Could not read search history from Firestore:', err);
+    } catch (_) {
+      // Fallback cleanly to LocalStorage without throwing or breaking the search UI
     }
   }
 
@@ -136,12 +138,11 @@ export async function removeSearchHistoryItem(
   }
 
   // 2. Remove from Firestore
-  if (userId && !itemId.startsWith('local-')) {
+  const activeUid = auth?.currentUser?.uid;
+  if (userId && activeUid && activeUid === userId && !itemId.startsWith('local-')) {
     try {
       await deleteDoc(doc(db, 'customers', userId, 'searchHistory', itemId));
-    } catch (err) {
-      console.warn('Could not delete history item from Firestore:', err);
-    }
+    } catch (_) {}
   }
 }
 
@@ -158,7 +159,8 @@ export async function clearAllSearchHistory(userId?: string | null): Promise<voi
   }
 
   // 2. Clear Firestore subcollection
-  if (userId) {
+  const activeUid = auth?.currentUser?.uid;
+  if (userId && activeUid && activeUid === userId) {
     try {
       const historyCol = collection(db, 'customers', userId, 'searchHistory');
       const snap = await getDocs(historyCol);
@@ -167,9 +169,7 @@ export async function clearAllSearchHistory(userId?: string | null): Promise<voi
         batch.delete(d.ref);
       });
       await batch.commit();
-    } catch (err) {
-      console.warn('Could not clear Firestore search history:', err);
-    }
+    } catch (_) {}
   }
 }
 

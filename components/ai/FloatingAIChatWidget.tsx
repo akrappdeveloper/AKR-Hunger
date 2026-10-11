@@ -29,8 +29,8 @@ export default function FloatingAIChatWidget({
     const [open, setOpen] = useState(false);
     const pathname = usePathname();
 
-    // Do not show floating button if already on dedicated support pages to prevent clutter
-    if (pathname?.includes('/support')) {
+    // Do not show floating button if already on dedicated support pages or auth pages to prevent clutter
+    if (pathname?.includes('/support') || pathname?.includes('/login') || pathname?.includes('/signup')) {
         return null;
     }
 

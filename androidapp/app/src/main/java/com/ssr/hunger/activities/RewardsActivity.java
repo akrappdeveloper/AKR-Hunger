@@ -209,7 +209,8 @@ public class RewardsActivity extends BaseActivity {
         Double val = childSnapshot.child("value").getValue(Double.class);
         final double rewardVal = val != null ? val : 100.0;
         String type = childSnapshot.child("type").getValue(String.class);
-        final String benefitType = type != null ? type : "points";
+        String benType = childSnapshot.child("benefitType").getValue(String.class);
+        final String benefitType = benType != null ? benType : (type != null ? type : "points");
         String desc = childSnapshot.child("description").getValue(String.class);
 
         // Check if user already used this code
@@ -228,17 +229,21 @@ public class RewardsActivity extends BaseActivity {
                     // Increment redemption count
                     childSnapshot.getRef().child("redemptionCount").setValue(count + 1);
 
-                    // Credit reward
-                    if ("wallet".equalsIgnoreCase(benefitType)) {
+                    // Credit reward based on Benefit Type
+                    if ("wallet".equalsIgnoreCase(benefitType) || "discount".equalsIgnoreCase(benefitType)) {
                         creditUserWallet(uid, rewardVal, code, desc != null ? desc : "Redeemed Code " + code);
+                    } else if ("delivery".equalsIgnoreCase(benefitType)) {
+                        creditUserWallet(uid, rewardVal > 0 ? rewardVal : 50.0, code, "Free Delivery Credit (" + code + ")");
                     } else {
                         creditUserPoints(uid, (int) rewardVal, code, desc != null ? desc : "Redeemed Code " + code);
                     }
                 })
                 .addOnFailureListener(e -> {
                     childSnapshot.getRef().child("redemptionCount").setValue(count + 1);
-                    if ("wallet".equalsIgnoreCase(benefitType)) {
+                    if ("wallet".equalsIgnoreCase(benefitType) || "discount".equalsIgnoreCase(benefitType)) {
                         creditUserWallet(uid, rewardVal, code, desc != null ? desc : "Redeemed Code " + code);
+                    } else if ("delivery".equalsIgnoreCase(benefitType)) {
+                        creditUserWallet(uid, rewardVal > 0 ? rewardVal : 50.0, code, "Free Delivery Credit (" + code + ")");
                     } else {
                         creditUserPoints(uid, (int) rewardVal, code, desc != null ? desc : "Redeemed Code " + code);
                     }
@@ -259,18 +264,22 @@ public class RewardsActivity extends BaseActivity {
                             showRedeemFailure("This redeem code is inactive.");
                             return;
                         }
-                        Long val = doc.getLong("value");
-                        int points = val != null ? val.intValue() : 100;
+                        Double val = doc.getDouble("value");
+                        double rewardVal = val != null ? val : (doc.getLong("value") != null ? doc.getLong("value") : 100.0);
                         String desc = doc.getString("description");
                         String type = doc.getString("type");
+                        String benType = doc.getString("benefitType");
+                        String benefitType = benType != null ? benType : (type != null ? type : "points");
 
                         // Update Firestore count
                         doc.getReference().update("redemptionCount", FieldValue.increment(1));
 
-                        if ("wallet".equalsIgnoreCase(type)) {
-                            creditUserWallet(uid, points, code, desc != null ? desc : "Redeemed Code " + code);
+                        if ("wallet".equalsIgnoreCase(benefitType) || "discount".equalsIgnoreCase(benefitType)) {
+                            creditUserWallet(uid, rewardVal, code, desc != null ? desc : "Redeemed Code " + code);
+                        } else if ("delivery".equalsIgnoreCase(benefitType)) {
+                            creditUserWallet(uid, rewardVal > 0 ? rewardVal : 50.0, code, "Free Delivery Pass (" + code + ")");
                         } else {
-                            creditUserPoints(uid, points, code, desc != null ? desc : "Redeemed Code " + code);
+                            creditUserPoints(uid, (int) rewardVal, code, desc != null ? desc : "Redeemed Code " + code);
                         }
                     } else {
                         resetRedeemButton();

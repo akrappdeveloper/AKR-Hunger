@@ -511,6 +511,13 @@ export default function WalletPage() {
                                 </DialogFooter>
                             </DialogContent>
                         </Dialog>
+
+                        {/* Redeem Code / Voucher Quick Link */}
+                        <Link href="/customer/rewards#voucher">
+                            <Button variant="outline" className="border-amber-500/30 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 font-semibold rounded-xl gap-1.5 shadow-sm">
+                                <Gift className="h-4 w-4" /> Redeem Code
+                            </Button>
+                        </Link>
                     </div>
                 </div>
 

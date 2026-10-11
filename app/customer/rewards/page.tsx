@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { db } from '@/lib/firebase';
+import { db, realtimeDb } from '@/lib/firebase';
 import {
   collection,
   query,
@@ -13,13 +13,23 @@ import {
   orderBy,
   limit,
   doc,
+  getDoc,
+  getDocs,
+  where,
   updateDoc,
   addDoc,
   serverTimestamp,
   arrayUnion,
+  increment,
 } from 'firebase/firestore';
+import {
+  ref as rtdbRef,
+  get as rtdbGet,
+  update as rtdbUpdate,
+} from 'firebase/database';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -40,6 +50,11 @@ import {
   CheckCircle2,
   Ticket,
   Loader2,
+  Coins,
+  Wallet,
+  Percent,
+  Truck,
+  IndianRupee,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { copyToClipboard } from '@/lib/utils';
@@ -105,6 +120,181 @@ export default function RewardsPage() {
   const [loading, setLoading] = useState(true);
   const [redeemingId, setRedeemingId] = useState<string | null>(null);
   const [referralCode] = useState(() => `HUNGER${(user?.uid || 'VIP').substring(0, 5).toUpperCase()}`);
+  const [voucherInput, setVoucherInput] = useState('');
+  const [isApplyingVoucher, setIsApplyingVoucher] = useState(false);
+  const [redeemedVoucherInfo, setRedeemedVoucherInfo] = useState<{
+    code: string;
+    benefitText: string;
+    type: string;
+  } | null>(null);
+
+  const handleApplyVoucherCode = async () => {
+    if (!user) {
+      toast.error('Please log in to redeem voucher codes');
+      return;
+    }
+    const cleanCode = voucherInput.trim().toUpperCase();
+    if (!cleanCode) {
+      toast.error('Please enter a voucher code');
+      return;
+    }
+
+    setIsApplyingVoucher(true);
+    try {
+      // 1. Check if user already claimed this code
+      const customerDocSnap = await getDoc(doc(db, 'customers', user.uid));
+      const customerData = customerDocSnap.data() || {};
+      const claimedCodes: string[] = customerData.redeemedCodes || [];
+      if (claimedCodes.includes(cleanCode)) {
+        toast.error('You have already redeemed this code!');
+        setIsApplyingVoucher(false);
+        return;
+      }
+
+      // 2. Lookup in Firestore (/redeemCodes)
+      let matchedCode: any = null;
+      let matchedDocRef: any = null;
+
+      try {
+        const qFs = query(collection(db, 'redeemCodes'), where('code', '==', cleanCode));
+        const fsSnap = await getDocs(qFs);
+        if (!fsSnap.empty) {
+          matchedDocRef = fsSnap.docs[0].ref;
+          matchedCode = fsSnap.docs[0].data();
+        }
+      } catch (fsErr) {
+        console.warn('Firestore code check notice:', fsErr);
+      }
+
+      // 3. Fallback to Realtime Database (/redeem_codes)
+      if (!matchedCode) {
+        try {
+          const rtdbSnapshot = await rtdbGet(rtdbRef(realtimeDb, 'redeem_codes'));
+          if (rtdbSnapshot.exists()) {
+            const allCodes = rtdbSnapshot.val();
+            for (const key of Object.keys(allCodes)) {
+              if (allCodes[key].code?.toUpperCase() === cleanCode) {
+                matchedCode = { ...allCodes[key], rtdbKey: key };
+                break;
+              }
+            }
+          }
+        } catch (rtdbErr) {
+          console.warn('RTDB code check notice:', rtdbErr);
+        }
+      }
+
+      if (!matchedCode) {
+        toast.error('Invalid voucher code. Please check spelling and try again.');
+        setIsApplyingVoucher(false);
+        return;
+      }
+
+      // Validate status
+      if (matchedCode.isActive === false) {
+        toast.error('This redeem code is paused or inactive.');
+        setIsApplyingVoucher(false);
+        return;
+      }
+
+      // Validate expiration
+      if (matchedCode.expiresAt) {
+        const expDate = new Date(matchedCode.expiresAt);
+        if (new Date() > expDate) {
+          toast.error('This voucher code has expired.');
+          setIsApplyingVoucher(false);
+          return;
+        }
+      }
+
+      // Validate max usages
+      if (
+        matchedCode.maxRedemptions &&
+        (matchedCode.redemptionCount || 0) >= matchedCode.maxRedemptions
+      ) {
+        toast.error('This voucher has reached its redemption limit.');
+        setIsApplyingVoucher(false);
+        return;
+      }
+
+      const benefitType = matchedCode.benefitType || matchedCode.type || 'points';
+      const rewardVal = Number(matchedCode.value) || 0;
+      let benefitDesc = '';
+
+      // Credit based on Benefit Type
+      if (benefitType === 'wallet') {
+        await updateDoc(doc(db, 'customers', user.uid), {
+          walletBalance: increment(rewardVal),
+          redeemedCodes: arrayUnion(cleanCode),
+          updatedAt: serverTimestamp(),
+        });
+        await addDoc(collection(db, 'customers', user.uid, 'walletTransactions'), {
+          type: 'credit',
+          amount: rewardVal,
+          description: `Voucher Credit: ${cleanCode}`,
+          createdAt: serverTimestamp(),
+        });
+        benefitDesc = `₹${rewardVal} Instant Wallet Cash`;
+      } else if (benefitType === 'points') {
+        await updateDoc(doc(db, 'customers', user.uid), {
+          rewardPoints: increment(rewardVal),
+          redeemedCodes: arrayUnion(cleanCode),
+          updatedAt: serverTimestamp(),
+        });
+        await addDoc(collection(db, 'customers', user.uid, 'pointActivities'), {
+          type: 'bonus',
+          points: rewardVal,
+          description: `Redeemed Code: ${cleanCode}`,
+          createdAt: serverTimestamp(),
+        });
+        benefitDesc = `+${rewardVal} Loyalty Reward Points`;
+      } else if (benefitType === 'delivery') {
+        await updateDoc(doc(db, 'customers', user.uid), {
+          savedCoupons: arrayUnion(cleanCode),
+          redeemedCodes: arrayUnion(cleanCode),
+          updatedAt: serverTimestamp(),
+        });
+        benefitDesc = '100% Free Express Delivery Voucher';
+      } else {
+        await updateDoc(doc(db, 'customers', user.uid), {
+          savedCoupons: arrayUnion(cleanCode),
+          redeemedCodes: arrayUnion(cleanCode),
+          updatedAt: serverTimestamp(),
+        });
+        benefitDesc =
+          matchedCode.discountType === 'percentage'
+            ? `${rewardVal}% Cart Discount Coupon`
+            : `₹${rewardVal} Flat Discount Voucher`;
+      }
+
+      // Increment count on code records
+      if (matchedDocRef) {
+        await updateDoc(matchedDocRef, {
+          redemptionCount: increment(1),
+        }).catch(() => {});
+      }
+      if (matchedCode.rtdbKey) {
+        try {
+          await rtdbUpdate(rtdbRef(realtimeDb, `redeem_codes/${matchedCode.rtdbKey}`), {
+            redemptionCount: (matchedCode.redemptionCount || 0) + 1,
+          });
+        } catch (_) {}
+      }
+
+      toast.success(`🎉 Voucher Redeemed! ${benefitDesc} added to your account!`);
+      setRedeemedVoucherInfo({
+        code: cleanCode,
+        benefitText: benefitDesc,
+        type: benefitType,
+      });
+      setVoucherInput('');
+    } catch (err: any) {
+      console.error('Voucher redeem error:', err);
+      toast.error('Failed to apply voucher. Please try again.');
+    } finally {
+      setIsApplyingVoucher(false);
+    }
+  };
 
   // Sync real-time points from customer profile
   useEffect(() => {
@@ -283,6 +473,79 @@ export default function RewardsPage() {
                 <span>{nextTier ? `${nextTier.name} (${nextTier.minPoints} pts)` : 'Top Tier'}</span>
               </div>
             </div>
+          </Card>
+        </motion.div>
+
+        {/* Redeem Gift Voucher Card */}
+        <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
+          <Card className="rounded-3xl border border-primary/25 bg-gradient-to-br from-card via-card to-primary/5 p-6 shadow-md overflow-hidden relative">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <div className="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                    <Gift className="w-5 h-5" />
+                  </div>
+                  <h3 className="text-lg font-black text-foreground">Have a Gift Voucher or Promo Code?</h3>
+                  <Badge variant="outline" className="border-primary/30 text-primary text-[10px] font-bold">
+                    All Benefits Supported
+                  </Badge>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Enter your voucher code to claim instant <strong>Wallet Cash (₹)</strong>, <strong>Loyalty Coins</strong>, <strong>Cart Discounts</strong>, or <strong>Free Delivery Passes</strong>.
+                </p>
+              </div>
+
+              {/* Form Input + Button */}
+              <div className="flex items-center gap-2.5 w-full md:w-auto">
+                <Input
+                  placeholder="Enter code e.g. WELCOME2026"
+                  value={voucherInput}
+                  onChange={(e) => setVoucherInput(e.target.value.toUpperCase().replace(/\s+/g, ''))}
+                  onKeyDown={(e) => e.key === 'Enter' && handleApplyVoucherCode()}
+                  className="h-11 rounded-2xl bg-background border-border text-foreground font-mono font-bold text-sm tracking-wider uppercase w-full md:w-64"
+                />
+                <Button
+                  onClick={handleApplyVoucherCode}
+                  disabled={isApplyingVoucher || !voucherInput.trim()}
+                  className="h-11 px-6 rounded-2xl bg-primary text-primary-foreground font-bold shadow-md hover:bg-primary/90 shrink-0 cursor-pointer"
+                >
+                  {isApplyingVoucher ? (
+                    <div className="flex items-center gap-1.5">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Verifying...</span>
+                    </div>
+                  ) : (
+                    <span>Redeem Code</span>
+                  )}
+                </Button>
+              </div>
+            </div>
+
+            {/* Success Celebration Alert if claimed */}
+            {redeemedVoucherInfo && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mt-4 p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-between"
+              >
+                <div className="flex items-center gap-2.5">
+                  <span className="text-xl">🎉</span>
+                  <div>
+                    <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                      Code "{redeemedVoucherInfo.code}" Applied Successfully!
+                    </p>
+                    <p className="text-[11px] text-muted-foreground">{redeemedVoucherInfo.benefitText}</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setRedeemedVoucherInfo(null)}
+                  className="text-xs text-muted-foreground hover:text-foreground font-bold p-1 cursor-pointer"
+                >
+                  ✕
+                </button>
+              </motion.div>
+            )}
           </Card>
         </motion.div>
 

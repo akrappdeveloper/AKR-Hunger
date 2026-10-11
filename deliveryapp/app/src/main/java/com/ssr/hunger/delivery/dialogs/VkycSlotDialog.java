@@ -19,6 +19,7 @@ import com.google.android.material.button.MaterialButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.ListenerRegistration;
 import com.ssr.hunger.delivery.R;
 import com.ssr.hunger.delivery.utils.Constants;
 
@@ -36,6 +37,7 @@ public class VkycSlotDialog extends Dialog {
 
     private Calendar selectedDate;
     private String selectedTimeSlot = null;
+    private ListenerRegistration autoDismissListener;
 
     private final String[] availableSlots = {
             "10:00 AM", "11:00 AM", "12:00 PM",
@@ -79,6 +81,33 @@ public class VkycSlotDialog extends Dialog {
         });
 
         populateTimeSlots();
+        setupAutoDismissListener();
+    }
+
+    private void setupAutoDismissListener() {
+        String uid = FirebaseAuth.getInstance().getUid();
+        if (uid == null) return;
+
+        autoDismissListener = FirebaseFirestore.getInstance()
+                .collection("kycVideoCalls")
+                .document(uid)
+                .addSnapshotListener((snapshot, error) -> {
+                    if (error != null || snapshot == null || !snapshot.exists()) return;
+                    String status = snapshot.getString("status");
+                    Boolean vkycCompleted = snapshot.getBoolean("vkycCompleted");
+                    if ("completed".equalsIgnoreCase(status) || Boolean.TRUE.equals(vkycCompleted)) {
+                        if (isShowing()) dismiss();
+                    }
+                });
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (autoDismissListener != null) {
+            autoDismissListener.remove();
+            autoDismissListener = null;
+        }
     }
 
     private void updateDateButtonText() {

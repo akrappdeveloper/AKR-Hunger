@@ -40,6 +40,11 @@ export async function POST(request: NextRequest) {
           const delSnap = await adminDb.collection('deliveryPersons').doc(userId).get();
           if (delSnap.exists && delSnap.data()?.fcmToken) {
             targetToken = delSnap.data()?.fcmToken;
+          } else {
+            const partSnap = await adminDb.collection('delivery_partners').doc(userId).get();
+            if (partSnap.exists && partSnap.data()?.fcmToken) {
+              targetToken = partSnap.data()?.fcmToken;
+            }
           }
         }
 
@@ -51,11 +56,18 @@ export async function POST(request: NextRequest) {
           }
         }
 
-        // 3. Fallback to customers collection if still not found
-        if (!targetToken && role !== 'customer') {
+        // 3. Cross-role collection fallback (checks customers, deliveryPersons, delivery_partners, restaurants)
+        if (!targetToken) {
           const custSnap = await adminDb.collection('customers').doc(userId).get();
           if (custSnap.exists && custSnap.data()?.fcmToken) {
             targetToken = custSnap.data()?.fcmToken;
+          }
+        }
+
+        if (!targetToken) {
+          const delSnap = await adminDb.collection('deliveryPersons').doc(userId).get();
+          if (delSnap.exists && delSnap.data()?.fcmToken) {
+            targetToken = delSnap.data()?.fcmToken;
           }
         }
       } catch (lookupErr) {

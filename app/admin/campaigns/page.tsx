@@ -149,7 +149,7 @@ export default function AdminCampaignsPage() {
   }
 
   return (
-    <ProtectedRoute allowedRoles={['super_admin', 'marketing_admin']}>
+    <ProtectedRoute allowedRoles={['super_admin', 'operations_admin', 'content_manager']}>
     <div className="space-y-8 animate-in fade-in duration-500">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">

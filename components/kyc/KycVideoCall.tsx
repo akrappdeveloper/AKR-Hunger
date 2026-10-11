@@ -8,7 +8,9 @@ import {
   updateDoc,
   serverTimestamp,
   arrayUnion,
-  deleteDoc
+  deleteDoc,
+  collection,
+  addDoc
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
@@ -27,7 +29,9 @@ import {
   Maximize2,
   Minimize2,
   Wifi,
-  Sparkles
+  Sparkles,
+  CheckCircle2,
+  Loader2
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -38,6 +42,7 @@ interface KycVideoCallProps {
   deliveryPersonId: string;
   deliveryPersonName: string;
   adminName?: string;
+  onKycApproved?: () => void;
 }
 
 const ICE_SERVERS: RTCConfiguration = {
@@ -56,11 +61,13 @@ export default function KycVideoCall({
   deliveryPersonId,
   deliveryPersonName,
   adminName = 'KYC Admin Desk',
+  onKycApproved,
 }: KycVideoCallProps) {
   const [callStatus, setCallStatus] = useState<'idle' | 'calling' | 'connected' | 'ended'>('idle');
   const [isMuted, setIsMuted] = useState(false);
   const [isCamOff, setIsCamOff] = useState(false);
   const [duration, setDuration] = useState(0);
+  const [isCompletingVkyc, setIsCompletingVkyc] = useState(false);
 
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
@@ -312,6 +319,82 @@ export default function KycVideoCall({
     endCallLocally();
   };
 
+  const handleConfirmCompleteVkyc = async () => {
+    if (isCompletingVkyc) return;
+    setIsCompletingVkyc(true);
+
+    try {
+      // 1. Update deliveryPersons collection in Firestore
+      await updateDoc(doc(db, 'deliveryPersons', deliveryPersonId), {
+        verificationStatus: 'approved',
+        kycStatus: 'approved',
+        vkycStatus: 'verified',
+        isVerified: true,
+        kycApprovedAt: serverTimestamp(),
+      });
+
+      // 2. Mark kycVideoCalls as completed
+      await updateDoc(doc(db, 'kycVideoCalls', deliveryPersonId), {
+        status: 'completed',
+        vkycCompleted: true,
+        endedAt: serverTimestamp(),
+        duration,
+      });
+
+      // 3. Mark vkyc_requests as approved/completed if exists
+      try {
+        await updateDoc(doc(db, 'vkyc_requests', deliveryPersonId), {
+          status: 'approved',
+          verifiedAt: serverTimestamp(),
+        });
+      } catch (_) {}
+
+      // 4. Create in-app notification for the delivery partner
+      try {
+        await addDoc(collection(db, 'notifications'), {
+          userId: deliveryPersonId,
+          userType: 'delivery',
+          type: 'vkyc_completed',
+          title: '🎉 V-KYC Approved & Completed!',
+          message: 'Congratulations! Your Live Video KYC has been verified by the Admin Desk. You are now authorized to accept delivery orders.',
+          isRead: false,
+          createdAt: serverTimestamp(),
+        });
+      } catch (_) {}
+
+      // 5. Send FCM push notification to rider's device
+      try {
+        fetch('/api/notifications/send-push', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: deliveryPersonId,
+            role: 'delivery',
+            title: '🎉 V-KYC Approved & Verified!',
+            body: 'Congratulations! Your live video KYC is complete. You can now start taking deliveries!',
+            data: {
+              type: 'vkyc_completed',
+              status: 'approved',
+              action: 'close_call',
+            },
+          }),
+        }).catch((e) => console.warn('Push dispatch warning:', e));
+      } catch (_) {}
+
+      toast.success('Live V-KYC Successfully Verified & Approved!');
+      
+      // 6. End call locally and notify parent
+      endCallLocally();
+      if (onKycApproved) {
+        onKycApproved();
+      }
+    } catch (err: any) {
+      console.error('Error completing V-KYC:', err);
+      toast.error('Failed to complete V-KYC: ' + (err.message || 'Unknown error'));
+      setIsCompletingVkyc(false);
+    }
+  };
+
   const toggleMute = () => {
     if (localStreamRef.current) {
       localStreamRef.current.getAudioTracks().forEach((track) => {
@@ -368,14 +451,31 @@ export default function KycVideoCall({
               </div>
             </div>
 
-            <Button
-              size="icon"
-              variant="ghost"
-              onClick={handleEndCall}
-              className="text-white/60 hover:text-white hover:bg-white/10 rounded-full"
-            >
-              <X className="w-5 h-5" />
-            </Button>
+            <div className="flex items-center gap-2 sm:gap-3">
+              {role === 'admin' && (
+                <Button
+                  onClick={handleConfirmCompleteVkyc}
+                  disabled={isCompletingVkyc}
+                  className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs sm:text-sm px-3.5 sm:px-4 h-9 sm:h-10 rounded-xl shadow-lg shadow-emerald-600/30 gap-2 cursor-pointer transition-all active:scale-95"
+                >
+                  {isCompletingVkyc ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <CheckCircle2 className="w-4 h-4 text-emerald-100" />
+                  )}
+                  <span>Confirm Complete V-KYC</span>
+                </Button>
+              )}
+
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={handleEndCall}
+                className="text-white/60 hover:text-white hover:bg-white/10 rounded-full"
+              >
+                <X className="w-5 h-5" />
+              </Button>
+            </div>
           </div>
 
           {/* Main Remote Video Area */}

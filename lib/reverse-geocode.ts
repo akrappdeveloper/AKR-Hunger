@@ -12,11 +12,13 @@ export interface GeocodedAddress {
   area: string;
   city: string;
   state: string;
+  country: string;
   pincode: string;
   formattedAddress: string;
   latitude: number;
   longitude: number;
   accuracy?: number;
+  ipAddress?: string;
   plusCode?: string;
   confidence: 'high' | 'medium' | 'approximate';
 }
@@ -27,6 +29,81 @@ export interface PostalDetails {
   state: string;
   postOfficeName?: string;
   message?: string;
+}
+
+export interface PublicIpInfo {
+  ip: string;
+  city?: string;
+  region?: string;
+  country?: string;
+  postal?: string;
+}
+
+/**
+ * Fetch client's real public IP address and ISP geolocation info
+ */
+export async function fetchPublicIpInfo(): Promise<PublicIpInfo> {
+  // Strategy 1: ipwho.is (fast, detailed, free)
+  try {
+    const res = await fetch('https://ipwho.is/', { cache: 'no-store' });
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.success !== false && data.ip) {
+        return {
+          ip: data.ip,
+          city: data.city || '',
+          region: data.region || '',
+          country: data.country || 'India',
+          postal: data.postal || '',
+        };
+      }
+    }
+  } catch (err) {
+    console.warn('[ReverseGeocode] ipwho.is lookup notice:', err);
+  }
+
+  // Strategy 2: ipify json fallback
+  try {
+    const res = await fetch('https://api.ipify.org?format=json', { cache: 'no-store' });
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.ip) {
+        return {
+          ip: data.ip,
+          country: 'India',
+        };
+      }
+    }
+  } catch (err) {
+    console.warn('[ReverseGeocode] ipify lookup notice:', err);
+  }
+
+  return { ip: '127.0.0.1 (Local)', country: 'India' };
+}
+
+/**
+ * Search India Post registry by post office / locality name to get authentic 6-digit PIN
+ * (e.g. "Chinhat" -> "226028")
+ */
+export async function lookupPincodeByLocality(localityName: string): Promise<string | null> {
+  if (!localityName || localityName.trim().length < 3) return null;
+  const clean = localityName.trim().replace(/[^a-zA-Z0-9\s]/g, '').slice(0, 30);
+  if (!clean) return null;
+
+  try {
+    const res = await fetch(`https://api.postalpincode.in/postoffice/${encodeURIComponent(clean)}`);
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (Array.isArray(data) && data[0] && data[0].Status === 'Success' && Array.isArray(data[0].PostOffice)) {
+      const po = data[0].PostOffice[0];
+      if (po && po.Pincode && /^[1-9][0-9]{5}$/.test(po.Pincode)) {
+        return po.Pincode;
+      }
+    }
+  } catch (err) {
+    console.warn('[ReverseGeocode] Locality postal lookup notice:', err);
+  }
+  return null;
 }
 
 /**
@@ -144,6 +221,7 @@ export async function reverseGeocodeCoordinates(
   let resolvedArea = '';
   let resolvedCity = '';
   let resolvedState = '';
+  let resolvedCountry = 'India';
   let resolvedPincode = '';
   let resolvedFull = '';
   let confidence: 'high' | 'medium' | 'approximate' = 'approximate';
@@ -178,8 +256,9 @@ export async function reverseGeocodeCoordinates(
         addr.state_district ||
         '';
 
-      // State
+      // State & Country
       resolvedState = addr.state || '';
+      if (addr.country) resolvedCountry = addr.country;
 
       // Postcode: Check 6-digit Indian PIN
       if (addr.postcode) {
@@ -237,13 +316,35 @@ export async function reverseGeocodeCoordinates(
         if (!resolvedState && bdc.principalSubdivision) {
           resolvedState = bdc.principalSubdivision;
         }
+
+        if (bdc.countryName) {
+          resolvedCountry = bdc.countryName;
+        }
       }
     } catch (bdcErr) {
       console.warn('[ReverseGeocode] BigDataCloud Tier 2 notice:', bdcErr);
     }
   }
 
-  // --- TIER 3: India Post Pincode Verification & Enhancement ---
+  // --- TIER 3: Locality-based Postal Search Fallback if PIN is still missing or suspicious ---
+  if (!resolvedPincode || resolvedPincode.startsWith('255001') || resolvedPincode === '000000') {
+    if (resolvedArea) {
+      const areaPin = await lookupPincodeByLocality(resolvedArea);
+      if (areaPin) {
+        resolvedPincode = areaPin;
+        confidence = 'high';
+      }
+    }
+    if (!resolvedPincode && resolvedCity) {
+      const cityPin = await lookupPincodeByLocality(resolvedCity);
+      if (cityPin) {
+        resolvedPincode = cityPin;
+        confidence = 'medium';
+      }
+    }
+  }
+
+  // --- TIER 4: India Post Pincode Verification & Enhancement ---
   if (resolvedPincode && /^[1-9][0-9]{5}$/.test(resolvedPincode)) {
     try {
       const postalInfo = await lookupPostalPincode(resolvedPincode);
@@ -261,7 +362,7 @@ export async function reverseGeocodeCoordinates(
         confidence = 'high';
       }
     } catch (postalErr) {
-      console.warn('[ReverseGeocode] Tier 3 postal verification notice:', postalErr);
+      console.warn('[ReverseGeocode] Tier 4 postal verification notice:', postalErr);
     }
   }
 
@@ -292,6 +393,7 @@ export async function reverseGeocodeCoordinates(
     area: resolvedArea,
     city: finalCity,
     state: finalState,
+    country: resolvedCountry || 'India',
     pincode: finalPincode,
     formattedAddress: resolvedFull || formattedAddress,
     latitude,
@@ -302,13 +404,29 @@ export async function reverseGeocodeCoordinates(
 }
 
 /**
- * All-In-One: Request GPS with high accuracy and reverse geocode to a validated address
+ * All-In-One: Request GPS with high accuracy, reverse geocode to a validated address,
+ * and fetch public IP address.
  */
 export async function getAccurateCurrentLocation(): Promise<GeocodedAddress> {
-  const coords = await getGpsCoordinates();
+  const [coords, ipInfo] = await Promise.all([
+    getGpsCoordinates(),
+    fetchPublicIpInfo().catch((): PublicIpInfo => ({ ip: 'Unknown', country: 'India' })),
+  ]);
+
   const address = await reverseGeocodeCoordinates(coords.latitude, coords.longitude);
+
+  // If pincode was still not found by GPS reverse geocode, fallback to IP postal if valid 6-digit
+  let finalPin = address.pincode;
+  if (!finalPin && ipInfo.postal && /^[1-9][0-9]{5}$/.test(ipInfo.postal)) {
+    finalPin = ipInfo.postal;
+  }
+
   return {
     ...address,
+    pincode: finalPin,
     accuracy: coords.accuracy,
+    ipAddress: ipInfo.ip,
+    country: address.country || ipInfo.country || 'India',
   };
 }
+

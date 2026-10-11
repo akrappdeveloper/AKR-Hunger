@@ -398,8 +398,9 @@ export async function sendTestWebPushNotification(params: {
         ? localStorage.getItem('hunger_fcm_token') || undefined
         : undefined;
     const effectiveToken = params.token || cachedToken;
+    const effectiveUserId = params.userId || auth.currentUser?.uid;
 
-    if (!effectiveToken && !params.userId) {
+    if (!effectiveToken && !effectiveUserId) {
       return {
         success: false,
         error:
@@ -413,7 +414,7 @@ export async function sendTestWebPushNotification(params: {
       body: JSON.stringify({
         token: effectiveToken,
         role: params.role,
-        userId: params.userId,
+        userId: effectiveUserId,
         title: params.title || '🔔 Test Notification from Hunger',
         body: params.body || 'Web Push is working seamlessly on your browser!',
         actionUrl: params.actionUrl || '/',

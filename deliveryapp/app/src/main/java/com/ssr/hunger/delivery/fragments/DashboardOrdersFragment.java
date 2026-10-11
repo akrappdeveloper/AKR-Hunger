@@ -62,6 +62,7 @@ import com.ssr.hunger.delivery.R;
 import com.ssr.hunger.delivery.activities.LiveTrackingRadarActivity;
 import com.ssr.hunger.delivery.activities.NotificationsActivity;
 import com.ssr.hunger.delivery.activities.OrderActiveDetailActivity;
+import com.ssr.hunger.delivery.activities.VkycVideoCallActivity;
 import com.ssr.hunger.delivery.adapters.ActiveOrdersAdapter;
 import com.ssr.hunger.delivery.adapters.AvailableOrdersAdapter;
 import com.ssr.hunger.delivery.dialogs.EmergencySosDialog;
@@ -142,6 +143,8 @@ public class DashboardOrdersFragment extends Fragment {
     private ListenerRegistration partnerListener;
     private ListenerRegistration activeOrdersListener;
     private ListenerRegistration availableOrdersListener;
+    private ListenerRegistration vkycCallListener;
+    private androidx.appcompat.app.AlertDialog incomingCallDialog;
 
     @Nullable
     @Override
@@ -583,8 +586,12 @@ public class DashboardOrdersFragment extends Fragment {
                         cardKycWarning.setVisibility(View.VISIBLE);
                     } else {
                         cardKycWarning.setVisibility(View.GONE);
+                        if (incomingCallDialog != null && incomingCallDialog.isShowing()) {
+                            incomingCallDialog.dismiss();
+                        }
                     }
 
+                    listenForIncomingVkycCall(uid);
                     listenActiveDeliveries();
                     if (isOnline) {
                         listenAvailableOrders();
@@ -592,6 +599,77 @@ public class DashboardOrdersFragment extends Fragment {
                         stopAvailableOrdersListener();
                     }
                 });
+    }
+
+    private void listenForIncomingVkycCall(String uid) {
+        if (vkycCallListener != null) vkycCallListener.remove();
+
+        vkycCallListener = db.collection("kycVideoCalls").document(uid)
+                .addSnapshotListener((snapshot, error) -> {
+                    if (error != null || snapshot == null || !snapshot.exists()) return;
+
+                    String status = snapshot.getString("status");
+                    Boolean vkycCompleted = snapshot.getBoolean("vkycCompleted");
+
+                    if ("calling".equalsIgnoreCase(status)) {
+                        String adminName = snapshot.getString("adminName");
+                        if (adminName == null || adminName.isEmpty()) adminName = "Hunger Admin Desk";
+                        showIncomingVkycDialog(uid, adminName);
+                    } else if ("completed".equalsIgnoreCase(status) || Boolean.TRUE.equals(vkycCompleted)) {
+                        if (incomingCallDialog != null && incomingCallDialog.isShowing()) {
+                            incomingCallDialog.dismiss();
+                        }
+                    } else if ("ended".equalsIgnoreCase(status)) {
+                        if (incomingCallDialog != null && incomingCallDialog.isShowing()) {
+                            incomingCallDialog.dismiss();
+                        }
+                    }
+                });
+    }
+
+    private void showIncomingVkycDialog(String callId, String adminName) {
+        if (getContext() == null || getActivity() == null || getActivity().isFinishing()) return;
+        if (incomingCallDialog != null && incomingCallDialog.isShowing()) return;
+
+        try {
+            androidx.appcompat.app.AlertDialog.Builder builder = new androidx.appcompat.app.AlertDialog.Builder(getContext(), R.style.Theme_Hunger_Dialog_Rounded);
+            View dialogView = LayoutInflater.from(getContext()).inflate(R.layout.dialog_incoming_vkyc_call, null);
+
+            TextView tvCallerName = dialogView.findViewById(R.id.tv_vkyc_caller_name);
+            if (tvCallerName != null) tvCallerName.setText(adminName);
+
+            View btnAccept = dialogView.findViewById(R.id.btn_accept_vkyc);
+            View btnDecline = dialogView.findViewById(R.id.btn_decline_vkyc);
+
+            builder.setView(dialogView);
+            builder.setCancelable(false);
+            incomingCallDialog = builder.create();
+
+            if (btnAccept != null) {
+                btnAccept.setOnClickListener(v -> {
+                    if (incomingCallDialog != null) incomingCallDialog.dismiss();
+                    Intent intent = new Intent(getContext(), VkycVideoCallActivity.class);
+                    intent.putExtra("callId", callId);
+                    intent.putExtra("adminName", adminName);
+                    startActivity(intent);
+                });
+            }
+
+            if (btnDecline != null) {
+                btnDecline.setOnClickListener(v -> {
+                    if (incomingCallDialog != null) incomingCallDialog.dismiss();
+                    db.collection("kycVideoCalls").document(callId).update("status", "declined");
+                });
+            }
+
+            incomingCallDialog.show();
+        } catch (Exception e) {
+            // Fallback: direct intent if dialog fails to inflate
+            Intent intent = new Intent(getContext(), VkycVideoCallActivity.class);
+            intent.putExtra("callId", callId);
+            intent.putExtra("adminName", adminName);
+            startActivity(intent);
+        }
     }
 
     private void updateStatusUI(boolean online) {
@@ -1044,6 +1122,14 @@ public class DashboardOrdersFragment extends Fragment {
             fusedLocationClient.removeLocationUpdates(locationCallback);
         }
         if (partnerListener != null) partnerListener.remove();
+        if (vkycCallListener != null) {
+            vkycCallListener.remove();
+            vkycCallListener = null;
+        }
+        if (incomingCallDialog != null && incomingCallDialog.isShowing()) {
+            incomingCallDialog.dismiss();
+            incomingCallDialog = null;
+        }
         if (activeOrdersListener != null) activeOrdersListener.remove();
         if (availableOrdersListener != null) availableOrdersListener.remove();
     }

@@ -43,6 +43,7 @@ export default function CustomerNavbar() {
 
   // Auto-select default address or prompt dialog for new users without address
   useEffect(() => {
+    if (pathname?.includes('/login') || pathname?.includes('/signup')) return;
     if (!deliveryAddress && customer?.addresses && customer.addresses.length > 0) {
       const defaultAddr = customer.addresses.find(a => a.isDefault) || customer.addresses[0];
       setDeliveryAddress(defaultAddr);
@@ -54,7 +55,7 @@ export default function CustomerNavbar() {
       }, 700);
       return () => clearTimeout(timer);
     }
-  }, [user, customer, deliveryAddress, setDeliveryAddress]);
+  }, [user, customer, deliveryAddress, setDeliveryAddress, pathname]);
 
   // Handle scroll effect
   useEffect(() => {
@@ -198,7 +199,9 @@ export default function CustomerNavbar() {
                       {user.email?.[0].toUpperCase()}
                     </div>
                     <div className="text-left hidden lg:block">
-                      <p className="text-xs font-bold text-foreground leading-none">{user.displayName || 'My Account'}</p>
+                      <p className="text-xs font-bold text-foreground leading-none capitalize truncate max-w-[120px]">
+                        {customer?.name || customer?.displayName || user.displayName || (user.email ? user.email.split('@')[0].replace(/[._-]/g, ' ') : 'My Account')}
+                      </p>
                     </div>
                     <ChevronDown className="w-3 h-3 text-muted-foreground" />
                   </Button>
@@ -206,73 +209,79 @@ export default function CustomerNavbar() {
                 <DropdownMenuContent align="end" className="w-60 bg-popover text-popover-foreground border border-border/80 p-1.5 shadow-2xl rounded-2xl z-50">
                   <DropdownMenuLabel className="font-normal border-b border-border/60 pb-2 mb-1">
                     <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-bold leading-none text-foreground">{user.displayName || 'User'}</p>
+                      <p className="text-sm font-bold leading-none text-foreground capitalize truncate">
+                        {customer?.name || customer?.displayName || user.displayName || (user.email ? user.email.split('@')[0].replace(/[._-]/g, ' ') : 'Customer')}
+                      </p>
                       <p className="text-xs leading-none text-muted-foreground truncate">{user.email}</p>
                     </div>
                   </DropdownMenuLabel>
-                  <DropdownMenuItem onClick={() => router.push('/customer/profile')} className="cursor-pointer rounded-xl my-0.5 hover:bg-muted/60">
-                    <User className="w-4 h-4 mr-2.5 text-blue-500 dark:text-blue-400" />
+                  <DropdownMenuItem onClick={() => router.push('/customer/profile')} className="cursor-pointer rounded-xl my-0.5 hover:bg-muted/60 group">
+                    <User className="w-4 h-4 mr-2.5 text-muted-foreground group-hover:text-foreground transition-colors shrink-0" />
                     <span>Profile</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => router.push('/customer/orders')} className="cursor-pointer rounded-xl my-0.5 hover:bg-muted/60">
-                    <Package className="w-4 h-4 mr-2.5 text-orange-500 dark:text-orange-400" />
+                  <DropdownMenuItem onClick={() => router.push('/customer/orders')} className="cursor-pointer rounded-xl my-0.5 hover:bg-muted/60 group">
+                    <Package className="w-4 h-4 mr-2.5 text-muted-foreground group-hover:text-foreground transition-colors shrink-0" />
                     <span>My Orders</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => router.push('/customer/wallet')} className="cursor-pointer rounded-xl my-0.5 hover:bg-muted/60">
-                    <Wallet className="w-4 h-4 mr-2.5 text-emerald-500 dark:text-emerald-400" />
+                  <DropdownMenuItem onClick={() => router.push('/customer/wallet')} className="cursor-pointer rounded-xl my-0.5 hover:bg-muted/60 group">
+                    <Wallet className="w-4 h-4 mr-2.5 text-muted-foreground group-hover:text-foreground transition-colors shrink-0" />
                     <span>Wallet & Points</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => router.push('/customer/addresses')} className="cursor-pointer rounded-xl my-0.5 hover:bg-muted/60">
-                    <MapPin className="w-4 h-4 mr-2.5 text-rose-500 dark:text-rose-400" />
+                  <DropdownMenuItem onClick={() => router.push('/customer/addresses')} className="cursor-pointer rounded-xl my-0.5 hover:bg-muted/60 group">
+                    <MapPin className="w-4 h-4 mr-2.5 text-muted-foreground group-hover:text-foreground transition-colors shrink-0" />
                     <span>Saved Addresses</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => router.push('/customer/favorites')} className="cursor-pointer rounded-xl my-0.5 hover:bg-muted/60">
-                    <Heart className="w-4 h-4 mr-2.5 text-pink-500 dark:text-pink-400" />
+                  <DropdownMenuItem onClick={() => router.push('/customer/favorites')} className="cursor-pointer rounded-xl my-0.5 hover:bg-muted/60 group">
+                    <Heart className="w-4 h-4 mr-2.5 text-muted-foreground group-hover:text-foreground transition-colors shrink-0" />
                     <span>Favorites</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => router.push('/customer/deals')} className="cursor-pointer rounded-xl my-0.5 hover:bg-muted/60">
-                    <Tag className="w-4 h-4 mr-2.5 text-amber-500 dark:text-amber-400" />
+                  <DropdownMenuItem onClick={() => router.push('/customer/deals')} className="cursor-pointer rounded-xl my-0.5 hover:bg-muted/60 group">
+                    <Tag className="w-4 h-4 mr-2.5 text-muted-foreground group-hover:text-foreground transition-colors shrink-0" />
                     <span>Deals & Offers</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => router.push('/customer/rewards')} className="cursor-pointer rounded-xl my-0.5 hover:bg-muted/60">
-                    <Gift className="w-4 h-4 mr-2.5 text-purple-500 dark:text-purple-400" />
+                  <DropdownMenuItem onClick={() => router.push('/customer/rewards')} className="cursor-pointer rounded-xl my-0.5 hover:bg-muted/60 group">
+                    <Gift className="w-4 h-4 mr-2.5 text-muted-foreground group-hover:text-foreground transition-colors shrink-0" />
                     <span>Rewards & Points</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => router.push('/customer/membership')} className="cursor-pointer rounded-xl my-0.5 hover:bg-muted/60">
-                    <Crown className="w-4 h-4 mr-2.5 text-yellow-500 dark:text-yellow-400" />
+                  <DropdownMenuItem onClick={() => router.push('/customer/membership')} className="cursor-pointer rounded-xl my-0.5 hover:bg-muted/60 group">
+                    <Crown className="w-4 h-4 mr-2.5 text-muted-foreground group-hover:text-foreground transition-colors shrink-0" />
                     <span>VIP Membership</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => router.push('/customer/reviews')} className="cursor-pointer rounded-xl my-0.5 hover:bg-muted/60">
-                    <Star className="w-4 h-4 mr-2.5 text-amber-400 dark:text-amber-300" />
+                  <DropdownMenuItem onClick={() => router.push('/customer/reviews')} className="cursor-pointer rounded-xl my-0.5 hover:bg-muted/60 group">
+                    <Star className="w-4 h-4 mr-2.5 text-muted-foreground group-hover:text-foreground transition-colors shrink-0" />
                     <span>My Reviews</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => router.push('/customer/search/history')} className="cursor-pointer rounded-xl my-0.5 hover:bg-muted/60">
-                    <Clock className="w-4 h-4 mr-2.5 text-cyan-500 dark:text-cyan-400" />
+                  <DropdownMenuItem onClick={() => router.push('/customer/search/history')} className="cursor-pointer rounded-xl my-0.5 hover:bg-muted/60 group">
+                    <Clock className="w-4 h-4 mr-2.5 text-muted-foreground group-hover:text-foreground transition-colors shrink-0" />
                     <span>Search History</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => router.push('/customer/support')} className="cursor-pointer rounded-xl my-0.5 hover:bg-muted/60">
-                    <HelpCircle className="w-4 h-4 mr-2.5 text-teal-500 dark:text-teal-400" />
+                  <DropdownMenuItem onClick={() => router.push('/customer/support')} className="cursor-pointer rounded-xl my-0.5 hover:bg-muted/60 group">
+                    <HelpCircle className="w-4 h-4 mr-2.5 text-muted-foreground group-hover:text-foreground transition-colors shrink-0" />
                     <span>Help & Support</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => router.push('/customer/notifications')} className="cursor-pointer rounded-xl my-0.5 justify-between hover:bg-muted/60">
+                  <DropdownMenuItem onClick={() => router.push('/customer/notifications')} className="cursor-pointer rounded-xl my-0.5 justify-between hover:bg-muted/60 group">
                     <div className="flex items-center">
-                      <Bell className="w-4 h-4 mr-2.5 text-red-500 dark:text-red-400" />
+                      <Bell className="w-4 h-4 mr-2.5 text-muted-foreground group-hover:text-foreground transition-colors shrink-0" />
                       <span>Notifications</span>
                     </div>
                     {unreadCount > 0 && (
-                      <Badge className="bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">
+                      <Badge className="bg-primary text-primary-foreground text-[10px] px-1.5 py-0.5 rounded-full font-bold">
                         {unreadCount > 9 ? '9+' : unreadCount}
                       </Badge>
                     )}
                   </DropdownMenuItem>
-                  {/* More Features Hub placed directly in bottom of Notifications */}
-                  <DropdownMenuItem onClick={() => router.push('/customer/more')} className="cursor-pointer rounded-xl my-1 bg-primary/10 text-primary font-bold hover:bg-primary/20">
-                    <Sparkles className="w-4 h-4 mr-2.5 text-primary" />
+                  <DropdownMenuItem onClick={() => router.push('/customer/settings')} className="cursor-pointer rounded-xl my-0.5 hover:bg-muted/60 group">
+                    <Settings className="w-4 h-4 mr-2.5 text-muted-foreground group-hover:text-foreground transition-colors shrink-0" />
+                    <span>Settings</span>
+                  </DropdownMenuItem>
+                  {/* More Features Hub */}
+                  <DropdownMenuItem onClick={() => router.push('/customer/more')} className="cursor-pointer rounded-xl my-1 bg-primary/10 text-primary font-bold hover:bg-primary/20 group">
+                    <Sparkles className="w-4 h-4 mr-2.5 text-primary shrink-0" />
                     <span>More Features Hub</span>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator className="bg-border/60" />
-                  <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer rounded-xl my-0.5" onClick={handleLogout}>
-                    <LogOut className="w-4 h-4 mr-2.5" />
+                  <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer rounded-xl my-0.5 group" onClick={handleLogout}>
+                    <LogOut className="w-4 h-4 mr-2.5 shrink-0" />
                     <span>Logout</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -316,7 +325,9 @@ export default function CustomerNavbar() {
                           )}
                         </div>
                         <div className="overflow-hidden">
-                          <h3 className="font-bold text-base text-foreground truncate">{customer?.name || user.displayName || 'User'}</h3>
+                          <h3 className="font-bold text-base text-foreground truncate capitalize">
+                            {customer?.name || customer?.displayName || user.displayName || (user.email ? user.email.split('@')[0].replace(/[._-]/g, ' ') : 'Customer')}
+                          </h3>
                           <p className="text-xs text-muted-foreground truncate">{user.email}</p>
                         </div>
                       </div>
@@ -339,11 +350,11 @@ export default function CustomerNavbar() {
 
                   <div className="flex-1 p-4 space-y-1 overflow-y-auto">
                     <Link href="/customer" className="flex items-center gap-3 p-3 rounded-2xl hover:bg-muted/60 text-foreground transition-colors">
-                      <div className="w-8 h-8 rounded-xl bg-orange-500/10 text-orange-500 flex items-center justify-center"><Home className="w-4 h-4" /></div>
+                      <div className="w-8 h-8 rounded-xl bg-muted text-muted-foreground flex items-center justify-center shrink-0"><Home className="w-4 h-4" /></div>
                       <span className="font-semibold text-sm">Home</span>
                     </Link>
                     <Link href="/customer/more" className="flex items-center gap-3 p-3 rounded-2xl bg-primary/10 hover:bg-primary/20 text-primary transition-colors border border-primary/20">
-                      <div className="w-8 h-8 rounded-xl bg-primary/20 text-primary flex items-center justify-center font-bold">
+                      <div className="w-8 h-8 rounded-xl bg-primary/20 text-primary flex items-center justify-center font-bold shrink-0">
                         <Sparkles className="w-4 h-4" />
                       </div>
                       <div className="flex-1">
@@ -352,59 +363,63 @@ export default function CustomerNavbar() {
                       </div>
                     </Link>
                     <Link href="/customer/orders" className="flex items-center gap-3 p-3 rounded-2xl hover:bg-muted/60 text-foreground transition-colors">
-                      <div className="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center"><Package className="w-4 h-4" /></div>
+                      <div className="w-8 h-8 rounded-xl bg-muted text-muted-foreground flex items-center justify-center shrink-0"><Package className="w-4 h-4" /></div>
                       <span className="font-semibold text-sm">My Orders</span>
                     </Link>
                     <Link href="/customer/wallet" className="flex items-center gap-3 p-3 rounded-2xl hover:bg-muted/60 text-foreground transition-colors">
-                      <div className="w-8 h-8 rounded-xl bg-green-500/10 text-green-500 flex items-center justify-center"><Wallet className="w-4 h-4" /></div>
+                      <div className="w-8 h-8 rounded-xl bg-muted text-muted-foreground flex items-center justify-center shrink-0"><Wallet className="w-4 h-4" /></div>
                       <span className="font-semibold text-sm">Wallet & Balance</span>
                     </Link>
                     <Link href="/customer/deals" className="flex items-center gap-3 p-3 rounded-2xl hover:bg-muted/60 text-foreground transition-colors">
-                      <div className="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center"><Tag className="w-4 h-4" /></div>
+                      <div className="w-8 h-8 rounded-xl bg-muted text-muted-foreground flex items-center justify-center shrink-0"><Tag className="w-4 h-4" /></div>
                       <span className="font-semibold text-sm">Deals & Offers</span>
                     </Link>
                     <Link href="/customer/rewards" className="flex items-center gap-3 p-3 rounded-2xl hover:bg-muted/60 text-foreground transition-colors">
-                      <div className="w-8 h-8 rounded-xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center"><Gift className="w-4 h-4" /></div>
+                      <div className="w-8 h-8 rounded-xl bg-muted text-muted-foreground flex items-center justify-center shrink-0"><Gift className="w-4 h-4" /></div>
                       <span className="font-semibold text-sm">Rewards & Points</span>
                     </Link>
                     <Link href="/customer/membership" className="flex items-center gap-3 p-3 rounded-2xl hover:bg-muted/60 text-foreground transition-colors">
-                      <div className="w-8 h-8 rounded-xl bg-yellow-500/10 text-yellow-600 flex items-center justify-center"><Crown className="w-4 h-4" /></div>
+                      <div className="w-8 h-8 rounded-xl bg-muted text-muted-foreground flex items-center justify-center shrink-0"><Crown className="w-4 h-4" /></div>
                       <span className="font-semibold text-sm">VIP Membership</span>
                     </Link>
                     <Link href="/customer/favorites" className="flex items-center gap-3 p-3 rounded-2xl hover:bg-muted/60 text-foreground transition-colors">
-                      <div className="w-8 h-8 rounded-xl bg-pink-500/10 text-pink-500 flex items-center justify-center"><Heart className="w-4 h-4" /></div>
+                      <div className="w-8 h-8 rounded-xl bg-muted text-muted-foreground flex items-center justify-center shrink-0"><Heart className="w-4 h-4" /></div>
                       <span className="font-semibold text-sm">Favorites</span>
                     </Link>
                     <Link href="/customer/addresses" className="flex items-center gap-3 p-3 rounded-2xl hover:bg-muted/60 text-foreground transition-colors">
-                      <div className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center"><MapPin className="w-4 h-4" /></div>
+                      <div className="w-8 h-8 rounded-xl bg-muted text-muted-foreground flex items-center justify-center shrink-0"><MapPin className="w-4 h-4" /></div>
                       <span className="font-semibold text-sm">Saved Addresses</span>
                     </Link>
                     <Link href="/customer/profile" className="flex items-center gap-3 p-3 rounded-2xl hover:bg-muted/60 text-foreground transition-colors">
-                      <div className="w-8 h-8 rounded-xl bg-purple-500/10 text-purple-500 flex items-center justify-center"><User className="w-4 h-4" /></div>
+                      <div className="w-8 h-8 rounded-xl bg-muted text-muted-foreground flex items-center justify-center shrink-0"><User className="w-4 h-4" /></div>
                       <span className="font-semibold text-sm">Profile</span>
                     </Link>
                     <Link href="/customer/reviews" className="flex items-center gap-3 p-3 rounded-2xl hover:bg-muted/60 text-foreground transition-colors">
-                      <div className="w-8 h-8 rounded-xl bg-amber-400/10 text-amber-500 flex items-center justify-center"><Star className="w-4 h-4" /></div>
+                      <div className="w-8 h-8 rounded-xl bg-muted text-muted-foreground flex items-center justify-center shrink-0"><Star className="w-4 h-4" /></div>
                       <span className="font-semibold text-sm">My Reviews</span>
                     </Link>
                     <Link href="/customer/search/history" className="flex items-center gap-3 p-3 rounded-2xl hover:bg-muted/60 text-foreground transition-colors">
-                      <div className="w-8 h-8 rounded-xl bg-slate-500/10 text-slate-500 flex items-center justify-center"><Clock className="w-4 h-4" /></div>
+                      <div className="w-8 h-8 rounded-xl bg-muted text-muted-foreground flex items-center justify-center shrink-0"><Clock className="w-4 h-4" /></div>
                       <span className="font-semibold text-sm">Search History</span>
                     </Link>
                     <Link href="/customer/support" className="flex items-center gap-3 p-3 rounded-2xl hover:bg-muted/60 text-foreground transition-colors">
-                      <div className="w-8 h-8 rounded-xl bg-cyan-500/10 text-cyan-500 flex items-center justify-center"><HelpCircle className="w-4 h-4" /></div>
+                      <div className="w-8 h-8 rounded-xl bg-muted text-muted-foreground flex items-center justify-center shrink-0"><HelpCircle className="w-4 h-4" /></div>
                       <span className="font-semibold text-sm">24/7 Support</span>
                     </Link>
                     <Link href="/customer/notifications" className="flex items-center justify-between p-3 rounded-2xl hover:bg-muted/60 text-foreground transition-colors">
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-xl bg-red-500/10 text-red-500 flex items-center justify-center"><Bell className="w-4 h-4" /></div>
+                        <div className="w-8 h-8 rounded-xl bg-muted text-muted-foreground flex items-center justify-center shrink-0"><Bell className="w-4 h-4" /></div>
                         <span className="font-semibold text-sm">Notifications</span>
                       </div>
                       {unreadCount > 0 && (
-                        <Badge className="bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full font-bold">
+                        <Badge className="bg-primary text-primary-foreground text-[10px] px-2 py-0.5 rounded-full font-bold">
                           {unreadCount} New
                         </Badge>
                       )}
+                    </Link>
+                    <Link href="/customer/settings" className="flex items-center gap-3 p-3 rounded-2xl hover:bg-muted/60 text-foreground transition-colors">
+                      <div className="w-8 h-8 rounded-xl bg-muted text-muted-foreground flex items-center justify-center shrink-0"><Settings className="w-4 h-4" /></div>
+                      <span className="font-semibold text-sm">Settings</span>
                     </Link>
                   </div>
 

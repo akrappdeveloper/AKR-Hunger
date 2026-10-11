@@ -83,6 +83,21 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // 4. If delivery, also sync to delivery_partners collection
+    if (role === 'delivery') {
+      try {
+        const partnerRef = adminDb.collection('delivery_partners').doc(userId);
+        const partnerSnap = await partnerRef.get();
+        if (partnerSnap.exists) {
+          await partnerRef.update(updateData);
+        } else {
+          await partnerRef.set(updateData, { merge: true });
+        }
+      } catch (e) {
+        // silent
+      }
+    }
+
     return NextResponse.json({
       success: true,
       message: `Token registered for ${role} (${userId})`,

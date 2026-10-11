@@ -70,6 +70,15 @@ export default function LoginPage() {
     }
   }, []);
 
+  const getRedirectTarget = () => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const red = params.get('redirect');
+      if (red && red.startsWith('/')) return red;
+    }
+    return '/customer';
+  };
+
   // Google Auth & Phone Dialog State
   const [isGoogleAuthModalOpen, setIsGoogleAuthModalOpen] = useState(false);
   const [isPopupBlocked, setIsPopupBlocked] = useState(false);
@@ -312,7 +321,7 @@ export default function LoginPage() {
     setIsGoogleSigningIn(false);
     setGoogleLoading(false);
     toast.success(`Welcome back, ${googleUser.displayName || 'Foodie'}!`);
-    router.push('/customer');
+    router.push(getRedirectTarget());
   };
 
   // Check for returning Google Redirect sign-in result on page mount
@@ -347,8 +356,17 @@ export default function LoginPage() {
 
   // Redirect if already logged in (pause redirect while Google sign-in or phone setup dialog is active)
   useEffect(() => {
+    const getRedirectTarget = () => {
+      if (typeof window !== 'undefined') {
+        const params = new URLSearchParams(window.location.search);
+        const red = params.get('redirect');
+        if (red && red.startsWith('/')) return red;
+      }
+      return '/customer';
+    };
+
     if (user && !isRedirectChecking && !isGoogleSigningIn && !isPhoneModalOpen) {
-      router.push('/customer');
+      router.push(getRedirectTarget());
     }
   }, [user, isRedirectChecking, isGoogleSigningIn, isPhoneModalOpen, router]);
 
@@ -357,31 +375,91 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
 
+    const getRedirectTarget = () => {
+      if (typeof window !== 'undefined') {
+        const params = new URLSearchParams(window.location.search);
+        const red = params.get('redirect');
+        if (red && red.startsWith('/')) return red;
+      }
+      return '/customer';
+    };
+
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const userId = userCredential.user.uid;
 
-      // Check if this user is actually a customer
-      const customerDoc = await getDoc(doc(db, 'customers', userId));
+      // Check if this user is a restaurant or delivery partner
+      const [restaurantsQuerySnap, deliveryQuerySnap] = await Promise.all([
+        getDocs(query(collection(db, 'restaurants'), where('email', '==', email.trim().toLowerCase()))).catch(() => null),
+        getDocs(query(collection(db, 'delivery_partners'), where('email', '==', email.trim().toLowerCase()))).catch(() => null),
+      ]);
 
-      if (!customerDoc.exists()) {
+      if (restaurantsQuerySnap && !restaurantsQuerySnap.empty) {
         await auth.signOut();
-        setError('This account is not registered as a customer. Please sign up or use the restaurant/delivery portal.');
+        setError('This account is registered as a restaurant partner. Please use the restaurant portal.');
         setLoading(false);
         return;
       }
 
-      // Sync password to customer doc in Firestore for all users
-      try {
-        await updateDoc(doc(db, 'customers', userId), {
-          password,
-          updatedAt: new Date(),
-        });
-      } catch (syncErr) {
-        console.warn('[Customer Login] Password sync notice:', syncErr);
+      if (deliveryQuerySnap && !deliveryQuerySnap.empty) {
+        await auth.signOut();
+        setError('This account is registered as a delivery fleet partner. Please use the delivery portal.');
+        setLoading(false);
+        return;
       }
 
-      router.push('/customer');
+      // Check if customer profile exists in Firestore
+      const customerDoc = await getDoc(doc(db, 'customers', userId));
+
+      if (!customerDoc.exists()) {
+        // Auto-provision customer document so user is never locked out
+        const newReferralCode = 'HUNGER' + Math.random().toString(36).substring(2, 7).toUpperCase();
+        const newCustomerData: any = {
+          email: userCredential.user.email || email,
+          name: userCredential.user.displayName || email.split('@')[0],
+          phone: userCredential.user.phoneNumber || '',
+          avatar: userCredential.user.photoURL || '',
+          addresses: [],
+          defaultAddressId: null,
+          favorites: [],
+          favoriteRestaurants: [],
+          walletBalance: 0,
+          membershipStatus: 'none',
+          isBlocked: false,
+          rewardPoints: 0,
+          referralCode: newReferralCode,
+          referralCount: 0,
+          referralEarnings: 0,
+          password,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
+
+        await setDoc(doc(db, 'customers', userId), newCustomerData);
+
+        // Also register referral code in directory
+        await setDoc(doc(db, 'referralCodes', newReferralCode), {
+          code: newReferralCode,
+          uid: userId,
+          userId,
+          userName: newCustomerData.name,
+          userEmail: newCustomerData.email,
+          createdAt: serverTimestamp(),
+        }).catch((e) => console.warn('Referral registry notice:', e));
+      } else {
+        // Sync password to customer doc in Firestore for seamless cross-platform login
+        try {
+          await updateDoc(doc(db, 'customers', userId), {
+            password,
+            updatedAt: new Date(),
+          });
+        } catch (syncErr) {
+          console.warn('[Customer Login] Password sync notice:', syncErr);
+        }
+      }
+
+      toast.success('Signed in successfully!');
+      router.push(getRedirectTarget());
     } catch (err: any) {
       const message =
         err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password'
@@ -585,7 +663,7 @@ export default function LoginPage() {
         }
       }
 
-      router.push('/customer');
+      router.push(getRedirectTarget());
     } catch (err: any) {
       const message =
         err.code === 'auth/email-already-in-use'
@@ -681,7 +759,7 @@ export default function LoginPage() {
 
       toast.success('Mobile number saved! Welcome to Hunger.');
       setIsPhoneModalOpen(false);
-      router.push('/customer');
+      router.push(getRedirectTarget());
     } catch (err: any) {
       console.error('Error saving phone number:', err);
       setPhoneError(err.message || 'Failed to save phone number. Please try again.');

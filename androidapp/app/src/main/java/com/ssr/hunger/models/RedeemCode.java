@@ -9,8 +9,12 @@ import java.io.Serializable;
 public class RedeemCode implements Serializable {
     private String id;
     private String code;
-    private String type; // "points", "wallet", "discount"
+    private String type; // "points", "wallet", "discount", "delivery"
+    private String benefitType;
     private double value;
+    private String discountType; // "flat", "percentage"
+    private double minOrderValue;
+    private double maxDiscount;
     private String description;
     private int maxRedemptions;
     private int redemptionCount;
@@ -21,12 +25,14 @@ public class RedeemCode implements Serializable {
     public RedeemCode() {
         this.isActive = true;
         this.type = "points";
+        this.benefitType = "points";
         this.maxRedemptions = 1000;
     }
 
     public RedeemCode(String code, String type, double value, String description) {
         this.code = code;
         this.type = type;
+        this.benefitType = type;
         this.value = value;
         this.description = description;
         this.isActive = true;
@@ -39,11 +45,23 @@ public class RedeemCode implements Serializable {
     public String getCode() { return code != null ? code : ""; }
     public void setCode(String code) { this.code = code; }
 
-    public String getType() { return type != null ? type : "points"; }
+    public String getType() { return type != null ? type : (benefitType != null ? benefitType : "points"); }
     public void setType(String type) { this.type = type; }
+
+    public String getBenefitType() { return benefitType != null ? benefitType : (type != null ? type : "points"); }
+    public void setBenefitType(String benefitType) { this.benefitType = benefitType; }
 
     public double getValue() { return value; }
     public void setValue(double value) { this.value = value; }
+
+    public String getDiscountType() { return discountType != null ? discountType : "flat"; }
+    public void setDiscountType(String discountType) { this.discountType = discountType; }
+
+    public double getMinOrderValue() { return minOrderValue; }
+    public void setMinOrderValue(double minOrderValue) { this.minOrderValue = minOrderValue; }
+
+    public double getMaxDiscount() { return maxDiscount; }
+    public void setMaxDiscount(double maxDiscount) { this.maxDiscount = maxDiscount; }
 
     public String getDescription() { return description != null ? description : ""; }
     public void setDescription(String description) { this.description = description; }

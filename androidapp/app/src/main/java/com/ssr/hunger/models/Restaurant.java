@@ -232,4 +232,31 @@ public class Restaurant {
             return -1;
         }
     }
+
+    public List<String> getServicePincodes() {
+        return servicePincodes;
+    }
+
+    public void setServicePincodes(List<String> servicePincodes) {
+        this.servicePincodes = servicePincodes;
+    }
+
+    public boolean isServingPincode(String userPincode) {
+        if (userPincode == null || userPincode.trim().isEmpty()) {
+            return true;
+        }
+        String cleanPin = userPincode.trim();
+        if (servicePincodes != null && !servicePincodes.isEmpty()) {
+            for (String sp : servicePincodes) {
+                if (sp != null && sp.trim().equals(cleanPin)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        if (pincode != null && !pincode.trim().isEmpty()) {
+            return pincode.trim().equals(cleanPin);
+        }
+        return true;
+    }
 }

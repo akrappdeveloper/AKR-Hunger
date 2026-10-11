@@ -6,7 +6,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
 import { Address } from '@/lib/types';
 import { db } from '@/lib/firebase';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, setDoc } from 'firebase/firestore';
 import {
   Dialog,
   DialogContent,
@@ -28,10 +28,16 @@ import {
   ExternalLink,
   Loader2,
   AlertCircle,
-  Sparkles
+  Sparkles,
+  Globe,
+  Edit2,
+  Save,
+  CheckCircle2,
+  RefreshCw,
+  X
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { getAccurateCurrentLocation, lookupPostalPincode } from '@/lib/reverse-geocode';
+import { getAccurateCurrentLocation, lookupPostalPincode, GeocodedAddress } from '@/lib/reverse-geocode';
 
 interface DeliveryLocationDialogProps {
   open: boolean;
@@ -52,6 +58,17 @@ export default function DeliveryLocationDialog({
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [gpsLoading, setGpsLoading] = useState(false);
   const [savingAddress, setSavingAddress] = useState(false);
+
+  // Real-time Detected Location Card State
+  const [detectedGeo, setDetectedGeo] = useState<GeocodedAddress | null>(null);
+  const [isEditingDetected, setIsEditingDetected] = useState(false);
+  const [editedStreet, setEditedStreet] = useState('');
+  const [editedArea, setEditedArea] = useState('');
+  const [editedCity, setEditedCity] = useState('');
+  const [editedState, setEditedState] = useState('');
+  const [editedCountry, setEditedCountry] = useState('India');
+  const [editedPincode, setEditedPincode] = useState('');
+  const [editedPincodeStatus, setEditedPincodeStatus] = useState<string>('');
 
   // New Address Form State
   const [newAddrType, setNewAddrType] = useState<'home' | 'work' | 'other'>('home');
@@ -93,12 +110,47 @@ export default function DeliveryLocationDialog({
     onOpenChange(false);
   };
 
-  // Use Current Location (High-Accuracy GPS + Verified Postal Geocoding)
+  // Detected Card: handle pincode edit with postal registry verification
+  const handleDetectedPincodeChange = async (val: string) => {
+    const clean = val.replace(/\D/g, '').slice(0, 6);
+    setEditedPincode(clean);
+    if (clean.length === 6) {
+      setPincodeLoading(true);
+      try {
+        const details = await lookupPostalPincode(clean);
+        if (details.verified) {
+          setEditedCity(details.district);
+          setEditedState(details.state);
+          setEditedPincodeStatus(`Verified: ${details.postOfficeName || details.district}`);
+          toast.success(`Verified: ${details.district}, ${details.state}`);
+        } else {
+          setEditedPincodeStatus('Unverified in postal registry');
+        }
+      } catch {
+        setEditedPincodeStatus('Could not verify pincode');
+      } finally {
+        setPincodeLoading(false);
+      }
+    } else {
+      setEditedPincodeStatus('');
+    }
+  };
+
+  // Use Current Location (High-Accuracy GPS + Realtime IP + Postal Geocoding)
   const handleUseCurrentLocation = async (fillFormOnly = false) => {
     setGpsLoading(true);
     try {
-      toast.info('Acquiring high-accuracy GPS & postal address...');
+      toast.info('Acquiring realtime GPS, public IP & postal details...');
       const geo = await getAccurateCurrentLocation();
+
+      setDetectedGeo(geo);
+      setEditedStreet(geo.street);
+      setEditedArea(geo.area);
+      setEditedCity(geo.city);
+      setEditedState(geo.state);
+      setEditedCountry(geo.country || 'India');
+      setEditedPincode(geo.pincode);
+      setEditedPincodeStatus(geo.pincode ? 'Pincode resolved' : 'Please verify pincode');
 
       if (isAddingNew || fillFormOnly) {
         setIsAddingNew(true);
@@ -111,46 +163,63 @@ export default function DeliveryLocationDialog({
         return;
       }
 
-      const liveAddress: Address = {
-        id: `gps-${Date.now()}`,
-        customerId: user?.uid || 'guest',
-        type: 'other',
-        street: geo.street,
-        city: geo.city,
-        state: geo.state,
-        pincode: geo.pincode || '000000',
-        latitude: geo.latitude,
-        longitude: geo.longitude,
-        plusCode: geo.plusCode,
-        isDefault: false,
-        createdAt: new Date(),
-      };
-
-      setDeliveryAddress(liveAddress);
-      localStorage.setItem('deliveryAddress', JSON.stringify(liveAddress));
-
-      // Also persist to customer's saved addresses in Firestore if logged in
-      if (user) {
-        try {
-          const existingAddresses: Address[] = customer?.addresses || [];
-          const nonGps = existingAddresses.filter((a) => !a.id.startsWith('gps-'));
-          const updatedList = [liveAddress, ...nonGps.slice(0, 8)];
-          await updateDoc(doc(db, 'customers', user.uid), {
-            addresses: updatedList,
-            updatedAt: new Date(),
-          });
-        } catch (dbErr) {
-          console.warn('Could not archive GPS address to customer profile:', dbErr);
-        }
-      }
-
-      toast.success(`📍 Set to current location: ${geo.city} ${geo.pincode ? `(${geo.pincode})` : ''}`);
-      onOpenChange(false);
+      toast.success(`📍 Realtime location detected: ${geo.city} • PIN: ${geo.pincode || 'Manual input'}`);
     } catch (err: any) {
       toast.error(err?.message || 'Unable to retrieve location. Please check browser permissions.');
     } finally {
       setGpsLoading(false);
     }
+  };
+
+  // Confirm and set detected location as active delivery location
+  const handleConfirmDetectedLocation = async (saveToProfile = false) => {
+    if (!detectedGeo) return;
+    const pin = editedPincode.trim() || detectedGeo.pincode || '000000';
+    const finalCity = editedCity.trim() || detectedGeo.city || 'Current Location';
+    const finalState = editedState.trim() || detectedGeo.state || '';
+    const finalStreet = editedStreet.trim() || detectedGeo.street;
+    const finalCountry = editedCountry.trim() || detectedGeo.country || 'India';
+    const finalArea = editedArea.trim() || detectedGeo.area;
+
+    const liveAddress: Address = {
+      id: `gps-${Date.now()}`,
+      customerId: user?.uid || 'guest',
+      type: 'other',
+      street: finalArea ? `${finalStreet}, ${finalArea}` : finalStreet,
+      city: finalCity,
+      state: finalState,
+      pincode: pin,
+      latitude: detectedGeo.latitude,
+      longitude: detectedGeo.longitude,
+      plusCode: detectedGeo.plusCode,
+      isDefault: false,
+      createdAt: new Date(),
+    };
+
+    setDeliveryAddress(liveAddress);
+    localStorage.setItem('deliveryAddress', JSON.stringify(liveAddress));
+
+    if (user && saveToProfile) {
+      try {
+        const existingAddresses: Address[] = customer?.addresses || [];
+        const nonGps = existingAddresses.filter((a) => !a.id.startsWith('gps-'));
+        const updatedList = [liveAddress, ...nonGps.slice(0, 8)];
+        await setDoc(
+          doc(db, 'customers', user.uid),
+          {
+            addresses: updatedList,
+            updatedAt: new Date(),
+          },
+          { merge: true }
+        );
+        toast.success('Address saved to your profile!');
+      } catch (dbErr) {
+        console.warn('Could not archive GPS address:', dbErr);
+      }
+    }
+
+    toast.success(`📍 Delivering to: ${finalCity} (${pin})`);
+    onOpenChange(false);
   };
 
   // Save new address and select it
@@ -202,11 +271,15 @@ export default function DeliveryLocationDialog({
       };
 
       const updatedList = [newAddressObj, ...existingAddresses];
-      await updateDoc(doc(db, 'customers', user.uid), {
-        addresses: updatedList,
-        defaultAddressId: existingAddresses.length === 0 ? newAddressObj.id : customer?.defaultAddressId,
-        updatedAt: new Date(),
-      });
+      await setDoc(
+        doc(db, 'customers', user.uid),
+        {
+          addresses: updatedList,
+          defaultAddressId: existingAddresses.length === 0 ? newAddressObj.id : customer?.defaultAddressId,
+          updatedAt: new Date(),
+        },
+        { merge: true }
+      );
 
       setDeliveryAddress(newAddressObj);
       localStorage.setItem('deliveryAddress', JSON.stringify(newAddressObj));
@@ -317,6 +390,193 @@ export default function DeliveryLocationDialog({
               </div>
             </button>
           </div>
+
+          {/* Real-time Detected Location Card (with IP, GPS, Pincode, City, State, Country & Manual Edit) */}
+          {detectedGeo && (
+            <div className="p-4 sm:p-5 rounded-2xl border-2 border-primary/40 bg-gradient-to-br from-primary/10 via-card to-background shadow-lg space-y-4 animate-in fade-in-50 duration-300">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/70 pb-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-primary text-primary-foreground flex items-center justify-center shadow-sm">
+                    <Navigation className="w-4 h-4 animate-pulse" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-black text-foreground flex items-center gap-2">
+                      Realtime Detected Location
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+                    </h4>
+                    <p className="text-[11px] text-muted-foreground">Original GPS + Public IP Geolocation</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={isEditingDetected ? 'default' : 'outline'}
+                    onClick={() => setIsEditingDetected(!isEditingDetected)}
+                    className="h-7 px-2.5 rounded-lg text-xs font-bold gap-1 cursor-pointer"
+                  >
+                    <Edit2 className="w-3 h-3" />
+                    <span>{isEditingDetected ? 'Done Editing' : 'Manual Edit'}</span>
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => handleUseCurrentLocation(false)}
+                    disabled={gpsLoading}
+                    className="h-7 w-7 p-0 rounded-lg text-muted-foreground hover:text-foreground cursor-pointer"
+                    title="Re-scan GPS"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${gpsLoading ? 'animate-spin' : ''}`} />
+                  </Button>
+                  <button
+                    type="button"
+                    onClick={() => setDetectedGeo(null)}
+                    className="text-muted-foreground hover:text-foreground p-1 rounded-lg"
+                    title="Dismiss"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Realtime Technical Telemetry Row: IP & GPS Accuracy */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                <div className="flex items-center gap-2 p-2 rounded-xl bg-muted/60 border border-border/60">
+                  <Globe className="w-4 h-4 text-blue-500 shrink-0" />
+                  <div className="min-w-0">
+                    <span className="text-[10px] text-muted-foreground block font-bold uppercase tracking-wider">Public IP Address</span>
+                    <span className="font-mono font-bold text-foreground truncate block">{detectedGeo.ipAddress || '103.xxx.xxx.xxx'}</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 p-2 rounded-xl bg-muted/60 border border-border/60">
+                  <Navigation className="w-4 h-4 text-emerald-500 shrink-0" />
+                  <div className="min-w-0">
+                    <span className="text-[10px] text-muted-foreground block font-bold uppercase tracking-wider">GPS Coordinates</span>
+                    <span className="font-mono font-bold text-foreground truncate block">
+                      {detectedGeo.latitude.toFixed(5)}°, {detectedGeo.longitude.toFixed(5)}° {detectedGeo.accuracy ? `(±${Math.round(detectedGeo.accuracy)}m)` : ''}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Location Data Form / Display */}
+              {isEditingDetected ? (
+                <div className="space-y-3 pt-1">
+                  <div>
+                    <label className="text-[11px] font-bold text-foreground block mb-1">Street / House / Landmark</label>
+                    <Input
+                      value={editedStreet}
+                      onChange={(e) => setEditedStreet(e.target.value)}
+                      placeholder="Flat 101, Road / Landmark"
+                      className="h-9 text-xs rounded-xl bg-card border-border"
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[11px] font-bold text-foreground block mb-1">Locality / Area</label>
+                      <Input
+                        value={editedArea}
+                        onChange={(e) => setEditedArea(e.target.value)}
+                        placeholder="e.g. Chinhat"
+                        className="h-9 text-xs rounded-xl bg-card border-border"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-bold text-foreground block mb-1">
+                        Pincode (6-digit) {pincodeLoading && <Loader2 className="w-3 h-3 inline animate-spin text-primary ml-1" />}
+                      </label>
+                      <Input
+                        value={editedPincode}
+                        maxLength={6}
+                        onChange={(e) => handleDetectedPincodeChange(e.target.value)}
+                        placeholder="e.g. 226028"
+                        className="h-9 text-xs font-bold font-mono rounded-xl bg-card border-border"
+                      />
+                      {editedPincodeStatus && (
+                        <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold block mt-0.5">
+                          {editedPincodeStatus}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                      <label className="text-[11px] font-bold text-foreground block mb-1">City</label>
+                      <Input
+                        value={editedCity}
+                        onChange={(e) => setEditedCity(e.target.value)}
+                        placeholder="e.g. Lucknow"
+                        className="h-9 text-xs rounded-xl bg-card border-border"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-bold text-foreground block mb-1">State</label>
+                      <Input
+                        value={editedState}
+                        onChange={(e) => setEditedState(e.target.value)}
+                        placeholder="e.g. Uttar Pradesh"
+                        className="h-9 text-xs rounded-xl bg-card border-border"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-bold text-foreground block mb-1">Country</label>
+                      <Input
+                        value={editedCountry}
+                        onChange={(e) => setEditedCountry(e.target.value)}
+                        placeholder="India"
+                        className="h-9 text-xs rounded-xl bg-card border-border"
+                      />
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="p-3.5 rounded-xl bg-card border border-border space-y-2">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-xs font-bold text-foreground">
+                        {[editedStreet, editedArea].filter(Boolean).join(', ') || 'Doorstep Location'}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {[editedCity, editedState, editedCountry].filter(Boolean).join(', ')}
+                      </p>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <span className="font-mono text-sm font-black text-primary bg-primary/10 px-2 py-0.5 rounded-md border border-primary/20 block">
+                        {editedPincode || detectedGeo.pincode || 'PIN Needed'}
+                      </span>
+                      <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center justify-end gap-1 mt-0.5">
+                        <CheckCircle2 className="w-3 h-3" /> India Post
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Buttons: Deliver to this location or save */}
+              <div className="flex flex-wrap items-center justify-end gap-2 pt-1 border-t border-border/60">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleConfirmDetectedLocation(true)}
+                  className="rounded-xl text-xs font-bold border-border hover:bg-muted"
+                >
+                  <Save className="w-3.5 h-3.5 mr-1" />
+                  Save & Deliver
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={() => handleConfirmDetectedLocation(false)}
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground font-black rounded-xl text-xs px-4 shadow-md"
+                >
+                  <Check className="w-3.5 h-3.5 mr-1 stroke-[3]" />
+                  Deliver to This Location
+                </Button>
+              </div>
+            </div>
+          )}
 
           {/* Inline Add Address Form */}
           {isAddingNew && (

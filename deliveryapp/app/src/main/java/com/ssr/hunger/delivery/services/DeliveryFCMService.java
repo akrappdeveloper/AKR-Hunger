@@ -19,6 +19,7 @@ import com.ssr.hunger.delivery.R;
 import com.ssr.hunger.delivery.activities.LiveTrackingRadarActivity;
 import com.ssr.hunger.delivery.activities.MainActivity;
 import com.ssr.hunger.delivery.activities.OrderActiveDetailActivity;
+import com.ssr.hunger.delivery.activities.VkycVideoCallActivity;
 import com.ssr.hunger.delivery.utils.Constants;
 import com.ssr.hunger.delivery.utils.SoundHelper;
 
@@ -77,7 +78,10 @@ public class DeliveryFCMService extends FirebaseMessagingService {
         if (data.containsKey("body")) body = data.get("body");
         if (data.containsKey("type")) type = data.get("type");
         if (data.containsKey("orderId")) orderId = data.get("orderId");
-        if (data.containsKey("amount")) amount = data.get("amount");
+        String callId = null;
+        String adminName = "Hunger Admin Desk";
+        if (data.containsKey("callId")) callId = data.get("callId");
+        if (data.containsKey("adminName")) adminName = data.get("adminName");
 
         int notificationId = (int) (System.currentTimeMillis() % 100000);
 
@@ -85,6 +89,12 @@ public class DeliveryFCMService extends FirebaseMessagingService {
         if ("new_order".equalsIgnoreCase(type) || "order".equalsIgnoreCase(type)) {
             SoundHelper.playNewOrderAlert(this);
             showNewOrderNotification(notificationId, title, body, orderId);
+        } else if ("vkyc_call".equalsIgnoreCase(type) || "vkyc".equalsIgnoreCase(type)) {
+            SoundHelper.playEmergencyAlert(this);
+            showVkycCallNotification(notificationId, title, body, callId, adminName);
+        } else if ("vkyc_completed".equalsIgnoreCase(type) || "kyc_approved".equalsIgnoreCase(type)) {
+            SoundHelper.playPaymentAlert(this);
+            showVkycCompletedNotification(notificationId, title, body);
         } else if ("payment".equalsIgnoreCase(type) || "wallet".equalsIgnoreCase(type) || "payout".equalsIgnoreCase(type)) {
             SoundHelper.playPaymentAlert(this);
             showPaymentNotification(notificationId, title, body, amount);
@@ -234,6 +244,66 @@ public class DeliveryFCMService extends FirebaseMessagingService {
                 .setContentText(body)
                 .setAutoCancel(true)
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .setContentIntent(pIntent);
+
+        manager.notify(id, builder.build());
+    }
+
+    private void showVkycCallNotification(int id, String title, String body, String callId, String adminName) {
+        NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        if (manager == null) return;
+
+        Intent callIntent = new Intent(this, VkycVideoCallActivity.class);
+        callIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        if (callId != null) callIntent.putExtra("callId", callId);
+        if (adminName != null) callIntent.putExtra("adminName", adminName);
+
+        PendingIntent pIntent = PendingIntent.getActivity(
+                this, id, callIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+        );
+
+        Uri ringtoneSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE);
+        if (ringtoneSound == null) {
+            ringtoneSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+        }
+
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, Constants.CHANNEL_ORDERS)
+                .setSmallIcon(R.drawable.ic_video)
+                .setContentTitle(title)
+                .setContentText(body)
+                .setStyle(new NotificationCompat.BigTextStyle().bigText(body))
+                .setPriority(NotificationCompat.PRIORITY_MAX)
+                .setCategory(NotificationCompat.CATEGORY_CALL)
+                .setAutoCancel(true)
+                .setSound(ringtoneSound)
+                .setVibrate(new long[]{0, 800, 300, 800, 300, 800})
+                .setFullScreenIntent(pIntent, true)
+                .setContentIntent(pIntent)
+                .addAction(R.drawable.ic_video, "Connect Live V-KYC", pIntent);
+
+        manager.notify(id, builder.build());
+    }
+
+    private void showVkycCompletedNotification(int id, String title, String body) {
+        NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        if (manager == null) return;
+
+        Intent mainIntent = new Intent(this, MainActivity.class);
+        mainIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+
+        PendingIntent pIntent = PendingIntent.getActivity(
+                this, id, mainIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+        );
+
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, Constants.CHANNEL_STATUS)
+                .setSmallIcon(R.drawable.ic_check_circle)
+                .setContentTitle(title)
+                .setContentText(body)
+                .setStyle(new NotificationCompat.BigTextStyle().bigText(body))
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setAutoCancel(true)
                 .setContentIntent(pIntent);
 
         manager.notify(id, builder.build());

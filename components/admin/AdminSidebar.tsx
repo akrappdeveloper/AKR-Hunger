@@ -48,6 +48,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import NotificationBell from '@/components/notifications/NotificationBell';
+import ThemeToggle from '@/components/customer/ThemeToggle';
 
 interface AdminSidebarProps {
   isMobile?: boolean;
@@ -154,17 +155,20 @@ const AdminSidebar = ({ isMobile = false, onClose }: AdminSidebarProps) => {
 
   return (
     <aside className={`${isMobile ? 'w-full h-full border-none bg-transparent' : 'hidden lg:flex w-72 border-r fixed inset-y-0 z-50'} flex-col bg-card/90 backdrop-blur-xl border-border/50 text-foreground transition-all duration-300 shadow-2xl`}>
-      <div className="p-6 border-b border-border/50 flex items-center justify-between gap-3">
+      <div className="p-5 border-b border-border/50 flex items-center justify-between gap-2">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
-            <span className="font-bold text-lg text-foreground">H</span>
+            <span className="font-bold text-lg text-white">H</span>
           </div>
           <div>
             <h1 className="text-xl font-bold text-foreground tracking-tight leading-none">Hunger</h1>
             <p className="text-[10px] text-blue-500 font-bold uppercase tracking-widest mt-1">Admin Portal</p>
           </div>
         </div>
-        {!isMobile && <NotificationBell />}
+        <div className="flex items-center gap-1">
+          <ThemeToggle />
+          {!isMobile && <NotificationBell />}
+        </div>
       </div>
 
       <div className="flex-1 px-3 py-4 overflow-y-auto custom-scrollbar">
@@ -246,7 +250,7 @@ const AdminSidebar = ({ isMobile = false, onClose }: AdminSidebarProps) => {
         </div>
         <button
           onClick={handleLogout}
-          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-400 hover:text-red-300 rounded-lg text-sm font-medium transition-all duration-200 group"
+          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/25 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 rounded-xl text-sm font-semibold transition-all duration-200 group cursor-pointer"
         >
           <LogOut size={16} className="group-hover:-translate-x-0.5 transition-transform" />
           Sign Out

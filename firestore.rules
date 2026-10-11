@@ -95,8 +95,7 @@ service cloud.firestore {
     // 4. Customer Profiles & Subcollections
     // ==========================================
     match /customers/{customerId} {
-      allow read: if request.auth.uid == customerId || isAdmin(request.auth.uid);
-      allow list: if request.auth.uid != null; // Allows referral code lookup and verification
+      allow read, get, list: if request.auth.uid != null; // Allows customer profile reading, referral lookup, and delivery partner order contact
       allow create: if request.auth.uid != null && request.auth.uid == customerId;
       allow update: if request.auth.uid == customerId || isAdmin(request.auth.uid) || (
         request.auth.uid != null &&
@@ -108,6 +107,17 @@ service cloud.firestore {
       match /walletTransactions/{transactionId} {
         allow read: if request.auth.uid == customerId || isAdmin(request.auth.uid);
         allow create: if request.auth.uid != null;
+        allow update, delete: if isAdmin(request.auth.uid);
+      }
+
+      // Customer Search History (Subcollection)
+      match /searchHistory/{searchId} {
+        allow read, write: if request.auth.uid == customerId || isAdmin(request.auth.uid);
+      }
+
+      // Customer Point Activities (Subcollection)
+      match /pointActivities/{activityId} {
+        allow read, write: if request.auth.uid == customerId || isAdmin(request.auth.uid);
       }
     }
 
@@ -173,7 +183,7 @@ service cloud.firestore {
     // ==========================================
     match /deliveryPersons/{partnerId} {
       allow read, list: if true; // Public read so customer tracking page can view assigned rider details
-      allow write: if request.auth.uid == partnerId || isAdmin(request.auth.uid);
+      allow write: if request.auth.uid != null || isAdmin(request.auth.uid);
       
       // Allow delivery person to read and create their own wallet transactions
       match /walletTransactions/{transactionId} {
@@ -542,6 +552,31 @@ service cloud.firestore {
       allow read, list: if request.auth.uid != null;
       allow create, update: if request.auth.uid != null;
       allow delete: if request.auth.uid != null && (request.auth.uid == userId || isAdmin(request.auth.uid));
+    }
+
+    // ==========================================
+    // 34. Video KYC Requests & WebRTC Signaling
+    // ==========================================
+    match /vkyc_requests/{requestId} {
+      allow read, list: if true;
+      allow write: if request.auth.uid != null || true;
+    }
+
+    match /kycVideoCalls/{callId} {
+      allow read, write: if true;
+    }
+
+    // ==========================================
+    // 35. Redeem Codes & Gift Vouchers
+    // ==========================================
+    match /redeemCodes/{codeId} {
+      allow read, list: if true;
+      allow write: if request.auth.uid != null || true;
+    }
+
+    match /redeem_codes/{codeId} {
+      allow read, list: if true;
+      allow write: if request.auth.uid != null || true;
     }
   }
 }

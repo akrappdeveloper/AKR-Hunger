@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User, onAuthStateChanged, signOut } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
-import { doc, getDoc, onSnapshot } from 'firebase/firestore';
+import { doc, getDoc, onSnapshot, setDoc } from 'firebase/firestore';
 import { Customer } from '@/lib/types';
 
 interface AuthContextType {
@@ -41,10 +41,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 ...customerDoc.data(),
                 id: customerDoc.id,
               } as Customer);
+              setLoading(false);
             } else {
-              setCustomer(null);
+              // Ensure basic customer document is auto-provisioned in Firestore
+              const newCustomerData = {
+                email: authUser.email || '',
+                name: authUser.displayName || 'Customer',
+                displayName: authUser.displayName || 'Customer',
+                phone: authUser.phoneNumber || '',
+                avatar: authUser.photoURL || '',
+                addresses: [],
+                walletBalance: 0,
+                rewardPoints: 0,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+              };
+              setDoc(doc(db, 'customers', authUser.uid), newCustomerData, { merge: true })
+                .catch((e) => console.warn('Customer auto-provision notice:', e));
+              setCustomer({
+                ...newCustomerData,
+                id: authUser.uid,
+              } as Customer);
+              setLoading(false);
             }
-            setLoading(false);
           },
           (error) => {
             console.error('Error listening to customer profile:', error);

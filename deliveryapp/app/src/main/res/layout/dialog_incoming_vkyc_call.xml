@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="24dp"
+    android:background="@drawable/bg_dialog_rounded">
+
+    <!-- Header with Video Call Icon -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <ImageView
+            android:layout_width="52dp"
+            android:layout_height="52dp"
+            android:background="@drawable/bg_pill_primary"
+            android:backgroundTint="#1A6366F1"
+            android:padding="14dp"
+            android:src="@drawable/ic_video"
+            app:tint="#6366F1"
+            android:contentDescription="Live Video KYC Call" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="14dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Live Video KYC Calling..."
+                android:textColor="#6366F1"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.02" />
+
+            <TextView
+                android:id="@+id/tv_vkyc_caller_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="Hunger Admin Desk"
+                android:textColor="@color/text_primary"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="16dp"
+        android:background="@color/divider" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Hunger Admin is requesting a live video call to verify your identity and physical documents for fast-track onboarding approval."
+        android:textColor="@color/text_secondary"
+        android:textSize="13.5sp"
+        android:lineSpacingExtra="3dp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:orientation="horizontal"
+        android:gravity="center">
+
+        <!-- Decline Button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_decline_vkyc"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:layout_marginEnd="8dp"
+            android:text="Decline"
+            android:textAllCaps="false"
+            android:textColor="@color/text_secondary"
+            app:cornerRadius="12dp"
+            app:strokeColor="@color/divider" />
+
+        <!-- Accept Button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_accept_vkyc"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1.4"
+            android:layout_marginStart="8dp"
+            android:backgroundTint="@color/veg_green"
+            android:text="Connect Live"
+            android:textAllCaps="false"
+            android:textColor="@color/white"
+            android:textStyle="bold"
+            app:cornerRadius="12dp"
+            app:icon="@drawable/ic_video"
+            app:iconGravity="textStart"
+            app:iconTint="@color/white" />
+    </LinearLayout>
+
+</LinearLayout>

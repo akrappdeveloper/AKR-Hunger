@@ -201,9 +201,15 @@ export default function WebPushManagerCard({
 
   // Handle Quick Test Push
   const handleQuickTest = async (preset?: { title: string; body: string; actionUrl: string }) => {
-    if (!isGranted) {
-      toast.info('Please click "Enable Push Notifications" first to receive notifications on this browser.');
-      return;
+    let activeToken = fcmToken;
+    if (!isGranted || !activeToken) {
+      toast.info('Requesting push registration on this device...');
+      const permRes = await requestPermission();
+      if (!permRes.success || !permRes.token) {
+        toast.error(permRes.error || 'Please click "Enable Push Notifications" first to receive notifications on this browser.');
+        return;
+      }
+      activeToken = permRes.token;
     }
     setSendingPush(true);
     try {
