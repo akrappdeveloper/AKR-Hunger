@@ -632,7 +632,7 @@ public class DashboardOrdersFragment extends Fragment {
         if (incomingCallDialog != null && incomingCallDialog.isShowing()) return;
 
         try {
-            androidx.appcompat.app.AlertDialog.Builder builder = new androidx.appcompat.app.AlertDialog.Builder(getContext(), R.style.Theme_Hunger_Dialog_Rounded);
+            androidx.appcompat.app.AlertDialog.Builder builder = new androidx.appcompat.app.AlertDialog.Builder(getContext(), R.style.RoundedDialog);
             View dialogView = LayoutInflater.from(getContext()).inflate(R.layout.dialog_incoming_vkyc_call, null);
 
             TextView tvCallerName = dialogView.findViewById(R.id.tv_vkyc_caller_name);
@@ -880,34 +880,55 @@ public class DashboardOrdersFragment extends Fragment {
     private void acceptOrder(DeliveryOrder order) {
         if (auth.getCurrentUser() == null || partner == null) return;
         String uid = auth.getCurrentUser().getUid();
+        com.google.firebase.firestore.DocumentReference orderRef = db.collection(Constants.COLLECTION_ORDERS).document(order.getId());
 
-        Map<String, Object> updates = new HashMap<>();
-        updates.put("deliveryPersonId", uid);
-        updates.put("deliveryPersonName", partner.getName());
-        updates.put("deliveryPersonPhone", partner.getPhone());
-        updates.put("status", Constants.STATUS_OUT_FOR_DELIVERY);
-        updates.put("deliveryStage", Constants.STAGE_TO_RESTAURANT);
-        updates.put("acceptedAt", FieldValue.serverTimestamp());
+        db.runTransaction(transaction -> {
+            com.google.firebase.firestore.DocumentSnapshot snapshot = transaction.get(orderRef);
+            if (!snapshot.exists()) {
+                throw new com.google.firebase.firestore.FirebaseFirestoreException(
+                        "Order no longer exists",
+                        com.google.firebase.firestore.FirebaseFirestoreException.Code.NOT_FOUND
+                );
+            }
 
-        db.collection(Constants.COLLECTION_ORDERS)
-                .document(order.getId())
-                .update(updates)
-                .addOnSuccessListener(v -> {
-                    Context ctx = getContext();
-                    if (ctx != null) {
-                        AnalyticsHelper.getInstance(ctx).logOrderAccepted(order.getId(), order.getRestaurantName(), order.getEstimatedEarning());
-                        DriverLocationService.startTracking(ctx, uid, order.getId(), true);
-                    }
-                    displayActiveOrderOnMap(order);
-                    if (nestedScrollView != null) {
-                        nestedScrollView.smoothScrollTo(0, 0);
-                    }
-                    Toast.makeText(getContext(), "🎉 Order Accepted! Live navigation & tracking activated", Toast.LENGTH_SHORT).show();
-                    Intent intent = new Intent(getContext(), OrderActiveDetailActivity.class);
-                    intent.putExtra(Constants.EXTRA_ORDER_ID, order.getId());
-                    startActivity(intent);
-                })
-                .addOnFailureListener(e -> Toast.makeText(getContext(), "Failed to accept order: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+            String currentDeliveryPersonId = snapshot.getString("deliveryPersonId");
+            if (currentDeliveryPersonId != null && !currentDeliveryPersonId.isEmpty() && !currentDeliveryPersonId.equals(uid)) {
+                throw new com.google.firebase.firestore.FirebaseFirestoreException(
+                        "Order already accepted by another partner",
+                        com.google.firebase.firestore.FirebaseFirestoreException.Code.ABORTED
+                );
+            }
+
+            Map<String, Object> updates = new HashMap<>();
+            updates.put("deliveryPersonId", uid);
+            updates.put("deliveryPersonName", partner.getName());
+            updates.put("deliveryPersonPhone", partner.getPhone());
+            updates.put("status", Constants.STATUS_OUT_FOR_DELIVERY);
+            updates.put("deliveryStage", Constants.STAGE_TO_RESTAURANT);
+            updates.put("acceptedAt", FieldValue.serverTimestamp());
+            transaction.update(orderRef, updates);
+            return null;
+        }).addOnSuccessListener(v -> {
+            Context ctx = getContext();
+            if (ctx != null) {
+                AnalyticsHelper.getInstance(ctx).logOrderAccepted(order.getId(), order.getRestaurantName(), order.getEstimatedEarning());
+                DriverLocationService.startTracking(ctx, uid, order.getId(), true);
+            }
+            displayActiveOrderOnMap(order);
+            if (nestedScrollView != null) {
+                nestedScrollView.smoothScrollTo(0, 0);
+            }
+            Toast.makeText(getContext(), "🎉 Order Accepted! Live navigation & tracking activated", Toast.LENGTH_SHORT).show();
+            Intent intent = new Intent(getContext(), OrderActiveDetailActivity.class);
+            intent.putExtra(Constants.EXTRA_ORDER_ID, order.getId());
+            startActivity(intent);
+        }).addOnFailureListener(e -> {
+            String msg = (e.getMessage() != null && e.getMessage().contains("already accepted"))
+                    ? "Order has already been accepted by another partner."
+                    : "Failed to accept order: " + e.getMessage();
+            Toast.makeText(getContext(), msg, Toast.LENGTH_LONG).show();
+            restartAvailableOrdersListener();
+        });
     }
 
     public void displayActiveOrderOnMap(DeliveryOrder order) {

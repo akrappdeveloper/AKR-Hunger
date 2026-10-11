@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, User as FirebaseUser } from 'firebase/auth';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, sendPasswordResetEmail, User as FirebaseUser } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
 import { doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs, addDoc, serverTimestamp, increment } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
@@ -40,6 +40,8 @@ import {
   HeartHandshake,
   Smartphone,
   Gift,
+  KeyRound,
+  RefreshCw,
 } from 'lucide-react';
 import ThemeToggle from '@/components/customer/ThemeToggle';
 
@@ -56,10 +58,21 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // Read referral code from URL query (?ref=...) or localStorage
+  // Forgot password dialog states
+  const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
+  const [forgotPasswordEmail, setForgotPasswordEmail] = useState('');
+  const [forgotPasswordLoading, setForgotPasswordLoading] = useState(false);
+  const [forgotPasswordSuccess, setForgotPasswordSuccess] = useState(false);
+  const [forgotPasswordError, setForgotPasswordError] = useState('');
+
+  // Read URL query (?mode=signup, ?ref=...) or localStorage
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
+      const modeParam = params.get('mode') || params.get('tab');
+      if (modeParam === 'signup' || modeParam === 'register') {
+        setIsLogin(false);
+      }
       const refParam = params.get('ref') || localStorage.getItem('hunger_referral_code');
       if (refParam && refParam.trim()) {
         const cleanRef = refParam.trim().toUpperCase();
@@ -385,13 +398,20 @@ export default function LoginPage() {
     };
 
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const cleanEmail = email.trim().toLowerCase();
+      if (!cleanEmail || !password) {
+        setError('Please enter both email and password.');
+        setLoading(false);
+        return;
+      }
+
+      const userCredential = await signInWithEmailAndPassword(auth, cleanEmail, password);
       const userId = userCredential.user.uid;
 
       // Check if this user is a restaurant or delivery partner
       const [restaurantsQuerySnap, deliveryQuerySnap] = await Promise.all([
-        getDocs(query(collection(db, 'restaurants'), where('email', '==', email.trim().toLowerCase()))).catch(() => null),
-        getDocs(query(collection(db, 'delivery_partners'), where('email', '==', email.trim().toLowerCase()))).catch(() => null),
+        getDocs(query(collection(db, 'restaurants'), where('email', '==', cleanEmail))).catch(() => null),
+        getDocs(query(collection(db, 'delivery_partners'), where('email', '==', cleanEmail))).catch(() => null),
       ]);
 
       if (restaurantsQuerySnap && !restaurantsQuerySnap.empty) {
@@ -409,14 +429,14 @@ export default function LoginPage() {
       }
 
       // Check if customer profile exists in Firestore
-      const customerDoc = await getDoc(doc(db, 'customers', userId));
+      const customerDoc = await getDoc(doc(db, 'customers', userId)).catch(() => null);
 
-      if (!customerDoc.exists()) {
+      if (!customerDoc || !customerDoc.exists()) {
         // Auto-provision customer document so user is never locked out
         const newReferralCode = 'HUNGER' + Math.random().toString(36).substring(2, 7).toUpperCase();
         const newCustomerData: any = {
-          email: userCredential.user.email || email,
-          name: userCredential.user.displayName || email.split('@')[0],
+          email: userCredential.user.email || cleanEmail,
+          name: userCredential.user.displayName || cleanEmail.split('@')[0],
           phone: userCredential.user.phoneNumber || '',
           avatar: userCredential.user.photoURL || '',
           addresses: [],
@@ -461,10 +481,25 @@ export default function LoginPage() {
       toast.success('Signed in successfully!');
       router.push(getRedirectTarget());
     } catch (err: any) {
-      const message =
-        err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password'
-          ? 'Invalid email or password. Please check your credentials.'
-          : err.message || 'Login failed. Please try again.';
+      console.error('[Customer Login] Error:', err);
+      let message = 'Login failed. Please try again.';
+      if (
+        err.code === 'auth/invalid-credential' ||
+        err.code === 'auth/user-not-found' ||
+        err.code === 'auth/wrong-password'
+      ) {
+        message = 'Invalid email or password. Please verify your credentials or click "Forgot password?".';
+      } else if (err.code === 'auth/invalid-email') {
+        message = 'Please enter a valid email address.';
+      } else if (err.code === 'auth/too-many-requests') {
+        message = 'Too many failed attempts. Access temporarily restricted. Try again later or reset password.';
+      } else if (err.code === 'auth/user-disabled') {
+        message = 'This customer account has been suspended. Please contact customer support.';
+      } else if (err.code === 'auth/network-request-failed') {
+        message = 'Network connection failed. Please check your internet connection.';
+      } else if (err.message) {
+        message = err.message;
+      }
       setError(message);
     } finally {
       setLoading(false);
@@ -477,18 +512,30 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      // Check if this email is already used by a restaurant
-      const restaurantsQuery = query(collection(db, 'restaurants'), where('email', '==', email));
-      const restaurantSnapshot = await getDocs(restaurantsQuery);
+      const cleanEmail = email.trim().toLowerCase();
+      if (!cleanEmail || !password) {
+        setError('Please enter both email and password.');
+        setLoading(false);
+        return;
+      }
+      if (password.length < 6) {
+        setError('Password must be at least 6 characters.');
+        setLoading(false);
+        return;
+      }
 
-      if (!restaurantSnapshot.empty) {
+      // Check if this email is already used by a restaurant
+      const restaurantsQuery = query(collection(db, 'restaurants'), where('email', '==', cleanEmail));
+      const restaurantSnapshot = await getDocs(restaurantsQuery).catch(() => null);
+
+      if (restaurantSnapshot && !restaurantSnapshot.empty) {
         setError('This email is already registered as a restaurant partner. Please use a different email.');
         setLoading(false);
         return;
       }
 
       // Create user in Firebase Auth
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const userCredential = await createUserWithEmailAndPassword(auth, cleanEmail, password);
 
       const newUid = userCredential.user.uid;
       const myNewReferralCode = 'HUNGER' + Math.random().toString(36).substring(2, 7).toUpperCase();
@@ -529,10 +576,10 @@ export default function LoginPage() {
 
       // Create customer document in Firestore with complete details matching Android app
       const customerData: any = {
-        email,
+        email: cleanEmail,
         password,
-        name,
-        phone,
+        name: name.trim() || cleanEmail.split('@')[0],
+        phone: phone.trim(),
         avatar: '',
         addresses: [],
         defaultAddressId: null,
@@ -557,14 +604,14 @@ export default function LoginPage() {
       await setDoc(doc(db, 'customers', newUid), customerData);
 
       // Send Welcome Email via Resend
-      if (email) {
+      if (cleanEmail) {
         fetch('/api/email/send', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             type: 'welcome',
-            email,
-            name,
+            email: cleanEmail,
+            name: name.trim() || 'Foodie',
             role: 'customer',
           }),
         }).catch((err) => console.error('[Resend] Customer welcome email notice:', err));
@@ -575,8 +622,8 @@ export default function LoginPage() {
         code: myNewReferralCode,
         uid: newUid,
         userId: newUid,
-        userName: name,
-        userEmail: email,
+        userName: name.trim() || 'Customer',
+        userEmail: cleanEmail,
         createdAt: serverTimestamp(),
       });
 
@@ -596,9 +643,9 @@ export default function LoginPage() {
             referrerId,
             referrerName,
             referredUserId: newUid,
-            referredUserName: name,
-            referredUserEmail: email,
-            referredUserPhone: phone,
+            referredUserName: name.trim() || 'Customer',
+            referredUserEmail: cleanEmail,
+            referredUserPhone: phone.trim(),
             referralCode: codeToApply,
             rewardAmount: 50,
             status: 'completed',
@@ -631,7 +678,7 @@ export default function LoginPage() {
             amount: 50,
             type: 'credit',
             status: 'completed',
-            description: `🎉 Referral Reward - ${name} joined`,
+            description: `🎉 Referral Reward - ${name.trim() || 'Friend'} joined`,
             createdAt: serverTimestamp(),
           });
 
@@ -640,7 +687,7 @@ export default function LoginPage() {
             amount: 50,
             type: 'credit',
             status: 'completed',
-            description: `🎉 Referral Reward - ${name} joined`,
+            description: `🎉 Referral Reward - ${name.trim() || 'Friend'} joined`,
             createdAt: serverTimestamp(),
           });
 
@@ -648,7 +695,7 @@ export default function LoginPage() {
           await addDoc(collection(db, 'notifications'), {
             userId: referrerId,
             title: '🎉 Referral Reward Earned!',
-            message: `${name} joined using your referral link. ₹50 has been credited to your Hunger Wallet!`,
+            message: `${name.trim() || 'Friend'} joined using your referral link. ₹50 has been credited to your Hunger Wallet!`,
             type: 'referral',
             read: false,
             createdAt: serverTimestamp(),
@@ -665,15 +712,58 @@ export default function LoginPage() {
 
       router.push(getRedirectTarget());
     } catch (err: any) {
-      const message =
-        err.code === 'auth/email-already-in-use'
-          ? 'An account with this email already exists. Please sign in instead.'
-          : err.code === 'auth/weak-password'
-          ? 'Password should be at least 6 characters.'
-          : err.message || 'Signup failed. Please try again.';
+      console.error('[Customer Signup] Error:', err);
+      let message = 'Signup failed. Please try again.';
+      if (err.code === 'auth/email-already-in-use') {
+        message = 'An account with this email already exists. Please sign in above.';
+      } else if (err.code === 'auth/weak-password') {
+        message = 'Password should be at least 6 characters.';
+      } else if (err.code === 'auth/invalid-email') {
+        message = 'Please enter a valid email address.';
+      } else if (err.code === 'auth/operation-not-allowed') {
+        message = 'Email registration is currently unavailable. Please use Google Sign In.';
+      } else if (err.code === 'auth/network-request-failed') {
+        message = 'Network connection failed. Please check your internet connection.';
+      } else if (err.message) {
+        message = err.message;
+      }
       setError(message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setForgotPasswordError('');
+    setForgotPasswordSuccess(false);
+
+    const cleanResetEmail = forgotPasswordEmail.trim().toLowerCase();
+    if (!cleanResetEmail) {
+      setForgotPasswordError('Please enter your registered email address.');
+      return;
+    }
+
+    setForgotPasswordLoading(true);
+    try {
+      await sendPasswordResetEmail(auth, cleanResetEmail);
+      setForgotPasswordSuccess(true);
+      toast.success(`Password reset link sent to ${cleanResetEmail}`);
+    } catch (err: any) {
+      console.error('Password reset error:', err);
+      let msg = 'Failed to send reset link. Please try again.';
+      if (err.code === 'auth/user-not-found') {
+        msg = 'No Hunger account found with this email.';
+      } else if (err.code === 'auth/invalid-email') {
+        msg = 'Please enter a valid email address.';
+      } else if (err.code === 'auth/too-many-requests') {
+        msg = 'Too many requests. Please wait a moment and try again.';
+      } else if (err.message) {
+        msg = err.message;
+      }
+      setForgotPasswordError(msg);
+    } finally {
+      setForgotPasswordLoading(false);
     }
   };
 
@@ -906,6 +996,38 @@ export default function LoginPage() {
                     </p>
                   </div>
 
+                  {/* Active Session Info Banner (if user is already authenticated) */}
+                  {user && !isGoogleSigningIn && !isPhoneModalOpen && (
+                    <div className="mb-5 p-3 rounded-2xl bg-primary/10 border border-primary/25 text-xs text-foreground flex items-center justify-between gap-2 animate-in fade-in">
+                      <div className="flex items-center gap-2 truncate">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0 animate-pulse" />
+                        <span className="truncate">Active: <strong>{user.email || user.displayName}</strong></span>
+                      </div>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={() => router.push(getRedirectTarget())}
+                          className="h-7 px-2.5 text-xs font-bold bg-primary text-primary-foreground rounded-lg cursor-pointer"
+                        >
+                          Explore Menu
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={async () => {
+                            await auth.signOut();
+                            toast.info('Signed out. You can now log into a different account.');
+                          }}
+                          className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground cursor-pointer"
+                        >
+                          Switch
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Mode Switcher Segment Tabs */}
                   <div className="grid grid-cols-2 p-1 bg-muted/60 backdrop-blur-sm rounded-xl mb-6 border border-border/50 text-xs sm:text-sm font-semibold">
                     <button
@@ -1058,8 +1180,21 @@ export default function LoginPage() {
                         <label className="text-xs font-bold text-foreground">
                           Password
                         </label>
-                        {!isLogin && (
+                        {!isLogin ? (
                           <span className="text-[11px] text-muted-foreground">Min. 6 characters</span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setForgotPasswordEmail(email);
+                              setForgotPasswordError('');
+                              setForgotPasswordSuccess(false);
+                              setIsForgotPasswordOpen(true);
+                            }}
+                            className="text-[11px] text-primary hover:underline font-bold transition-colors cursor-pointer"
+                          >
+                            Forgot password?
+                          </button>
                         )}
                       </div>
                       <div className="relative">
@@ -1260,6 +1395,111 @@ export default function LoginPage() {
               </Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Forgot Password Dialog */}
+      <Dialog
+        open={isForgotPasswordOpen}
+        onOpenChange={(open) => {
+          setIsForgotPasswordOpen(open);
+          if (!open) {
+            setForgotPasswordError('');
+            setForgotPasswordSuccess(false);
+          }
+        }}
+      >
+        <DialogContent className="max-w-md rounded-3xl p-6 sm:p-7 bg-card border border-border shadow-2xl">
+          <DialogHeader className="text-center sm:text-left space-y-2">
+            <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mx-auto sm:mx-0 shadow-sm ring-1 ring-primary/25">
+              <KeyRound className="w-6 h-6" />
+            </div>
+            <DialogTitle className="text-xl sm:text-2xl font-black text-foreground tracking-tight">
+              Reset Your Password
+            </DialogTitle>
+            <DialogDescription className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+              Enter the email associated with your Hunger account and we'll send you an instant link to securely reset your password.
+            </DialogDescription>
+          </DialogHeader>
+
+          {forgotPasswordSuccess ? (
+            <div className="my-4 p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300 space-y-2">
+              <div className="flex items-center gap-2 font-bold text-sm">
+                <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                <span>Password Reset Email Sent!</span>
+              </div>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Please check your inbox (and spam folder) for the password reset instructions sent to <strong>{forgotPasswordEmail}</strong>.
+              </p>
+              <Button
+                type="button"
+                onClick={() => {
+                  setIsForgotPasswordOpen(false);
+                  setForgotPasswordSuccess(false);
+                }}
+                className="w-full mt-3 h-10 rounded-xl font-bold bg-primary text-primary-foreground text-xs"
+              >
+                Back to Sign In
+              </Button>
+            </div>
+          ) : (
+            <form onSubmit={handleForgotPassword} className="space-y-4 my-2">
+              <div>
+                <label className="text-xs font-bold text-foreground block mb-1.5">
+                  Your Account Email
+                </label>
+                <div className="relative">
+                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+                  <Input
+                    type="email"
+                    placeholder="you@example.com"
+                    autoFocus
+                    required
+                    value={forgotPasswordEmail}
+                    onChange={(e) => {
+                      setForgotPasswordEmail(e.target.value);
+                      if (forgotPasswordError) setForgotPasswordError('');
+                    }}
+                    className="pl-10 h-12 rounded-xl bg-muted/40 border-border/80 text-foreground placeholder:text-muted-foreground text-sm font-medium transition-all focus:border-primary focus:bg-background"
+                  />
+                </div>
+                {forgotPasswordError && (
+                  <p className="text-xs text-destructive mt-1.5 font-medium flex items-center gap-1 animate-in fade-in">
+                    <span className="w-1 h-1 rounded-full bg-destructive inline-block" />
+                    {forgotPasswordError}
+                  </p>
+                )}
+              </div>
+
+              <DialogFooter className="pt-2 sm:pt-3 flex gap-2 sm:gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsForgotPasswordOpen(false)}
+                  className="rounded-xl h-11 text-xs font-semibold cursor-pointer"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={forgotPasswordLoading || !forgotPasswordEmail.trim()}
+                  className="flex-1 h-11 rounded-xl font-bold bg-primary hover:bg-primary/90 text-primary-foreground text-xs shadow-md shadow-primary/20 gap-2 cursor-pointer transition-all"
+                >
+                  {forgotPasswordLoading ? (
+                    <>
+                      <Spinner className="w-4 h-4 text-primary-foreground" />
+                      <span>Sending Link...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Send Reset Link</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </>
+                  )}
+                </Button>
+              </DialogFooter>
+            </form>
+          )}
         </DialogContent>
       </Dialog>
 

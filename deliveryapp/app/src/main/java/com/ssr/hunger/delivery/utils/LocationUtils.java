@@ -21,6 +21,10 @@ public class LocationUtils {
         return Math.round(R * c * 10.0) / 10.0;
     }
 
+    public static boolean isValidCoordinate(double lat, double lon) {
+        return GeohashHelper.isValidCoordinate(lat, lon);
+    }
+
     public static String formatDistance(double km) {
         if (km <= 0) return "Nearby";
         return String.format(Locale.getDefault(), "%.1f km", km);

@@ -241,6 +241,13 @@ public class OrderActiveDetailActivity extends AppCompatActivity {
     }
 
     private void confirmPickup() {
+        if (auth.getCurrentUser() == null || order == null) return;
+        String uid = auth.getCurrentUser().getUid();
+        if (order.getDeliveryPersonId() != null && !uid.equals(order.getDeliveryPersonId())) {
+            Toast.makeText(this, "Unauthorized: You are not the assigned partner for this order.", Toast.LENGTH_LONG).show();
+            return;
+        }
+
         Map<String, Object> updates = new HashMap<>();
         updates.put("deliveryStage", Constants.STAGE_TO_CUSTOMER);
         updates.put("pickedUpAt", FieldValue.serverTimestamp());
@@ -269,6 +276,10 @@ public class OrderActiveDetailActivity extends AppCompatActivity {
     private void completeDelivery() {
         if (auth.getCurrentUser() == null || order == null) return;
         String uid = auth.getCurrentUser().getUid();
+        if (order.getDeliveryPersonId() != null && !uid.equals(order.getDeliveryPersonId())) {
+            Toast.makeText(this, "Unauthorized: You are not the assigned partner for this order.", Toast.LENGTH_LONG).show();
+            return;
+        }
 
         Map<String, Object> orderUpdates = new HashMap<>();
         orderUpdates.put("status", Constants.STATUS_DELIVERED);

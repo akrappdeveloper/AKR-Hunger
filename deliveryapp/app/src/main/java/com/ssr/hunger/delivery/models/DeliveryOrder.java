@@ -24,6 +24,15 @@ public class DeliveryOrder implements Serializable {
     private String deliveryAddressPincode;
     private double deliveryLatitude;
     private double deliveryLongitude;
+    private String deliveryLocality;
+    private String deliveryDistrict;
+    private String deliveryLandmark;
+    private String customerGeohash;
+    private String restaurantGeohash;
+    private double roadDistanceKm;
+    private int estimatedDeliveryMinutes;
+    private String serviceMode;
+    private Map<String, Object> deliveryAddress;
 
     private List<OrderItem> items;
     private String status;
@@ -100,9 +109,61 @@ public class DeliveryOrder implements Serializable {
     public String getDeliveryAddressPincode() { return deliveryAddressPincode != null ? deliveryAddressPincode : ""; }
     public void setDeliveryAddressPincode(String deliveryAddressPincode) { this.deliveryAddressPincode = deliveryAddressPincode; }
 
+    public Map<String, Object> getDeliveryAddress() { return deliveryAddress; }
+    public void setDeliveryAddress(Map<String, Object> map) {
+        this.deliveryAddress = map;
+        if (map != null) {
+            if (map.get("street") != null) this.deliveryAddressStreet = map.get("street").toString();
+            if (map.get("addressLine1") != null && this.deliveryAddressStreet == null) this.deliveryAddressStreet = map.get("addressLine1").toString();
+            if (map.get("city") != null) this.deliveryAddressCity = map.get("city").toString();
+            if (map.get("pincode") != null) this.deliveryAddressPincode = map.get("pincode").toString();
+            if (map.get("locality") != null) this.deliveryLocality = map.get("locality").toString();
+            if (map.get("district") != null) this.deliveryDistrict = map.get("district").toString();
+            if (map.get("landmark") != null) this.deliveryLandmark = map.get("landmark").toString();
+            if (map.get("geohash") != null) this.customerGeohash = map.get("geohash").toString();
+            if (map.get("latitude") instanceof Number) this.deliveryLatitude = ((Number) map.get("latitude")).doubleValue();
+            if (map.get("longitude") instanceof Number) this.deliveryLongitude = ((Number) map.get("longitude")).doubleValue();
+        }
+    }
+
+    public void setCustomerLat(double lat) {
+        if (this.deliveryLatitude == 0.0) this.deliveryLatitude = lat;
+    }
+    public void setCustomerLon(double lon) {
+        if (this.deliveryLongitude == 0.0) this.deliveryLongitude = lon;
+    }
+
+    public String getDeliveryLocality() { return deliveryLocality != null ? deliveryLocality : ""; }
+    public void setDeliveryLocality(String deliveryLocality) { this.deliveryLocality = deliveryLocality; }
+
+    public String getDeliveryDistrict() { return deliveryDistrict != null ? deliveryDistrict : ""; }
+    public void setDeliveryDistrict(String deliveryDistrict) { this.deliveryDistrict = deliveryDistrict; }
+
+    public String getDeliveryLandmark() { return deliveryLandmark != null ? deliveryLandmark : ""; }
+    public void setDeliveryLandmark(String deliveryLandmark) { this.deliveryLandmark = deliveryLandmark; }
+
+    public String getCustomerGeohash() { return customerGeohash != null ? customerGeohash : ""; }
+    public void setCustomerGeohash(String customerGeohash) { this.customerGeohash = customerGeohash; }
+
+    public String getRestaurantGeohash() { return restaurantGeohash != null ? restaurantGeohash : ""; }
+    public void setRestaurantGeohash(String restaurantGeohash) { this.restaurantGeohash = restaurantGeohash; }
+
+    public double getRoadDistanceKm() { return roadDistanceKm; }
+    public void setRoadDistanceKm(double roadDistanceKm) { this.roadDistanceKm = roadDistanceKm; }
+
+    public int getEstimatedDeliveryMinutes() { return estimatedDeliveryMinutes; }
+    public void setEstimatedDeliveryMinutes(int estimatedDeliveryMinutes) { this.estimatedDeliveryMinutes = estimatedDeliveryMinutes; }
+
+    public String getServiceMode() { return serviceMode != null ? serviceMode : "standard"; }
+    public void setServiceMode(String serviceMode) { this.serviceMode = serviceMode; }
+
     public String getFullDeliveryAddress() {
         StringBuilder sb = new StringBuilder();
         if (deliveryAddressStreet != null && !deliveryAddressStreet.isEmpty()) sb.append(deliveryAddressStreet);
+        if (deliveryLocality != null && !deliveryLocality.isEmpty()) {
+            if (sb.length() > 0) sb.append(", ");
+            sb.append(deliveryLocality);
+        }
         if (deliveryAddressCity != null && !deliveryAddressCity.isEmpty()) {
             if (sb.length() > 0) sb.append(", ");
             sb.append(deliveryAddressCity);

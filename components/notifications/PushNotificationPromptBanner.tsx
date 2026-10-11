@@ -121,6 +121,15 @@ export default function PushNotificationPromptBanner({
     setDismissed(!shouldShow);
   }, [role, isSupported, permission, fcmToken]);
 
+  // Never display push prompt banner on login, signup, or authentication pages
+  if (
+    pathname?.includes('/login') ||
+    pathname?.includes('/signup') ||
+    pathname?.includes('/auth')
+  ) {
+    return null;
+  }
+
   // If another banner instance is already active, don't duplicate
   if (!isPrimaryInstance) {
     return null;

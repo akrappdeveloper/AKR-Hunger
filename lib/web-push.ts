@@ -17,7 +17,25 @@ export interface BrowserInfo {
   userAgent: string;
 }
 
-const VAPID_KEY = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY || 'BKBieUeVIq-2sW74jzr6egToaP1jfnzBZd4sJav8VgnSH90t9yt8y5UpdMC3pBvIOWLn2WKf1R-wnHUJfsDZs';
+export function normalizeVapidKey(key?: string): string | undefined {
+  if (!key) return undefined;
+  const trimmed = key.trim();
+  if (trimmed.length < 20) return undefined;
+  try {
+    const padding = (4 - (trimmed.length % 4)) % 4;
+    const padded = trimmed + '='.repeat(padding);
+    const base64 = padded.replace(/-/g, '+').replace(/_/g, '/');
+    if (typeof window !== 'undefined') {
+      window.atob(base64);
+    }
+    return trimmed;
+  } catch (e) {
+    console.warn('[WebPush] Invalid VAPID key format, omitting vapidKey option:', e);
+    return undefined;
+  }
+}
+
+const VAPID_KEY = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY || '';
 
 /**
  * Detect browser, operating system, and Web Push capability across Chrome, Safari, Edge, Firefox, etc.
@@ -344,11 +362,13 @@ export async function requestWebPushSubscription(
       };
     }
 
-    // Retrieve FCM token
-    const token = await getToken(msg, {
-      vapidKey: VAPID_KEY,
-      serviceWorkerRegistration: reg,
-    });
+    // Retrieve FCM token safely
+    const tokenOptions: any = { serviceWorkerRegistration: reg };
+    const validVapid = normalizeVapidKey(VAPID_KEY);
+    if (validVapid) {
+      tokenOptions.vapidKey = validVapid;
+    }
+    const token = await getToken(msg, tokenOptions);
 
     if (!token) {
       return {

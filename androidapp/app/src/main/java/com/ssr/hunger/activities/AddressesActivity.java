@@ -118,8 +118,11 @@ public class AddressesActivity extends BaseActivity {
             String pincode = addr.get("pincode") != null ? addr.get("pincode").toString() : "";
             Boolean isDefault = addr.get("isDefault") instanceof Boolean && (Boolean) addr.get("isDefault");
 
+            String locality = addr.get("locality") != null ? addr.get("locality").toString() : "";
             ((TextView) card.findViewById(R.id.tv_addr_label)).setText(label);
-            ((TextView) card.findViewById(R.id.tv_addr_line)).setText(line1);
+            String displayLine = line1;
+            if (!TextUtils.isEmpty(locality)) displayLine += " (" + locality + ")";
+            ((TextView) card.findViewById(R.id.tv_addr_line)).setText(displayLine);
             ((TextView) card.findViewById(R.id.tv_addr_city)).setText(city + ", " + state + " - " + pincode);
 
             TextView tvTypeEmoji = card.findViewById(R.id.tv_type_emoji);
@@ -172,6 +175,50 @@ public class AddressesActivity extends BaseActivity {
         EditText etPincode = dialogView.findViewById(R.id.et_addr_pincode);
         RadioGroup rgType = dialogView.findViewById(R.id.rg_addr_type);
         MaterialSwitch switchDefault = dialogView.findViewById(R.id.switch_addr_default);
+        View btnPickOnMap = dialogView.findViewById(R.id.btn_pick_on_map);
+        TextView tvPickMapSubtitle = dialogView.findViewById(R.id.tv_pick_map_subtitle);
+
+        final double[] coords = new double[]{
+                existing != null && existing.get("latitude") instanceof Number ? ((Number) existing.get("latitude")).doubleValue() : 0.0,
+                existing != null && existing.get("longitude") instanceof Number ? ((Number) existing.get("longitude")).doubleValue() : 0.0
+        };
+        final String[] geoMeta = new String[]{
+                existing != null && existing.get("geohash") != null ? existing.get("geohash").toString() : "",
+                existing != null && existing.get("locality") != null ? existing.get("locality").toString() : "",
+                existing != null && existing.get("district") != null ? existing.get("district").toString() : ""
+        };
+
+        if (coords[0] != 0 && coords[1] != 0 && tvPickMapSubtitle != null) {
+            tvPickMapSubtitle.setText(String.format(java.util.Locale.getDefault(), "📍 Pinned: %.4f, %.4f", coords[0], coords[1]));
+        }
+
+        if (btnPickOnMap != null) {
+            btnPickOnMap.setOnClickListener(v -> {
+                double initLat = coords[0] != 0 ? coords[0] : 28.6139;
+                double initLon = coords[1] != 0 ? coords[1] : 77.2090;
+                com.ssr.hunger.dialogs.MapPickerDialog mapDialog = com.ssr.hunger.dialogs.MapPickerDialog.newInstance(initLat, initLon);
+                mapDialog.setOnLocationPickedListener(picked -> {
+                    if (picked != null) {
+                        coords[0] = picked.getLatitude();
+                        coords[1] = picked.getLongitude();
+                        geoMeta[0] = picked.getGeohash() != null ? picked.getGeohash() :
+                                com.ssr.hunger.utils.GeohashHelper.encode(coords[0], coords[1], 7);
+                        geoMeta[1] = picked.getLocality() != null ? picked.getLocality() : "";
+                        geoMeta[2] = picked.getDistrict() != null ? picked.getDistrict() : "";
+
+                        if (etLine1 != null && !TextUtils.isEmpty(picked.getStreet())) etLine1.setText(picked.getStreet());
+                        if (etCity != null && !TextUtils.isEmpty(picked.getCity())) etCity.setText(picked.getCity());
+                        if (etState != null && !TextUtils.isEmpty(picked.getState())) etState.setText(picked.getState());
+                        if (etPincode != null && !TextUtils.isEmpty(picked.getPincode())) etPincode.setText(picked.getPincode());
+                        if (etLandmark != null && !TextUtils.isEmpty(picked.getLandmark())) etLandmark.setText(picked.getLandmark());
+                        if (tvPickMapSubtitle != null) {
+                            tvPickMapSubtitle.setText(String.format(java.util.Locale.getDefault(), "✅ Pinned: %.4f, %.4f", coords[0], coords[1]));
+                        }
+                    }
+                });
+                mapDialog.show(getSupportFragmentManager(), "map_picker_from_addresses");
+            });
+        }
 
         // Pre-fill if editing
         if (existing != null) {
@@ -229,6 +276,7 @@ public class AddressesActivity extends BaseActivity {
 
             Map<String, Object> data = new HashMap<>();
             data.put("label", etLabel != null && !TextUtils.isEmpty(etLabel.getText()) ? etLabel.getText().toString().trim() : type);
+            data.put("addressLabel", etLabel != null && !TextUtils.isEmpty(etLabel.getText()) ? etLabel.getText().toString().trim() : type);
             data.put("type", type);
             data.put("addressLine1", line1Val);
             data.put("addressLine2", etLine2 != null ? etLine2.getText().toString().trim() : "");
@@ -238,6 +286,16 @@ public class AddressesActivity extends BaseActivity {
             data.put("pincode", pincodeVal);
             data.put("isDefault", isDefault);
             data.put("updatedAt", Timestamp.now());
+
+            if (coords[0] != 0 && coords[1] != 0) {
+                data.put("latitude", coords[0]);
+                data.put("longitude", coords[1]);
+                String gHash = !TextUtils.isEmpty(geoMeta[0]) ? geoMeta[0] :
+                        com.ssr.hunger.utils.GeohashHelper.encode(coords[0], coords[1], 7);
+                data.put("geohash", gHash);
+            }
+            if (!TextUtils.isEmpty(geoMeta[1])) data.put("locality", geoMeta[1]);
+            if (!TextUtils.isEmpty(geoMeta[2])) data.put("district", geoMeta[2]);
 
             String uid = auth.getCurrentUser().getUid();
             if (addrId != null) {

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, lazy, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
@@ -38,6 +38,8 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { getAccurateCurrentLocation, lookupPostalPincode, GeocodedAddress } from '@/lib/reverse-geocode';
+
+const MapLocationPicker = lazy(() => import('@/components/customer/MapLocationPicker'));
 
 interface DeliveryLocationDialogProps {
   open: boolean;
@@ -78,6 +80,7 @@ export default function DeliveryLocationDialog({
   const [state, setState] = useState('');
   const [landmark, setLandmark] = useState('');
   const [pincodeLoading, setPincodeLoading] = useState(false);
+  const [showMapPicker, setShowMapPicker] = useState(false);
 
   // Auto-fetch city & state on pincode entry
   const handlePincodeChange = async (val: string) => {
@@ -339,7 +342,7 @@ export default function DeliveryLocationDialog({
         {/* Modal Body */}
         <div className="p-4 sm:p-6 space-y-4 max-h-[75vh] overflow-y-auto">
           {/* Action Row: Live GPS & Add New Address Toggle */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {/* GPS Button */}
             <button
               type="button"
@@ -389,7 +392,71 @@ export default function DeliveryLocationDialog({
                 </p>
               </div>
             </button>
+
+            {/* Pick on Map Button */}
+            <button
+              type="button"
+              onClick={() => setShowMapPicker(!showMapPicker)}
+              className={`flex items-center gap-3 p-3.5 rounded-2xl border transition-all text-left group cursor-pointer shadow-sm ${
+                showMapPicker
+                  ? 'border-emerald-500 bg-emerald-500/10 text-emerald-600'
+                  : 'border-border/80 bg-muted/40 hover:bg-muted text-foreground'
+              }`}
+            >
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm transition-transform group-hover:scale-105 ${
+                showMapPicker ? 'bg-emerald-500 text-white' : 'bg-card border border-border text-foreground'
+              }`}>
+                <MapPin className={`w-5 h-5 ${showMapPicker ? 'animate-bounce' : ''}`} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs sm:text-sm font-black text-foreground">
+                  {showMapPicker ? 'Close Map' : 'Pick on Map'}
+                </p>
+                <p className="text-[11px] text-muted-foreground truncate">
+                  {showMapPicker ? 'Drag pin to set location' : 'Interactive map to pinpoint delivery spot'}
+                </p>
+              </div>
+            </button>
           </div>
+
+          {/* Interactive Map Picker */}
+          {showMapPicker && (
+            <div className="animate-in fade-in-50 slide-in-from-top-2 duration-300">
+              <Suspense fallback={
+                <div className="flex items-center justify-center h-[300px] bg-muted/40 rounded-2xl border border-border">
+                  <Loader2 className="w-8 h-8 text-primary animate-spin" />
+                </div>
+              }>
+                <MapLocationPicker
+                  initialLat={detectedGeo?.latitude || (deliveryAddress?.latitude && deliveryAddress.latitude !== 0 ? deliveryAddress.latitude : 28.6139)}
+                  initialLon={detectedGeo?.longitude || (deliveryAddress?.longitude && deliveryAddress.longitude !== 0 ? deliveryAddress.longitude : 77.2090)}
+                  height="350px"
+                  onClose={() => setShowMapPicker(false)}
+                  onLocationConfirmed={(loc) => {
+                    const mapAddress: Address = {
+                      id: `map-${Date.now()}`,
+                      customerId: user?.uid || 'guest',
+                      type: 'other',
+                      street: loc.street || loc.locality || `${loc.latitude.toFixed(4)}, ${loc.longitude.toFixed(4)}`,
+                      locality: loc.locality,
+                      city: loc.city,
+                      state: loc.state,
+                      pincode: loc.pincode,
+                      latitude: loc.latitude,
+                      longitude: loc.longitude,
+                      isDefault: false,
+                      createdAt: new Date(),
+                    };
+                    setDeliveryAddress(mapAddress);
+                    localStorage.setItem('deliveryAddress', JSON.stringify(mapAddress));
+                    toast.success(`📍 Delivering to: ${loc.city || loc.locality || 'Selected Location'}${loc.pincode ? ` (${loc.pincode})` : ''}`);
+                    setShowMapPicker(false);
+                    onOpenChange(false);
+                  }}
+                />
+              </Suspense>
+            </div>
+          )}
 
           {/* Real-time Detected Location Card (with IP, GPS, Pincode, City, State, Country & Manual Edit) */}
           {detectedGeo && (

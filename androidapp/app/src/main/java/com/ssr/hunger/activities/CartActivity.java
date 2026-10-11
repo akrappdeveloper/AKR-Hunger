@@ -455,6 +455,51 @@ public class CartActivity extends BaseActivity implements CartManager.CartChange
                                 }
                             }
                         }
+
+                        // === GEOSPATIAL DISTANCE CHECK ===
+                        // When both restaurant and customer have valid coordinates,
+                        // check straight-line distance as a pre-filter (road distance = ~1.4x straight-line)
+                        boolean geoCheckPassed = true;
+                        double straightLineKm = 0;
+                        if (restaurantDoc != null && restaurantDoc.exists()) {
+                            Double rLat = restaurantDoc.getDouble("latitude");
+                            Double rLon = restaurantDoc.getDouble("longitude");
+                            double cLat = deliveryAddress.getLatitude();
+                            double cLon = deliveryAddress.getLongitude();
+
+                            if (rLat != null && rLon != null && rLat != 0 && rLon != 0
+                                    && com.ssr.hunger.utils.GeohashHelper.isValidCoordinate(cLat, cLon)) {
+                                double distMeters = com.ssr.hunger.utils.GeohashHelper.haversineDistance(
+                                        rLat, rLon, cLat, cLon);
+                                straightLineKm = distMeters / 1000.0;
+
+                                // 15km straight-line ≈ 20km road distance — block if clearly out of range
+                                double maxStraightLineKm = 15.0;
+                                if (straightLineKm > maxStraightLineKm) {
+                                    geoCheckPassed = false;
+                                    String rName = restaurantDoc.getString("name");
+                                    final double finalDistKm = straightLineKm;
+                                    runOnUiThread(() -> {
+                                        findViewById(R.id.btn_place_order).setEnabled(true);
+                                        ModernDialogHelper.showWarningDialog(
+                                                CartActivity.this,
+                                                "Too Far for Delivery",
+                                                "📍 " + (rName != null ? rName : "This restaurant")
+                                                        + " is approximately " + String.format("%.1f", finalDistKm)
+                                                        + " km away from your delivery location."
+                                                        + "\n\nMaximum delivery range is ~10 km by road."
+                                                        + "\n\nPlease select a closer restaurant or change your delivery address.",
+                                                "Change Address",
+                                                () -> openAddressSelector()
+                                        );
+                                    });
+                                }
+                            }
+                        }
+
+                        if (!geoCheckPassed) return;
+                        // === END GEOSPATIAL CHECK ===
+
                         // If restaurant has no pincode list or pincode is empty, allow order
                         if (servicePincodes == null || servicePincodes.isEmpty() || TextUtils.isEmpty(finalDeliveryPincode)) {
                             findViewById(R.id.btn_place_order).setEnabled(true);
@@ -635,6 +680,12 @@ public class CartActivity extends BaseActivity implements CartManager.CartChange
         addrMap.put("type", deliveryAddress.getType() != null ? deliveryAddress.getType() : "home");
         addrMap.put("latitude", deliveryAddress.getLatitude());
         addrMap.put("longitude", deliveryAddress.getLongitude());
+        addrMap.put("locality", deliveryAddress.getLocality() != null ? deliveryAddress.getLocality() : "");
+        addrMap.put("district", deliveryAddress.getDistrict() != null ? deliveryAddress.getDistrict() : "");
+        addrMap.put("addressLabel", deliveryAddress.getAddressLabel() != null ? deliveryAddress.getAddressLabel() : "");
+        String custGeohash = deliveryAddress.getGeohash() != null && !deliveryAddress.getGeohash().isEmpty() ? deliveryAddress.getGeohash() :
+                (deliveryAddress.getLatitude() != 0 ? com.ssr.hunger.utils.GeohashHelper.encode(deliveryAddress.getLatitude(), deliveryAddress.getLongitude(), 7) : "");
+        addrMap.put("geohash", custGeohash);
 
         String customerPhone = user.getPhoneNumber() != null ? user.getPhoneNumber() : "";
 
@@ -651,6 +702,13 @@ public class CartActivity extends BaseActivity implements CartManager.CartChange
         orderData.put("deliveryAddressStreet", deliveryAddress.getStreet() != null ? deliveryAddress.getStreet() : "");
         orderData.put("deliveryAddressCity", deliveryAddress.getCity() != null ? deliveryAddress.getCity() : "");
         orderData.put("deliveryAddressPincode", deliveryAddress.getPincode() != null ? deliveryAddress.getPincode() : "");
+        orderData.put("deliveryLatitude", deliveryAddress.getLatitude());
+        orderData.put("deliveryLongitude", deliveryAddress.getLongitude());
+        orderData.put("customerLat", deliveryAddress.getLatitude());
+        orderData.put("customerLon", deliveryAddress.getLongitude());
+        orderData.put("customerGeohash", custGeohash);
+        orderData.put("deliveryLocality", deliveryAddress.getLocality() != null ? deliveryAddress.getLocality() : "");
+        orderData.put("serviceMode", "standard");
         orderData.put("status", "pending");
         orderData.put("paymentMethod", paymentMethod);
         orderData.put("subtotal", subtotal);

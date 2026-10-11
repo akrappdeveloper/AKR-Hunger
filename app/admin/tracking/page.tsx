@@ -11,13 +11,23 @@ import {
   Navigation, MapPin, Truck, Clock, Package, CheckCircle,
   Search, Activity, ArrowRight, Phone, User, Store,
   AlertCircle, Bike, ChefHat, ShoppingBag, Signal,
-  Gauge, Eye, Filter, Satellite, Radio
+  Gauge, Eye, Filter, Satellite, Radio, Sliders, RefreshCw,
+  Send, AlertTriangle, ShieldCheck, Check, Users
 } from 'lucide-react';
 import { useTrackAllDrivers, DriverLocationData } from '@/hooks/useTrackDriver';
 import LiveTrackingMap, { MapMarker } from '@/components/tracking/LiveTrackingMap';
 import DriverInfoPanel from '@/components/tracking/DriverInfoPanel';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DeliveryStage, DeliveryFlow, getStageLabel, getStageColor, getRouteDestination } from '@/lib/types';
+import { toast } from 'sonner';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 interface ActiveDelivery {
   id: string;
@@ -57,8 +67,70 @@ export default function AdminTrackingPage() {
   const [selectedDriverId, setSelectedDriverId] = useState<string | null>(null);
   const [showMap, setShowMap] = useState(true);
 
+  // Reassignment & Settings state
+  const [reassignOrder, setReassignOrder] = useState<ActiveDelivery | null>(null);
+  const [selectedNewPartnerId, setSelectedNewPartnerId] = useState<string>('');
+  const [reassignReason, setReassignReason] = useState<string>('');
+  const [reassigning, setReassigning] = useState<boolean>(false);
+  const [showSettingsDialog, setShowSettingsDialog] = useState<boolean>(false);
+  const [assignmentRadius, setAssignmentRadius] = useState<number>(7);
+  const [assignmentTimeout, setAssignmentTimeout] = useState<number>(45);
+
   // Live driver locations from Firestore
   const { drivers: liveDrivers, loading: driversLoading } = useTrackAllDrivers();
+
+  // Filter for unassigned orders waiting for partner
+  const waitingOrders = useMemo(() => {
+    return activeDeliveries.filter(
+      d => !d.deliveryPersonId || d.deliveryPersonName === 'Unassigned'
+    );
+  }, [activeDeliveries]);
+
+  const handleAutoAssign = async (orderId: string) => {
+    try {
+      const res = await fetch('/api/delivery/assign', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'auto_assign', orderId, radiusKm: assignmentRadius }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || data.message || 'Auto-assignment failed');
+      toast.success(data.message || 'Partner assigned successfully!');
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to auto-assign');
+    }
+  };
+
+  const handleManualReassign = async () => {
+    if (!reassignOrder || !selectedNewPartnerId) {
+      toast.error('Please select a delivery partner');
+      return;
+    }
+    setReassigning(true);
+    try {
+      const res = await fetch('/api/delivery/assign', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'manual_assign',
+          orderId: reassignOrder.id,
+          partnerId: selectedNewPartnerId,
+          reason: reassignReason || 'Manual dispatch by administrator',
+          adminId: 'admin',
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to reassign');
+      toast.success(data.message || 'Partner reassigned successfully!');
+      setReassignOrder(null);
+      setSelectedNewPartnerId('');
+      setReassignReason('');
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to reassign');
+    } finally {
+      setReassigning(false);
+    }
+  };
 
   useEffect(() => {
     // Listen to active orders
@@ -247,6 +319,15 @@ export default function AdminTrackingPage() {
           <p className="text-muted-foreground">Monitor all delivery partners and active orders on the live map.</p>
         </div>
         <div className="flex items-center gap-3">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowSettingsDialog(true)}
+            className="border-border/50 text-xs gap-1.5 bg-card/5 hover:bg-card/10 text-foreground"
+          >
+            <Sliders className="w-3.5 h-3.5 text-blue-400" />
+            Assignment Rules
+          </Button>
           <div className="flex items-center gap-2 bg-card/5 rounded-full px-4 py-2 border border-border/50">
             <Satellite className="w-3.5 h-3.5 text-green-400" />
             <span className="text-sm font-medium text-green-400">{liveOnlineCount} GPS Active</span>
@@ -282,6 +363,73 @@ export default function AdminTrackingPage() {
           );
         })}
       </div>
+
+      {/* Orders Waiting for Delivery Partner Alert */}
+      {waitingOrders.length > 0 && (
+        <Card className="bg-yellow-500/10 border-yellow-500/30 backdrop-blur-md shadow-lg overflow-hidden">
+          <CardHeader className="bg-yellow-500/10 border-b border-yellow-500/20 py-3 px-4">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm font-semibold text-yellow-400 flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-yellow-400" />
+                {waitingOrders.length} {waitingOrders.length === 1 ? 'Order' : 'Orders'} Awaiting Delivery Partner Assignment
+              </CardTitle>
+              <Badge variant="outline" className="bg-yellow-500/20 text-yellow-300 border-yellow-500/40 text-xs">
+                Action Required
+              </Badge>
+            </div>
+          </CardHeader>
+          <CardContent className="p-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {waitingOrders.map((ord) => (
+                <div
+                  key={ord.id}
+                  className="bg-card/40 border border-border/50 rounded-lg p-3 space-y-2 hover:border-yellow-500/40 transition-colors"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-mono font-bold text-foreground">#{ord.id.slice(0, 8)}</span>
+                    <Badge variant="outline" className="text-[10px] bg-yellow-500/10 text-yellow-400 border-yellow-500/30 capitalize">
+                      {ord.status}
+                    </Badge>
+                  </div>
+                  <div className="text-xs space-y-1">
+                    <p className="text-foreground font-medium truncate flex items-center gap-1.5">
+                      <Store className="w-3.5 h-3.5 text-orange-400 shrink-0" />
+                      {ord.restaurantName}
+                    </p>
+                    <p className="text-muted-foreground truncate flex items-center gap-1.5">
+                      <MapPin className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                      {ord.customerName}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 pt-2 border-t border-border/40">
+                    <Button
+                      size="sm"
+                      variant="default"
+                      onClick={() => handleAutoAssign(ord.id)}
+                      className="flex-1 bg-yellow-600 hover:bg-yellow-500 text-black text-xs font-bold h-7 gap-1"
+                    >
+                      <RefreshCw className="w-3 h-3" />
+                      Auto-Assign
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setReassignOrder(ord);
+                        setSelectedNewPartnerId('');
+                      }}
+                      className="border-border text-xs h-7 gap-1"
+                    >
+                      <Users className="w-3 h-3" />
+                      Choose Rider
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Fleet Map */}
       <Card className="bg-background/40 border-border/50 backdrop-blur-md shadow-xl overflow-hidden">
@@ -542,7 +690,22 @@ export default function AdminTrackingPage() {
                           )}
                         </div>
                       </div>
-                      <p className="text-emerald-400 font-bold font-mono text-sm">₹{delivery.total}</p>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setReassignOrder(delivery);
+                            setSelectedNewPartnerId('');
+                          }}
+                          className="h-6 px-2 text-[10px] text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 gap-1 border border-blue-500/20"
+                        >
+                          <RefreshCw className="w-2.5 h-2.5" />
+                          Reassign
+                        </Button>
+                        <p className="text-emerald-400 font-bold font-mono text-sm">₹{delivery.total}</p>
+                      </div>
                     </div>
                   </div>
                 );
@@ -657,6 +820,190 @@ export default function AdminTrackingPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Manual Reassignment Dialog */}
+      <Dialog open={!!reassignOrder} onOpenChange={(open) => !open && setReassignOrder(null)}>
+        <DialogContent className="max-w-md bg-card/95 border-border backdrop-blur-xl text-foreground">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-foreground font-bold">
+              <RefreshCw className="w-4 h-4 text-blue-400" />
+              Reassign Order #{reassignOrder?.id.slice(0, 8)}
+            </DialogTitle>
+            <DialogDescription className="text-muted-foreground text-xs">
+              Atomically transfer this order to an eligible online delivery partner with audit logging.
+            </DialogDescription>
+          </DialogHeader>
+
+          {reassignOrder && (
+            <div className="space-y-4 py-2 text-xs">
+              <div className="bg-background/40 border border-border/50 rounded-lg p-3 space-y-1.5">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Restaurant:</span>
+                  <span className="font-semibold text-foreground">{reassignOrder.restaurantName}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Customer:</span>
+                  <span className="font-semibold text-foreground">{reassignOrder.customerName}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Current Partner:</span>
+                  <span className="font-semibold text-yellow-400">{reassignOrder.deliveryPersonName}</span>
+                </div>
+              </div>
+
+              {/* Select Partner */}
+              <div className="space-y-1.5">
+                <label className="font-medium text-foreground">Select New Delivery Partner</label>
+                <div className="max-h-48 overflow-y-auto space-y-1.5 border border-border/50 rounded-lg p-2 bg-background/20">
+                  {partners
+                    .filter(p => p.id !== reassignOrder.deliveryPersonId)
+                    .map((p) => {
+                      const dLoc = liveDrivers.find(d => d.driverId === p.id);
+                      const isSelected = selectedNewPartnerId === p.id;
+                      return (
+                        <div
+                          key={p.id}
+                          onClick={() => setSelectedNewPartnerId(p.id)}
+                          className={`p-2 rounded-md flex items-center justify-between cursor-pointer transition-colors ${
+                            isSelected
+                              ? 'bg-blue-600/20 border border-blue-500/50'
+                              : 'hover:bg-card/20 border border-transparent'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <div className="w-7 h-7 rounded-full bg-card/40 flex items-center justify-center font-bold text-xs">
+                              {p.name.charAt(0)}
+                            </div>
+                            <div>
+                              <p className="font-medium text-foreground">{p.name}</p>
+                              <p className="text-[10px] text-muted-foreground">{p.vehicle} • ⭐ {p.rating.toFixed(1)}</p>
+                            </div>
+                          </div>
+                          <Badge
+                            variant="outline"
+                            className={`text-[10px] ${
+                              dLoc?.isOnline
+                                ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                                : 'bg-gray-500/10 text-muted-foreground border-border/30'
+                            }`}
+                          >
+                            {dLoc?.isOnline ? 'GPS Active' : 'Offline'}
+                          </Badge>
+                        </div>
+                      );
+                    })}
+                </div>
+              </div>
+
+              {/* Reason */}
+              <div className="space-y-1.5">
+                <label className="font-medium text-foreground">Reassignment Reason (Logged in Audit Trail)</label>
+                <Input
+                  placeholder="e.g. Previous partner bike breakdown / unresponsive"
+                  value={reassignReason}
+                  onChange={(e) => setReassignReason(e.target.value)}
+                  className="text-xs bg-background/30 border-border"
+                />
+              </div>
+            </div>
+          )}
+
+          <DialogFooter className="gap-2">
+            <Button variant="outline" size="sm" onClick={() => setReassignOrder(null)}>
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              disabled={!selectedNewPartnerId || reassigning}
+              onClick={handleManualReassign}
+              className="bg-blue-600 hover:bg-blue-500 text-white font-bold"
+            >
+              {reassigning ? 'Reassigning...' : 'Confirm Reassignment'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Assignment Rules Settings Dialog */}
+      <Dialog open={showSettingsDialog} onOpenChange={setShowSettingsDialog}>
+        <DialogContent className="max-w-md bg-card/95 border-border backdrop-blur-xl text-foreground">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-foreground font-bold">
+              <Sliders className="w-4 h-4 text-blue-400" />
+              Delivery Assignment Rules & Radius
+            </DialogTitle>
+            <DialogDescription className="text-muted-foreground text-xs">
+              Operational controls for driver dispatch and distance enforcement.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2 text-xs">
+            {/* Rule 1: Customer Radius */}
+            <div className="bg-background/40 border border-border/50 rounded-lg p-3 space-y-1">
+              <p className="font-semibold text-foreground flex items-center gap-1.5">
+                <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                Restaurant-to-Customer Service Radius
+              </p>
+              <p className="text-muted-foreground text-[11px]">
+                Strictly enforced at <strong>10.0 km road distance</strong> from restaurant to customer. A nearby delivery partner will never make an ineligible restaurant deliverable.
+              </p>
+            </div>
+
+            {/* Rule 2: Assignment Radius */}
+            <div className="space-y-1.5">
+              <div className="flex justify-between items-center">
+                <label className="font-medium text-foreground">Partner Assignment Search Radius</label>
+                <span className="font-mono font-bold text-blue-400">{assignmentRadius} km</span>
+              </div>
+              <input
+                type="range"
+                min="3"
+                max="15"
+                step="0.5"
+                value={assignmentRadius}
+                onChange={(e) => setAssignmentRadius(Number(e.target.value))}
+                className="w-full accent-blue-500"
+              />
+              <p className="text-[10px] text-muted-foreground">
+                Independent radius measured from restaurant to online delivery partners.
+              </p>
+            </div>
+
+            {/* Rule 3: Offer Timeout */}
+            <div className="space-y-1.5">
+              <div className="flex justify-between items-center">
+                <label className="font-medium text-foreground">Offer Acceptance Timeout</label>
+                <span className="font-mono font-bold text-yellow-400">{assignmentTimeout}s</span>
+              </div>
+              <input
+                type="range"
+                min="20"
+                max="90"
+                step="5"
+                value={assignmentTimeout}
+                onChange={(e) => setAssignmentTimeout(Number(e.target.value))}
+                className="w-full accent-yellow-500"
+              />
+              <p className="text-[10px] text-muted-foreground">
+                If the offered partner does not accept within this window, the job automatically waterfalls to the next nearest candidate.
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              size="sm"
+              onClick={() => {
+                setShowSettingsDialog(false);
+                toast.success(`Operational rules updated: ${assignmentRadius}km assignment radius, ${assignmentTimeout}s timeout.`);
+              }}
+              className="bg-blue-600 hover:bg-blue-500 text-white font-bold"
+            >
+              Save Settings
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

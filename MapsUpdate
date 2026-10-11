@@ -1,0 +1,849 @@
+MASTER IMPLEMENTATION PROMPT — HUNGER INDIA-WIDE LOCATION & RESTAURANT DISCOVERY SYSTEM
+
+1. ROLE AND OBJECTIVE
+
+Act as a Senior Android Engineer, Next.js Engineer, Firebase Architect, GIS/Mapping Engineer, Backend Developer, Security Engineer, and QA Engineer.
+
+Implement a complete, production-oriented Location-Based Restaurant Discovery and Delivery Eligibility System in my existing Hunger food delivery platform.
+
+This is an implementation task, not a UI-only task or a tutorial. Inspect the existing source code first, understand the current architecture, and integrate the feature into the actual project without breaking existing functionality.
+
+Primary objective: Customers across India must be able to enter a PIN code, use their current GPS location, or manually select a location on a map. Hunger must display restaurants and menu items that can actually deliver to the selected address, using road distance, restaurant delivery radius, operating status, serviceability, and delivery capacity.
+
+Do not replace existing working features unnecessarily. Reuse the project's current architecture, Firebase configuration, authentication, navigation, UI components, theme system, and naming conventions.
+
+2. MANDATORY FIRST STEP — INSPECT THE EXISTING PROJECT
+
+Before modifying code:
+
+Inspect the complete project structure.
+
+Identify the Android application module, Java Activities/Fragments, XML layouts, Gradle files, manifest, repositories, adapters, models, and navigation.
+
+Identify the Next.js application, admin dashboard, API routes, server-side code, environment variables, and deployment configuration.
+
+Identify the Firebase products currently in use: Authentication, Firestore, Realtime Database, Storage, Cloud Functions, and Firebase Cloud Messaging.
+
+Locate existing restaurant discovery, PIN code search, menu loading, saved addresses, checkout, order creation, delivery tracking, and admin restaurant management code.
+
+Identify the existing map SDK, if any, and the current geocoding/routing implementation.
+
+Identify current Firestore collections, document structures, indexes, and security rules before designing migrations.
+
+Check installed dependencies and use versions compatible with the existing project. Do not blindly upgrade Next.js, React, Gradle, Android SDK, or Firebase dependencies.
+
+Create an implementation checklist and a list of existing files that must be modified.
+
+Implement in small, verifiable stages and build/test after each major stage.
+
+Do not invent existing file names, collections, functions, credentials, or configuration values. Discover them from the repository.
+
+If a feature already exists, improve and reuse it rather than creating a conflicting duplicate.
+
+3. CUSTOMER LOCATION SELECTION
+
+Implement a professional location selection experience in the Hunger Android application and website.
+
+Support all three methods:
+
+A. PIN Code Search
+
+Accept Indian six-digit PIN codes.
+
+Validate format and resolve the PIN code to locality, district, state, and available geographic information.
+
+Show locality suggestions when multiple localities or post offices share a PIN code.
+
+Allow the customer to select the correct locality.
+
+Never treat the PIN code centroid as the customer's exact delivery location.
+
+After PIN selection, request an exact map pin, GPS location, or sufficiently precise address confirmation before final delivery eligibility.
+
+Handle invalid, unknown, discontinued, ambiguous, and unsupported PIN codes gracefully.
+
+Avoid hardcoding a limited list of Indian PIN codes.
+
+Use a maintained and appropriately licensed PIN code data source or geocoding provider. Cache results according to its terms.
+
+B. Current GPS Location
+
+Request Android location permissions only when the user chooses the location feature.
+
+Support approximate and precise location permissions where applicable.
+
+Explain the purpose of location access.
+
+Handle permission denial, disabled location services, timeouts, inaccurate coordinates, and unavailable GPS.
+
+Do not force customers to grant location permission; provide manual address selection as an alternative.
+
+Use a suitable Android location API already compatible with the project.
+
+Do not continuously track customer location when it is not needed.
+
+C. Manual Map Selection
+
+Display an interactive map.
+
+Let customers drag a map pin or tap to choose the delivery location.
+
+Reverse-geocode the selected coordinates to suggest a readable address.
+
+Allow manual correction of house number, street, locality, landmark, city, state, and PIN code.
+
+Provide a clear Confirm Location button.
+
+Show a marker, current selection, and address confirmation state.
+
+Support light and dark themes.
+
+Handle loading, network errors, and map-provider failures.
+
+Make the map usable on small screens and accessible to assistive technologies.
+
+After confirmation, save the address under the authenticated customer's account. Support Home, Work, and Other labels, edit, delete, and default-address selection.
+
+4. OPEN-SOURCE MAPPING ARCHITECTURE
+
+Prefer the following components, subject to compatibility and production testing:
+
+Map data: OpenStreetMap.
+
+Android map interface: a compatible native MapLibre SDK.
+
+Web map interface: MapLibre GL JS.
+
+Road routing: OSRM or a compatible routing engine.
+
+Geohash candidate discovery: Firestore-compatible geohash querying.
+
+Advanced future geospatial queries: PostgreSQL with PostGIS, if required.
+
+Verify the current official documentation, licenses, supported versions, deployment requirements, and compatibility before selecting dependencies.
+
+Do not assume that public OpenStreetMap tile servers, public Nominatim, or public OSRM demonstration servers offer unlimited production access.
+
+For production:
+
+Use an appropriately licensed and provisioned tile service or self-hosted map infrastructure.
+
+Use a suitable geocoding service or self-hosted solution.
+
+Use self-hosted OSRM or an appropriately licensed routing provider with defined capacity and availability.
+
+Follow OpenStreetMap attribution and each service's caching, attribution, and usage policies.
+
+Keep service URLs configurable through environment configuration.
+
+Provide timeouts, retry policies, structured error handling, and monitoring.
+
+Never expose private API keys, credentials, or privileged service configuration in Android or browser bundles.
+
+Create provider interfaces so the routing or geocoding implementation can be replaced without rewriting restaurant discovery.
+
+Suggested interfaces:
+
+LocationResolver
+
+ReverseGeocodingService
+
+RestaurantGeoSearchRepository
+
+RoadRoutingService
+
+DeliveryEligibilityService
+
+DeliveryPricingService
+
+Adapt naming to the existing project's architecture.
+
+5. DEFAULT DELIVERY POLICY
+
+Implement the following configurable business rules:
+
+STANDARD DELIVERY
+
+Default maximum road distance: 10 km.
+
+Restaurant must be approved, active, accepting orders, and within its configured service area.
+
+Restaurant must have an eligible delivery method and sufficient delivery capacity.
+
+Menu items must be active, in stock, and orderable.
+
+The routing engine must return a valid route.
+
+The final road distance must not exceed the effective delivery limit.
+
+EXTENDED DELIVERY
+
+Default disabled.
+
+Configurable per restaurant and by authorized administrators.
+
+Suggested initial extended limit: 20 km.
+
+Requires explicit approval, compatible delivery arrangements, and valid pricing.
+
+Must not be activated merely because the customer PIN code matches.
+
+LONG-DISTANCE DELIVERY
+
+Disabled by default.
+
+Suggested maximum policy limit: 100 km, only if an appropriate logistics service is implemented and approved.
+
+Treat this as a separate delivery/logistics mode, not normal restaurant delivery.
+
+Require supported routes, packaging and food-safety procedures, capacity, serviceable destination, realistic ETA, and explicit pricing.
+
+Do not display long-distance delivery as available until the complete logistics workflow is operational.
+
+Allow platform administrators to configure these settings safely.
+
+Keep separate fields for:
+
+Platform default radius.
+
+Restaurant-specific approved maximum radius.
+
+Customer-selected delivery address.
+
+Effective delivery limit.
+
+Service mode.
+
+Actual road distance.
+
+Route duration.
+
+Delivery eligibility result.
+
+Do not allow a restaurant to exceed its administrator-approved maximum radius.
+
+6. FIRESTORE DATA MODEL
+
+First inspect and reuse the existing schema. Implement compatible additions and a migration plan instead of blindly replacing collections.
+
+Recommended conceptual structure:
+
+restaurants/{restaurantId}
+restaurants/{restaurantId}/menuItems/{itemId}
+users/{uid}/addresses/{addressId}
+deliveryPartners/{partnerId}
+orders/{orderId}
+platformSettings/deliveryPolicies
+
+Restaurant location fields should include:
+
+latitude
+
+longitude
+
+geohash
+
+formattedAddress
+
+locality
+
+city
+
+state
+
+pincode
+
+approvalStatus
+
+isOpen
+
+acceptsOrders
+
+deliveryMode
+
+serviceArea.mode
+
+serviceArea.defaultRadiusKm
+
+serviceArea.maxRadiusKm
+
+averagePreparationMinutes
+
+updatedAt
+
+Menu item fields should include:
+
+name
+
+categoryId
+
+price
+
+imageUrl
+
+isActive
+
+isAvailable
+
+preparationMinutes, where appropriate
+
+dietary classification, if supported by the existing platform
+
+Saved address fields should include:
+
+addressLabel
+
+addressLine
+
+landmark
+
+locality
+
+city
+
+district
+
+state
+
+pincode
+
+latitude
+
+longitude
+
+geohash
+
+isDefault
+
+createdAt
+
+updatedAt
+
+Order records must preserve a snapshot of the confirmed delivery address, restaurant details needed for fulfillment, ordered item details, verified prices, fee breakdown, service mode, and the estimate shown at checkout.
+
+Use server timestamps and validated numeric coordinates. Do not duplicate large menu documents inside every restaurant discovery result.
+
+Do not trust client-supplied geohashes, road distances, eligibility decisions, prices, or delivery fees without server-side validation.
+
+7. NEARBY RESTAURANT DISCOVERY
+
+Implement a scalable multi-stage search pipeline.
+
+Stage 1: Validate the customer's selected location.
+
+Stage 2: Calculate the candidate search bounds for the configured radius.
+
+Stage 3: Query restaurant geohash ranges in Firestore using the appropriate geospatial query pattern.
+
+Stage 4: Deduplicate results and calculate straight-line distance from coordinates.
+
+Stage 5: Apply an initial spatial filter that includes all potential road-distance candidates. Do not assume a straight-line 10 km circle contains every restaurant whose road distance is under 10 km; geographic detours can reverse that assumption.
+
+Stage 6: Fetch or batch-query routing information for the shortlisted candidates.
+
+Stage 7: Calculate actual road distance and duration using the routing engine.
+
+Stage 8: Apply the effective road-distance limit, service-area restrictions, restaurant approval, operating status, delivery mode, and capacity.
+
+Stage 9: Rank eligible restaurants by an appropriate combination of relevance, delivery ETA, distance, rating, and availability. Do not let ranking override eligibility.
+
+Stage 10: Return paginated results with consistent restaurant IDs and clear serviceability metadata.
+
+Use Firestore geohash bounds as a candidate discovery mechanism, not as the final delivery-eligibility decision.
+
+Do not query every restaurant in India for each customer request.
+
+Avoid unbounded fan-out routing requests. Use batch routing where available, concurrency limits, caching, and pagination.
+
+If the candidate list is incomplete because of a service failure, do not incorrectly represent unverified restaurants as confirmed deliverable.
+
+8. ROAD DISTANCE AND ETA
+
+Implement a RoadRoutingService.
+
+Support:
+
+Route distance in meters.
+
+Route duration in seconds.
+
+Route availability.
+
+Optional route geometry for map display.
+
+Routing provider and calculation timestamp.
+
+Provider errors and timeout handling.
+
+Use the routing engine's documented coordinate order. For OSRM, coordinates are longitude,latitude.
+
+For multiple restaurants, use a supported routing table/matrix endpoint where appropriate. Validate the response and map each result back to the correct restaurant ID.
+
+Calculate the estimated total delivery time using configurable components:
+
+Estimated delivery time =
+restaurant preparation time
+
+estimated route travel time
+
+dispatch/assignment buffer
+
+pickup and handoff buffer.
+
+Avoid adding the same time component twice.
+
+OSRM's ordinary route duration must not be presented as guaranteed live-traffic ETA. Label estimates appropriately and use traffic-aware data only if the selected provider actually supports it.
+
+If routing fails:
+
+Apply bounded retries where appropriate.
+
+Record a structured error.
+
+Do not fabricate road distance or ETA.
+
+Do not confirm a new delivery order without the required eligibility verification.
+
+Show a friendly temporary-unavailability message.
+
+9. DELIVERY ELIGIBILITY ENGINE
+
+Implement a centralized server-side DeliveryEligibilityService.
+
+Suggested output:
+
+{
+"restaurantId": "exampleRestaurantId",
+"eligible": true,
+"reasonCode": "DELIVERABLE",
+"serviceMode": "standard",
+"roadDistanceMeters": 4200,
+"routeDurationSeconds": 720,
+"estimatedDeliveryMinutes": 37,
+"effectiveMaxRoadDistanceKm": 10,
+"checkedAt": "server-generated timestamp"
+}
+
+The values above are illustrative only.
+
+Support meaningful reason codes, including:
+
+DELIVERABLE
+
+INVALID_CUSTOMER_LOCATION
+
+INVALID_RESTAURANT_LOCATION
+
+RESTAURANT_NOT_APPROVED
+
+RESTAURANT_CLOSED
+
+NOT_ACCEPTING_ORDERS
+
+OUTSIDE_DELIVERY_RADIUS
+
+OUTSIDE_SERVICE_AREA
+
+NO_DELIVERY_CAPACITY
+
+NO_VALID_ROUTE
+
+ROUTING_TEMPORARILY_UNAVAILABLE
+
+MENU_ITEM_UNAVAILABLE
+
+Use a consistent response contract across Android, web, checkout, and admin tools.
+
+Avoid exposing internal security details in customer-facing error messages.
+
+10. MENU FILTERING AND CUSTOMER EXPERIENCE
+
+Display restaurants that can deliver to the selected address.
+
+Restaurant cards should show:
+
+Restaurant image and name.
+
+Rating, if already supported.
+
+Open/closed state.
+
+Approximate road distance.
+
+Estimated delivery time.
+
+Delivery fee or applicable delivery charge.
+
+Minimum order amount, if applicable.
+
+Cuisine and relevant existing metadata.
+
+For each restaurant:
+
+Fetch available menu items using pagination or the existing efficient data-loading mechanism.
+
+Filter out inactive or unavailable items.
+
+Display sold-out items according to existing UX conventions.
+
+Revalidate item prices and availability at checkout.
+
+Avoid exposing items that cannot be ordered.
+
+When the customer changes their address:
+
+Invalidate location-dependent restaurant results.
+
+Recalculate serviceability.
+
+Refresh delivery estimates and applicable fees.
+
+Prevent checkout from silently using a previous address.
+
+Preserve cart items where possible, but revalidate restaurant compatibility and availability.
+
+If the cart contains items from a restaurant that cannot serve the new address, clearly explain the issue and let the customer switch address or modify the cart.
+
+11. DELIVERY PRICING
+
+Implement a configurable server-side pricing service.
+
+Do not invent or hardcode a final nationwide delivery fee.
+
+Allow the existing business pricing model to define:
+
+Base delivery fee.
+
+Distance-based charge, if applicable.
+
+Minimum delivery fee.
+
+Restaurant-specific delivery subsidy.
+
+Promotional discount.
+
+Applicable taxes.
+
+Any permitted peak-time or special logistics charge.
+
+Validate every fee on the server and return a transparent fee breakdown.
+
+Prevent customers and restaurant clients from directly writing trusted fee values.
+
+Do not charge for a delivery mode that the platform cannot fulfill.
+
+Keep pricing calculations separate from location search and route calculation.
+
+12. NEXT.JS ADMIN DASHBOARD
+
+Integrate the feature into the existing Hunger admin panel.
+
+Create or extend the following views using existing UI patterns:
+
+A. Restaurant Location Management
+
+Restaurant address and PIN code.
+
+Map pin and coordinates.
+
+Geocoded address preview.
+
+Geohash generation or server-managed update.
+
+Location correction and validation.
+
+B. Delivery Policy Management
+
+Default standard radius: 10 km.
+
+Per-restaurant approved radius.
+
+Extended delivery enable/disable.
+
+Long-distance logistics enable/disable.
+
+Maximum policy limits.
+
+Allowed delivery modes.
+
+Policy audit history.
+
+C. Serviceability Preview
+
+Enter a customer PIN code or select a map point.
+
+Show candidate restaurants.
+
+Show road distance and ETA.
+
+Explain why each restaurant is eligible or ineligible.
+
+Display routing failures distinctly from confirmed unavailability.
+
+D. Monitoring
+
+Routing API error rate.
+
+Geocoding failures.
+
+Average discovery latency.
+
+Cache hit rate.
+
+Orders blocked by eligibility validation.
+
+Estimated versus actual delivery time, if actual timing data is available.
+
+Restrict policy management to authorized administrators. Validate permissions on the server, not only in the UI.
+
+Use the existing admin authentication and role system.
+
+13. ANDROID JAVA AND XML IMPLEMENTATION
+
+Implement the feature in the existing native Android application.
+
+Requirements:
+
+Java, not an unnecessary Kotlin rewrite.
+
+XML layouts, not a migration to Jetpack Compose.
+
+Compatible with the current Gradle setup and SDK configuration.
+
+Use the existing architecture and UI components.
+
+Maintain light and dark theme support.
+
+Use ViewModel/Repository patterns only if compatible with the existing project.
+
+Create or extend:
+
+Location selection Activity/Fragment.
+
+PIN code input and locality selection.
+
+Map picker.
+
+Saved-address selector.
+
+Restaurant discovery repository.
+
+Location and routing API client.
+
+Restaurant list adapter.
+
+Restaurant detail and menu filtering.
+
+Checkout eligibility validation.
+
+Loading, empty, permission-denied, and network-error states.
+
+Use background execution for network requests. Never perform network or routing operations on the main thread.
+
+Handle lifecycle changes, location permission revocation, process recreation, network loss, and stale search responses.
+
+Do not repeatedly request GPS updates when a single location fix is sufficient.
+
+Ensure that map controls, dialogs, bottom sheets, and restaurant cards match the existing Hunger design system.
+
+14. SECURITY AND FIREBASE RULES
+
+Implement least-privilege access.
+
+Customers can access only their authorized saved addresses.
+
+Restaurant owners can edit only permitted fields of their own restaurant and menu.
+
+Only authorized administrators can change platform delivery policies and approved restaurant limits.
+
+Delivery partners can update only their authorized delivery information.
+
+Order creation and trusted price calculations must occur through a trusted backend.
+
+Validate coordinates, field types, document ownership, request size, and allowed state transitions.
+
+Prevent unauthorized changes to approval status, delivery radius, fees, and order totals.
+
+Protect server secrets using appropriate environment configuration and secret management.
+
+Add appropriate abuse protection and request rate limiting.
+
+Avoid collecting or retaining precise location data beyond what is required by the product.
+
+Never log sensitive full customer addresses unnecessarily.
+
+Inspect existing Firestore and Realtime Database rules before modifying them. Do not replace them with public read/write rules or disable security to make development easier.
+
+If the project uses Realtime Database for some existing features, maintain compatibility. Do not migrate all existing data solely for this feature.
+
+15. CACHING AND PERFORMANCE
+
+Implement:
+
+Short-lived caching of validated geocoding results.
+
+Geohash-based restaurant candidate discovery.
+
+Short-lived caching of routing results where appropriate.
+
+Cache invalidation when restaurant coordinates or approved delivery policies change.
+
+Bounded concurrent routing requests.
+
+Pagination and deduplication.
+
+Request cancellation for outdated searches.
+
+Debouncing for map movement and PIN code suggestions.
+
+Appropriate Firestore indexes.
+
+Structured performance logging.
+
+Never use stale cached eligibility to bypass the final checkout validation.
+
+Respect all map, geocoding, and routing provider caching rules.
+
+16. TESTING REQUIREMENTS
+
+Add unit tests, integration tests, and manual test scenarios for:
+
+Valid and invalid Indian PIN codes.
+
+Ambiguous locality resolution.
+
+GPS permission granted and denied.
+
+Manual map location selection.
+
+Address/PIN mismatch.
+
+Restaurant within 5 km road distance.
+
+Restaurant within 10 km road distance.
+
+Restaurant outside the 10 km road limit.
+
+Straight-line distance under 10 km but road distance above 10 km.
+
+Restaurant outside its approved service area.
+
+Restaurant closed during checkout.
+
+Menu item becoming unavailable before order creation.
+
+Invalid or missing restaurant coordinates.
+
+Routing timeout and no-route response.
+
+Geohash duplicate results and incomplete candidate queries.
+
+Unauthorized attempts to change delivery fees or restaurant radius.
+
+Customer switching addresses with items in the cart.
+
+Extended delivery disabled.
+
+Long-distance delivery disabled.
+
+Successful eligible order with a verified address.
+
+Firebase permission errors.
+
+Light and dark themes.
+
+Slow networks and interrupted requests.
+
+Routing service rate limits and recovery.
+
+Do not write tests that require real paid routing calls for every test. Use mocked routing responses for deterministic automated tests.
+
+17. MIGRATION AND ROLLOUT
+
+Preserve existing production data.
+
+Add only required fields and indexes.
+
+Provide a dry-run migration or backfill script if existing restaurant records lack coordinates.
+
+Do not invent coordinates for restaurants with missing locations.
+
+Mark incomplete records as requiring location verification.
+
+Test using a staging Firebase project or controlled test dataset.
+
+Roll out to a limited city or group of restaurants first.
+
+Keep a feature flag or safe rollback path where appropriate.
+
+Verify security rules and production configuration before enabling ordering.
+
+Do not modify or delete live data without an explicit, documented migration plan.
+
+18. ACCEPTANCE CRITERIA
+
+The feature is complete only when:
+
+Customers can select an address using PIN code plus GPS/map confirmation.
+
+The system can discover nearby restaurants using geohash-based candidate queries.
+
+Final delivery eligibility is calculated from actual road distance and configured policy.
+
+The standard service limit is 10 km by road.
+
+Ineligible restaurants are excluded from normal orderable results.
+
+Restaurant menus reflect current item availability.
+
+ETA is calculated transparently and is not represented as guaranteed live traffic.
+
+Checkout revalidates the address, restaurant, route, fees, and menu items.
+
+Extended and long-distance modes remain disabled unless explicitly configured and operational.
+
+The admin panel can manage authorized restaurant delivery settings.
+
+Firebase security rules and backend authorization protect sensitive operations.
+
+Android and web interfaces handle errors, permissions, and network failures.
+
+Existing Hunger functionality remains operational.
+
+Automated tests and builds pass, or any remaining blockers are documented precisely.
+
+19. REQUIRED FINAL DELIVERY REPORT
+
+After implementation, provide:
+
+Existing architecture discovered.
+
+Features implemented.
+
+Files created and modified.
+
+Database schema changes.
+
+Required Firestore indexes and security-rule changes.
+
+Routing/geocoding configuration.
+
+Environment variables required, without exposing secret values.
+
+Migration instructions.
+
+Build and test results.
+
+Deployment instructions.
+
+Known limitations and external service dependencies.
+
+Estimated ongoing infrastructure requirements, where supported by actual provider pricing.
+
+Any remaining incomplete tasks.
+
+Do not claim that the feature is complete if only the UI, interfaces, or mock data have been implemented.
+
+Do not replace real routing or geocoding with fake coordinates or fabricated results.
+
+Start by inspecting the repository and then implement the complete feature in the existing Hunger platform.

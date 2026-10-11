@@ -10,7 +10,7 @@ import { Loader } from '@/components/ui/spinner';
 import { MapPin, Clock, ArrowRight, DollarSign, Bike, RefreshCw, ShoppingBag, Navigation, ShieldCheck, AlertTriangle, AlertCircle } from 'lucide-react';
 import { Order } from '@/lib/types';
 import { db } from '@/lib/firebase';
-import { collection, query, where, onSnapshot, orderBy, updateDoc, doc, serverTimestamp, getDoc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, orderBy, updateDoc, doc, serverTimestamp, getDoc, runTransaction } from 'firebase/firestore';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -184,17 +184,29 @@ export default function AvailableOrdersPage() {
                 }
             }
 
-            await updateDoc(doc(db, 'orders', orderId), {
-                deliveryPersonId: user.uid,
-                deliveryPersonName: deliveryPartner?.name || 'Assigned Partner',
-                deliveryPersonPhone: deliveryPartner?.phone || '',
-                deliveryVehicle: deliveryPartner?.vehicle || 'Vehicle',
-                restaurantAddress: currentRestaurantAddress || 'Unknown Location',
-                restaurantPhone: restaurantPhone,
-                restaurantLocation: { lat: restaurantLat, lng: restaurantLng },
-                status: 'ready',
-                deliveryStatus: 'going_to_restaurant',
-                updatedAt: serverTimestamp()
+            await runTransaction(db, async (transaction) => {
+                const orderRef = doc(db, 'orders', orderId);
+                const orderSnap = await transaction.get(orderRef);
+                if (!orderSnap.exists()) {
+                    throw new Error('Order no longer exists.');
+                }
+                const currentData = orderSnap.data();
+                if (currentData.deliveryPersonId && currentData.deliveryPersonId !== user.uid) {
+                    throw new Error('Order has already been accepted by another partner.');
+                }
+                transaction.update(orderRef, {
+                    deliveryPersonId: user.uid,
+                    deliveryPersonName: deliveryPartner?.name || 'Assigned Partner',
+                    deliveryPersonPhone: deliveryPartner?.phone || '',
+                    deliveryVehicle: deliveryPartner?.vehicle || 'Vehicle',
+                    restaurantAddress: currentRestaurantAddress || 'Unknown Location',
+                    restaurantPhone: restaurantPhone,
+                    restaurantLocation: { lat: restaurantLat, lng: restaurantLng },
+                    status: 'ready',
+                    deliveryStatus: 'going_to_restaurant',
+                    acceptedAt: serverTimestamp(),
+                    updatedAt: serverTimestamp()
+                });
             });
 
             // Send Email Update to Customer via Resend

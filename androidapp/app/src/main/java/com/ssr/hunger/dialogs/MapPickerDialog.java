@@ -751,10 +751,16 @@ public class MapPickerDialog extends BottomSheetDialogFragment {
         addr.setLongitude(currentLon);
         addr.setStreet(resolvedStreet.isEmpty() ? String.format(Locale.getDefault(), "GPS: %.4f, %.4f", currentLat, currentLon) : resolvedStreet);
         addr.setLandmark(resolvedLandmark);
+        addr.setLocality(resolvedArea);
         addr.setCity(resolvedCity.isEmpty() ? "Selected Location" : resolvedCity);
         addr.setState(resolvedState);
         addr.setPincode(resolvedPincode);
         addr.setDefault(true);
+
+        // Compute geohash from confirmed coordinates
+        if (com.ssr.hunger.utils.GeohashHelper.isValidCoordinate(currentLat, currentLon)) {
+            addr.setGeohash(com.ssr.hunger.utils.GeohashHelper.encode(currentLat, currentLon));
+        }
 
         // 1. Update CartManager Delivery Address immediately
         if (getContext() != null) {
@@ -768,12 +774,14 @@ public class MapPickerDialog extends BottomSheetDialogFragment {
             addrDoc.put("id", addr.getId());
             addrDoc.put("street", addr.getStreet());
             addrDoc.put("landmark", addr.getLandmark());
+            addrDoc.put("locality", addr.getLocality());
             addrDoc.put("city", addr.getCity());
             addrDoc.put("state", addr.getState());
             addrDoc.put("pincode", addr.getPincode());
             addrDoc.put("type", addr.getType());
             addrDoc.put("latitude", addr.getLatitude());
             addrDoc.put("longitude", addr.getLongitude());
+            addrDoc.put("geohash", addr.getGeohash());
             addrDoc.put("isDefault", true);
             addrDoc.put("createdAt", com.google.firebase.Timestamp.now());
 

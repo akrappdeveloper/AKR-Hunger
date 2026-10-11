@@ -3,6 +3,7 @@ package com.ssr.hunger.models;
 /**
  * Address model matching the web app's Address type.
  * Used for delivery location management.
+ * Extended with geohash, locality, district, and addressLabel for geospatial delivery eligibility.
  */
 public class Address {
     private String id;
@@ -12,10 +13,14 @@ public class Address {
     private String pincode;
     private String plusCode;
     private String landmark;
+    private String locality;
+    private String district;
+    private String addressLabel;
     private String type; // home, work, other
     private boolean isDefault;
     private double latitude;
     private double longitude;
+    private String geohash;
 
     public Address() {}
 
@@ -50,6 +55,15 @@ public class Address {
     public String getLandmark() { return landmark; }
     public void setLandmark(String landmark) { this.landmark = landmark; }
 
+    public String getLocality() { return locality; }
+    public void setLocality(String locality) { this.locality = locality; }
+
+    public String getDistrict() { return district; }
+    public void setDistrict(String district) { this.district = district; }
+
+    public String getAddressLabel() { return addressLabel; }
+    public void setAddressLabel(String addressLabel) { this.addressLabel = addressLabel; }
+
     public String getType() { return type; }
     public void setType(String type) { this.type = type; }
 
@@ -62,9 +76,16 @@ public class Address {
     public double getLongitude() { return longitude; }
     public void setLongitude(double longitude) { this.longitude = longitude; }
 
+    public String getGeohash() { return geohash; }
+    public void setGeohash(String geohash) { this.geohash = geohash; }
+
     public String getDisplayText() {
         StringBuilder sb = new StringBuilder();
         if (street != null && !street.isEmpty()) sb.append(street);
+        if (locality != null && !locality.isEmpty()) {
+            if (sb.length() > 0) sb.append(", ");
+            sb.append(locality);
+        }
         if (city != null && !city.isEmpty()) {
             if (sb.length() > 0) sb.append(", ");
             sb.append(city);
@@ -76,8 +97,8 @@ public class Address {
     }
 
     public String getTypeIcon() {
-        if ("home".equals(type)) return "🏠";
-        if ("work".equals(type)) return "💼";
-        return "📍";
+        if ("home".equals(type)) return "\uD83C\uDFE0";
+        if ("work".equals(type)) return "\uD83D\uDCBC";
+        return "\uD83D\uDCCD";
     }
 }

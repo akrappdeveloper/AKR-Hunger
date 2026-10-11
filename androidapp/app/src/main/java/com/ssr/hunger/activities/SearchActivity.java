@@ -364,7 +364,7 @@ public class SearchActivity extends BaseActivity {
 
                     for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
                         MenuItem item = MenuItem.fromSnapshot(doc);
-                        if (item != null) {
+                        if (item != null && item.isAvailable()) {
                             String name = item.getName() != null ? item.getName().toLowerCase() : "";
                             String desc = item.getDescription() != null ? item.getDescription().toLowerCase() : "";
                             String cat = item.getCategory() != null ? item.getCategory().toLowerCase() : "";

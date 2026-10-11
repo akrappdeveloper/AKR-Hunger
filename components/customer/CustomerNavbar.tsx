@@ -291,7 +291,7 @@ export default function CustomerNavbar() {
                 <Link href="/customer/login" className="hidden md:block">
                   <Button variant="ghost" className="text-foreground/80 hover:text-foreground hover:bg-muted/60 rounded-full">Login</Button>
                 </Link>
-                <Link href="/customer/login">
+                <Link href="/customer/login?mode=signup">
                   <Button className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full font-bold px-4 sm:px-6 shadow-md shadow-primary/20">
                     Sign Up
                   </Button>

@@ -6,13 +6,19 @@ import { db } from '@/lib/firebase';
 
 export interface DriverLocationData {
   driverId: string;
+  partnerId?: string;
+  driverName?: string;
   latitude: number;
   longitude: number;
+  geohash?: string;
   accuracy: number;
+  locationAccuracyMeters?: number;
   speed: number; // km/h
   heading: number;
   isOnline: boolean;
+  availabilityStatus?: string;
   activeOrderId?: string;
+  lastLocationUpdateAt?: any;
   updatedAt: any;
 }
 

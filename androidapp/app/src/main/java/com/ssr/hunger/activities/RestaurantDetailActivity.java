@@ -66,6 +66,8 @@ public class RestaurantDetailActivity extends BaseActivity {
     private View barViewCart;
     private TextView tvCartCount, tvCartTotal;
     private ProgressBar pbLoading;
+    private TextView tvDeliveryDistance, tvDeliveryEta, tvDeliveryNotice;
+    private boolean isDeliverableToCurrentLocation = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -93,63 +95,120 @@ public class RestaurantDetailActivity extends BaseActivity {
     }
 
     /**
-     * After the restaurant loads, check GPS pincode vs servicePincodes and show banner.
+     * Comprehensive geospatial delivery eligibility check:
+     * Evaluates road distance, restaurant delivery radius (10km default or serviceArea),
+     * and customer's selected location from CartManager or GPS.
      */
-    @android.annotation.SuppressLint("MissingPermission")
-    private void checkRestaurantAvailabilityByGps(Restaurant restaurant) {
-        List<String> servicePincodes = restaurant.getServicePincodes();
-        // No restriction set — skip check
-        if (servicePincodes == null || servicePincodes.isEmpty()) return;
+    private void checkDeliveryEligibility(Restaurant restaurant) {
+        if (restaurant == null) return;
 
-        // Only check if GPS permission is already granted (non-blocking)
-        boolean hasGps = checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION)
-                == android.content.pm.PackageManager.PERMISSION_GRANTED
-                || checkSelfPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION)
-                == android.content.pm.PackageManager.PERMISSION_GRANTED;
-        if (!hasGps) return;
+        com.ssr.hunger.models.Address deliveryAddr = CartManager.getInstance(this).getDeliveryAddress();
+        double cLat = deliveryAddr != null ? deliveryAddr.getLatitude() : 0.0;
+        double cLon = deliveryAddr != null ? deliveryAddr.getLongitude() : 0.0;
 
-        FusedLocationProviderClient fusedLocation = LocationServices.getFusedLocationProviderClient(this);
-        fusedLocation.getLastLocation().addOnSuccessListener(location -> {
-            if (location == null) return;
-            try {
-                Geocoder geocoder = new Geocoder(this, Locale.getDefault());
-                List<android.location.Address> addresses = geocoder.getFromLocation(
-                        location.getLatitude(), location.getLongitude(), 1);
-                if (addresses == null || addresses.isEmpty()) return;
-                String postalCode = addresses.get(0).getPostalCode();
-                if (TextUtils.isEmpty(postalCode)) return;
-
-                boolean canDeliver = false;
-                for (String sp : servicePincodes) {
-                    if (sp != null && sp.trim().equalsIgnoreCase(postalCode.trim())) {
-                        canDeliver = true;
-                        break;
+        if (com.ssr.hunger.utils.GeohashHelper.isValidCoordinate(cLat, cLon)) {
+            evaluateRestaurantCoordinates(restaurant, cLat, cLon, deliveryAddr.getPincode());
+        } else {
+            boolean hasGps = checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION)
+                    == android.content.pm.PackageManager.PERMISSION_GRANTED
+                    || checkSelfPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION)
+                    == android.content.pm.PackageManager.PERMISSION_GRANTED;
+            if (hasGps) {
+                FusedLocationProviderClient fusedLocation = LocationServices.getFusedLocationProviderClient(this);
+                fusedLocation.getLastLocation().addOnSuccessListener(loc -> {
+                    if (loc != null) {
+                        evaluateRestaurantCoordinates(restaurant, loc.getLatitude(), loc.getLongitude(), null);
+                    } else {
+                        fallbackPincodeCheck(restaurant);
                     }
+                }).addOnFailureListener(e -> fallbackPincodeCheck(restaurant));
+            } else {
+                fallbackPincodeCheck(restaurant);
+            }
+        }
+    }
+
+    private void evaluateRestaurantCoordinates(Restaurant restaurant, double cLat, double cLon, String customerPincode) {
+        double rLat = restaurant.getLatitude();
+        double rLon = restaurant.getLongitude();
+
+        if (rLat != 0.0 && rLon != 0.0) {
+            double straightLineMeters = com.ssr.hunger.utils.GeohashHelper.haversineDistance(rLat, rLon, cLat, cLon);
+            double roadDistanceKm = (straightLineMeters / 1000.0) * 1.35; // typical road detour factor
+            int travelMinutes = (int) Math.round(roadDistanceKm * 3.0); // ~20 km/h avg courier speed
+            int prepMinutes = restaurant.getAveragePreparationMinutes() > 0 ? restaurant.getAveragePreparationMinutes() : 20;
+            int totalEtaMinutes = prepMinutes + travelMinutes + 5; // dispatch buffer
+
+            double maxRadiusKm = restaurant.getMaxRadiusKm();
+
+            final double finalRoadKm = roadDistanceKm;
+            final int finalEta = totalEtaMinutes;
+            final boolean deliverable = roadDistanceKm <= maxRadiusKm;
+            isDeliverableToCurrentLocation = deliverable;
+
+            runOnUiThread(() -> {
+                if (tvDeliveryDistance != null) {
+                    tvDeliveryDistance.setText(String.format(Locale.getDefault(), "🛵 %.1f km", finalRoadKm));
+                }
+                if (tvDeliveryEta != null) {
+                    tvDeliveryEta.setText(String.format(Locale.getDefault(), "⏱️ ~%d mins", finalEta));
                 }
 
-                final boolean deliverable = canDeliver;
-                final String detectedPin = postalCode;
-                runOnUiThread(() -> {
-                    if (!deliverable) {
-                        String pincodeList = String.join(", ", servicePincodes);
-                        // Show non-blocking Toast warning about delivery area
-                        Toast.makeText(RestaurantDetailActivity.this,
-                                "\uD83D\uDEAB " + restaurant.getName()
-                                + " doesn't deliver to your area (" + detectedPin + ").\nThey serve: " + pincodeList,
-                                Toast.LENGTH_LONG).show();
-                        // Optionally dim the cart bar to hint unavailability
-                        if (barViewCart != null) {
-                            barViewCart.setAlpha(0.5f);
-                        }
-                    } else {
-                        if (barViewCart != null) barViewCart.setAlpha(1.0f);
+                if (!deliverable) {
+                    if (tvDeliveryNotice != null) {
+                        tvDeliveryNotice.setVisibility(View.VISIBLE);
+                        tvDeliveryNotice.setText(String.format(Locale.getDefault(),
+                                "⚠️ Outside delivery range (%.1f km). Maximum standard delivery radius is %.0f km.",
+                                finalRoadKm, maxRadiusKm));
                     }
-                    logBreadcrumb("Pincode availability: " + detectedPin + " canDeliver=" + deliverable);
-                });
-            } catch (Exception e) {
-                logBreadcrumb("GPS pincode check failed: " + e.getMessage());
+                    if (barViewCart != null) barViewCart.setAlpha(0.6f);
+                } else {
+                    if (tvDeliveryNotice != null) tvDeliveryNotice.setVisibility(View.GONE);
+                    if (barViewCart != null) barViewCart.setAlpha(1.0f);
+                }
+            });
+        } else {
+            fallbackPincodeCheck(restaurant);
+        }
+    }
+
+    private void fallbackPincodeCheck(Restaurant restaurant) {
+        List<String> servicePincodes = restaurant.getServicePincodes();
+        if (servicePincodes == null || servicePincodes.isEmpty()) {
+            runOnUiThread(() -> {
+                if (tvDeliveryDistance != null) tvDeliveryDistance.setText("🛵 Delivery available");
+                if (tvDeliveryEta != null) tvDeliveryEta.setText("⏱️ 30-40 mins");
+                if (tvDeliveryNotice != null) tvDeliveryNotice.setVisibility(View.GONE);
+            });
+            return;
+        }
+
+        com.ssr.hunger.models.Address deliveryAddr = CartManager.getInstance(this).getDeliveryAddress();
+        String currentPin = deliveryAddr != null ? deliveryAddr.getPincode() : null;
+        if (!TextUtils.isEmpty(currentPin)) {
+            boolean matched = false;
+            for (String sp : servicePincodes) {
+                if (sp != null && sp.trim().equalsIgnoreCase(currentPin.trim())) {
+                    matched = true;
+                    break;
+                }
             }
-        });
+            final boolean deliverable = matched;
+            isDeliverableToCurrentLocation = deliverable;
+            runOnUiThread(() -> {
+                if (tvDeliveryDistance != null) tvDeliveryDistance.setText("📍 Area: " + currentPin);
+                if (!deliverable) {
+                    if (tvDeliveryNotice != null) {
+                        tvDeliveryNotice.setVisibility(View.VISIBLE);
+                        tvDeliveryNotice.setText("⚠️ Does not deliver to PIN " + currentPin + ". Serves: " + String.join(", ", servicePincodes));
+                    }
+                    if (barViewCart != null) barViewCart.setAlpha(0.6f);
+                } else {
+                    if (tvDeliveryNotice != null) tvDeliveryNotice.setVisibility(View.GONE);
+                    if (barViewCart != null) barViewCart.setAlpha(1.0f);
+                }
+            });
+        }
     }
 
     @Override
@@ -173,6 +232,10 @@ public class RestaurantDetailActivity extends BaseActivity {
         tvCartTotal = findViewById(R.id.tv_cart_bar_total);
         pbLoading = findViewById(R.id.pb_menu_loading);
 
+        tvDeliveryDistance = findViewById(R.id.tv_delivery_distance);
+        tvDeliveryEta = findViewById(R.id.tv_delivery_eta);
+        tvDeliveryNotice = findViewById(R.id.tv_delivery_notice);
+
         if (barViewCart != null) {
             barViewCart.setOnClickListener(v -> {
                 startActivity(new Intent(this, CartActivity.class));
@@ -194,6 +257,10 @@ public class RestaurantDetailActivity extends BaseActivity {
                 item -> {
                     if (menuAdapter != null && !menuAdapter.isRestaurantOpen()) {
                         Toast.makeText(this, "🔴 Restaurant is currently closed. Ordering is disabled, but you can add items to your wishlist!", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    if (!isDeliverableToCurrentLocation) {
+                        Toast.makeText(this, "⚠️ " + restaurantName + " cannot deliver to your selected location.", Toast.LENGTH_LONG).show();
                         return;
                     }
                     CartItem cartItem = new CartItem(item.getId(), item.getRestaurantId(), item.getName(),
@@ -323,8 +390,8 @@ public class RestaurantDetailActivity extends BaseActivity {
                         updateBottomCartBar();
                     }
 
-                    // GPS-based pincode delivery availability check (non-blocking)
-                    checkRestaurantAvailabilityByGps(restaurant);
+                    // Geospatial delivery eligibility & road distance calculation
+                    checkDeliveryEligibility(restaurant);
 
                     if (allMenuItems.isEmpty()) {
                         loadMenuItems(restaurant.getName());

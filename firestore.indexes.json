@@ -221,6 +221,48 @@
                     "order": "DESCENDING"
                 }
             ]
+        },
+        {
+            "collectionGroup": "restaurants",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "geohash",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "isActive",
+                    "order": "ASCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "restaurants",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "geohash",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "approvalStatus",
+                    "order": "ASCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "restaurants",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "geohash",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "averageRating",
+                    "order": "DESCENDING"
+                }
+            ]
         }
     ],
     "fieldOverrides": []

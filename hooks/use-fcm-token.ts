@@ -8,6 +8,7 @@ import {
   persistPushToken,
   sendTestWebPushNotification,
   registerPushServiceWorker,
+  normalizeVapidKey,
   BrowserInfo,
   UserRole,
 } from '@/lib/web-push';
@@ -15,15 +16,16 @@ import { auth, messaging } from '@/lib/firebase';
 import { getToken } from 'firebase/messaging';
 import { onAuthStateChanged } from 'firebase/auth';
 
-const VAPID_KEY = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY || 'BKBieUeVIq-2sW74jzr6egToaP1jfnzBZd4sJav8VgnSH90t9yt8y5UpdMC3pBvIOWLn2WKf1R-wnHUJfsDZs';
+const VAPID_KEY = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY || '';
 
 interface UseFcmTokenOptions {
   role?: UserRole;
   autoRequest?: boolean;
+  enabled?: boolean;
 }
 
 export const useFcmToken = (options: UseFcmTokenOptions = {}) => {
-  const { role = 'customer', autoRequest = false } = options;
+  const { role = 'customer', autoRequest = false, enabled = true } = options;
 
   const [token, setToken] = useState<string | null>(() => {
     if (typeof window !== 'undefined') {
@@ -49,6 +51,7 @@ export const useFcmToken = (options: UseFcmTokenOptions = {}) => {
 
   // Silent token retrieval for users who already granted permission
   const silentRetrieveToken = useCallback(async () => {
+    if (!enabled) return;
     try {
       if (typeof window === 'undefined' || !('serviceWorker' in navigator)) return;
 
@@ -57,10 +60,12 @@ export const useFcmToken = (options: UseFcmTokenOptions = {}) => {
 
       const msg = await messaging;
       if (msg) {
-        const currentToken = await getToken(msg, {
-          vapidKey: VAPID_KEY,
-          serviceWorkerRegistration: reg,
-        });
+        const tokenOptions: any = { serviceWorkerRegistration: reg };
+        const validVapid = normalizeVapidKey(VAPID_KEY);
+        if (validVapid) {
+          tokenOptions.vapidKey = validVapid;
+        }
+        const currentToken = await getToken(msg, tokenOptions);
 
         if (currentToken) {
           setToken(currentToken);
@@ -73,7 +78,7 @@ export const useFcmToken = (options: UseFcmTokenOptions = {}) => {
     } catch (err) {
       console.warn('[useFcmToken] Silent token retrieval notice:', err);
     }
-  }, [role]);
+  }, [role, enabled]);
 
   // Explicit user-gesture permission request (compatible with Chrome, Safari, Edge)
   const requestPermission = useCallback(async () => {
@@ -98,7 +103,7 @@ export const useFcmToken = (options: UseFcmTokenOptions = {}) => {
 
   // Initialize browser detection & check existing permission on mount
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined' || !enabled) return;
 
     const info = detectBrowserInfo();
     setBrowserInfo(info);

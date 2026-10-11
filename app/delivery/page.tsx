@@ -499,18 +499,30 @@ export default function DeliveryDashboard() {
         assignedAt: serverTimestamp(),
       };
 
-      await updateDoc(doc(db, 'orders', order.id!), {
-        deliveryPersonId: user.uid,
-        deliveryPersonName: deliveryPartner?.name || 'Assigned Partner',
-        deliveryPersonPhone: deliveryPartner?.phone || '',
-        deliveryVehicle: deliveryPartner?.vehicle || 'Vehicle',
-        restaurantAddress: currentRestaurantAddress || order.restaurantName || 'Unknown Location',
-        restaurantPhone: restaurantPhone,
-        restaurantLocation: { lat: restaurantLat, lng: restaurantLng },
-        status: 'ready',
-        deliveryStatus: 'going_to_restaurant',
-        delivery: deliveryFlow,
-        updatedAt: serverTimestamp()
+      await runTransaction(db, async (transaction) => {
+        const orderRef = doc(db, 'orders', order.id!);
+        const orderSnap = await transaction.get(orderRef);
+        if (!orderSnap.exists()) {
+          throw new Error('Order no longer exists.');
+        }
+        const currentData = orderSnap.data();
+        if (currentData.deliveryPersonId && currentData.deliveryPersonId !== user.uid) {
+          throw new Error('Order has already been accepted by another partner.');
+        }
+        transaction.update(orderRef, {
+          deliveryPersonId: user.uid,
+          deliveryPersonName: deliveryPartner?.name || 'Assigned Partner',
+          deliveryPersonPhone: deliveryPartner?.phone || '',
+          deliveryVehicle: deliveryPartner?.vehicle || 'Vehicle',
+          restaurantAddress: currentRestaurantAddress || order.restaurantName || 'Unknown Location',
+          restaurantPhone: restaurantPhone,
+          restaurantLocation: { lat: restaurantLat, lng: restaurantLng },
+          status: 'ready',
+          deliveryStatus: 'going_to_restaurant',
+          delivery: deliveryFlow,
+          acceptedAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        });
       });
 
       // Send Email Update to Customer via Resend

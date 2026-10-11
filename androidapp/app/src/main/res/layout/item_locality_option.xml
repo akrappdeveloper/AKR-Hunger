@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:padding="14dp"
+    android:layout_marginBottom="6dp"
+    android:background="@drawable/bg_card_rounded"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?attr/selectableItemBackground">
+
+    <!-- Selection indicator dot -->
+    <View
+        android:id="@+id/view_selected_indicator"
+        android:layout_width="10dp"
+        android:layout_height="10dp"
+        android:background="@drawable/bg_circle_primary"
+        android:visibility="invisible"
+        android:layout_marginEnd="12dp" />
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <!-- Locality / Post Office name -->
+        <TextView
+            android:id="@+id/tv_locality_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Locality Name"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="?attr/colorOnSurface" />
+
+        <!-- District, State -->
+        <TextView
+            android:id="@+id/tv_locality_district"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="District, State"
+            android:textSize="11sp"
+            android:textColor="?attr/colorOnSurfaceVariant"
+            android:layout_marginTop="2dp" />
+    </LinearLayout>
+
+    <!-- Arrow indicator -->
+    <ImageView
+        android:layout_width="18dp"
+        android:layout_height="18dp"
+        android:src="@android:drawable/ic_media_play"
+        android:tint="?attr/colorPrimary"
+        android:contentDescription="Select"
+        android:layout_marginStart="8dp" />
+</LinearLayout>

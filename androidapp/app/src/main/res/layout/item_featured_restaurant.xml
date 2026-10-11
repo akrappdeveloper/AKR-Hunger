@@ -72,6 +72,23 @@
                 android:textSize="9sp"
                 android:visibility="gone" />
 
+            <!-- Road Distance Pill -->
+            <TextView
+                android:id="@+id/tv_road_distance"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:background="@drawable/bg_pill_white"
+                android:elevation="2dp"
+                android:fontFamily="sans-serif-bold"
+                android:letterSpacing="0.02"
+                android:paddingHorizontal="8dp"
+                android:paddingVertical="4dp"
+                android:text="2.5 km"
+                android:textColor="#4F46E5"
+                android:textSize="9sp"
+                android:visibility="gone" />
+
             <View
                 android:layout_width="0dp"
                 android:layout_height="1dp"

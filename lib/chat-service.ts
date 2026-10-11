@@ -129,6 +129,30 @@ export const ADMIN_QUICK_REPLIES = [
 ];
 
 /**
+ * Recursively cleans an object for Firebase Realtime Database.
+ * Realtime Database throws an error if any property value is `undefined`.
+ */
+export function sanitizeForRtdb<T>(obj: T): T {
+  if (obj === null || obj === undefined || typeof obj !== 'object') {
+    return obj;
+  }
+
+  if (Array.isArray(obj)) {
+    return obj
+      .filter((item) => item !== undefined)
+      .map((item) => sanitizeForRtdb(item)) as unknown as T;
+  }
+
+  const clean: Record<string, any> = {};
+  for (const [key, value] of Object.entries(obj)) {
+    if (value !== undefined) {
+      clean[key] = typeof value === 'object' && value !== null ? sanitizeForRtdb(value) : value;
+    }
+  }
+  return clean as T;
+}
+
+/**
  * Generates a stable, deterministic chat ID.
  * Guarantees that the same order + participant pair always reuses the exact same conversation.
  */
@@ -233,7 +257,7 @@ export async function initializeOrderChat(params: {
       participants,
     };
 
-    await set(chatRef, newChat);
+    await set(chatRef, sanitizeForRtdb(newChat));
 
     // Initial system message
     const msgRef = push(ref(realtimeDb, `chats/${chatId}/messages`));
@@ -249,7 +273,7 @@ export async function initializeOrderChat(params: {
       createdAt: now,
       status: 'SENT',
     };
-    await set(msgRef, initSystemMsg);
+    await set(msgRef, sanitizeForRtdb(initSystemMsg));
   } else {
     // Update existing participants if new rider or restaurant added
     const existing = snapshot.val() as ChatConversation;
@@ -268,7 +292,7 @@ export async function initializeOrderChat(params: {
     }
 
     if (Object.keys(updates).length > 1) {
-      await update(ref(realtimeDb), updates);
+      await update(ref(realtimeDb), sanitizeForRtdb(updates));
     }
   }
 
@@ -331,7 +355,7 @@ export async function syncUserChatIndexes(chatId: string) {
     }
 
     if (Object.keys(updates).length > 0) {
-      await update(ref(realtimeDb), updates);
+      await update(ref(realtimeDb), sanitizeForRtdb(updates));
     }
   } catch (err) {
     console.warn('[ChatService] Error syncing user chats:', err);
@@ -372,24 +396,24 @@ export async function sendChatMessage(params: {
     senderName: params.senderName,
     senderImage: params.senderImage || '',
     type: params.type || (params.mediaPath ? 'IMAGE' : params.location ? 'LOCATION' : 'TEXT'),
-    text: params.text.trim(),
-    mediaPath: params.mediaPath,
+    text: (params.text || '').trim(),
     createdAt: now,
     status: 'SENT',
-    replyToMessageId: params.replyToMessageId,
-    replyToText: params.replyToText,
-    replyToSenderName: params.replyToSenderName,
-    location: params.location,
+    ...(params.mediaPath ? { mediaPath: params.mediaPath } : {}),
+    ...(params.replyToMessageId ? { replyToMessageId: params.replyToMessageId } : {}),
+    ...(params.replyToText ? { replyToText: params.replyToText } : {}),
+    ...(params.replyToSenderName ? { replyToSenderName: params.replyToSenderName } : {}),
+    ...(params.location ? { location: params.location } : {}),
   };
 
   const previewText = params.type === 'IMAGE' || params.mediaPath
     ? '📷 [Image attachment]'
     : params.type === 'LOCATION'
     ? '📍 [Location shared]'
-    : params.text.trim();
+    : (params.text || '').trim();
 
-  // 1. Write the message
-  await set(newMsgRef, message);
+  // 1. Write the message (sanitized so no undefined properties reach RTDB)
+  await set(newMsgRef, sanitizeForRtdb(message));
 
   // 2. Update chat metadata
   const chatUpdates: Record<string, any> = {
@@ -425,7 +449,7 @@ export async function sendChatMessage(params: {
     console.warn('[ChatService] Error updating user summaries:', syncErr);
   }
 
-  await update(ref(realtimeDb), chatUpdates);
+  await update(ref(realtimeDb), sanitizeForRtdb(chatUpdates));
 
   // 4. Trigger in-app/push notification in background
   try {
@@ -473,7 +497,7 @@ export async function markChatAsRead(chatId: string, currentUserId: string): Pro
       }
     }
 
-    await update(ref(realtimeDb), updates);
+    await update(ref(realtimeDb), sanitizeForRtdb(updates));
   } catch (err) {
     console.warn('[ChatService] Error marking as read:', err);
   }
@@ -494,7 +518,7 @@ export function setTypingStatus(
   if (isTyping) {
     set(typingRef, {
       isTyping: true,
-      userName,
+      userName: userName || 'User',
       updatedAt: Date.now(),
     });
     onDisconnect(typingRef).remove();
@@ -517,15 +541,15 @@ export function registerUserPresence(userId: string, userName: string, role: Use
       set(presenceRef, {
         online: true,
         lastSeen: Date.now(),
-        name: userName,
-        role,
+        name: userName || 'User',
+        role: role || 'customer',
       });
 
       onDisconnect(presenceRef).set({
         online: false,
         lastSeen: Date.now(),
-        name: userName,
-        role,
+        name: userName || 'User',
+        role: role || 'customer',
       });
     }
   });
@@ -535,8 +559,8 @@ export function registerUserPresence(userId: string, userName: string, role: Use
     set(presenceRef, {
       online: false,
       lastSeen: Date.now(),
-      name: userName,
-      role,
+      name: userName || 'User',
+      role: role || 'customer',
     });
   };
 }
@@ -574,12 +598,12 @@ export async function sendOrderEventSystemMessage(
         status: 'SENT',
       };
 
-      await set(msgRef, sysMsg);
-      await update(chatRef, {
+      await set(msgRef, sanitizeForRtdb(sysMsg));
+      await update(chatRef, sanitizeForRtdb({
         lastMessage: sysMsg.text,
         lastMessageAt: now,
         updatedAt: now,
-      });
+      }));
     }
   }
 }
@@ -600,7 +624,7 @@ export async function submitChatReport(params: {
   const reportRef = push(ref(realtimeDb, 'chatReports'));
   const reportId = reportRef.key || `rep_${Date.now()}`;
 
-  await set(reportRef, {
+  await set(reportRef, sanitizeForRtdb({
     reportId,
     chatId: params.chatId,
     orderId: params.orderId || '',
@@ -610,12 +634,12 @@ export async function submitChatReport(params: {
     reason: params.reason,
     status: 'pending',
     createdAt: Date.now(),
-  });
+  }));
 
   // Mark conversation status as reported
-  await update(ref(realtimeDb, `chats/${params.chatId}`), {
+  await update(ref(realtimeDb, `chats/${params.chatId}`), sanitizeForRtdb({
     status: 'reported',
-  });
+  }));
 
   return reportId;
 }

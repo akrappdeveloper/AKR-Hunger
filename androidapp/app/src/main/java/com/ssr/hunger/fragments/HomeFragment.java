@@ -343,19 +343,63 @@ public class HomeFragment extends Fragment {
 
     private void filterRestaurants() {
         if (restaurantAdapter == null) return;
-        String userPincode = null;
+
+        com.ssr.hunger.models.Address addr = null;
         if (getContext() != null) {
-            com.ssr.hunger.models.Address addr = CartManager.getInstance(getContext()).getDeliveryAddress();
-            if (addr != null && addr.getPincode() != null && !addr.getPincode().trim().isEmpty()) {
+            addr = CartManager.getInstance(getContext()).getDeliveryAddress();
+        }
+
+        String userPincode = null;
+        double customerLat = 0, customerLon = 0;
+        boolean hasCoordinates = false;
+
+        if (addr != null) {
+            if (addr.getPincode() != null && !addr.getPincode().trim().isEmpty()) {
                 userPincode = addr.getPincode().trim();
+            }
+            if (com.ssr.hunger.utils.GeohashHelper.isValidCoordinate(addr.getLatitude(), addr.getLongitude())) {
+                customerLat = addr.getLatitude();
+                customerLon = addr.getLongitude();
+                hasCoordinates = true;
             }
         }
 
         List<Restaurant> deliverable = new ArrayList<>();
+        List<Restaurant> others = new ArrayList<>();
+
+        // Geospatial filtering: straight-line distance pre-filter
+        final double maxDistMeters = 15000; // 15km straight-line covers ~10km road
+
         for (Restaurant r : allRestaurants) {
-            if (r.isServingPincode(userPincode)) {
+            if (hasCoordinates && r.getLatitude() != 0 && r.getLongitude() != 0) {
+                double dist = com.ssr.hunger.utils.GeohashHelper.haversineDistance(
+                        customerLat, customerLon, r.getLatitude(), r.getLongitude());
+                if (dist <= maxDistMeters) {
+                    deliverable.add(r);
+                } else {
+                    others.add(r);
+                }
+            } else if (r.isServingPincode(userPincode)) {
+                // Fallback to pincode matching
                 deliverable.add(r);
+            } else {
+                others.add(r);
             }
+        }
+
+        // Sort deliverable by distance (closest first) when coordinates available
+        if (hasCoordinates) {
+            final double lat = customerLat;
+            final double lon = customerLon;
+            deliverable.sort((a, b) -> {
+                double distA = (a.getLatitude() != 0 && a.getLongitude() != 0)
+                        ? com.ssr.hunger.utils.GeohashHelper.haversineDistance(lat, lon, a.getLatitude(), a.getLongitude())
+                        : Double.MAX_VALUE;
+                double distB = (b.getLatitude() != 0 && b.getLongitude() != 0)
+                        ? com.ssr.hunger.utils.GeohashHelper.haversineDistance(lat, lon, b.getLatitude(), b.getLongitude())
+                        : Double.MAX_VALUE;
+                return Double.compare(distA, distB);
+            });
         }
 
         List<Restaurant> toShow = !deliverable.isEmpty() ? deliverable : allRestaurants;

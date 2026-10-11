@@ -35,111 +35,344 @@ public class Restaurant {
     private double averageRating;
     private int totalReviews;
     private List<String> servicePincodes;
+    // Geospatial delivery eligibility fields
+    private String geohash;
+    private String formattedAddress;
+    private String locality;
+    private String approvalStatus; // pending, approved, rejected, suspended
+    private boolean acceptsOrders = true;
+    private String deliveryMode; // platform, self, hybrid
+    private Map<String, Object> serviceArea;
+    private int averagePreparationMinutes;
+    private int maxConcurrentOrders;
 
-    public Restaurant() {}
+    public Restaurant() {
+    }
 
     // Getters and Setters
-    public String getId() { return id; }
-    public void setId(String id) { this.id = id; }
+    public String getId() {
+        return id;
+    }
 
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
+    public void setId(String id) {
+        this.id = id;
+    }
 
-    public String getDescription() { return description; }
-    public void setDescription(String description) { this.description = description; }
+    public String getName() {
+        return name;
+    }
 
-    public String getImage() { return image; }
-    public void setImage(String image) { this.image = image; }
+    public void setName(String name) {
+        this.name = name;
+    }
 
-    public double getRating() { return rating; }
-    public void setRating(double rating) { this.rating = rating; }
+    public String getDescription() {
+        return description;
+    }
 
-    public int getReviews() { return reviews; }
-    public void setReviews(int reviews) { this.reviews = reviews; }
+    public void setDescription(String description) {
+        this.description = description;
+    }
 
-    public int getDeliveryTime() { return deliveryTime; }
-    public void setDeliveryTime(int deliveryTime) { this.deliveryTime = deliveryTime; }
+    public String getImage() {
+        return image;
+    }
 
-    public double getDeliveryCharge() { return deliveryCharge; }
-    public void setDeliveryCharge(double deliveryCharge) { this.deliveryCharge = deliveryCharge; }
+    public void setImage(String image) {
+        this.image = image;
+    }
 
-    public double getMinimumOrder() { return minimumOrder; }
-    public void setMinimumOrder(double minimumOrder) { this.minimumOrder = minimumOrder; }
+    public double getRating() {
+        return rating;
+    }
 
-    public List<String> getCuisineType() { return cuisineType; }
-    public void setCuisineType(List<String> cuisineType) { this.cuisineType = cuisineType; }
+    public void setRating(double rating) {
+        this.rating = rating;
+    }
 
-    public boolean isOpen() { return isOpen; }
+    public int getReviews() {
+        return reviews;
+    }
+
+    public void setReviews(int reviews) {
+        this.reviews = reviews;
+    }
+
+    public int getDeliveryTime() {
+        return deliveryTime;
+    }
+
+    public void setDeliveryTime(int deliveryTime) {
+        this.deliveryTime = deliveryTime;
+    }
+
+    public double getDeliveryCharge() {
+        return deliveryCharge;
+    }
+
+    public void setDeliveryCharge(double deliveryCharge) {
+        this.deliveryCharge = deliveryCharge;
+    }
+
+    public double getMinimumOrder() {
+        return minimumOrder;
+    }
+
+    public void setMinimumOrder(double minimumOrder) {
+        this.minimumOrder = minimumOrder;
+    }
+
+    public List<String> getCuisineType() {
+        return cuisineType;
+    }
+
+    public void setCuisineType(List<String> cuisineType) {
+        this.cuisineType = cuisineType;
+    }
+
+    public boolean isOpen() {
+        return isOpen;
+    }
+
     public void setOpen(boolean open) {
         this.isOpen = open;
         this.isCurrentlyOpen = open;
     }
 
-    public boolean isCurrentlyOpen() { return isCurrentlyOpen; }
+    public boolean isCurrentlyOpen() {
+        return isCurrentlyOpen;
+    }
+
     public void setCurrentlyOpen(boolean currentlyOpen) {
         this.isCurrentlyOpen = currentlyOpen;
         this.isOpen = currentlyOpen;
     }
 
-    public boolean isActive() { return isActive; }
-    public void setActive(boolean active) { isActive = active; }
+    public boolean isActive() {
+        return isActive;
+    }
 
-    public Map<String, Object> getSchedule() { return schedule; }
-    public void setSchedule(Map<String, Object> schedule) { this.schedule = schedule; }
+    public void setActive(boolean active) {
+        isActive = active;
+    }
 
-    public List<Map<String, Object>> getSpecialDays() { return specialDays; }
-    public void setSpecialDays(List<Map<String, Object>> specialDays) { this.specialDays = specialDays; }
+    public Map<String, Object> getSchedule() {
+        return schedule;
+    }
 
-    public String getAddress() { return address; }
-    public void setAddress(String address) { this.address = address; }
+    public void setSchedule(Map<String, Object> schedule) {
+        this.schedule = schedule;
+    }
 
-    public String getStreet() { return street; }
-    public void setStreet(String street) { this.street = street; }
+    public List<Map<String, Object>> getSpecialDays() {
+        return specialDays;
+    }
 
-    public String getCity() { return city; }
-    public void setCity(String city) { this.city = city; }
+    public void setSpecialDays(List<Map<String, Object>> specialDays) {
+        this.specialDays = specialDays;
+    }
 
-    public String getState() { return state; }
-    public void setState(String state) { this.state = state; }
+    public String getAddress() {
+        return address;
+    }
 
-    public String getPincode() { return pincode; }
-    public void setPincode(String pincode) { this.pincode = pincode; }
+    public void setAddress(String address) {
+        this.address = address;
+    }
 
-    public double getLatitude() { return latitude; }
-    public void setLatitude(double latitude) { this.latitude = latitude; }
+    public String getStreet() {
+        return street;
+    }
 
-    public double getLongitude() { return longitude; }
-    public void setLongitude(double longitude) { this.longitude = longitude; }
+    public void setStreet(String street) {
+        this.street = street;
+    }
 
-    public String getPhone() { return phone; }
-    public void setPhone(String phone) { this.phone = phone; }
+    public String getCity() {
+        return city;
+    }
 
-    public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
+    public void setCity(String city) {
+        this.city = city;
+    }
 
-    public double getAverageRating() { return averageRating; }
-    public void setAverageRating(double averageRating) { this.averageRating = averageRating; }
+    public String getState() {
+        return state;
+    }
 
-    public int getTotalReviews() { return totalReviews; }
-    public void setTotalReviews(int totalReviews) { this.totalReviews = totalReviews; }
+    public void setState(String state) {
+        this.state = state;
+    }
 
-    public List<String> getServicePincodes() { return servicePincodes; }
-    public void setServicePincodes(List<String> servicePincodes) { this.servicePincodes = servicePincodes; }
+    public String getPincode() {
+        return pincode;
+    }
+
+    public void setPincode(String pincode) {
+        this.pincode = pincode;
+    }
+
+    public double getLatitude() {
+        return latitude;
+    }
+
+    public void setLatitude(double latitude) {
+        this.latitude = latitude;
+    }
+
+    public double getLongitude() {
+        return longitude;
+    }
+
+    public void setLongitude(double longitude) {
+        this.longitude = longitude;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public double getAverageRating() {
+        return averageRating;
+    }
+
+    public void setAverageRating(double averageRating) {
+        this.averageRating = averageRating;
+    }
+
+    public int getTotalReviews() {
+        return totalReviews;
+    }
+
+    public void setTotalReviews(int totalReviews) {
+        this.totalReviews = totalReviews;
+    }
+
+    public List<String> getServicePincodes() {
+        return servicePincodes;
+    }
+
+    public void setServicePincodes(List<String> servicePincodes) {
+        this.servicePincodes = servicePincodes;
+    }
+
+    public String getGeohash() {
+        return geohash;
+    }
+
+    public void setGeohash(String geohash) {
+        this.geohash = geohash;
+    }
+
+    public String getFormattedAddress() {
+        return formattedAddress;
+    }
+
+    public void setFormattedAddress(String formattedAddress) {
+        this.formattedAddress = formattedAddress;
+    }
+
+    public String getLocality() {
+        return locality;
+    }
+
+    public void setLocality(String locality) {
+        this.locality = locality;
+    }
+
+    public String getApprovalStatus() {
+        return approvalStatus;
+    }
+
+    public void setApprovalStatus(String approvalStatus) {
+        this.approvalStatus = approvalStatus;
+    }
+
+    public boolean isAcceptsOrders() {
+        return acceptsOrders;
+    }
+
+    public void setAcceptsOrders(boolean acceptsOrders) {
+        this.acceptsOrders = acceptsOrders;
+    }
+
+    public String getDeliveryMode() {
+        return deliveryMode;
+    }
+
+    public void setDeliveryMode(String deliveryMode) {
+        this.deliveryMode = deliveryMode;
+    }
+
+    public Map<String, Object> getServiceArea() {
+        return serviceArea;
+    }
+
+    public void setServiceArea(Map<String, Object> serviceArea) {
+        this.serviceArea = serviceArea;
+    }
+
+    public double getMaxRadiusKm() {
+        if (serviceArea != null && serviceArea.get("maxRadiusKm") instanceof Number) {
+            return ((Number) serviceArea.get("maxRadiusKm")).doubleValue();
+        }
+        return 10.0;
+    }
+
+    public double getDefaultRadiusKm() {
+        if (serviceArea != null && serviceArea.get("defaultRadiusKm") instanceof Number) {
+            return ((Number) serviceArea.get("defaultRadiusKm")).doubleValue();
+        }
+        return 10.0;
+    }
+
+    public int getAveragePreparationMinutes() {
+        return averagePreparationMinutes;
+    }
+
+    public void setAveragePreparationMinutes(int averagePreparationMinutes) {
+        this.averagePreparationMinutes = averagePreparationMinutes;
+    }
+
+    public int getMaxConcurrentOrders() {
+        return maxConcurrentOrders;
+    }
+
+    public void setMaxConcurrentOrders(int maxConcurrentOrders) {
+        this.maxConcurrentOrders = maxConcurrentOrders;
+    }
 
     public String getCuisineString() {
-        if (cuisineType == null || cuisineType.isEmpty()) return "Multi-cuisine";
+        if (cuisineType == null || cuisineType.isEmpty())
+            return "Multi-cuisine";
         return String.join(", ", cuisineType);
     }
 
     public String getDisplayRating() {
-        if (averageRating > 0) return String.format(Locale.getDefault(), "%.1f", averageRating);
-        if (rating > 0) return String.format(Locale.getDefault(), "%.1f", rating);
+        if (averageRating > 0)
+            return String.format(Locale.getDefault(), "%.1f", averageRating);
+        if (rating > 0)
+            return String.format(Locale.getDefault(), "%.1f", rating);
         return "4.5";
     }
 
     public boolean isOperatingNow() {
-        if (!isActive) return false;
-        if (!isOpen || !isCurrentlyOpen) return false;
+        if (!isActive)
+            return false;
+        if (!isOpen || !isCurrentlyOpen)
+            return false;
 
         Calendar now = Calendar.getInstance();
         int currentMinutes = now.get(Calendar.HOUR_OF_DAY) * 60 + now.get(Calendar.MINUTE);
@@ -173,7 +406,7 @@ public class Restaurant {
 
         // Check regular schedule
         if (schedule != null) {
-            String[] days = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
+            String[] days = { "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" };
             int dayOfWeek = now.get(Calendar.DAY_OF_WEEK) - 1; // 0 = Sunday
             if (dayOfWeek >= 0 && dayOfWeek < days.length) {
                 String dayCap = days[dayOfWeek];
@@ -189,8 +422,10 @@ public class Restaurant {
                     if (dayOpenObj instanceof Boolean && !(Boolean) dayOpenObj) {
                         return false;
                     }
-                    Object openObj = dayConfig.get("openTime") != null ? dayConfig.get("openTime") : dayConfig.get("open");
-                    Object closeObj = dayConfig.get("closeTime") != null ? dayConfig.get("closeTime") : dayConfig.get("close");
+                    Object openObj = dayConfig.get("openTime") != null ? dayConfig.get("openTime")
+                            : dayConfig.get("open");
+                    Object closeObj = dayConfig.get("closeTime") != null ? dayConfig.get("closeTime")
+                            : dayConfig.get("close");
                     if (openObj instanceof String && closeObj instanceof String) {
                         int oMinutes = parseTimeToMinutes((String) openObj);
                         int cMinutes = parseTimeToMinutes((String) closeObj);
@@ -201,7 +436,8 @@ public class Restaurant {
                             } else {
                                 withinHours = currentMinutes >= oMinutes || currentMinutes <= cMinutes;
                             }
-                            if (!withinHours) return false;
+                            if (!withinHours)
+                                return false;
                         }
                     }
                     // Check break
@@ -222,7 +458,8 @@ public class Restaurant {
     }
 
     private static int parseTimeToMinutes(String timeStr) {
-        if (timeStr == null || !timeStr.contains(":")) return -1;
+        if (timeStr == null || !timeStr.contains(":"))
+            return -1;
         try {
             String[] parts = timeStr.trim().split(":");
             int h = Integer.parseInt(parts[0].trim());
@@ -231,14 +468,6 @@ public class Restaurant {
         } catch (Exception e) {
             return -1;
         }
-    }
-
-    public List<String> getServicePincodes() {
-        return servicePincodes;
-    }
-
-    public void setServicePincodes(List<String> servicePincodes) {
-        this.servicePincodes = servicePincodes;
     }
 
     public boolean isServingPincode(String userPincode) {

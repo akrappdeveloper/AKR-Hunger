@@ -22,8 +22,12 @@ export default function FCMInitializer({ role }: FCMInitializerProps) {
     return 'customer';
   }, [role, pathname]);
 
-  // Silent listener and token maintenance for the active session
-  useFcmToken({ role: resolvedRole, autoRequest: false });
+  const isAuthPage = pathname?.includes('/login') || pathname?.includes('/signup') || pathname?.includes('/auth');
+
+  // Silent listener and token maintenance for the active session (skip on auth pages)
+  useFcmToken({ role: resolvedRole, autoRequest: false, enabled: !isAuthPage });
+
+  if (isAuthPage) return null;
 
   return <PushNotificationPromptBanner role={resolvedRole} />;
 }

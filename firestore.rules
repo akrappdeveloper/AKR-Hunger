@@ -412,16 +412,8 @@ service cloud.firestore {
     }
 
     // ==========================================
-    // 24. Driver Live Locations (GPS Tracking)
+    // 24. Driver Live Locations — Defined in Section 31 below
     // ==========================================
-    match /driverLocations/{driverId} {
-      // Anyone can read driver live locations for real-time order tracking
-      allow read, list: if true;
-      // Drivers can only write their own location
-      allow create, update: if request.auth.uid != null && request.auth.uid == driverId;
-      // Admin can manage all locations
-      allow delete: if isAdmin(request.auth.uid) || request.auth.uid == driverId;
-    }
 
     // ==========================================
     // 25. Delivery Zones (deliveryZones & delivery_zones)
@@ -512,15 +504,17 @@ service cloud.firestore {
     //         from the order document, and customers can only reach it through
     //         their own order context)
     match /driverLocations/{driverId} {
-      // Driver can write their own location
-      allow write: if request.auth != null && request.auth.uid == driverId;
-
-      // Admins can write (for testing / correction)
-      allow write: if request.auth != null && isAdmin(request.auth.uid);
+      // Driver can write their own location with coordinate type validation
+      allow write: if request.auth != null && (
+        (request.auth.uid == driverId && (
+          !('latitude' in request.resource.data) ||
+          (request.resource.data.latitude is number && request.resource.data.longitude is number)
+        )) ||
+        isAdmin(request.auth.uid)
+      );
 
       // Any authenticated user can read a driver's location document
-      // (Access is effectively gated by knowing the driverId, which only
-      //  comes from the order's deliveryPersonId field the customer already has access to)
+      // (Access is gated by knowing the driverId, which comes from order's deliveryPersonId)
       allow read: if request.auth != null;
 
       // Admins can list all driver locations
@@ -577,6 +571,16 @@ service cloud.firestore {
     match /redeem_codes/{codeId} {
       allow read, list: if true;
       allow write: if request.auth.uid != null || true;
+    }
+
+    // ==========================================
+    // 36. Platform Settings (Delivery Policies)
+    // ==========================================
+    match /platformSettings/{settingId} {
+      // Public read — clients need delivery policies for UI
+      allow read, list: if true;
+      // Only admins can write platform settings
+      allow create, update, delete: if request.auth.uid != null && isAdmin(request.auth.uid);
     }
   }
 }

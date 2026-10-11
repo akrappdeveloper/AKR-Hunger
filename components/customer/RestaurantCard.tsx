@@ -3,8 +3,9 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { Restaurant } from '@/lib/types';
+import { DeliveryEligibilityResult } from '@/lib/types';
 import SafeImage from '@/components/ui/safe-image';
-import { Star, Clock, Bike, MapPin, Sparkles, CheckCircle2 } from 'lucide-react';
+import { Star, Clock, Bike, MapPin, Sparkles, CheckCircle2, Route } from 'lucide-react';
 import { checkRestaurantOperatingStatus } from '@/lib/restaurant-schedule';
 
 export interface RestaurantCardProps {
@@ -13,6 +14,8 @@ export interface RestaurantCardProps {
   isPromoted?: boolean;
   currentTime?: Date;
   className?: string;
+  /** Delivery eligibility data from discovery pipeline */
+  eligibility?: DeliveryEligibilityResult;
 }
 
 export default function RestaurantCard({
@@ -21,6 +24,7 @@ export default function RestaurantCard({
   isPromoted = false,
   currentTime,
   className = '',
+  eligibility,
 }: RestaurantCardProps) {
   const current = currentTime || new Date();
   const operatingStatus = checkRestaurantOperatingStatus(restaurant, current);
@@ -39,11 +43,14 @@ export default function RestaurantCard({
   // Format location / area
   const areaName = restaurant.street || restaurant.city || (restaurant.address ? restaurant.address.split(',')[0].trim() : 'Local Gourmet');
 
-  // Format delivery time
-  const deliveryMins = restaurant.deliveryTime || 30;
+  // Format delivery time — prefer eligibility ETA if available
+  const deliveryMins = eligibility?.estimatedDeliveryMinutes || restaurant.deliveryTime || 30;
 
-  // Delivery charge display
-  const deliveryCharge = Number(restaurant.deliveryCharge) || 0;
+  // Road distance from eligibility (in km)
+  const roadDistanceKm = eligibility?.roadDistanceMeters ? (eligibility.roadDistanceMeters / 1000) : null;
+
+  // Delivery charge — prefer eligibility calculated fee
+  const deliveryCharge = eligibility?.deliveryFee ?? Number(restaurant.deliveryCharge) ?? 0;
   const isFreeDelivery = deliveryCharge === 0;
 
   // Dedicated Brand Logo (square 1:1 icon, no banner)
@@ -137,8 +144,17 @@ export default function RestaurantCard({
         {/* Bottom Meta Strip: Location & Delivery Charge */}
         <div className="flex items-center justify-between pt-2.5 border-t border-border/60 text-xs text-muted-foreground">
           <div className="flex items-center gap-1 max-w-[55%] truncate">
-            <MapPin className="w-3.5 h-3.5 text-primary/70 flex-shrink-0" />
-            <span className="truncate">{areaName}</span>
+            {roadDistanceKm !== null ? (
+              <>
+                <Route className="w-3.5 h-3.5 text-blue-500/70 flex-shrink-0" />
+                <span className="truncate font-semibold">{roadDistanceKm.toFixed(1)} km</span>
+              </>
+            ) : (
+              <>
+                <MapPin className="w-3.5 h-3.5 text-primary/70 flex-shrink-0" />
+                <span className="truncate">{areaName}</span>
+              </>
+            )}
           </div>
 
           <div className="flex items-center gap-1 font-semibold flex-shrink-0">

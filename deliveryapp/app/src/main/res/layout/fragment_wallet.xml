@@ -25,7 +25,7 @@
                 android:textColor="@color/text_primary"
                 android:textSize="24sp"
                 android:textStyle="bold"
-                android:layout_marginBottom="16dp"/>
+                android:layout_marginBottom="16dp" />
 
             <!-- 1. Wallet Balance Hero Card (Dark Theme + Neon Green) -->
             <com.google.android.material.card.MaterialCardView

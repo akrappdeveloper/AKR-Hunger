@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { doc, setDoc, serverTimestamp, deleteDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { GPSTracker, GPSPosition, speedToKmh } from '@/lib/gps-tracking';
+import { encodeGeohash } from '@/lib/geohash';
 
 interface UseDriverLocationOptions {
   /** Driver's user ID */
@@ -71,17 +72,43 @@ export function useDriverLocation({
     const currentDriverId = driverIdRef.current;
     if (!currentDriverId) return;
 
+    // Validate coordinates
+    if (
+      isNaN(pos.latitude) || isNaN(pos.longitude) ||
+      pos.latitude < -90 || pos.latitude > 90 ||
+      pos.longitude < -180 || pos.longitude > 180 ||
+      (Math.abs(pos.latitude) < 0.0001 && Math.abs(pos.longitude) < 0.0001)
+    ) {
+      console.warn('[GPS] Discarding invalid coordinates:', pos.latitude, pos.longitude);
+      return;
+    }
+
+    // Discard inaccurate fixes > 200m
+    if (pos.accuracy > 200) {
+      console.warn('[GPS] Discarding inaccurate fix:', pos.accuracy);
+      return;
+    }
+
     try {
+      const geohash = encodeGeohash(pos.latitude, pos.longitude, 7);
+      const acc = Math.round(pos.accuracy);
+      const isBusy = Boolean(activeOrderIdRef.current);
+
       await setDoc(doc(db, 'driverLocations', currentDriverId), {
         driverId: currentDriverId,
+        partnerId: currentDriverId,
         ...(driverNameRef.current ? { driverName: driverNameRef.current } : {}),
         latitude: pos.latitude,
         longitude: pos.longitude,
-        accuracy: Math.round(pos.accuracy),
+        geohash,
+        accuracy: acc,
+        locationAccuracyMeters: acc,
         speed: Math.round(speedToKmh(pos.speed)),
         heading: Math.round(pos.heading),
         isOnline: true,
+        availabilityStatus: isBusy ? 'busy' : 'available',
         activeOrderId: activeOrderIdRef.current || null,
+        lastLocationUpdateAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       }, { merge: true });
     } catch (err) {
@@ -128,7 +155,10 @@ export function useDriverLocation({
       if (driverId) {
         setDoc(doc(db, 'driverLocations', driverId), {
           driverId,
+          partnerId: driverId,
           isOnline: false,
+          availabilityStatus: 'offline',
+          activeOrderId: null,
           updatedAt: serverTimestamp(),
         }, { merge: true }).catch(console.error);
       }

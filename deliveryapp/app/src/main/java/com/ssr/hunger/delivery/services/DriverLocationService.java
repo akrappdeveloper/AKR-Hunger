@@ -33,6 +33,7 @@ import com.google.firebase.firestore.SetOptions;
 import com.ssr.hunger.delivery.R;
 import com.ssr.hunger.delivery.activities.MainActivity;
 import com.ssr.hunger.delivery.utils.Constants;
+import com.ssr.hunger.delivery.utils.GeohashHelper;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -216,16 +217,35 @@ public class DriverLocationService extends Service {
         if (now - lastWriteMs < 3000L) return; // Debounce 3s
         lastWriteMs = now;
 
+        double lat = loc.getLatitude();
+        double lon = loc.getLongitude();
+        if (!GeohashHelper.isValidCoordinate(lat, lon)) {
+            Log.w(TAG, "Rejected invalid GPS coordinates: lat=" + lat + ", lon=" + lon);
+            return;
+        }
+
+        double accuracy = loc.hasAccuracy() ? (double) loc.getAccuracy() : 0.0;
+        // Reject implausibly inaccurate fixes (> 200m)
+        if (accuracy > 200.0) {
+            Log.w(TAG, "Rejected inaccurate GPS fix: accuracy=" + accuracy + "m");
+            return;
+        }
+
         Map<String, Object> data = new HashMap<>();
         data.put("driverId", driverId);
-        data.put("latitude", loc.getLatitude());
-        data.put("longitude", loc.getLongitude());
-        data.put("accuracy", loc.hasAccuracy() ? (double) loc.getAccuracy() : 0.0);
+        data.put("partnerId", driverId);
+        data.put("latitude", lat);
+        data.put("longitude", lon);
+        data.put("geohash", GeohashHelper.encode(lat, lon, 7));
+        data.put("accuracy", accuracy);
+        data.put("locationAccuracyMeters", accuracy);
         data.put("speed", (double) speedKmh);
         data.put("heading", loc.hasBearing() ? (double) loc.getBearing() : 0.0);
         data.put("altitude", loc.hasAltitude() ? loc.getAltitude() : 0.0);
         data.put("isOnline", true);
+        data.put("availabilityStatus", (activeOrderId != null && !activeOrderId.isEmpty()) ? "busy" : "available");
         data.put("activeOrderId", activeOrderId);
+        data.put("lastLocationUpdateAt", FieldValue.serverTimestamp());
         data.put("updatedAt", FieldValue.serverTimestamp());
 
         db.collection(Constants.COLLECTION_DRIVER_LOCATIONS)
@@ -238,6 +258,7 @@ public class DriverLocationService extends Service {
         if (driverId == null) return;
         Map<String, Object> data = new HashMap<>();
         data.put("isOnline", false);
+        data.put("availabilityStatus", "offline");
         data.put("activeOrderId", null);
         data.put("updatedAt", FieldValue.serverTimestamp());
 

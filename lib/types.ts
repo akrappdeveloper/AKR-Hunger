@@ -39,14 +39,21 @@ export interface Address {
   id: string;
   customerId: string;
   type: 'home' | 'work' | 'other';
+  addressLabel?: string;
+  addressLine?: string;
   street: string;
+  landmark?: string;
+  locality?: string;
   city: string;
+  district?: string;
   state: string;
   pincode: string;
   latitude: number;
   longitude: number;
+  geohash?: string;
   isDefault: boolean;
   createdAt: Date;
+  updatedAt?: Date;
   plusCode?: string;
 }
 
@@ -65,17 +72,35 @@ export interface Restaurant {
   isActive?: boolean;
   address: string; // Keep for backward compatibility
   // Structured address fields
+  formattedAddress?: string;
   street?: string;
+  locality?: string;
   city?: string;
   state?: string;
   pincode?: string;
   latitude?: number;
   longitude?: number;
+  geohash?: string;
   phone: string;
   email: string;
   password?: string;
   createdAt?: Date;
   updatedAt?: Date;
+  // Delivery eligibility & geospatial fields
+  approvalStatus?: 'pending' | 'approved' | 'rejected' | 'suspended';
+  acceptsOrders?: boolean;
+  deliveryMode?: 'platform' | 'self' | 'hybrid';
+  serviceArea?: {
+    mode: 'radius' | 'pincode' | 'zone';
+    defaultRadiusKm: number;
+    maxRadiusKm: number;
+    extendedDeliveryEnabled?: boolean;
+    extendedMaxRadiusKm?: number;
+    longDistanceEnabled?: boolean;
+    longDistanceMaxKm?: number;
+  };
+  averagePreparationMinutes?: number;
+  maxConcurrentOrders?: number;
   // Enhanced for reviews and search
   averageRating?: number;
   totalReviews?: number;
@@ -517,13 +542,19 @@ export type DeliveryPartner = DeliveryPerson & {
 // GPS Live Location (stored in driverLocations/{driverId})
 export interface DriverLocation {
   driverId: string;
+  partnerId?: string;
+  driverName?: string;
   latitude: number;
   longitude: number;
+  geohash?: string;
   accuracy: number;
+  locationAccuracyMeters?: number;
   speed: number; // km/h
   heading: number; // degrees from north
   isOnline: boolean;
-  activeOrderId?: string;
+  availabilityStatus?: 'available' | 'busy' | 'offline';
+  activeOrderId?: string | null;
+  lastLocationUpdateAt?: any;
   updatedAt: any; // serverTimestamp
 }
 
@@ -869,6 +900,76 @@ export interface RedeemCodeItem {
   isActive: boolean;
   expiresAt?: string;
   createdAt?: any;
+}
+
+// ==========================================
+// Delivery Eligibility & Geospatial Types
+// ==========================================
+
+export type DeliveryReasonCode =
+  | 'DELIVERABLE'
+  | 'INVALID_CUSTOMER_LOCATION'
+  | 'INVALID_RESTAURANT_LOCATION'
+  | 'RESTAURANT_NOT_APPROVED'
+  | 'RESTAURANT_CLOSED'
+  | 'NOT_ACCEPTING_ORDERS'
+  | 'OUTSIDE_DELIVERY_RADIUS'
+  | 'OUTSIDE_SERVICE_AREA'
+  | 'NO_DELIVERY_CAPACITY'
+  | 'NO_VALID_ROUTE'
+  | 'ROUTING_TEMPORARILY_UNAVAILABLE'
+  | 'MENU_ITEM_UNAVAILABLE';
+
+export type DeliveryServiceMode = 'standard' | 'extended' | 'long_distance';
+
+export interface DeliveryEligibilityResult {
+  restaurantId: string;
+  eligible: boolean;
+  reasonCode: DeliveryReasonCode;
+  serviceMode: DeliveryServiceMode;
+  roadDistanceMeters: number;
+  straightLineDistanceMeters?: number;
+  routeDurationSeconds: number;
+  estimatedDeliveryMinutes: number;
+  effectiveMaxRoadDistanceKm: number;
+  deliveryFee?: number;
+  feeBreakdown?: DeliveryFeeBreakdown;
+  checkedAt: string; // ISO timestamp
+  routeGeometry?: [number, number][];
+}
+
+export interface DeliveryFeeBreakdown {
+  baseFee: number;
+  distanceCharge: number;
+  minimumFee: number;
+  restaurantSubsidy: number;
+  promotionalDiscount: number;
+  peakCharge: number;
+  taxes: number;
+  totalFee: number;
+}
+
+export interface PlatformDeliverySettings {
+  standardMaxRadiusKm: number;
+  extendedMaxRadiusKm: number;
+  longDistanceMaxKm: number;
+  defaultPreparationMinutes: number;
+  dispatchBufferMinutes: number;
+  pickupHandoffBufferMinutes: number;
+  baseFee: number;
+  perKmCharge: number;
+  minimumDeliveryFee: number;
+  peakHourMultiplier: number;
+  taxRate: number; // e.g. 0.05 for 5%
+  extendedDeliveryGlobalEnabled: boolean;
+  longDistanceGlobalEnabled: boolean;
+  updatedAt?: Date;
+  updatedBy?: string;
+}
+
+export interface RestaurantDiscoveryResult {
+  restaurant: Restaurant;
+  eligibility: DeliveryEligibilityResult;
 }
 
 export { generateProfessionalOrderId, formatOrderId } from './order-utils';

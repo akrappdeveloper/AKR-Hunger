@@ -46,8 +46,22 @@ public class AvailableOrdersAdapter extends RecyclerView.Adapter<AvailableOrders
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         DeliveryOrder order = orders.get(position);
-
-        holder.tvOrderId.setText(order.getFormattedOrderId());
+        String metaText = order.getFormattedOrderId();
+        if (order.getDeliveryLocality() != null && !order.getDeliveryLocality().isEmpty()) {
+            metaText += " • 📍 " + order.getDeliveryLocality();
+        } else if (order.getDeliveryAddressPincode() != null && !order.getDeliveryAddressPincode().isEmpty()) {
+            metaText += " • PIN " + order.getDeliveryAddressPincode();
+        }
+        if (order.getRestaurantLatitude() != 0 && order.getDeliveryLatitude() != 0) {
+            double distKm = LocationUtils.calculateDistanceKm(
+                    order.getRestaurantLatitude(), order.getRestaurantLongitude(),
+                    order.getDeliveryLatitude(), order.getDeliveryLongitude()
+            );
+            if (distKm > 0) {
+                metaText += " • " + LocationUtils.formatDistance(distKm);
+            }
+        }
+        holder.tvOrderId.setText(metaText);
         holder.tvEarnings.setText(LocationUtils.formatCurrency(order.getEstimatedEarning()));
         holder.tvRestaurantName.setText(order.getRestaurantName());
         holder.tvCustomerName.setText(order.getCustomerName());

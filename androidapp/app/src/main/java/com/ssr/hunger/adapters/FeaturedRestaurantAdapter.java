@@ -22,6 +22,8 @@ public class FeaturedRestaurantAdapter extends RecyclerView.Adapter<FeaturedRest
 
     private List<Restaurant> restaurants;
     private final OnRestaurantClickListener listener;
+    private double customerLat = 0;
+    private double customerLon = 0;
 
     public FeaturedRestaurantAdapter(List<Restaurant> restaurants, OnRestaurantClickListener listener) {
         this.restaurants = restaurants;
@@ -31,6 +33,15 @@ public class FeaturedRestaurantAdapter extends RecyclerView.Adapter<FeaturedRest
     public void updateData(List<Restaurant> newData) {
         this.restaurants = newData;
         notifyDataSetChanged();
+    }
+
+    /**
+     * Set customer coordinates for distance calculation.
+     * Call when delivery address changes.
+     */
+    public void setCustomerLocation(double lat, double lon) {
+        this.customerLat = lat;
+        this.customerLon = lon;
     }
 
     @NonNull
@@ -54,6 +65,19 @@ public class FeaturedRestaurantAdapter extends RecyclerView.Adapter<FeaturedRest
             holder.tvClosedBadge.setVisibility(isOpen ? View.GONE : View.VISIBLE);
         }
 
+        // Show distance when both customer and restaurant have valid coordinates
+        if (holder.tvDistance != null) {
+            if (customerLat != 0 && customerLon != 0
+                    && restaurant.getLatitude() != 0 && restaurant.getLongitude() != 0) {
+                double dist = com.ssr.hunger.utils.GeohashHelper.haversineDistance(
+                        customerLat, customerLon, restaurant.getLatitude(), restaurant.getLongitude());
+                holder.tvDistance.setText(com.ssr.hunger.utils.GeohashHelper.formatDistance(dist));
+                holder.tvDistance.setVisibility(View.VISIBLE);
+            } else {
+                holder.tvDistance.setVisibility(View.GONE);
+            }
+        }
+
         // Load image with Glide
         if (restaurant.getImage() != null && !restaurant.getImage().isEmpty()) {
             Glide.with(holder.itemView.getContext())
@@ -73,7 +97,7 @@ public class FeaturedRestaurantAdapter extends RecyclerView.Adapter<FeaturedRest
 
     static class ViewHolder extends RecyclerView.ViewHolder {
         ImageView ivImage;
-        TextView tvName, tvRating, tvCuisine, tvClosedBadge;
+        TextView tvName, tvRating, tvCuisine, tvClosedBadge, tvDistance;
 
         ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -82,6 +106,7 @@ public class FeaturedRestaurantAdapter extends RecyclerView.Adapter<FeaturedRest
             tvRating = itemView.findViewById(R.id.tv_restaurant_rating);
             tvCuisine = itemView.findViewById(R.id.tv_restaurant_cuisine);
             tvClosedBadge = itemView.findViewById(R.id.tv_closed_badge);
+            tvDistance = itemView.findViewById(R.id.tv_road_distance);
         }
     }
 }

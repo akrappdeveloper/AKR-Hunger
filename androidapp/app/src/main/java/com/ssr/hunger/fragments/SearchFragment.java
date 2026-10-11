@@ -425,7 +425,7 @@ public class SearchFragment extends Fragment {
                     allMenuItems.clear();
                     for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
                         MenuItem item = MenuItem.fromSnapshot(doc);
-                        if (item != null) {
+                        if (item != null && item.isAvailable()) {
                             allMenuItems.add(item);
                         }
                     }
