@@ -729,33 +729,191 @@ export interface QualityMetrics {
 }
 
 // Advertisement Campaign Types
+export type CampaignAdType = 'HOME_PAGE' | 'SEARCH' | 'PRODUCT_DETAILS';
+
+export type CampaignStatus =
+  | 'DRAFT'
+  | 'PENDING_PAYMENT'
+  | 'SCHEDULED'
+  | 'ACTIVATING'
+  | 'ACTIVE'
+  | 'PAUSED'
+  | 'COMPLETED'
+  | 'REJECTED'
+  | 'CANCELLED'
+  | 'FAILED'
+  // Legacy lowercase compatibility
+  | 'draft'
+  | 'active'
+  | 'paused'
+  | 'completed'
+  | 'cancelled';
+
+export type CampaignPaymentStatus =
+  | 'PENDING'
+  | 'PENDING_ONLINE'
+  | 'PAID'
+  | 'FAILED'
+  | 'CANCELLED'
+  | 'REFUNDED';
+
+export interface AdSettings {
+  id?: string;
+  minDailyBudget: number;
+  minTotalBudget: number;
+  cpcRate: number; // ₹ per click
+  cpmRate: number; // ₹ per 1000 impressions
+  pointsToRupeeRate: number; // ₹ value per 1 reward point
+  activationDelaySeconds: number; // ~60s default
+  estimatedCtrPercent: number; // e.g. 3.5% for estimates
+  placementsEnabled: {
+    HOME_PAGE: boolean;
+    SEARCH: boolean;
+    PRODUCT_DETAILS: boolean;
+  };
+  placementMultipliers: {
+    HOME_PAGE: number;
+    SEARCH: number;
+    PRODUCT_DETAILS: number;
+  };
+  updatedAt?: Date | any;
+  updatedBy?: string;
+}
+
 export interface AdCampaign {
   id?: string;
+  campaignId?: string;
   restaurantId: string;
   restaurantName: string;
   menuItemId: string;
+  menuItemIds?: string[];
   menuItemName: string;
+  menuItemNames?: string[];
   menuItemImage: string;
+  menuItemsSnapshot?: Array<{
+    id: string;
+    name: string;
+    price: number;
+    image: string;
+    category?: string;
+    vegetarian?: boolean;
+  }>;
   // Campaign details
+  adType?: CampaignAdType;
+  campaignName?: string;
   title: string;
   description: string;
+  offerBadge?: string;
+  targetKeywords?: string[];
   budget: 'daily' | 'monthly';
-  dailyCost: number; // in points
-  monthlyCost: number; // in points
+  budgetType?: 'DAILY' | 'TOTAL';
+  dailyBudget?: number;
+  totalBudget?: number;
+  spentAmount?: number;
+  remainingBudget?: number;
+  todaySpent?: number;
+  todaySpentDate?: string;
+  dailyCost: number; // legacy points or ₹ daily
+  monthlyCost: number; // legacy points or ₹ total
   // Status
-  status: 'draft' | 'active' | 'paused' | 'completed' | 'cancelled';
+  status: CampaignStatus;
+  campaignStatus?: CampaignStatus;
+  paymentStatus?: CampaignPaymentStatus;
   isActive: boolean;
+  rejectionReason?: string;
+  pauseReason?: string;
+  // Payment & Transaction refs
+  paymentMethod?: 'WALLET' | 'RAZORPAY' | 'REWARD_POINTS' | 'POINTS_WALLET' | 'POINTS_RAZORPAY' | 'POINTS_WALLET_RAZORPAY';
+  paymentId?: string;
+  idempotencyKey?: string;
+  pointsUsed?: number;
+  pointsValueInRupees?: number;
+  walletAmountUsed?: number;
+  onlineAmountPaid?: number;
+  totalAmountPaid?: number;
+  razorpayOrderId?: string;
+  razorpayPaymentId?: string;
   // Metrics
   totalClicks: number;
-  totalSpent: number; // in points
+  totalSpent: number;
   pointsRemaining: number;
   impressions: number;
+  uniqueImpressions?: number;
+  ordersGenerated?: number;
+  revenueAttributed?: number;
   clickThroughRate: number; // %
-  // Dates
-  startDate?: Date;
-  endDate?: Date;
-  createdAt: Date;
-  updatedAt?: Date;
+  // Dates & Schedule
+  startDate?: Date | any;
+  endDate?: Date | any;
+  startAt?: Date | any;
+  endAt?: Date | any;
+  activationDueAt?: Date | any;
+  activatedAt?: Date | any;
+  timezone?: string;
+  createdAt: Date | any;
+  updatedAt?: Date | any;
+}
+
+export interface CampaignPaymentRecord {
+  id?: string;
+  paymentId: string;
+  campaignId: string;
+  restaurantId: string;
+  restaurantName?: string;
+  idempotencyKey: string;
+  paymentMethod: string;
+  totalAmount: number;
+  pointsUsed: number;
+  pointsValueInRupees: number;
+  walletAmount: number;
+  onlineAmount: number;
+  status: CampaignPaymentStatus;
+  walletReservationStatus?: 'NONE' | 'RESERVED' | 'COMMITTED' | 'RELEASED';
+  pointsReservationStatus?: 'NONE' | 'RESERVED' | 'COMMITTED' | 'RELEASED';
+  razorpayOrderId?: string;
+  razorpayPaymentId?: string;
+  razorpaySignature?: string;
+  failureReason?: string;
+  createdAt: Date | any;
+  updatedAt?: Date | any;
+  paidAt?: Date | any;
+}
+
+export interface RestaurantWalletTransaction {
+  id?: string;
+  transactionId: string;
+  restaurantId: string;
+  type: 'DEBIT' | 'CREDIT' | 'REFUND' | 'RESERVED' | 'RELEASED';
+  category: 'CAMPAIGN_AD' | 'CAMPAIGN_REFUND' | 'EARNING' | 'WITHDRAWAL';
+  campaignId?: string;
+  campaignName?: string;
+  paymentId?: string;
+  paymentReference?: string;
+  amount: number;
+  balanceBefore?: number;
+  balanceAfter?: number;
+  status: 'PENDING' | 'RESERVED' | 'COMPLETED' | 'FAILED' | 'RELEASED';
+  description: string;
+  createdAt: Date | any;
+  updatedAt?: Date | any;
+}
+
+export interface RestaurantRewardTransaction {
+  id?: string;
+  transactionId: string;
+  restaurantId: string;
+  type: 'DEBIT' | 'CREDIT' | 'REFUND' | 'RESERVED' | 'RELEASED';
+  points: number;
+  rupeeValue: number;
+  conversionRate: number;
+  campaignId?: string;
+  campaignName?: string;
+  paymentId?: string;
+  status: 'PENDING' | 'RESERVED' | 'COMPLETED' | 'FAILED' | 'RELEASED';
+  balanceBefore: number;
+  balanceAfter: number;
+  description: string;
+  createdAt: Date | any;
 }
 
 // Ad Click Tracking

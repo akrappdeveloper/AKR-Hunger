@@ -600,5 +600,72 @@ service cloud.firestore {
     match /inventory/{itemId} {
       allow read, list, create, update, delete: if request.auth.uid != null;
     }
+
+    // ==========================================
+    // 39. Campaigns & Ads Platform Collections
+    // ==========================================
+    match /adSettings/{settingId} {
+      allow read, list: if true;
+      allow write: if request.auth.uid != null && isAdmin(request.auth.uid);
+    }
+
+    match /campaignPayments/{paymentId} {
+      allow read, list: if request.auth.uid != null && (
+        resource.data.restaurantId == request.auth.uid || isAdmin(request.auth.uid)
+      );
+      allow write: if request.auth.uid != null && isAdmin(request.auth.uid);
+    }
+
+    match /campaignTransactions/{txId} {
+      allow read, list: if request.auth.uid != null && (
+        resource.data.restaurantId == request.auth.uid || isAdmin(request.auth.uid)
+      );
+      allow write: if request.auth.uid != null && isAdmin(request.auth.uid);
+    }
+
+    match /restaurantWalletTransactions/{txId} {
+      allow read, list: if request.auth.uid != null && (
+        resource.data.restaurantId == request.auth.uid || isAdmin(request.auth.uid)
+      );
+      allow write: if request.auth.uid != null && isAdmin(request.auth.uid);
+    }
+
+    match /restaurantRewardTransactions/{txId} {
+      allow read, list: if request.auth.uid != null && (
+        resource.data.restaurantId == request.auth.uid || isAdmin(request.auth.uid)
+      );
+      allow write: if request.auth.uid != null && isAdmin(request.auth.uid);
+    }
+
+    match /campaignSchedules/{scheduleId} {
+      allow read, list: if request.auth.uid != null && (
+        resource.data.restaurantId == request.auth.uid || isAdmin(request.auth.uid)
+      );
+      allow write: if request.auth.uid != null && isAdmin(request.auth.uid);
+    }
+
+    match /adImpressions/{impId} {
+      allow read, list: if request.auth.uid != null && (
+        resource.data.restaurantId == request.auth.uid || isAdmin(request.auth.uid)
+      );
+      allow create: if true;
+      allow update, delete: if request.auth.uid != null && isAdmin(request.auth.uid);
+    }
+
+    match /adClicks/{clickId} {
+      allow read, list: if request.auth.uid != null && (
+        resource.data.restaurantId == request.auth.uid || isAdmin(request.auth.uid)
+      );
+      allow create: if true;
+      allow update, delete: if request.auth.uid != null && isAdmin(request.auth.uid);
+    }
+
+    match /adConversions/{convId} {
+      allow read, list: if request.auth.uid != null && (
+        resource.data.restaurantId == request.auth.uid || isAdmin(request.auth.uid)
+      );
+      allow create: if request.auth.uid != null;
+      allow update, delete: if request.auth.uid != null && isAdmin(request.auth.uid);
+    }
   }
 }

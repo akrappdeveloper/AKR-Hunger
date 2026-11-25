@@ -15,6 +15,7 @@ import Link from 'next/link';
 import SafeImage from '@/components/ui/safe-image';
 import RestaurantCard from '@/components/customer/RestaurantCard';
 import { checkRestaurantOperatingStatus } from '@/lib/restaurant-schedule';
+import { SponsoredHomeAds } from '@/components/customer/SponsoredAdsSections';
 import { toast } from 'sonner';
 
 // Curated Food Categories with Rich Vibrant Color Palettes
@@ -632,6 +633,11 @@ export default function CustomerHomePage() {
               )}
             </div>
           </div>
+        )}
+
+        {/* Sponsored Home Page Ads */}
+        {!searchQuery && (
+          <SponsoredHomeAds pincode={deliveryAddress?.pincode} category={categoryFilter} />
         )}
 
         {/* Popular Items Grid */}

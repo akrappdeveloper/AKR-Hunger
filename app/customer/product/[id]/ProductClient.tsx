@@ -22,6 +22,7 @@ import { toast } from 'sonner';
 import { copyToClipboard } from '@/lib/utils';
 import ThemeToggle from '@/components/customer/ThemeToggle';
 import { buildCleanItemPayload } from '@/lib/customization-utils';
+import { SponsoredProductRelatedAds } from '@/components/customer/SponsoredAdsSections';
 
 interface ProductClientProps {
     productId: string;
@@ -1189,6 +1190,9 @@ export default function ProductClient({
                     </div>
                 </div>
             </main>
+
+            {/* Sponsored Related Items */}
+            <SponsoredProductRelatedAds currentProductId={product.id} category={product.category} />
 
             {/* Similar Products */}
             {recommendations.length > 0 && (

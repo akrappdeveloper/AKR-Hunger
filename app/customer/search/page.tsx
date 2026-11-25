@@ -14,6 +14,7 @@ import SafeImage from '@/components/ui/safe-image';
 import CustomerSearchBar from '@/components/customer/CustomerSearchBar';
 import SmartMealFinder from '@/components/customer/SmartMealFinder';
 import RestaurantCard from '@/components/customer/RestaurantCard';
+import { SponsoredSearchAds } from '@/components/customer/SponsoredAdsSections';
 import { MealIntent } from '@/lib/hunger-types-client';
 import {
   Search,
@@ -487,6 +488,11 @@ export default function SearchPage() {
                   ))}
                 </div>
               </div>
+            )}
+
+            {/* Sponsored Search Ads */}
+            {(searchTab === 'all' || searchTab === 'dishes') && (
+              <SponsoredSearchAds searchQuery={searchQuery} />
             )}
 
             {/* Section 2: Dishes */}

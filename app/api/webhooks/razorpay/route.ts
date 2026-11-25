@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin-db';
 import { FieldValue } from 'firebase-admin/firestore';
 import crypto from 'crypto';
+import { finalizeOnlineCampaignPayment } from '@/lib/campaigns/payment-reconcile';
+import { releasePaymentReservations } from '@/lib/campaigns/lifecycle-engine';
 
 const WEBHOOK_SECRET = process.env.RAZORPAY_WEBHOOK_SECRET || '';
 
@@ -31,6 +33,24 @@ export async function POST(request: NextRequest) {
       case 'payment.captured': {
         const payment = payload.payment?.entity;
         if (!payment) break;
+
+        // Check if this payment belongs to a Restaurant Ad Campaign
+        const campaignPaySnap = await adminDb
+          .collection('campaignPayments')
+          .where('razorpayOrderId', '==', payment.order_id)
+          .limit(1)
+          .get();
+
+        if (!campaignPaySnap.empty) {
+          const campPayDoc = campaignPaySnap.docs[0];
+          await finalizeOnlineCampaignPayment({
+            paymentId: campPayDoc.id,
+            razorpayOrderId: payment.order_id,
+            razorpayPaymentId: payment.id,
+            verifiedBy: 'RAZORPAY_WEBHOOK',
+          });
+          break;
+        }
 
         // Find order by razorpayOrderId
         const ordersSnap = await adminDb.collection('orders')
@@ -88,6 +108,21 @@ export async function POST(request: NextRequest) {
       case 'payment.failed': {
         const payment = payload.payment?.entity;
         if (!payment) break;
+
+        const campaignPaySnap = await adminDb
+          .collection('campaignPayments')
+          .where('razorpayOrderId', '==', payment.order_id)
+          .limit(1)
+          .get();
+
+        if (!campaignPaySnap.empty) {
+          await releasePaymentReservations(
+            campaignPaySnap.docs[0].id,
+            payment.error_description || 'Razorpay payment failed',
+            'FAILED'
+          );
+          break;
+        }
 
         const ordersSnap = await adminDb.collection('orders')
           .where('razorpayOrderId', '==', payment.order_id)

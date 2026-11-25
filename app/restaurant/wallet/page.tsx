@@ -24,10 +24,12 @@ interface Transaction {
     id: string;
     orderId: string;
     amount: number;
-    type: 'earning' | 'withdrawal';
-    status: 'completed' | 'pending' | 'rejected';
+    type: 'earning' | 'withdrawal' | 'campaign_debit' | 'campaign_refund' | 'campaign_reserved' | 'campaign_released';
+    status: 'completed' | 'pending' | 'rejected' | 'reserved' | 'released' | 'failed';
     date: Date;
     customerName?: string;
+    campaignId?: string;
+    description?: string;
 }
 
 export default function RestaurantWalletPage() {
@@ -65,13 +67,14 @@ export default function RestaurantWalletPage() {
     const loadWalletData = async () => {
         try {
             setLoading(true);
+            const targetRestaurantId = user?.restaurantId || user!.uid;
             const ordersRef = collection(db, 'orders');
             const withdrawalsRef = collection(db, 'withdrawalRequests');
 
             // 1. Get all delivered orders (Earnings)
             const qOrders = query(
                 ordersRef,
-                where('restaurantId', '==', user!.uid),
+                where('restaurantId', '==', targetRestaurantId),
                 where('status', '==', 'delivered')
             );
             const snapshotOrders = await getDocs(qOrders);
@@ -102,7 +105,7 @@ export default function RestaurantWalletPage() {
             // 2. Get all withdrawal requests
             const qWithdrawals = query(
                 withdrawalsRef,
-                where('restaurantId', '==', user!.uid)
+                where('restaurantId', '==', targetRestaurantId)
             );
             const snapshotWithdrawals = await getDocs(qWithdrawals);
 
@@ -131,17 +134,73 @@ export default function RestaurantWalletPage() {
                 });
             });
 
-            // 3. Calculate Final Balances
-            // Available = Total Earnings - (Pending + Completed Withdrawals)
-            const currentAvailable = totalEarned - (totalPending + totalWithdrawn);
+            // 3. Get Campaign Ad Wallet Transactions (debits, reservations, refunds)
+            const qCampWallet = query(
+                collection(db, 'restaurantWalletTransactions'),
+                where('restaurantId', '==', targetRestaurantId)
+            );
+            const snapCampWallet = await getDocs(qCampWallet);
+
+            let campaignDebits = 0;
+            let campaignRefunds = 0;
+            const campaignTrans: Transaction[] = [];
+
+            snapCampWallet.docs.forEach(docSnap => {
+                const data = docSnap.data();
+                const amount = Number(data.amount || 0);
+                const txType = String(data.type || '').toUpperCase();
+                const txStatus = String(data.status || '').toUpperCase();
+
+                if ((txType === 'DEBIT' || txType === 'RESERVED') && (txStatus === 'COMPLETED' || txStatus === 'RESERVED')) {
+                    campaignDebits += amount;
+                } else if (txType === 'REFUND' && txStatus === 'COMPLETED') {
+                    campaignRefunds += amount;
+                }
+
+                const uiType: Transaction['type'] =
+                    txType === 'REFUND'
+                        ? 'campaign_refund'
+                        : txType === 'RESERVED'
+                        ? 'campaign_reserved'
+                        : txType === 'RELEASED'
+                        ? 'campaign_released'
+                        : 'campaign_debit';
+
+                const uiStatus: Transaction['status'] =
+                    txStatus === 'RESERVED'
+                        ? 'reserved'
+                        : txStatus === 'RELEASED'
+                        ? 'released'
+                        : txStatus === 'FAILED'
+                        ? 'rejected'
+                        : txStatus === 'COMPLETED'
+                        ? 'completed'
+                        : 'pending';
+
+                campaignTrans.push({
+                    id: `cw_${docSnap.id}`,
+                    orderId: data.campaignId || docSnap.id.slice(0, 8),
+                    amount,
+                    type: uiType,
+                    status: uiStatus,
+                    date: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(),
+                    customerName: data.campaignName || 'Ad Campaign',
+                    campaignId: data.campaignId,
+                    description: data.description,
+                });
+            });
+
+            // 4. Calculate Final Balances
+            // Available = Total Earnings + Campaign Refunds - (Pending + Completed Withdrawals + Campaign Debits/Reservations)
+            const currentAvailable = totalEarned + campaignRefunds - (totalPending + totalWithdrawn + campaignDebits);
 
             setTotalEarnings(totalEarned);
             setAvailableBalance(currentAvailable);
             setPendingWithdrawals(totalPending);
-            setTotalWithdrawn(totalWithdrawn); // Need to add this state
+            setTotalWithdrawn(totalWithdrawn);
 
             // Merge and sort transactions
-            const allTrans = [...orderTrans, ...withdrawalTrans].sort((a, b) =>
+            const allTrans = [...orderTrans, ...withdrawalTrans, ...campaignTrans].sort((a, b) =>
                 b.date.getTime() - a.date.getTime()
             );
             setTransactions(allTrans);
@@ -395,38 +454,63 @@ export default function RestaurantWalletPage() {
                     </div>
                 ) : (
                     <div className="space-y-3">
-                        {transactions.map((transaction) => (
+                        {transactions.map((transaction) => {
+                            const isCredit = transaction.type === 'earning' || transaction.type === 'campaign_refund';
+                            const isNeutral = transaction.type === 'campaign_released';
+                            const title =
+                                transaction.type === 'earning'
+                                    ? 'Order Payment (Subtotal)'
+                                    : transaction.type === 'withdrawal'
+                                    ? 'Withdrawal'
+                                    : transaction.type === 'campaign_refund'
+                                    ? 'Campaign Refund'
+                                    : transaction.type === 'campaign_reserved'
+                                    ? 'Campaign Hold (Pending Online Payment)'
+                                    : transaction.type === 'campaign_released'
+                                    ? 'Campaign Hold Released'
+                                    : 'Ad Campaign Spend';
+
+                            return (
                             <div
                                 key={transaction.id}
                                 className="flex items-center justify-between p-4 bg-muted/30 rounded-xl border border-border hover:bg-muted/60 transition"
                             >
                                 <div className="flex items-center gap-4">
-                                    <div className={`p-2 rounded-lg ${transaction.type === 'earning'
+                                    <div className={`p-2 rounded-lg ${isCredit
                                         ? 'bg-emerald-500/10 border border-emerald-500/30'
+                                        : isNeutral
+                                        ? 'bg-muted border border-border'
                                         : 'bg-red-500/10 border border-red-500/30'
                                         }`}>
-                                        {transaction.type === 'earning' ? (
+                                        {isCredit ? (
                                             <ArrowUpCircle className="w-5 h-5 text-emerald-500" />
                                         ) : (
-                                            <ArrowDownCircle className="w-5 h-5 text-red-500" />
+                                            <ArrowDownCircle className={`w-5 h-5 ${isNeutral ? 'text-muted-foreground' : 'text-red-500'}`} />
                                         )}
                                     </div>
                                     <div>
-                                        <p className="text-foreground font-semibold">
-                                            {transaction.type === 'earning' ? 'Order Payment (Subtotal)' : 'Withdrawal'}
-                                        </p>
+                                        <p className="text-foreground font-semibold">{title}</p>
                                         <p className="text-sm text-muted-foreground font-medium">
-                                            {transaction.customerName} • Order #{transaction.orderId.slice(0, 8)}
+                                            {transaction.description || `${transaction.customerName} • #${transaction.orderId.slice(0, 12)}`}
                                         </p>
-                                        <p className="text-xs text-muted-foreground mt-1">
-                                            {transaction.date.toLocaleDateString()} {transaction.date.toLocaleTimeString()}
-                                        </p>
+                                        <div className="flex items-center gap-3 mt-1">
+                                            <p className="text-xs text-muted-foreground">
+                                                {transaction.date.toLocaleDateString()} {transaction.date.toLocaleTimeString()}
+                                            </p>
+                                            {transaction.campaignId && (
+                                                <Link
+                                                    href={`/restaurant/campaigns/${transaction.campaignId}`}
+                                                    className="text-xs font-semibold text-primary hover:underline"
+                                                >
+                                                    View Campaign
+                                                </Link>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                                 <div className="text-right">
-                                    <p className={`text-xl font-bold ${transaction.type === 'earning' ? 'text-emerald-500' : 'text-red-500'
-                                        }`}>
-                                        {transaction.type === 'earning' ? '+' : '-'}₹{transaction.amount.toFixed(2)}
+                                    <p className={`text-xl font-bold ${isCredit ? 'text-emerald-500' : isNeutral ? 'text-muted-foreground' : 'text-red-500'}`}>
+                                        {isNeutral ? '' : isCredit ? '+' : '-'}₹{transaction.amount.toFixed(2)}
                                     </p>
                                     <Badge className={`mt-1 capitalize ${transaction.status === 'completed'
                                             ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30'
@@ -438,7 +522,8 @@ export default function RestaurantWalletPage() {
                                     </Badge>
                                 </div>
                             </div>
-                        ))}
+                        );
+                        })}
                     </div>
                 )}
             </Card>

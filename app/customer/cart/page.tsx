@@ -28,6 +28,7 @@ import {
 import { generateProfessionalOrderId } from '@/lib/order-utils';
 import { validatePromotionCode, calculateDiscount, recordPromotionUsage } from '@/lib/promotions';
 import { notifyOrderPlaced, notifyPaymentResult } from '@/lib/customer-notifications';
+import { trackAdConversionsForOrder } from '@/lib/campaigns/client-ads';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -546,6 +547,8 @@ export default function CartPage() {
           body: JSON.stringify({ orderId }),
         }).catch((err) => console.error('Failed to trigger notification', err));
 
+        trackAdConversionsForOrder(orderId, orderItems, total, user.uid).catch(() => {});
+
         // Send confirmation emails
         if (user.email) {
           fetch('/api/email/send', {
@@ -678,6 +681,8 @@ export default function CartPage() {
         method: 'POST',
         body: JSON.stringify({ orderId }),
       }).catch((err) => console.error('Failed to trigger notification', err));
+
+      trackAdConversionsForOrder(orderId, orderItems, total, user.uid).catch(() => {});
 
       if (user.email) {
         fetch('/api/email/send', {
@@ -860,6 +865,8 @@ export default function CartPage() {
                 method: 'POST',
                 body: JSON.stringify({ orderId }),
               }).catch(err => console.error("Failed to trigger notification", err));
+
+              trackAdConversionsForOrder(orderId, orderItems, amount, currentUserId).catch(() => {});
 
               // Send Emails
               if (user?.email) {
