@@ -1,10 +1,11 @@
 /**
- * Uploads a file to Cloudinary with real-time percentage progress tracking.
+ * Uploads an image or video file to Cloudinary with real-time percentage progress tracking.
  * Requires NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME and NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET to be set in .env
  */
 export const uploadToCloudinary = async (
     file: File,
-    onProgress?: (percent: number) => void
+    onProgress?: (percent: number) => void,
+    resourceType: 'image' | 'video' | 'auto' = 'image'
 ): Promise<string> => {
     const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
     const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
@@ -17,9 +18,11 @@ export const uploadToCloudinary = async (
     formData.append('file', file);
     formData.append('upload_preset', uploadPreset);
 
+    const endpointType = resourceType === 'video' ? 'video' : resourceType === 'auto' ? 'auto' : 'image';
+
     return new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
-        xhr.open('POST', `https://api.cloudinary.com/v1_1/${cloudName}/upload`);
+        xhr.open('POST', `https://api.cloudinary.com/v1_1/${cloudName}/${endpointType}/upload`);
 
         if (onProgress && xhr.upload) {
             xhr.upload.onprogress = (event) => {

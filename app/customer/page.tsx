@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { collection, query, onSnapshot, getDocs } from 'firebase/firestore';
+import { collection, query, onSnapshot, getDocs, where, limit } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { MenuItem, Restaurant } from '@/lib/types';
 import { Card } from '@/components/ui/card';
@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useCart } from '@/context/CartContext';
-import { Search, ShoppingCart, Star, Flame, Clock, Filter, MapPin, ChevronRight, ChevronLeft, ChevronDown, TrendingUp, Plus, Store, Sparkles } from 'lucide-react';
+import { Search, ShoppingCart, Star, Flame, Clock, Filter, MapPin, ChevronRight, ChevronLeft, ChevronDown, TrendingUp, Plus, Store, Sparkles, Video, RotateCcw, Apple, BookOpen, Compass } from 'lucide-react';
 import Link from 'next/link';
 import SafeImage from '@/components/ui/safe-image';
 import RestaurantCard from '@/components/customer/RestaurantCard';
@@ -152,6 +152,12 @@ export default function CustomerHomePage() {
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [activeTab, setActiveTab] = useState('delivery'); // 'delivery' or 'pickup'
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [storyRestaurants, setStoryRestaurants] = useState<{
+    restaurantId: string;
+    restaurantName: string;
+    restaurantImage: string;
+    storyCount: number;
+  }[]>([]);
 
   // Carousel ref, quick filter state, and dish visibility limit
   const carouselRef = useRef<HTMLDivElement>(null);
@@ -222,9 +228,48 @@ export default function CustomerHomePage() {
       setLoading(false);
     });
 
+    // 3. Realtime listener for Uploaded Restaurant Stories / Reels
+    let unsubscribeVideos: (() => void) | null = null;
+    try {
+      const videosRef = collection(db, 'videos');
+      const qVideos = query(videosRef, where('isActive', '==', true), limit(50));
+      unsubscribeVideos = onSnapshot(qVideos, (vSnapshot) => {
+        const videoDocs = vSnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+        const restStoryMap = new Map<string, {
+          restaurantId: string;
+          restaurantName: string;
+          restaurantImage: string;
+          storyCount: number;
+        }>();
+
+        videoDocs.forEach((v: any) => {
+          if (v.restaurantId) {
+            const existing = restStoryMap.get(v.restaurantId);
+            if (existing) {
+              existing.storyCount += 1;
+            } else {
+              restStoryMap.set(v.restaurantId, {
+                restaurantId: v.restaurantId,
+                restaurantName: v.restaurantName || restaurantMap.get(v.restaurantId) || 'Restaurant Partner',
+                restaurantImage: v.restaurantImage || '/hunger.png',
+                storyCount: 1,
+              });
+            }
+          }
+        });
+
+        setStoryRestaurants(Array.from(restStoryMap.values()));
+      }, (err) => {
+        console.warn('[Customer Home] Videos snapshot notice:', err);
+      });
+    } catch (e) {
+      console.warn('[Customer Home] Videos setup notice:', e);
+    }
+
     return () => {
       if (unsubscribeMenu) unsubscribeMenu();
       if (unsubscribeRestaurants) unsubscribeRestaurants();
+      if (unsubscribeVideos) unsubscribeVideos();
     };
   }, []);
 
@@ -323,6 +368,53 @@ export default function CustomerHomePage() {
 
       <div className="w-full max-w-[1440px] mx-auto px-3 sm:px-5 lg:px-8 space-y-6 sm:space-y-8 mt-3 sm:mt-6">
 
+        {/* Food Stories / Reels Strip - ONLY displays restaurants who have uploaded stories */}
+        {storyRestaurants.length > 0 && (
+          <div className="pt-1">
+            <div className="flex items-center justify-between mb-2.5">
+              <h2 className="text-sm sm:text-base font-bold flex items-center gap-1.5 text-foreground">
+                <Video className="w-4 h-4 text-primary" />
+                <span>Kitchen Stories &amp; Reels</span>
+                <Badge className="bg-primary/10 text-primary border-primary/20 text-[10px] font-bold">Live</Badge>
+              </h2>
+              <Link href="/customer/stories" className="text-xs font-bold text-primary flex items-center hover:underline">
+                <span>Watch Reels ({storyRestaurants.reduce((sum, s) => sum + s.storyCount, 0)})</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+            <div className="flex gap-3.5 overflow-x-auto pb-2 scrollbar-hide snap-x -mx-3 px-3 sm:mx-0 sm:px-0">
+              {storyRestaurants.map((sr) => (
+                <Link
+                  key={sr.restaurantId}
+                  href={`/customer/stories?restaurantId=${sr.restaurantId}`}
+                  className="snap-start flex flex-col items-center gap-1.5 min-w-[72px] group cursor-pointer"
+                >
+                  <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-primary via-orange-500 to-amber-500 p-[2.5px] transition-transform duration-300 group-hover:scale-105 group-hover:shadow-md group-hover:shadow-primary/30 relative">
+                    <div className="w-full h-full rounded-full bg-background p-[2px] overflow-hidden">
+                      <img
+                        src={sr.restaurantImage || '/hunger.png'}
+                        alt={sr.restaurantName}
+                        className="w-full h-full object-cover rounded-full group-hover:scale-110 transition-transform duration-500"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = '/hunger.png';
+                        }}
+                      />
+                    </div>
+                    {sr.storyCount > 1 && (
+                      <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[9px] font-black rounded-full w-4 h-4 flex items-center justify-center border border-background shadow-xs">
+                        {sr.storyCount}
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-[11px] font-bold text-center truncate max-w-[76px] text-muted-foreground group-hover:text-foreground">
+                    {sr.restaurantName}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Category Scroller */}
         <div>
           <h2 className="text-base sm:text-lg font-bold mb-3 sm:mb-4 flex items-center gap-2 text-foreground">
@@ -415,6 +507,59 @@ export default function CustomerHomePage() {
         )}
 
 
+
+        {/* Quick Explore Hub */}
+        {!searchQuery && (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <Link href="/customer/cuisines" className="group">
+              <div className="p-3.5 rounded-2xl bg-gradient-to-br from-orange-500/10 via-amber-500/5 to-transparent border border-orange-500/20 hover:border-orange-500/50 hover:shadow-md transition-all duration-300 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-orange-500/15 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
+                  🍲
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-foreground group-hover:text-primary transition-colors">Cuisines</p>
+                  <p className="text-[10px] text-muted-foreground">Explore tastes</p>
+                </div>
+              </div>
+            </Link>
+
+            <Link href="/customer/diet-planner" className="group">
+              <div className="p-3.5 rounded-2xl bg-gradient-to-br from-emerald-500/10 via-teal-500/5 to-transparent border border-emerald-500/20 hover:border-emerald-500/50 hover:shadow-md transition-all duration-300 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-emerald-500/15 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
+                  🥗
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-foreground group-hover:text-emerald-600 transition-colors">Diet Plan</p>
+                  <p className="text-[10px] text-muted-foreground">Calories &amp; macro</p>
+                </div>
+              </div>
+            </Link>
+
+            <Link href="/customer/reorder" className="group">
+              <div className="p-3.5 rounded-2xl bg-gradient-to-br from-blue-500/10 via-indigo-500/5 to-transparent border border-blue-500/20 hover:border-blue-500/50 hover:shadow-md transition-all duration-300 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-blue-500/15 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
+                  🔄
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-foreground group-hover:text-blue-600 transition-colors">Order Again</p>
+                  <p className="text-[10px] text-muted-foreground">1-click repeat</p>
+                </div>
+              </div>
+            </Link>
+
+            <Link href="/customer/blog" className="group">
+              <div className="p-3.5 rounded-2xl bg-gradient-to-br from-purple-500/10 via-pink-500/5 to-transparent border border-purple-500/20 hover:border-purple-500/50 hover:shadow-md transition-all duration-300 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-purple-500/15 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
+                  📖
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-foreground group-hover:text-purple-600 transition-colors">Food Blog</p>
+                  <p className="text-[10px] text-muted-foreground">Tips &amp; recipes</p>
+                </div>
+              </div>
+            </Link>
+          </div>
+        )}
 
         {/* Featured Restaurants Section */}
         {!searchQuery && categoryFilter === 'all' && (

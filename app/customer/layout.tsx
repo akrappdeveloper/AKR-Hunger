@@ -1,6 +1,7 @@
 import React from "react"
 import CustomerNavbar from '@/components/customer/CustomerNavbar';
 import CustomerMobileNav from '@/components/customer/MobileNav';
+import CustomerFooter from '@/components/customer/CustomerFooter';
 import ActiveOrderFloatingTracker from '@/components/customer/ActiveOrderFloatingTracker';
 import FloatingAIChatWidget from '@/components/ai/FloatingAIChatWidget';
 import { NotificationProvider } from '@/context/NotificationContext';
@@ -64,9 +65,10 @@ export default function CustomerLayout({
 
   return (
     <NotificationProvider>
-      <div className="min-h-screen bg-background text-foreground transition-colors duration-300 selection:bg-primary/20 flex flex-col">
+      <div className="min-h-screen min-h-[100dvh] w-full overflow-x-hidden bg-background text-foreground transition-colors duration-300 selection:bg-primary/20 flex flex-col">
         <CustomerNavbar />
-        <main className="flex-1 w-full pb-16 md:pb-0">{children}</main>
+        <main className="flex-1 w-full pb-20 md:pb-6">{children}</main>
+        <CustomerFooter />
         <CustomerMobileNav />
         <ActiveOrderFloatingTracker />
         <FloatingAIChatWidget role="customer" buttonText="Help AI" />

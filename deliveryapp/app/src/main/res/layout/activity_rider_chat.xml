@@ -14,16 +14,14 @@
         android:elevation="3dp"
         android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:paddingStart="12dp"
-        android:paddingEnd="12dp"
-        android:paddingTop="12dp"
-        android:paddingBottom="12dp">
+        android:paddingHorizontal="14dp"
+        android:paddingVertical="10dp">
 
         <ImageButton
             android:id="@+id/btn_back"
-            android:layout_width="44dp"
-            android:layout_height="44dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="@drawable/bg_icon_circle_soft"
             android:src="@drawable/ic_arrow_back"
             app:tint="@color/text_primary"
             android:contentDescription="Back" />
@@ -31,7 +29,7 @@
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
+            android:layout_marginStart="12dp"
             android:layout_weight="1"
             android:orientation="vertical">
 
@@ -49,7 +47,7 @@
                     android:maxLines="1"
                     android:text="Customer"
                     android:textColor="@color/text_primary"
-                    android:textSize="17sp"
+                    android:textSize="16.5sp"
                     android:textStyle="bold" />
 
                 <TextView
@@ -57,11 +55,10 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
-                    android:background="@drawable/bg_pill_soft"
-                    android:paddingStart="8dp"
-                    android:paddingEnd="8dp"
-                    android:paddingTop="2dp"
-                    android:paddingBottom="2dp"
+                    android:background="@drawable/bg_pill_primary"
+                    android:backgroundTint="@color/primary_tint"
+                    android:paddingHorizontal="8dp"
+                    android:paddingVertical="2dp"
                     android:text="#ORD-1234"
                     android:textColor="@color/primary"
                     android:textSize="11sp"
@@ -72,19 +69,21 @@
                 android:id="@+id/tv_presence_status"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Real-time Order Chat"
-                android:textColor="@color/success"
-                android:textSize="12sp" />
+                android:layout_marginTop="1dp"
+                android:text="● Online • Real-time Order Chat"
+                android:textColor="@color/veg_green"
+                android:textSize="12sp"
+                android:textStyle="bold" />
         </LinearLayout>
 
         <ImageButton
             android:id="@+id/btn_call"
-            android:layout_width="44dp"
-            android:layout_height="44dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="@drawable/bg_icon_circle_emerald"
             android:src="@drawable/ic_phone"
             android:visibility="gone"
-            app:tint="@color/success"
+            app:tint="@color/veg_green"
             android:contentDescription="Call" />
     </LinearLayout>
 
@@ -96,12 +95,19 @@
         android:gravity="center"
         android:orientation="horizontal"
         android:paddingHorizontal="14dp"
-        android:paddingVertical="7dp">
+        android:paddingVertical="8dp">
+
+        <ImageView
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:src="@drawable/ic_shield_check"
+            app:tint="@color/warning" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="⚠️ Safety Reminder: Never type while driving."
+            android:layout_marginStart="6dp"
+            android:text="Rider Safety: Pull over safely before replying."
             android:textColor="@color/warning"
             android:textSize="12sp"
             android:textStyle="bold" />
@@ -114,8 +120,9 @@
         android:layout_height="0dp"
         android:layout_weight="1"
         android:clipToPadding="false"
-        android:paddingTop="8dp"
-        android:paddingBottom="8dp" />
+        android:paddingTop="12dp"
+        android:paddingBottom="12dp"
+        android:paddingHorizontal="12dp" />
 
     <!-- Typing Indicator View -->
     <TextView
@@ -126,7 +133,8 @@
         android:layout_marginBottom="4dp"
         android:text="Typing..."
         android:textColor="@color/text_hint"
-        android:textSize="11sp"
+        android:textSize="11.5sp"
+        android:textStyle="italic"
         android:visibility="gone" />
 
     <!-- Rider Quick Replies Scroll Row -->
@@ -135,7 +143,7 @@
         android:layout_height="wrap_content"
         android:background="@color/surface"
         android:paddingTop="8dp"
-        android:paddingBottom="8dp"
+        android:paddingBottom="6dp"
         android:scrollbars="none">
 
         <LinearLayout
@@ -143,8 +151,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:paddingStart="12dp"
-            android:paddingEnd="12dp" />
+            android:paddingHorizontal="12dp" />
     </HorizontalScrollView>
 
     <!-- Bottom Input Bar -->
@@ -152,13 +159,11 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@color/surface"
-        android:elevation="6dp"
+        android:elevation="8dp"
         android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:paddingStart="12dp"
-        android:paddingEnd="12dp"
-        android:paddingTop="10dp"
-        android:paddingBottom="10dp">
+        android:paddingHorizontal="12dp"
+        android:paddingVertical="10dp">
 
         <EditText
             android:id="@+id/et_message_input"
@@ -166,28 +171,28 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:background="@drawable/bg_input_rounded"
-            android:hint="Type message..."
+            android:hint="Type message to customer..."
             android:imeOptions="actionSend"
             android:inputType="textCapSentences|textMultiLine"
             android:maxLines="3"
-            android:minHeight="48dp"
+            android:minHeight="46dp"
             android:paddingStart="16dp"
             android:paddingEnd="16dp"
             android:textColor="@color/text_primary"
             android:textColorHint="@color/text_hint"
-            android:textSize="14.5sp" />
+            android:textSize="14sp" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_send_message"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:layout_marginStart="10dp"
+            android:layout_width="46dp"
+            android:layout_height="46dp"
+            android:layout_marginStart="8dp"
             android:backgroundTint="@color/primary"
             android:insetLeft="0dp"
             android:insetTop="0dp"
             android:insetRight="0dp"
             android:insetBottom="0dp"
-            app:cornerRadius="24dp"
+            app:cornerRadius="23dp"
             app:icon="@drawable/ic_send"
             app:iconGravity="textStart"
             app:iconPadding="0dp"

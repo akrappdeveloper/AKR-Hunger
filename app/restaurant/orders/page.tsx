@@ -293,10 +293,8 @@ export default function RestaurantOrdersPage() {
     setIsBroadcasting(true);
     try {
       const onlineIds = availablePartners.filter(isPartnerOnline).map((p: any) => p.id);
-      // Empty array in targetDeliveryIds allows any online driver to claim
-      const targetIds = broadcastMode === 'all'
-        ? (onlineIds.length > 0 ? onlineIds : [])
-        : selectedPartnerIds;
+      // Empty array in targetDeliveryIds allows all online drivers to see and claim
+      const targetIds = broadcastMode === 'all' ? [] : selectedPartnerIds;
 
       await updateDoc(doc(db, 'orders', selectedOrder.id!), {
         status: 'ready',
@@ -322,13 +320,13 @@ export default function RestaurantOrdersPage() {
       // Trigger In-app notifications in Firestore
       try {
         const notifTargets = broadcastMode === 'all'
-          ? (onlineIds.length > 0 ? onlineIds : availablePartners.map((p: any) => p.id))
+          ? (availablePartners.length > 0 ? availablePartners.map((p: any) => p.id) : onlineIds)
           : selectedPartnerIds;
 
         for (const pid of notifTargets) {
           addDoc(collection(db, 'notifications'), {
             userId: pid,
-            type: 'order',
+            type: 'delivery_request',
             title: '🛵 New Delivery Request',
             message: `Order #${formatOrderId(selectedOrder.id)} from ${selectedOrder.restaurantName || 'Restaurant'} is ready for pickup!`,
             orderId: selectedOrder.id,

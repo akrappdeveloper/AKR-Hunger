@@ -1,18 +1,17 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   ref,
   onValue,
-  off,
   query,
   limitToLast,
-  orderByChild,
 } from 'firebase/database';
 import { realtimeDb } from '@/lib/firebase';
 import {
   ChatMessage,
-  ChatConversation,
+  ChatParticipant,
+  ChatType,
   UserRole,
   sendChatMessage,
   markChatAsRead,
@@ -23,6 +22,7 @@ import {
   DELIVERY_QUICK_REPLIES,
   ADMIN_QUICK_REPLIES,
   submitChatReport,
+  getChatTypeLabel,
 } from '@/lib/chat-service';
 import { uploadImage } from '@/lib/imageUpload';
 import { Button } from '@/components/ui/button';
@@ -40,13 +40,15 @@ import {
   X,
   Reply,
   Copy,
-  Info,
   ChevronDown,
   ChevronUp,
-  ShieldCheck,
   Sparkles,
   Loader2,
-  Maximize2,
+  Search,
+  Bike,
+  ChefHat,
+  ShieldAlert,
+  Zap,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -54,9 +56,12 @@ interface ChatBoxProps {
   chatId: string;
   orderId: string;
   currentUserId: string;
+  authUserId?: string;
   currentUserName: string;
   currentUserRole: UserRole;
   currentUserImage?: string;
+  chatType?: ChatType;
+  participants?: Record<string, ChatParticipant>;
   orderData?: {
     orderNumber?: string;
     status?: string;
@@ -64,8 +69,14 @@ interface ChatBoxProps {
     items?: Array<{ name: string; quantity: number }>;
     restaurantName?: string;
     customerName?: string;
+    customerPhone?: string;
     deliveryPersonName?: string;
+    deliveryPersonPhone?: string;
   };
+  fullScreen?: boolean;
+  hideOrderSummaryToggle?: boolean;
+  headerLeftSlot?: React.ReactNode;
+  headerRightSlot?: React.ReactNode;
   onClose?: () => void;
   className?: string;
 }
@@ -74,14 +85,24 @@ export default function ChatBox({
   chatId,
   orderId,
   currentUserId,
+  authUserId,
   currentUserName,
   currentUserRole,
   currentUserImage,
+  chatType,
+  participants: initialParticipants,
   orderData,
+  fullScreen = false,
+  hideOrderSummaryToggle = false,
+  headerLeftSlot,
+  headerRightSlot,
   onClose,
   className = '',
 }: ChatBoxProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [participants, setParticipants] = useState<Record<string, ChatParticipant>>(
+    initialParticipants || {}
+  );
   const [inputText, setInputText] = useState('');
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
@@ -90,6 +111,11 @@ export default function ChatBox({
   const [typingUsers, setTypingUsers] = useState<Record<string, { userName: string }>>({});
   const [presenceMap, setPresenceMap] = useState<Record<string, { online: boolean; lastSeen?: number }>>({});
   const [showOrderSummary, setShowOrderSummary] = useState(false);
+  const [showQuickReplies, setShowQuickReplies] = useState(true);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [messageSearch, setMessageSearch] = useState('');
+  const [activeMessageId, setActiveMessageId] = useState<string | null>(null);
+  const [showScrollBottom, setShowScrollBottom] = useState(false);
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
   const [reportModalOpen, setReportModalOpen] = useState(false);
   const [reportReason, setReportReason] = useState('Inappropriate conduct');
@@ -98,45 +124,104 @@ export default function ChatBox({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isAtBottomRef = useRef(true);
+
+  const effectivePresenceUid = authUserId || currentUserId;
+
+  useEffect(() => {
+    if (initialParticipants) {
+      setParticipants(initialParticipants);
+    }
+  }, [initialParticipants]);
 
   // 1. Setup Presence
   useEffect(() => {
-    if (!currentUserId) return;
-    const cleanup = registerUserPresence(currentUserId, currentUserName, currentUserRole);
-    return cleanup;
-  }, [currentUserId, currentUserName, currentUserRole]);
+    if (!effectivePresenceUid) return;
+    const cleanup = registerUserPresence(effectivePresenceUid, currentUserName, currentUserRole);
+    return () => {
+      cleanup();
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+      if (chatId) {
+        setTypingStatus(chatId, effectivePresenceUid, currentUserName, false);
+      }
+    };
+  }, [effectivePresenceUid, currentUserName, currentUserRole, chatId]);
 
-  // 2. Real-time Messages Listener
+  // 2. Listen to chat participants in RTDB
+  useEffect(() => {
+    if (!realtimeDb || !chatId) return;
+    const participantsRef = ref(realtimeDb, `chats/${chatId}/participants`);
+    const unsubscribe = onValue(participantsRef, (snapshot) => {
+      if (snapshot.exists()) {
+        setParticipants(snapshot.val() as Record<string, ChatParticipant>);
+      }
+    });
+    return () => unsubscribe();
+  }, [chatId]);
+
+  // 3. Listen to presence for counterparty participants
+  useEffect(() => {
+    if (!realtimeDb) return;
+    const otherUids = Object.keys(participants).filter(
+      (uid) => uid !== currentUserId && uid !== effectivePresenceUid
+    );
+    if (otherUids.length === 0) return;
+
+    const unsubs = otherUids.map((uid) => {
+      const pRef = ref(realtimeDb, `chatPresence/${uid}`);
+      return onValue(pRef, (snap) => {
+        if (snap.exists()) {
+          const val = snap.val();
+          setPresenceMap((prev) => ({
+            ...prev,
+            [uid]: { online: Boolean(val?.online), lastSeen: val?.lastSeen },
+          }));
+        }
+      });
+    });
+
+    return () => {
+      unsubs.forEach((u) => u());
+    };
+  }, [participants, currentUserId, effectivePresenceUid]);
+
+  // 4. Real-time Messages Listener
   useEffect(() => {
     if (!realtimeDb || !chatId) return;
 
     setLoading(true);
-    const messagesRef = query(ref(realtimeDb, `chats/${chatId}/messages`), limitToLast(100));
+    const messagesRef = query(ref(realtimeDb, `chats/${chatId}/messages`), limitToLast(150));
 
-    const unsubscribe = onValue(messagesRef, (snapshot) => {
-      if (snapshot.exists()) {
-        const val = snapshot.val();
-        const list: ChatMessage[] = Object.values(val);
-        list.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
-        setMessages(list);
+    const unsubscribe = onValue(
+      messagesRef,
+      (snapshot) => {
+        if (snapshot.exists()) {
+          const val = snapshot.val();
+          const list: ChatMessage[] = Object.values(val);
+          list.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+          setMessages(list);
 
-        // Mark read
-        if (currentUserId) {
-          markChatAsRead(chatId, currentUserId);
+          if (currentUserId) {
+            markChatAsRead(chatId, currentUserId);
+          }
+        } else {
+          setMessages([]);
         }
-      } else {
-        setMessages([]);
+        setLoading(false);
+      },
+      (err) => {
+        console.error('[ChatBox] Messages listener error:', err);
+        setLoading(false);
       }
-      setLoading(false);
-    });
+    );
 
-    return () => {
-      off(messagesRef);
-    };
+    return () => unsubscribe();
   }, [chatId, currentUserId]);
 
-  // 3. Typing Indicators Listener
+  // 5. Typing Indicators Listener
   useEffect(() => {
     if (!realtimeDb || !chatId) return;
 
@@ -146,7 +231,7 @@ export default function ChatBox({
         const data = snapshot.val();
         const others: Record<string, { userName: string }> = {};
         Object.entries(data).forEach(([uid, val]: [string, any]) => {
-          if (uid !== currentUserId && val?.isTyping) {
+          if (uid !== currentUserId && uid !== effectivePresenceUid && val?.isTyping) {
             others[uid] = { userName: val.userName || 'Someone' };
           }
         });
@@ -156,17 +241,30 @@ export default function ChatBox({
       }
     });
 
-    return () => {
-      off(typingRef);
-    };
-  }, [chatId, currentUserId]);
+    return () => unsubscribe();
+  }, [chatId, currentUserId, effectivePresenceUid]);
 
-  // 4. Auto scroll on new message
+  // 6. Scroll handling
+  const handleScroll = () => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+    const nearBottom = distanceFromBottom < 110;
+    isAtBottomRef.current = nearBottom;
+    setShowScrollBottom(!nearBottom);
+  };
+
+  const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
+    messagesEndRef.current?.scrollIntoView({ behavior });
+  };
+
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, typingUsers]);
+    if (isAtBottomRef.current && !messageSearch) {
+      scrollToBottom('smooth');
+    }
+  }, [messages, typingUsers, messageSearch]);
 
-  // 5. Handle typing trigger
+  // 7. Handle typing trigger
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     setInputText(val);
@@ -174,23 +272,25 @@ export default function ChatBox({
     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
 
     if (val.trim()) {
-      setTypingStatus(chatId, currentUserId, currentUserName, true);
+      setTypingStatus(chatId, effectivePresenceUid, currentUserName, true);
       typingTimeoutRef.current = setTimeout(() => {
-        setTypingStatus(chatId, currentUserId, currentUserName, false);
+        setTypingStatus(chatId, effectivePresenceUid, currentUserName, false);
       }, 2500);
     } else {
-      setTypingStatus(chatId, currentUserId, currentUserName, false);
+      setTypingStatus(chatId, effectivePresenceUid, currentUserName, false);
     }
   };
 
-  // 6. Send Text Message
+  // 8. Send Text Message
   const handleSend = async (textToSend?: string) => {
-    const text = (textToSend || inputText).trim();
+    const raw = textToSend ?? inputText;
+    const text = raw.trim();
     if (!text || sending) return;
 
+    const isQuickReply = Boolean(textToSend);
     setSending(true);
-    setInputText('');
-    setTypingStatus(chatId, currentUserId, currentUserName, false);
+    if (!isQuickReply) setInputText('');
+    setTypingStatus(chatId, effectivePresenceUid, currentUserName, false);
 
     try {
       await sendChatMessage({
@@ -201,22 +301,25 @@ export default function ChatBox({
         senderName: currentUserName,
         senderImage: currentUserImage,
         text,
-        type: textToSend ? 'QUICK_REPLY' : 'TEXT',
+        type: isQuickReply ? 'QUICK_REPLY' : 'TEXT',
         replyToMessageId: replyTo?.messageId,
         replyToText: replyTo?.text,
         replyToSenderName: replyTo?.senderName,
       });
 
       setReplyTo(null);
+      isAtBottomRef.current = true;
+      setTimeout(() => scrollToBottom('smooth'), 40);
     } catch (err: any) {
       console.error('[ChatBox] Send error:', err);
+      if (!isQuickReply) setInputText(raw);
       toast.error('Failed to send message. Please retry.');
     } finally {
       setSending(false);
     }
   };
 
-  // 7. Send Image Attachment
+  // 9. Send Image Attachment
   const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -250,6 +353,7 @@ export default function ChatBox({
 
       toast.success('Image sent successfully');
       setReplyTo(null);
+      isAtBottomRef.current = true;
     } catch (err: any) {
       toast.dismiss(toastId);
       console.error('[ChatBox] Image send error:', err);
@@ -260,7 +364,7 @@ export default function ChatBox({
     }
   };
 
-  // 8. Submit Report
+  // 10. Submit Report
   const handleReport = async () => {
     try {
       await submitChatReport({
@@ -279,7 +383,6 @@ export default function ChatBox({
     }
   };
 
-  // Quick replies list based on role
   const quickReplies =
     currentUserRole === 'customer'
       ? CUSTOMER_QUICK_REPLIES
@@ -289,7 +392,6 @@ export default function ChatBox({
       ? DELIVERY_QUICK_REPLIES
       : ADMIN_QUICK_REPLIES;
 
-  // Format timestamp
   const formatTime = (ts?: number) => {
     if (!ts) return '';
     return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -305,56 +407,207 @@ export default function ChatBox({
     return d.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
   };
 
+  // Derive header display based on role + chatType
+  const headerInfo = useMemo(() => {
+    const customerName = orderData?.customerName || 'Customer';
+    const restaurantName = orderData?.restaurantName || 'Restaurant';
+    const riderName = orderData?.deliveryPersonName || 'Delivery Partner';
+
+    if (chatType === 'customer_delivery') {
+      if (currentUserRole === 'customer') {
+        return { title: riderName, phone: orderData?.deliveryPersonPhone, badge: 'Delivery Partner' };
+      }
+      if (currentUserRole === 'delivery') {
+        return { title: customerName, phone: orderData?.customerPhone, badge: 'Customer' };
+      }
+      return {
+        title: `${customerName} ↔ ${riderName}`,
+        phone: orderData?.deliveryPersonPhone || orderData?.customerPhone,
+        badge: 'Customer & Rider',
+      };
+    }
+
+    if (chatType === 'restaurant_delivery') {
+      if (currentUserRole === 'restaurant') {
+        return { title: riderName, phone: orderData?.deliveryPersonPhone, badge: 'Delivery Rider' };
+      }
+      if (currentUserRole === 'delivery') {
+        return { title: restaurantName, phone: undefined, badge: 'Restaurant' };
+      }
+    }
+
+    if (chatType === 'customer_restaurant') {
+      if (currentUserRole === 'restaurant') {
+        return { title: customerName, phone: orderData?.customerPhone, badge: 'Customer' };
+      }
+      if (currentUserRole === 'customer') {
+        return { title: restaurantName, phone: undefined, badge: 'Restaurant' };
+      }
+    }
+
+    // Fallback when chatType isn't provided
+    if (currentUserRole === 'customer') {
+      return { title: restaurantName || 'Restaurant & Rider', phone: undefined, badge: undefined };
+    }
+    if (currentUserRole === 'restaurant') {
+      return { title: customerName, phone: orderData?.customerPhone, badge: undefined };
+    }
+    if (currentUserRole === 'delivery') {
+      return { title: customerName, phone: orderData?.customerPhone, badge: undefined };
+    }
+    return { title: 'Platform Conversation', phone: undefined, badge: undefined };
+  }, [chatType, currentUserRole, orderData]);
+
+  const anyOtherOnline = Object.values(presenceMap).some((p) => p.online);
+  const latestLastSeen = Object.values(presenceMap)
+    .map((p) => p.lastSeen || 0)
+    .sort((a, b) => b - a)[0];
+
+  const typingText = Object.values(typingUsers)
+    .map((u) => u.userName)
+    .join(', ');
+
+  const visibleMessages = useMemo(() => {
+    const q = messageSearch.trim().toLowerCase();
+    if (!q) return messages;
+    return messages.filter(
+      (m) =>
+        m.text?.toLowerCase().includes(q) ||
+        m.senderName?.toLowerCase().includes(q)
+    );
+  }, [messages, messageSearch]);
+
+  const shortOrderDisplay =
+    orderData?.orderNumber ||
+    (orderId ? `#${orderId.slice(-6).toUpperCase()}` : '');
+
   return (
-    <div className={`flex flex-col h-full bg-slate-950 text-white rounded-2xl overflow-hidden border border-slate-800 shadow-2xl ${className}`}>
+    <div
+      className={`flex flex-col h-full bg-background text-foreground overflow-hidden transition-colors duration-300 ${
+        fullScreen
+          ? ''
+          : 'rounded-2xl border border-border shadow-2xl'
+      } ${className}`}
+    >
       {/* Header */}
-      <div className="bg-slate-900/90 backdrop-blur-md px-4 py-3 border-b border-slate-800 flex items-center justify-between z-10 shrink-0">
-        <div className="flex items-center gap-3">
-          <div className="relative">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-amber-500 to-orange-600 flex items-center justify-center font-bold text-white shadow-md">
-              {currentUserRole === 'customer'
-                ? (orderData?.restaurantName?.[0] || 'R')
-                : (orderData?.customerName?.[0] || 'C')}
+      <header className="bg-card/90 backdrop-blur-xl px-3 sm:px-5 py-3 border-b border-border flex items-center justify-between gap-2 z-10 shrink-0">
+        <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+          {headerLeftSlot}
+
+          <div className="relative shrink-0">
+            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-gradient-to-br from-primary to-primary/75 flex items-center justify-center font-bold text-primary-foreground shadow-md shadow-primary/20 ring-1 ring-primary/20">
+              {chatType === 'restaurant_delivery' ? (
+                <Bike className="w-5 h-5" />
+              ) : chatType === 'customer_delivery' && currentUserRole === 'restaurant' ? (
+                <Bike className="w-5 h-5" />
+              ) : currentUserRole === 'customer' ? (
+                <ChefHat className="w-5 h-5" />
+              ) : (
+                <span className="text-sm font-black">
+                  {(headerInfo.title?.[0] || 'C').toUpperCase()}
+                </span>
+              )}
             </div>
-            <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 rounded-full ring-2 ring-slate-900" />
+            <span
+              className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full ring-2 ring-card ${
+                anyOtherOnline ? 'bg-emerald-500' : 'bg-muted-foreground/50'
+              }`}
+              title={anyOtherOnline ? 'Online' : 'Offline'}
+            />
           </div>
 
-          <div>
-            <div className="flex items-center gap-2">
-              <h3 className="font-semibold text-sm text-slate-100">
-                {currentUserRole === 'customer'
-                  ? (orderData?.restaurantName || 'Restaurant & Rider')
-                  : currentUserRole === 'restaurant'
-                  ? (orderData?.customerName || 'Customer')
-                  : currentUserRole === 'delivery'
-                  ? (orderData?.customerName || 'Customer')
-                  : 'Platform Conversation'}
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+              <h3 className="font-bold text-sm sm:text-base text-foreground truncate max-w-[160px] sm:max-w-xs">
+                {headerInfo.title}
               </h3>
-              <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-amber-500/30 text-amber-400 bg-amber-500/10">
-                Order {orderData?.orderNumber || `#${orderId.slice(-6).toUpperCase()}`}
-              </Badge>
+              {shortOrderDisplay && (
+                <Badge
+                  variant="outline"
+                  className="text-[10px] px-1.5 py-0 border-primary/30 text-primary bg-primary/10 font-mono shrink-0"
+                >
+                  {shortOrderDisplay}
+                </Badge>
+              )}
+              {headerInfo.badge && (
+                <Badge
+                  variant="secondary"
+                  className="hidden sm:inline-flex text-[10px] px-1.5 py-0 font-semibold shrink-0"
+                >
+                  {headerInfo.badge}
+                </Badge>
+              )}
             </div>
-            <p className="text-xs text-slate-400 flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block animate-pulse" />
-              Active Realtime Chat
+            <p className="text-[11px] sm:text-xs text-muted-foreground flex items-center gap-1.5 truncate">
+              {typingText ? (
+                <span className="text-primary font-semibold animate-pulse">
+                  {typingText} is typing...
+                </span>
+              ) : anyOtherOnline ? (
+                <>
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block animate-pulse shrink-0" />
+                  <span>Online • Real-time</span>
+                </>
+              ) : latestLastSeen ? (
+                <span>Last seen {formatTime(latestLastSeen)}</span>
+              ) : (
+                <>
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary/70 inline-block shrink-0" />
+                  <span>{chatType ? getChatTypeLabel(chatType) : 'Realtime Order Chat'}</span>
+                </>
+              )}
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5">
-          {orderData && (
+        <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
+          <Button
+            type="button"
+            variant={searchOpen ? 'secondary' : 'ghost'}
+            size="icon"
+            onClick={() => {
+              setSearchOpen((prev) => !prev);
+              if (searchOpen) setMessageSearch('');
+            }}
+            title="Search messages"
+            className="text-muted-foreground hover:text-foreground h-8 w-8 sm:h-9 sm:w-9 rounded-xl"
+          >
+            <Search className="w-4 h-4" />
+          </Button>
+
+          {headerInfo.phone && (
             <Button
+              asChild
               variant="ghost"
+              size="icon"
+              title={`Call ${headerInfo.title}`}
+              className="text-muted-foreground hover:text-primary h-8 w-8 sm:h-9 sm:w-9 rounded-xl"
+            >
+              <a href={`tel:${headerInfo.phone}`}>
+                <Phone className="w-4 h-4" />
+              </a>
+            </Button>
+          )}
+
+          {orderData && !hideOrderSummaryToggle && (
+            <Button
+              type="button"
+              variant={showOrderSummary ? 'secondary' : 'ghost'}
               size="sm"
-              onClick={() => setShowOrderSummary(!showOrderSummary)}
-              className="text-xs text-slate-300 hover:text-white hover:bg-slate-800 px-2 py-1 h-8 rounded-lg"
+              onClick={() => setShowOrderSummary((prev) => !prev)}
+              className="text-xs text-muted-foreground hover:text-foreground px-2.5 h-8 sm:h-9 rounded-xl hidden sm:inline-flex"
             >
               Order Details
-              {showOrderSummary ? <ChevronUp className="w-3.5 h-3.5 ml-1" /> : <ChevronDown className="w-3.5 h-3.5 ml-1" />}
+              {showOrderSummary ? (
+                <ChevronUp className="w-3.5 h-3.5 ml-1" />
+              ) : (
+                <ChevronDown className="w-3.5 h-3.5 ml-1" />
+              )}
             </Button>
           )}
 
           <Button
+            type="button"
             variant="ghost"
             size="icon"
             onClick={() => {
@@ -362,33 +615,76 @@ export default function ChatBox({
               setReportModalOpen(true);
             }}
             title="Report Issue"
-            className="text-slate-400 hover:text-amber-400 hover:bg-slate-800 h-8 w-8 rounded-lg"
+            className="text-muted-foreground hover:text-destructive h-8 w-8 sm:h-9 sm:w-9 rounded-xl"
           >
             <AlertTriangle className="w-4 h-4" />
           </Button>
 
+          {headerRightSlot}
+
           {onClose && (
             <Button
+              type="button"
               variant="ghost"
               size="icon"
               onClick={onClose}
-              className="text-slate-400 hover:text-white hover:bg-slate-800 h-8 w-8 rounded-lg"
+              className="text-muted-foreground hover:text-foreground h-8 w-8 sm:h-9 sm:w-9 rounded-xl"
             >
               <X className="w-4 h-4" />
             </Button>
           )}
         </div>
-      </div>
+      </header>
+
+      {/* Optional In-Chat Search Bar */}
+      {searchOpen && (
+        <div className="px-3 sm:px-5 py-2 bg-card/70 border-b border-border flex items-center gap-2 shrink-0 animate-in slide-in-from-top-1 duration-150">
+          <Search className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+          <Input
+            value={messageSearch}
+            onChange={(e) => setMessageSearch(e.target.value)}
+            placeholder="Search messages in this conversation..."
+            autoFocus
+            className="h-8 text-xs bg-background border-border rounded-lg flex-1"
+          />
+          {messageSearch && (
+            <span className="text-[11px] text-muted-foreground whitespace-nowrap">
+              {visibleMessages.length} found
+            </span>
+          )}
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={() => {
+              setMessageSearch('');
+              setSearchOpen(false);
+            }}
+            className="h-7 w-7 rounded-lg"
+          >
+            <X className="w-3.5 h-3.5" />
+          </Button>
+        </div>
+      )}
 
       {/* Collapsible Order Summary Bar */}
-      {showOrderSummary && orderData && (
-        <div className="bg-slate-900 border-b border-slate-800 px-4 py-3 text-xs text-slate-300 space-y-1.5 animate-in slide-in-from-top-2 duration-150">
-          <div className="flex justify-between items-center font-medium text-slate-200">
-            <span>Status: <strong className="text-amber-400 uppercase">{orderData.status || 'Active'}</strong></span>
-            {orderData.total && <span>Total: <strong>₹{orderData.total}</strong></span>}
+      {showOrderSummary && orderData && !hideOrderSummaryToggle && (
+        <div className="bg-muted/50 border-b border-border px-4 py-3 text-xs text-muted-foreground space-y-1.5 animate-in slide-in-from-top-2 duration-150 shrink-0">
+          <div className="flex justify-between items-center font-medium text-foreground">
+            <span>
+              Status:{' '}
+              <strong className="text-primary uppercase">
+                {orderData.status?.replace(/_/g, ' ') || 'Active'}
+              </strong>
+            </span>
+            {orderData.total !== undefined && (
+              <span>
+                Total: <strong className="font-mono">₹{orderData.total}</strong>
+              </span>
+            )}
           </div>
           {orderData.items && orderData.items.length > 0 && (
-            <p className="text-slate-400 truncate">
+            <p className="text-muted-foreground truncate">
               Items: {orderData.items.map((it) => `${it.quantity}x ${it.name}`).join(', ')}
             </p>
           )}
@@ -396,216 +692,301 @@ export default function ChatBox({
       )}
 
       {/* Message List */}
-      <div
-        ref={scrollContainerRef}
-        className="flex-1 overflow-y-auto p-4 space-y-3 bg-gradient-to-b from-slate-950 via-slate-900/60 to-slate-950"
-      >
-        {loading ? (
-          <div className="flex flex-col items-center justify-center h-full text-slate-500 gap-2">
-            <Loader2 className="w-6 h-6 animate-spin text-amber-500" />
-            <span className="text-xs">Connecting to secure chat...</span>
-          </div>
-        ) : messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-center px-6 py-12 text-slate-500">
-            <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 mb-3">
-              <Sparkles className="w-6 h-6" />
+      <div className="relative flex-1 min-h-0 flex flex-col">
+        <div
+          ref={scrollContainerRef}
+          onScroll={handleScroll}
+          className="flex-1 overflow-y-auto px-3 sm:px-6 py-4 space-y-3 bg-gradient-to-b from-background via-muted/20 to-background"
+        >
+          {loading ? (
+            <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center">
+                <Loader2 className="w-6 h-6 animate-spin text-primary" />
+              </div>
+              <span className="text-xs font-medium">Connecting to live chat...</span>
             </div>
-            <h4 className="text-sm font-semibold text-slate-300">Start the conversation</h4>
-            <p className="text-xs text-slate-500 max-w-xs mt-1">
-              You can clarify order details, delivery instructions or preparation requests directly in real-time.
-            </p>
-          </div>
-        ) : (
-          messages.map((msg, index) => {
-            const isMe = msg.senderId === currentUserId;
-            const isSystem = msg.type === 'SYSTEM' || msg.type === 'ORDER_UPDATE';
-            const showDateHeader =
-              index === 0 ||
-              formatDateHeader(msg.createdAt) !== formatDateHeader(messages[index - 1].createdAt);
+          ) : visibleMessages.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full text-center px-6 py-12 text-muted-foreground">
+              <div className="w-14 h-14 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary mb-3 shadow-sm">
+                <Sparkles className="w-7 h-7" />
+              </div>
+              <h4 className="text-sm sm:text-base font-bold text-foreground">
+                {messageSearch ? 'No matching messages' : 'Start the conversation'}
+              </h4>
+              <p className="text-xs sm:text-sm text-muted-foreground max-w-sm mt-1 leading-relaxed">
+                {messageSearch
+                  ? 'Try another keyword or clear your search filter.'
+                  : 'Clarify order details, preparation status, or pickup instructions in real time.'}
+              </p>
+            </div>
+          ) : (
+            visibleMessages.map((msg, index) => {
+              const isMe = msg.senderId === currentUserId;
+              const isSystem = msg.type === 'SYSTEM' || msg.type === 'ORDER_UPDATE';
+              const showDateHeader =
+                index === 0 ||
+                formatDateHeader(msg.createdAt) !==
+                  formatDateHeader(visibleMessages[index - 1].createdAt);
+              const isActive = activeMessageId === msg.messageId;
 
-            return (
-              <React.Fragment key={msg.messageId || index}>
-                {showDateHeader && (
-                  <div className="flex justify-center my-3">
-                    <span className="text-[10px] uppercase tracking-wider font-semibold bg-slate-800/80 text-slate-400 px-3 py-1 rounded-full border border-slate-700/50 shadow-sm">
-                      {formatDateHeader(msg.createdAt)}
-                    </span>
-                  </div>
-                )}
-
-                {isSystem ? (
-                  <div className="flex justify-center my-2">
-                    <div className="bg-slate-900/90 border border-amber-500/30 rounded-xl px-3 py-2 max-w-md text-center shadow-md">
-                      <p className="text-xs text-amber-300 font-medium">{msg.text}</p>
-                      <span className="text-[9px] text-slate-500 mt-0.5 block">{formatTime(msg.createdAt)}</span>
-                    </div>
-                  </div>
-                ) : (
-                  <div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} group`}>
-                    {!isMe && (
-                      <span className="text-[10px] text-slate-400 font-medium ml-1 mb-0.5 flex items-center gap-1">
-                        {msg.senderName}
-                        {msg.senderRole === 'admin' && (
-                          <span className="bg-purple-500/20 text-purple-300 border border-purple-500/30 text-[9px] px-1 rounded">
-                            👑 Admin
-                          </span>
-                        )}
-                        {msg.senderRole === 'restaurant' && (
-                          <span className="bg-orange-500/20 text-orange-300 border border-orange-500/30 text-[9px] px-1 rounded">
-                            Chef
-                          </span>
-                        )}
-                        {msg.senderRole === 'delivery' && (
-                          <span className="bg-blue-500/20 text-blue-300 border border-blue-500/30 text-[9px] px-1 rounded">
-                            🛵 Rider
-                          </span>
-                        )}
+              return (
+                <React.Fragment key={msg.messageId || index}>
+                  {showDateHeader && (
+                    <div className="flex justify-center my-3">
+                      <span className="text-[10px] uppercase tracking-wider font-bold bg-card/90 text-muted-foreground px-3 py-1 rounded-full border border-border shadow-xs">
+                        {formatDateHeader(msg.createdAt)}
                       </span>
-                    )}
+                    </div>
+                  )}
 
-                    <div
-                      className={`relative max-w-[82%] sm:max-w-md rounded-2xl px-3.5 py-2.5 shadow-md break-words ${
-                        isMe
-                          ? 'bg-gradient-to-r from-amber-600 to-orange-600 text-white rounded-br-none'
-                          : msg.senderRole === 'admin'
-                          ? 'bg-purple-950/80 border border-purple-600/50 text-purple-100 rounded-bl-none'
-                          : 'bg-slate-800/95 border border-slate-700/60 text-slate-100 rounded-bl-none'
-                      }`}
-                    >
-                      {/* Reply preview if quoted */}
-                      {msg.replyToText && (
-                        <div className="mb-2 pl-2.5 py-1 border-l-2 border-white/40 bg-black/20 rounded text-[11px] text-white/80">
-                          <p className="font-semibold text-[10px] text-white/90">{msg.replyToSenderName || 'Original message'}</p>
-                          <p className="truncate">{msg.replyToText}</p>
-                        </div>
-                      )}
-
-                      {/* Image Message */}
-                      {msg.type === 'IMAGE' && msg.mediaPath && (
-                        <div className="mb-1 rounded-xl overflow-hidden cursor-pointer" onClick={() => setLightboxImage(msg.mediaPath || '')}>
-                          <img
-                            src={msg.mediaPath}
-                            alt="Attachment"
-                            className="max-h-60 w-auto rounded-lg object-cover hover:opacity-95 transition"
-                            loading="lazy"
-                          />
-                        </div>
-                      )}
-
-                      {/* Text */}
-                      <p className="text-xs sm:text-sm whitespace-pre-wrap leading-relaxed">{msg.text}</p>
-
-                      {/* Time and Delivery status footer */}
-                      <div className="flex items-center justify-end gap-1 mt-1 text-[10px] text-white/70">
-                        <span>{formatTime(msg.createdAt)}</span>
-                        {isMe && (
-                          <span>
-                            {msg.status === 'READ' ? (
-                              <CheckCheck className="w-3.5 h-3.5 text-emerald-300" />
-                            ) : msg.status === 'DELIVERED' ? (
-                              <CheckCheck className="w-3.5 h-3.5 text-white/80" />
-                            ) : msg.status === 'SENT' ? (
-                              <Check className="w-3.5 h-3.5 text-white/70" />
-                            ) : (
-                              <Clock className="w-3 h-3 text-white/50" />
-                            )}
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Quick message hover actions */}
-                      <div
-                        className={`absolute top-1 ${
-                          isMe ? '-left-16' : '-right-16'
-                        } hidden group-hover:flex items-center gap-1 bg-slate-900 border border-slate-700 rounded-lg p-0.5 shadow-lg z-10`}
-                      >
-                        <button
-                          onClick={() => setReplyTo(msg)}
-                          title="Reply"
-                          className="p-1 hover:bg-slate-800 rounded text-slate-300 hover:text-white"
-                        >
-                          <Reply className="w-3 h-3" />
-                        </button>
-                        <button
-                          onClick={() => {
-                            navigator.clipboard.writeText(msg.text);
-                            toast.success('Copied text');
-                          }}
-                          title="Copy text"
-                          className="p-1 hover:bg-slate-800 rounded text-slate-300 hover:text-white"
-                        >
-                          <Copy className="w-3 h-3" />
-                        </button>
-                        {!isMe && (
-                          <button
-                            onClick={() => {
-                              setReportingMessage(msg);
-                              setReportModalOpen(true);
-                            }}
-                            title="Report message"
-                            className="p-1 hover:bg-slate-800 rounded text-slate-300 hover:text-amber-400"
-                          >
-                            <AlertTriangle className="w-3 h-3" />
-                          </button>
-                        )}
+                  {isSystem ? (
+                    <div className="flex justify-center my-2">
+                      <div className="bg-accent/70 border border-primary/20 rounded-2xl px-4 py-2 max-w-lg text-center shadow-xs">
+                        <p className="text-xs text-accent-foreground font-semibold">{msg.text}</p>
+                        <span className="text-[10px] text-muted-foreground mt-0.5 block">
+                          {formatTime(msg.createdAt)}
+                        </span>
                       </div>
                     </div>
-                  </div>
-                )}
-              </React.Fragment>
-            );
-          })
-        )}
+                  ) : (
+                    <div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} group`}>
+                      {!isMe && (
+                        <span className="text-[11px] text-muted-foreground font-semibold ml-1 mb-1 flex items-center gap-1.5">
+                          <span>{msg.senderName}</span>
+                          {msg.senderRole === 'admin' && (
+                            <span className="bg-purple-500/15 text-purple-600 dark:text-purple-300 border border-purple-500/25 text-[9px] px-1.5 py-0.5 rounded-md font-bold">
+                              Admin
+                            </span>
+                          )}
+                          {msg.senderRole === 'restaurant' && (
+                            <span className="bg-primary/15 text-primary border border-primary/25 text-[9px] px-1.5 py-0.5 rounded-md font-bold">
+                              Kitchen
+                            </span>
+                          )}
+                          {msg.senderRole === 'delivery' && (
+                            <span className="bg-blue-500/15 text-blue-600 dark:text-blue-300 border border-blue-500/25 text-[9px] px-1.5 py-0.5 rounded-md font-bold">
+                              Rider
+                            </span>
+                          )}
+                          {msg.senderRole === 'customer' && (
+                            <span className="bg-emerald-500/15 text-emerald-600 dark:text-emerald-300 border border-emerald-500/25 text-[9px] px-1.5 py-0.5 rounded-md font-bold">
+                              Customer
+                            </span>
+                          )}
+                        </span>
+                      )}
 
-        {/* Real-time Typing Indicator */}
-        {Object.keys(typingUsers).length > 0 && (
-          <div className="flex items-center gap-2 text-xs text-slate-400 animate-pulse pl-1">
-            <span className="flex gap-1 items-center bg-slate-800/80 px-2.5 py-1 rounded-full border border-slate-700">
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-bounce" />
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-bounce delay-100" />
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-bounce delay-200" />
-              <span className="text-[11px] ml-1">
-                {Object.values(typingUsers).map((u) => u.userName).join(', ')} typing...
+                      <div
+                        onClick={() =>
+                          setActiveMessageId((prev) =>
+                            prev === msg.messageId ? null : msg.messageId
+                          )
+                        }
+                        className={`relative max-w-[85%] sm:max-w-lg rounded-2xl px-4 py-2.5 shadow-sm break-words transition-all ${
+                          isMe
+                            ? 'bg-primary text-primary-foreground rounded-br-sm shadow-primary/15'
+                            : msg.senderRole === 'admin'
+                            ? 'bg-purple-500/10 border border-purple-500/30 text-foreground rounded-bl-sm'
+                            : 'bg-card border border-border text-card-foreground rounded-bl-sm'
+                        }`}
+                      >
+                        {/* Reply preview if quoted */}
+                        {msg.replyToText && (
+                          <div
+                            className={`mb-2 pl-2.5 py-1 border-l-2 rounded text-[11px] ${
+                              isMe
+                                ? 'border-primary-foreground/50 bg-black/15 text-primary-foreground/90'
+                                : 'border-primary bg-muted/70 text-muted-foreground'
+                            }`}
+                          >
+                            <p className="font-bold text-[10px] opacity-90">
+                              {msg.replyToSenderName || 'Original message'}
+                            </p>
+                            <p className="truncate">{msg.replyToText}</p>
+                          </div>
+                        )}
+
+                        {/* Image Message */}
+                        {msg.type === 'IMAGE' && msg.mediaPath && (
+                          <div
+                            className="mb-1.5 rounded-xl overflow-hidden cursor-pointer border border-border/40"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setLightboxImage(msg.mediaPath || '');
+                            }}
+                          >
+                            <img
+                              src={msg.mediaPath}
+                              alt="Attachment"
+                              className="max-h-64 w-auto rounded-lg object-cover hover:opacity-95 transition"
+                              loading="lazy"
+                            />
+                          </div>
+                        )}
+
+                        {/* Text */}
+                        <p className="text-xs sm:text-sm whitespace-pre-wrap leading-relaxed">
+                          {msg.text}
+                        </p>
+
+                        {/* Time and Delivery status footer */}
+                        <div
+                          className={`flex items-center justify-end gap-1 mt-1 text-[10px] ${
+                            isMe ? 'text-primary-foreground/75' : 'text-muted-foreground'
+                          }`}
+                        >
+                          <span>{formatTime(msg.createdAt)}</span>
+                          {isMe && (
+                            <span>
+                              {msg.status === 'READ' ? (
+                                <CheckCheck className="w-3.5 h-3.5 text-emerald-300 dark:text-emerald-300" />
+                              ) : msg.status === 'DELIVERED' ? (
+                                <CheckCheck className="w-3.5 h-3.5 opacity-85" />
+                              ) : msg.status === 'SENT' ? (
+                                <Check className="w-3.5 h-3.5 opacity-80" />
+                              ) : (
+                                <Clock className="w-3 h-3 opacity-60" />
+                              )}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Message actions (desktop hover + mobile tap) */}
+                        <div
+                          onClick={(e) => e.stopPropagation()}
+                          className={`absolute -top-3 ${
+                            isMe ? 'right-2' : 'left-2'
+                          } ${
+                            isActive ? 'flex' : 'hidden group-hover:flex'
+                          } items-center gap-0.5 bg-popover text-popover-foreground border border-border rounded-xl p-0.5 shadow-lg z-10`}
+                        >
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setReplyTo(msg);
+                              setActiveMessageId(null);
+                            }}
+                            title="Reply"
+                            className="p-1.5 hover:bg-muted rounded-lg text-muted-foreground hover:text-foreground transition"
+                          >
+                            <Reply className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              navigator.clipboard.writeText(msg.text);
+                              toast.success('Copied text');
+                              setActiveMessageId(null);
+                            }}
+                            title="Copy text"
+                            className="p-1.5 hover:bg-muted rounded-lg text-muted-foreground hover:text-foreground transition"
+                          >
+                            <Copy className="w-3.5 h-3.5" />
+                          </button>
+                          {!isMe && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setReportingMessage(msg);
+                                setReportModalOpen(true);
+                                setActiveMessageId(null);
+                              }}
+                              title="Report message"
+                              className="p-1.5 hover:bg-destructive/10 rounded-lg text-muted-foreground hover:text-destructive transition"
+                            >
+                              <AlertTriangle className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </React.Fragment>
+              );
+            })
+          )}
+
+          {/* Real-time Typing Indicator */}
+          {Object.keys(typingUsers).length > 0 && (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground pl-1">
+              <span className="flex gap-1.5 items-center bg-card px-3 py-1.5 rounded-full border border-border shadow-xs">
+                <span className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce" />
+                <span className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce delay-100" />
+                <span className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce delay-200" />
+                <span className="text-[11px] ml-0.5 font-medium">{typingText} typing...</span>
               </span>
-            </span>
-          </div>
-        )}
+            </div>
+          )}
 
-        <div ref={messagesEndRef} />
+          <div ref={messagesEndRef} />
+        </div>
+
+        {/* Scroll to bottom floating pill */}
+        {showScrollBottom && (
+          <Button
+            type="button"
+            size="sm"
+            variant="secondary"
+            onClick={() => {
+              isAtBottomRef.current = true;
+              scrollToBottom('smooth');
+            }}
+            className="absolute bottom-3 right-4 z-20 rounded-full shadow-lg border border-border h-9 px-3 gap-1.5 text-xs font-semibold bg-card/95 backdrop-blur-md hover:bg-card"
+          >
+            <ArrowDown className="w-3.5 h-3.5 text-primary" />
+            Latest
+          </Button>
+        )}
       </div>
 
       {/* Quick Replies Pill Carousel */}
-      <div className="px-3 py-1.5 bg-slate-900/90 border-t border-slate-800/80 flex items-center gap-1.5 overflow-x-auto no-scrollbar shrink-0">
-        <span className="text-[10px] uppercase font-bold text-slate-500 whitespace-nowrap pl-1">Quick:</span>
-        {quickReplies.map((qr, i) => (
+      {showQuickReplies && (
+        <div className="px-3 sm:px-5 py-2 bg-card/80 border-t border-border flex items-center gap-1.5 overflow-x-auto no-scrollbar shrink-0">
           <button
-            key={i}
-            onClick={() => handleSend(qr)}
-            disabled={sending}
-            className="text-[11px] whitespace-nowrap px-2.5 py-1 rounded-full bg-slate-800 hover:bg-amber-600/30 hover:border-amber-500/50 border border-slate-700 text-slate-300 hover:text-amber-300 transition shrink-0"
+            type="button"
+            onClick={() => setShowQuickReplies(false)}
+            title="Hide quick replies"
+            className="flex items-center gap-1 text-[10px] uppercase font-bold text-primary whitespace-nowrap px-2 py-1 rounded-full bg-primary/10 border border-primary/20 shrink-0"
           >
-            {qr}
+            <Zap className="w-3 h-3" />
+            Quick
           </button>
-        ))}
-      </div>
+          {quickReplies.map((qr, i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={() => handleSend(qr)}
+              disabled={sending}
+              className="text-xs whitespace-nowrap px-3 py-1.5 rounded-full bg-muted/70 hover:bg-primary/15 hover:border-primary/40 border border-border text-foreground/85 hover:text-primary transition shrink-0 font-medium"
+            >
+              {qr}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Reply Quote Banner */}
       {replyTo && (
-        <div className="px-4 py-2 bg-slate-900 border-t border-slate-800 flex items-center justify-between text-xs text-slate-300 shrink-0">
-          <div className="flex items-center gap-2 border-l-2 border-amber-500 pl-2 truncate">
-            <Reply className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+        <div className="px-4 py-2 bg-muted/60 border-t border-border flex items-center justify-between text-xs text-foreground shrink-0">
+          <div className="flex items-center gap-2 border-l-2 border-primary pl-2.5 truncate">
+            <Reply className="w-3.5 h-3.5 text-primary shrink-0" />
             <span className="truncate">
-              Replying to <strong className="text-white">{replyTo.senderName}:</strong> {replyTo.text}
+              Replying to <strong className="font-bold">{replyTo.senderName}:</strong>{' '}
+              <span className="text-muted-foreground">{replyTo.text}</span>
             </span>
           </div>
-          <button onClick={() => setReplyTo(null)} className="text-slate-400 hover:text-white p-1">
+          <button
+            type="button"
+            onClick={() => setReplyTo(null)}
+            className="text-muted-foreground hover:text-foreground p-1 rounded-lg hover:bg-muted"
+          >
             <X className="w-3.5 h-3.5" />
           </button>
         </div>
       )}
 
       {/* Input Bar */}
-      <div className="p-3 bg-slate-900 border-t border-slate-800 flex items-center gap-2 shrink-0">
+      <div className="p-2.5 sm:p-3.5 bg-card border-t border-border flex items-center gap-2 shrink-0 pb-[max(0.625rem,env(safe-area-inset-bottom))]">
         <input
           type="file"
           ref={fileInputRef}
@@ -613,15 +994,34 @@ export default function ChatBox({
           className="hidden"
           onChange={handleImageSelect}
         />
+
+        {!showQuickReplies && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={() => setShowQuickReplies(true)}
+            title="Show quick replies"
+            className="text-muted-foreground hover:text-primary hover:bg-muted rounded-xl h-10 w-10 shrink-0"
+          >
+            <Zap className="w-4 h-4" />
+          </Button>
+        )}
+
         <Button
           type="button"
           variant="ghost"
           size="icon"
           disabled={uploadingImage || sending}
           onClick={() => fileInputRef.current?.click()}
-          className="text-slate-400 hover:text-amber-400 hover:bg-slate-800 rounded-xl h-10 w-10 shrink-0"
+          title="Attach image"
+          className="text-muted-foreground hover:text-primary hover:bg-muted rounded-xl h-10 w-10 shrink-0"
         >
-          {uploadingImage ? <Loader2 className="w-4 h-4 animate-spin text-amber-500" /> : <ImageIcon className="w-5 h-5" />}
+          {uploadingImage ? (
+            <Loader2 className="w-4 h-4 animate-spin text-primary" />
+          ) : (
+            <ImageIcon className="w-5 h-5" />
+          )}
         </Button>
 
         <Input
@@ -635,30 +1035,36 @@ export default function ChatBox({
           }}
           placeholder="Type your message..."
           disabled={sending}
-          className="flex-1 bg-slate-950 border-slate-800 text-slate-100 placeholder:text-slate-500 text-xs sm:text-sm h-10 rounded-xl focus-visible:ring-amber-500"
+          className="flex-1 bg-background border-border text-foreground placeholder:text-muted-foreground text-xs sm:text-sm h-11 rounded-xl focus-visible:ring-primary"
         />
 
         <Button
           type="button"
           disabled={!inputText.trim() || sending}
           onClick={() => handleSend()}
-          className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-xl h-10 px-4 shrink-0 shadow-md transition"
+          className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl h-11 px-4 sm:px-5 shrink-0 shadow-md shadow-primary/20 transition font-semibold gap-1.5"
         >
           {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+          <span className="hidden sm:inline text-xs">Send</span>
         </Button>
       </div>
 
       {/* Lightbox Modal */}
       {lightboxImage && (
         <div
-          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4"
           onClick={() => setLightboxImage(null)}
         >
-          <div className="relative max-w-3xl max-h-[90vh]">
-            <img src={lightboxImage} alt="Enlarged" className="max-h-[85vh] w-auto rounded-xl object-contain" />
+          <div className="relative max-w-4xl max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
+            <img
+              src={lightboxImage}
+              alt="Enlarged attachment"
+              className="max-h-[85vh] w-auto rounded-2xl object-contain shadow-2xl"
+            />
             <button
+              type="button"
               onClick={() => setLightboxImage(null)}
-              className="absolute top-3 right-3 bg-slate-900/80 text-white p-2 rounded-full hover:bg-slate-800"
+              className="absolute top-3 right-3 bg-card/90 text-foreground p-2 rounded-full hover:bg-card border border-border shadow-lg"
             >
               <X className="w-5 h-5" />
             </button>
@@ -668,26 +1074,36 @@ export default function ChatBox({
 
       {/* Report Modal */}
       {reportModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-sm w-full p-5 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <h3 className="text-sm font-semibold text-slate-100 flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4 text-amber-500" />
+        <div
+          className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={() => setReportModalOpen(false)}
+        >
+          <div
+            className="bg-card text-card-foreground border border-border rounded-2xl max-w-sm w-full p-5 shadow-2xl space-y-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-border pb-3">
+              <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+                <ShieldAlert className="w-4 h-4 text-destructive" />
                 Report Conversation
               </h3>
-              <button onClick={() => setReportModalOpen(false)} className="text-slate-400 hover:text-white">
+              <button
+                type="button"
+                onClick={() => setReportModalOpen(false)}
+                className="text-muted-foreground hover:text-foreground p-1 rounded-lg"
+              >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <p className="text-xs text-slate-400">
-              Please choose a reason for reporting this chat. Hunger staff will review the messages.
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Please choose a reason for reporting this chat. Hunger trust & safety staff will review the messages promptly.
             </p>
 
             <select
               value={reportReason}
               onChange={(e) => setReportReason(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs text-slate-200"
+              className="w-full bg-background border border-border rounded-xl p-2.5 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <option value="Inappropriate conduct">Inappropriate / abusive language</option>
               <option value="Demanding off-platform payment">Demanding off-platform money</option>
@@ -697,10 +1113,22 @@ export default function ChatBox({
             </select>
 
             <div className="flex justify-end gap-2 pt-2">
-              <Button variant="ghost" size="sm" onClick={() => setReportModalOpen(false)} className="text-xs">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setReportModalOpen(false)}
+                className="text-xs rounded-xl"
+              >
                 Cancel
               </Button>
-              <Button size="sm" onClick={handleReport} className="bg-amber-600 hover:bg-amber-700 text-white text-xs">
+              <Button
+                type="button"
+                variant="destructive"
+                size="sm"
+                onClick={handleReport}
+                className="text-xs rounded-xl font-bold"
+              >
                 Submit Report
               </Button>
             </div>

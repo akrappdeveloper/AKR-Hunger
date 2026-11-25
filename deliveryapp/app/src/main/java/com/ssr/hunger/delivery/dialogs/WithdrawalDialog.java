@@ -150,10 +150,13 @@ public class WithdrawalDialog extends Dialog {
                             .document(uid)
                             .update(balanceUpdates);
 
-                    AnalyticsHelper.getInstance(getContext()).logPayoutRequested(amount, isUpi ? "upi" : "bank");
-                    Toast.makeText(getContext(), "🎉 Withdrawal request for " + LocationUtils.formatCurrency(amount) + " submitted!", Toast.LENGTH_LONG).show();
+                    Context ctx = getContext();
+                    if (ctx != null) {
+                        AnalyticsHelper.getInstance(ctx).logPayoutRequested(amount, isUpi ? "upi" : "bank");
+                    }
+                    com.ssr.hunger.delivery.utils.ToastUtils.showToast(getContext(), "🎉 Withdrawal request for " + LocationUtils.formatCurrency(amount) + " submitted!", Toast.LENGTH_LONG);
                     dismiss();
                 })
-                .addOnFailureListener(e -> Toast.makeText(getContext(), "Failed: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+                .addOnFailureListener(e -> com.ssr.hunger.delivery.utils.ToastUtils.showToast(getContext(), "Failed: " + e.getMessage(), Toast.LENGTH_SHORT));
     }
 }

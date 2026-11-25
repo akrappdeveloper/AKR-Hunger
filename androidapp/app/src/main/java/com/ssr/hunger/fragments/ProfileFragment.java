@@ -25,6 +25,15 @@ import com.ssr.hunger.activities.StudentModeActivity;
 import com.ssr.hunger.activities.SubscriptionActivity;
 import com.ssr.hunger.activities.GroupOrderActivity;
 import com.ssr.hunger.activities.DeliveryPartnerDashboardActivity;
+import com.ssr.hunger.activities.StoriesActivity;
+import com.ssr.hunger.activities.CuisineExplorerActivity;
+import com.ssr.hunger.activities.RouletteActivity;
+import com.ssr.hunger.activities.MoodFoodActivity;
+import com.ssr.hunger.activities.DietPlannerActivity;
+import com.ssr.hunger.activities.ReorderActivity;
+import com.ssr.hunger.activities.LeaderboardActivity;
+import com.ssr.hunger.activities.SecretMenuActivity;
+import com.ssr.hunger.activities.MysteryBoxActivity;
 import com.ssr.hunger.dialogs.ModernDialogHelper;
 import com.ssr.hunger.utils.Constants;
 import com.bumptech.glide.Glide;
@@ -120,6 +129,17 @@ public class ProfileFragment extends Fragment {
         safeClick(view, R.id.card_subscriptions, () -> nav(SubscriptionActivity.class));
         safeClick(view, R.id.card_group_order, () -> nav(GroupOrderActivity.class));
         safeClick(view, R.id.card_delivery_dashboard, () -> nav(DeliveryPartnerDashboardActivity.class));
+
+        // --- Food Discovery & Interactive Tools ---
+        safeClick(view, R.id.card_stories, () -> nav(StoriesActivity.class));
+        safeClick(view, R.id.card_cuisines, () -> nav(CuisineExplorerActivity.class));
+        safeClick(view, R.id.card_roulette, () -> nav(RouletteActivity.class));
+        safeClick(view, R.id.card_mood_food, () -> nav(MoodFoodActivity.class));
+        safeClick(view, R.id.card_diet_planner, () -> nav(DietPlannerActivity.class));
+        safeClick(view, R.id.card_reorder, () -> nav(ReorderActivity.class));
+        safeClick(view, R.id.card_leaderboard, () -> nav(LeaderboardActivity.class));
+        safeClick(view, R.id.card_secret_menu, () -> nav(SecretMenuActivity.class));
+        safeClick(view, R.id.card_mystery_box, () -> nav(MysteryBoxActivity.class));
 
         safeClick(view, R.id.btn_logout, () ->
                 ModernDialogHelper.showDangerDialog(

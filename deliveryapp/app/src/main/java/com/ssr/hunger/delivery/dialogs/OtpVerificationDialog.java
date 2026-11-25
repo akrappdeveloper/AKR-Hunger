@@ -30,6 +30,8 @@ public class OtpVerificationDialog extends Dialog {
         this.listener = listener;
     }
 
+    private int failedAttempts = 0;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -54,14 +56,27 @@ public class OtpVerificationDialog extends Dialog {
         btnCancel.setOnClickListener(v -> dismiss());
 
         btnConfirm.setOnClickListener(v -> {
-            String entered = etOtp.getText().toString().trim();
-            if (entered.length() != 4) {
-                Toast.makeText(getContext(), "Please enter a valid 4-digit OTP", Toast.LENGTH_SHORT).show();
+            if (failedAttempts >= 5) {
+                Toast.makeText(getContext(), "❌ Too many failed attempts. Please contact customer or support.", Toast.LENGTH_LONG).show();
+                dismiss();
                 return;
             }
 
-            if (expectedOtp != null && !expectedOtp.isEmpty() && !expectedOtp.equals(entered)) {
-                Toast.makeText(getContext(), "Incorrect OTP! Please check with " + (isReturnMode ? "restaurant" : "customer"), Toast.LENGTH_LONG).show();
+            String entered = etOtp.getText().toString().trim();
+            if (entered.length() < 4 || entered.length() > 6) {
+                Toast.makeText(getContext(), "Please enter a valid OTP", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            if (expectedOtp == null || expectedOtp.trim().isEmpty()) {
+                Toast.makeText(getContext(), "Order OTP is missing. Please contact support.", Toast.LENGTH_LONG).show();
+                return;
+            }
+
+            if (!expectedOtp.trim().equals(entered)) {
+                failedAttempts++;
+                int remaining = 5 - failedAttempts;
+                Toast.makeText(getContext(), "❌ Incorrect OTP! " + remaining + " attempts remaining.", Toast.LENGTH_SHORT).show();
                 return;
             }
 

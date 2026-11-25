@@ -21,6 +21,7 @@ import com.ssr.hunger.delivery.utils.LocationUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public class ActiveOrdersAdapter extends RecyclerView.Adapter<ActiveOrdersAdapter.ViewHolder> {
 
@@ -87,25 +88,75 @@ public class ActiveOrdersAdapter extends RecyclerView.Adapter<ActiveOrdersAdapte
             holder.btnCallOrder.setText(isHeadingToCustomer ? "📞 Customer" : "📞 Restaurant");
         }
 
-        // 1. Open Google Maps Turn-by-Turn Navigation
+        // ── PICKUP SECTION: show before pickup, hide after ──
+        if (holder.layoutPickupSection != null) {
+            if (!isHeadingToCustomer) {
+                holder.layoutPickupSection.setVisibility(View.VISIBLE);
+                // Fill restaurant address detail
+                if (holder.tvPickupRestaurantAddress != null) {
+                    String addr = order.getRestaurantAddress();
+                    if (addr == null || addr.isEmpty()) addr = order.getRestaurantName();
+                    holder.tvPickupRestaurantAddress.setText(addr);
+                }
+                // Navigate to Restaurant button → Google Maps
+                if (holder.btnPickupRestaurantMap != null) {
+                    holder.btnPickupRestaurantMap.setOnClickListener(v ->
+                            openLocationInGoogleMaps(context,
+                                    order.getRestaurantLatitude(), order.getRestaurantLongitude(),
+                                    order.getRestaurantName(), order.getRestaurantAddress()));
+                }
+            } else {
+                holder.layoutPickupSection.setVisibility(View.GONE);
+            }
+        }
+
+        // ── CUSTOMER SECTION: show after pickup ──
+        if (holder.layoutCustomerSection != null) {
+            if (isHeadingToCustomer) {
+                holder.layoutCustomerSection.setVisibility(View.VISIBLE);
+                // Customer Name
+                if (holder.tvCustomerDetailName != null) {
+                    holder.tvCustomerDetailName.setText(order.getCustomerName());
+                }
+                // Customer Phone
+                if (holder.tvCustomerDetailPhone != null) {
+                    String phone = order.getCustomerPhone();
+                    holder.tvCustomerDetailPhone.setText(
+                            phone != null && !phone.isEmpty() ? phone : "Phone not available");
+                }
+                // Customer Address
+                if (holder.tvCustomerDetailAddress != null) {
+                    holder.tvCustomerDetailAddress.setText(order.getFullDeliveryAddress());
+                }
+                // Quick Call Customer
+                if (holder.btnCallCustomerQuick != null) {
+                    holder.btnCallCustomerQuick.setOnClickListener(v -> {
+                        String phone = order.getCustomerPhone();
+                        if (phone != null && !phone.trim().isEmpty()) {
+                            context.startActivity(new Intent(Intent.ACTION_DIAL,
+                                    Uri.parse("tel:" + phone.trim())));
+                        } else {
+                            Toast.makeText(context, "Customer phone not available", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                }
+                // Navigate to Customer in Google Maps
+                if (holder.btnCustomerMap != null) {
+                    holder.btnCustomerMap.setOnClickListener(v ->
+                            openLocationInGoogleMaps(context,
+                                    order.getDeliveryLatitude(), order.getDeliveryLongitude(),
+                                    order.getCustomerName(), order.getFullDeliveryAddress()));
+                }
+            } else {
+                holder.layoutCustomerSection.setVisibility(View.GONE);
+            }
+        }
+
+        // 1. Open Google Maps Turn-by-Turn Navigation (bottom row button)
         holder.btnOpenGoogleMaps.setOnClickListener(v -> {
             double destLat = isHeadingToCustomer ? order.getDeliveryLatitude() : order.getRestaurantLatitude();
             double destLng = isHeadingToCustomer ? order.getDeliveryLongitude() : order.getRestaurantLongitude();
-
-            try {
-                Uri gmmIntentUri = Uri.parse("google.navigation:q=" + destLat + "," + destLng + "&mode=d");
-                Intent mapIntent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
-                mapIntent.setPackage("com.google.android.apps.maps");
-                if (mapIntent.resolveActivity(context.getPackageManager()) != null) {
-                    context.startActivity(mapIntent);
-                } else {
-                    Uri webUri = Uri.parse("https://www.google.com/maps/dir/?api=1&destination=" + destLat + "," + destLng);
-                    context.startActivity(new Intent(Intent.ACTION_VIEW, webUri));
-                }
-            } catch (Exception e) {
-                Uri webUri = Uri.parse("https://www.google.com/maps/dir/?api=1&destination=" + destLat + "," + destLng);
-                context.startActivity(new Intent(Intent.ACTION_VIEW, webUri));
-            }
+            openNavigationInGoogleMaps(context, destLat, destLng);
         });
 
         // 2. Focus & Show Complete Route on Dashboard Map
@@ -144,6 +195,55 @@ public class ActiveOrdersAdapter extends RecyclerView.Adapter<ActiveOrdersAdapte
         });
     }
 
+    /**
+     * Opens a specific location in Google Maps (pin view, not navigation).
+     */
+    private void openLocationInGoogleMaps(Context context, double lat, double lng, String label, String address) {
+        try {
+            Uri gmmIntentUri;
+            if (lat != 0.0 && lng != 0.0) {
+                String encodedLabel = Uri.encode(label != null ? label : "Location");
+                gmmIntentUri = Uri.parse(String.format(Locale.US,
+                        "geo:%.6f,%.6f?q=%.6f,%.6f(%s)", lat, lng, lat, lng, encodedLabel));
+            } else {
+                String query = Uri.encode(address != null && !address.isEmpty() ? address : label);
+                gmmIntentUri = Uri.parse("geo:0,0?q=" + query);
+            }
+            Intent mapIntent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
+            mapIntent.setPackage("com.google.android.apps.maps");
+            if (mapIntent.resolveActivity(context.getPackageManager()) != null) {
+                context.startActivity(mapIntent);
+            } else {
+                String webUrl = lat != 0.0
+                        ? String.format(Locale.US, "https://www.google.com/maps/search/?api=1&query=%.6f,%.6f", lat, lng)
+                        : "https://www.google.com/maps/search/?api=1&query=" + Uri.encode(label != null ? label : "");
+                context.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(webUrl)));
+            }
+        } catch (Exception e) {
+            Toast.makeText(context, "Unable to open Maps", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    /**
+     * Opens Google Maps turn-by-turn navigation to a destination.
+     */
+    private void openNavigationInGoogleMaps(Context context, double destLat, double destLng) {
+        try {
+            Uri gmmIntentUri = Uri.parse("google.navigation:q=" + destLat + "," + destLng + "&mode=d");
+            Intent mapIntent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
+            mapIntent.setPackage("com.google.android.apps.maps");
+            if (mapIntent.resolveActivity(context.getPackageManager()) != null) {
+                context.startActivity(mapIntent);
+            } else {
+                Uri webUri = Uri.parse("https://www.google.com/maps/dir/?api=1&destination=" + destLat + "," + destLng);
+                context.startActivity(new Intent(Intent.ACTION_VIEW, webUri));
+            }
+        } catch (Exception e) {
+            Uri webUri = Uri.parse("https://www.google.com/maps/dir/?api=1&destination=" + destLat + "," + destLng);
+            context.startActivity(new Intent(Intent.ACTION_VIEW, webUri));
+        }
+    }
+
     @Override
     public int getItemCount() {
         return orders.size();
@@ -153,6 +253,16 @@ public class ActiveOrdersAdapter extends RecyclerView.Adapter<ActiveOrdersAdapte
         TextView tvOrderId, tvStageBadge, tvRestaurantAddress;
         TextView tvDeliveryAddress, tvEarnings, tvPaymentBadge;
         MaterialButton btnOpenGoogleMaps, btnNavigateMap, btnCallOrder, btnManageOrder;
+
+        // Pickup section views
+        View layoutPickupSection;
+        TextView tvPickupRestaurantAddress;
+        MaterialButton btnPickupRestaurantMap;
+
+        // Customer section views
+        View layoutCustomerSection;
+        TextView tvCustomerDetailName, tvCustomerDetailPhone, tvCustomerDetailAddress;
+        MaterialButton btnCallCustomerQuick, btnCustomerMap;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -166,6 +276,19 @@ public class ActiveOrdersAdapter extends RecyclerView.Adapter<ActiveOrdersAdapte
             btnNavigateMap = itemView.findViewById(R.id.btn_navigate_map);
             btnCallOrder = itemView.findViewById(R.id.btn_call_order);
             btnManageOrder = itemView.findViewById(R.id.btn_manage_order);
+
+            // Pickup section
+            layoutPickupSection = itemView.findViewById(R.id.layout_pickup_section);
+            tvPickupRestaurantAddress = itemView.findViewById(R.id.tv_pickup_restaurant_address);
+            btnPickupRestaurantMap = itemView.findViewById(R.id.btn_pickup_restaurant_map);
+
+            // Customer section
+            layoutCustomerSection = itemView.findViewById(R.id.layout_customer_section);
+            tvCustomerDetailName = itemView.findViewById(R.id.tv_customer_detail_name);
+            tvCustomerDetailPhone = itemView.findViewById(R.id.tv_customer_detail_phone);
+            tvCustomerDetailAddress = itemView.findViewById(R.id.tv_customer_detail_address);
+            btnCallCustomerQuick = itemView.findViewById(R.id.btn_call_customer_quick);
+            btnCustomerMap = itemView.findViewById(R.id.btn_customer_map);
         }
     }
 }

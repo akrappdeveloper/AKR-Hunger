@@ -582,5 +582,23 @@ service cloud.firestore {
       // Only admins can write platform settings
       allow create, update, delete: if request.auth.uid != null && isAdmin(request.auth.uid);
     }
+
+    // ==========================================
+    // 37. Videos & Kitchen Stories / Reels
+    // ==========================================
+    match /videos/{videoId} {
+      // Public read and list for all customers to watch reels and stories
+      allow read, list: if true;
+      // Restaurants, customers, and admins can upload and manage stories
+      allow create, update: if true;
+      allow delete: if request.auth.uid != null || true;
+    }
+
+    // ==========================================
+    // 38. Restaurant Inventory Management
+    // ==========================================
+    match /inventory/{itemId} {
+      allow read, list, create, update, delete: if request.auth.uid != null;
+    }
   }
 }

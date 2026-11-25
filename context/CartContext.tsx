@@ -5,6 +5,7 @@ import { CartItem, Address } from '@/lib/types';
 import { useAuth } from '@/context/AuthContext';
 import { db } from '@/lib/firebase';
 import { doc, getDoc, updateDoc, setDoc, onSnapshot } from 'firebase/firestore';
+import { buildCleanItemPayload, getItemCustomizationSignature } from '@/lib/customization-utils';
 
 interface CartContextType {
   items: CartItem[];
@@ -41,80 +42,44 @@ export function CartProvider({ children }: { children: ReactNode }) {
     const unsub = onSnapshot(doc(db, 'customers', user.uid), (docSnap) => {
       if (docSnap.exists()) {
         const data = docSnap.data();
-        if (data.cartItems) {
-          // Determine if this is a remote update we should accept
-          // For simplicity, we always accept remote if we haven't touched local yet?
-          // Or just accept it. The issue is typing local triggering a write loop.
-          // But Firestore writes are usually idempotent-ish if data is same.
-          // However, let's just use strict sync: what's in DB is truth.
-          // User actions update DB.
-          // Actually, standard context updates local state.
-          // Let's stick to: Local state drives UI. useEffect syncs to DB.
-          // But to support multi-device, we need onSnapshot.
-
-          // Let's use a simpler strategy for this task:
-          // Load once on mount.
-          // Save on change.
-          if (!isLoaded) { // Only force load on first connect
+        if (!isLoaded) {
+          if (data.cartItems) {
             setItems(data.cartItems as CartItem[] || []);
             if (data.cartRestaurantId) setRestaurantId(data.cartRestaurantId);
-
-            // Address Initialization Logic
-            const savedAddress = localStorage.getItem('deliveryAddress');
-            let initialAddress = null;
-
-            if (savedAddress) {
-              try {
-                initialAddress = JSON.parse(savedAddress);
-                if (initialAddress?.pincode === '000000' && data.addresses && data.addresses.length > 0) {
-                  const betterAddr = data.addresses.find((a: any) => a.pincode && a.pincode !== '000000' && a.isDefault) || data.addresses.find((a: any) => a.pincode && a.pincode !== '000000');
-                  if (betterAddr) initialAddress = betterAddr;
-                }
-              } catch (e) {
-                initialAddress = null;
-              }
-            }
-
-            // If no saved address or it's invalid, fallback to profile default
-            if (!initialAddress && data.addresses && data.addresses.length > 0) {
-              initialAddress = data.addresses.find((a: any) => a.isDefault) || data.addresses[0];
-            }
-
-            if (initialAddress) {
-              setDeliveryAddressState(initialAddress);
-              // Ensure local storage is synced if we fell back to default
-              if (!savedAddress || initialAddress.pincode !== '000000') {
-                localStorage.setItem('deliveryAddress', JSON.stringify(initialAddress));
-              }
-            }
-
-            setIsLoaded(true);
           }
-        } else {
-          // No cart items, but check address
-          if (!deliveryAddress && data.addresses && data.addresses.length > 0) {
-            const savedAddress = localStorage.getItem('deliveryAddress');
-            if (savedAddress) {
-              try {
-                const parsed = JSON.parse(savedAddress);
-                if (parsed?.pincode === '000000' && data.addresses && data.addresses.length > 0) {
-                  const betterAddr = data.addresses.find((a: any) => a.pincode && a.pincode !== '000000' && a.isDefault) || data.addresses.find((a: any) => a.pincode && a.pincode !== '000000');
-                  setDeliveryAddressState(betterAddr || parsed);
-                  if (betterAddr) localStorage.setItem('deliveryAddress', JSON.stringify(betterAddr));
-                } else {
-                  setDeliveryAddressState(parsed);
-                }
-              } catch (e) {
-                const defaultAddr = data.addresses.find((a: any) => a.isDefault) || data.addresses[0];
-                setDeliveryAddressState(defaultAddr);
-                localStorage.setItem('deliveryAddress', JSON.stringify(defaultAddr));
+
+          // Address Initialization Logic
+          const savedAddress = localStorage.getItem('deliveryAddress');
+          let initialAddress = null;
+          const profileAddresses = data.addresses || [];
+
+          if (savedAddress) {
+            try {
+              initialAddress = JSON.parse(savedAddress);
+              if (initialAddress?.pincode === '000000' && profileAddresses.length > 0) {
+                const betterAddr =
+                  profileAddresses.find((a: any) => a.pincode && a.pincode !== '000000' && a.isDefault) ||
+                  profileAddresses.find((a: any) => a.pincode && a.pincode !== '000000');
+                if (betterAddr) initialAddress = betterAddr;
               }
-            } else {
-              const defaultAddr = data.addresses.find((a: any) => a.isDefault) || data.addresses[0];
-              setDeliveryAddressState(defaultAddr);
-              localStorage.setItem('deliveryAddress', JSON.stringify(defaultAddr));
+            } catch (e) {
+              initialAddress = null;
             }
           }
+
+          // If no saved address or it's invalid, fallback to profile default
+          if (!initialAddress && profileAddresses.length > 0) {
+            initialAddress = profileAddresses.find((a: any) => a.isDefault) || profileAddresses[0];
+          }
+
+          if (initialAddress) {
+            setDeliveryAddressState(initialAddress);
+            // Ensure local storage is synced if we fell back to default
+            if (!savedAddress || initialAddress.pincode !== '000000') {
+              localStorage.setItem('deliveryAddress', JSON.stringify(initialAddress));
+            }
+          }
+
           setIsLoaded(true);
         }
       } else {
@@ -132,7 +97,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     const saveCart = async () => {
       try {
         await updateDoc(doc(db, 'customers', user.uid), {
-          cartItems: items,
+          cartItems: items.map(buildCleanItemPayload),
           cartRestaurantId: restaurantId,
           updatedAt: new Date()
         });
@@ -155,31 +120,35 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const addItem = useCallback((item: CartItem) => {
+    const cleanItem = buildCleanItemPayload(item);
+    const incomingSig = getItemCustomizationSignature(cleanItem);
     setItems((prevItems) => {
-      // Check if item already exists
-      const existingItem = prevItems.find((i) => i.menuItemId === item.menuItemId);
+      // Check if same item with identical customizations already exists
+      const existingItem = prevItems.find(
+        (i) => getItemCustomizationSignature(i) === incomingSig
+      );
 
       if (existingItem) {
-        // Update quantity if item exists
+        // Update quantity if identical item + customizations exists
         return prevItems.map((i) =>
-          i.menuItemId === item.menuItemId
-            ? { ...i, quantity: i.quantity + item.quantity }
+          getItemCustomizationSignature(i) === incomingSig
+            ? { ...i, quantity: i.quantity + cleanItem.quantity }
             : i
         );
       }
 
       // Set restaurant ID on first item
       if (prevItems.length === 0) {
-        setRestaurantId(item.restaurantId);
+        setRestaurantId(cleanItem.restaurantId);
       }
 
-      return [...prevItems, item];
+      return [...prevItems, cleanItem];
     });
   }, []);
 
   const removeItem = useCallback((itemId: string) => {
     setItems((prevItems) => {
-      const newItems = prevItems.filter((i) => i.menuItemId !== itemId);
+      const newItems = prevItems.filter((i) => i.id !== itemId && i.menuItemId !== itemId);
       if (newItems.length === 0) setRestaurantId(null);
       return newItems;
     });
@@ -193,7 +162,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
     setItems((prevItems) =>
       prevItems.map((i) =>
-        i.menuItemId === itemId ? { ...i, quantity } : i
+        i.id === itemId || i.menuItemId === itemId ? { ...i, quantity } : i
       )
     );
   }, [removeItem]);

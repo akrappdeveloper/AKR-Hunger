@@ -5,11 +5,14 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginBottom="12dp"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?attr/selectableItemBackground"
+    app:cardBackgroundColor="@color/surface"
     app:cardCornerRadius="18dp"
-    app:cardElevation="1.5dp"
+    app:cardElevation="0dp"
     app:strokeColor="@color/card_border"
-    app:strokeWidth="1dp"
-    app:cardBackgroundColor="@color/surface">
+    app:strokeWidth="1dp">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -17,22 +20,54 @@
         android:orientation="vertical"
         android:padding="16dp">
 
+        <!-- Top Header: Order ID & Date on Left, Earnings on Right -->
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
-            <TextView
-                android:id="@+id/tv_history_order_id"
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignParentStart="true"
                 android:layout_centerVertical="true"
-                android:text="#ORD-7193"
-                android:textColor="@color/text_primary"
-                android:textSize="15sp"
-                android:textStyle="bold"
-                android:letterSpacing="-0.01" />
+                android:orientation="vertical">
 
+                <TextView
+                    android:id="@+id/tv_history_order_id"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="#ORD-7193"
+                    android:textColor="@color/text_primary"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    android:letterSpacing="-0.01" />
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:layout_width="11dp"
+                        android:layout_height="11dp"
+                        android:src="@drawable/ic_calendar"
+                        app:tint="@color/text_hint"
+                        android:contentDescription="Date" />
+
+                    <TextView
+                        android:id="@+id/tv_history_date"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="4dp"
+                        android:text="08 Oct, 07:45 PM"
+                        android:textColor="@color/text_hint"
+                        android:textSize="11sp" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Earnings Pill -->
             <TextView
                 android:id="@+id/tv_history_earning"
                 android:layout_width="wrap_content"
@@ -41,51 +76,163 @@
                 android:layout_centerVertical="true"
                 android:text="+₹62.00"
                 android:textColor="@color/veg_green"
-                android:textSize="15.5sp"
-                android:textStyle="bold" />
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:letterSpacing="-0.01" />
         </RelativeLayout>
 
-        <TextView
-            android:id="@+id/tv_history_date"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
-            android:text="08 Oct, 07:45 PM"
-            android:textColor="@color/text_hint"
-            android:textSize="11sp" />
-
+        <!-- Elegant Subtle Divider -->
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"
-            android:layout_marginVertical="10dp"
-            android:background="@color/divider" />
+            android:layout_marginVertical="12dp"
+            android:background="@color/card_border_subtle" />
 
+        <!-- Route Journey: Restaurant Pickup & Customer Drop Location -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <TextView
-                android:id="@+id/tv_history_restaurant"
-                android:layout_width="wrap_content"
+            <!-- Restaurant Step -->
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Royal Biryani House"
-                android:textColor="@color/text_primary"
-                android:textSize="14.5sp"
-                android:textStyle="bold" />
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <FrameLayout
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:background="@drawable/bg_icon_circle_orange"
+                    android:padding="6dp">
+
+                    <ImageView
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:src="@drawable/ic_restaurant_modern"
+                        app:tint="@color/primary"
+                        android:contentDescription="Restaurant" />
+                </FrameLayout>
+
+                <TextView
+                    android:id="@+id/tv_history_restaurant"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
+                    android:layout_weight="1"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:text="Royal Biryani House"
+                    android:textColor="@color/text_primary"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <!-- Route Connector Line -->
+            <View
+                android:layout_width="1.5dp"
+                android:layout_height="10dp"
+                android:layout_marginStart="13dp"
+                android:layout_marginVertical="2dp"
+                android:background="@color/card_border" />
+
+            <!-- Customer Destination Step -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <FrameLayout
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:background="@drawable/bg_icon_circle_emerald"
+                    android:padding="6dp">
+
+                    <ImageView
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:src="@drawable/ic_drop_pin"
+                        app:tint="@color/veg_green"
+                        android:contentDescription="Drop" />
+                </FrameLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/tv_history_customer_name"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Customer Name"
+                        android:textColor="@color/text_primary"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:maxLines="1"
+                        android:ellipsize="end" />
+
+                    <TextView
+                        android:id="@+id/tv_history_customer_address"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:ellipsize="end"
+                        android:maxLines="1"
+                        android:text="Delivered to: Kothrud, Pune - 411038"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="12sp" />
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Ordered Items Summary -->
+        <LinearLayout
+            android:id="@+id/layout_history_items"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="@drawable/bg_pill_primary"
+            android:backgroundTint="@color/surface_variant"
+            android:paddingHorizontal="10dp"
+            android:paddingVertical="6dp"
+            android:layout_marginTop="10dp">
+
+            <ImageView
+                android:layout_width="14dp"
+                android:layout_height="14dp"
+                android:src="@drawable/ic_receipt_long"
+                android:layout_marginEnd="6dp"
+                app:tint="@color/text_secondary"
+                android:contentDescription="Items" />
 
             <TextView
-                android:id="@+id/tv_history_customer_address"
-                android:layout_width="wrap_content"
+                android:id="@+id/tv_history_items"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="3dp"
-                android:text="Delivered to: Kothrud, Pune - 411038"
-                android:textColor="@color/text_secondary"
+                android:layout_weight="1"
+                android:text="2x Paneer Butter Masala, 1x Naan"
+                android:textColor="@color/text_primary"
                 android:textSize="12sp"
                 android:maxLines="1"
                 android:ellipsize="end" />
         </LinearLayout>
 
+        <!-- Pickup & Delivery Timestamps -->
+        <TextView
+            android:id="@+id/tv_history_timestamps"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="🛵 Picked: 07:30 PM • Delivered: 07:55 PM"
+            android:textColor="@color/text_hint"
+            android:textSize="11sp" />
+
+        <!-- Bottom Footer: Status Badge & Payment Method with Chevron -->
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -99,21 +246,38 @@
                 android:layout_centerVertical="true"
                 android:background="@drawable/bg_pill_emerald_soft"
                 android:paddingHorizontal="11dp"
-                android:paddingVertical="4dp"
+                android:paddingVertical="4.5dp"
                 android:text="Delivered"
                 android:textColor="@color/veg_green"
                 android:textSize="11.5sp"
                 android:textStyle="bold" />
 
-            <TextView
-                android:id="@+id/tv_history_payment"
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignParentEnd="true"
                 android:layout_centerVertical="true"
-                android:text="Paid Online"
-                android:textColor="@color/text_secondary"
-                android:textSize="12sp" />
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/tv_history_payment"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Paid Online"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="12sp"
+                    android:fontFamily="sans-serif-medium" />
+
+                <ImageView
+                    android:layout_width="14dp"
+                    android:layout_height="14dp"
+                    android:layout_marginStart="4dp"
+                    android:src="@drawable/ic_chevron_right"
+                    app:tint="@color/text_hint"
+                    android:contentDescription="Details" />
+            </LinearLayout>
         </RelativeLayout>
+
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

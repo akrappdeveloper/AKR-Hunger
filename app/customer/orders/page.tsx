@@ -173,8 +173,15 @@ export default function OrdersPage() {
     if (!order.items) return;
     order.items.forEach(item => addItem({
       menuItemId: item.menuItemId, restaurantId: order.restaurantId || '',
-      name: item.name, price: item.price, image: item.image, quantity: item.quantity,
-      restaurantName: order.restaurantName || '', id: `reorder_${Date.now()}`, addedAt: new Date()
+      name: item.name, price: item.price,
+      ...(item.basePrice !== undefined ? { basePrice: item.basePrice } : {}),
+      image: item.image, quantity: item.quantity,
+      restaurantName: order.restaurantName || '',
+      ...(item.spiceLevel ? { spiceLevel: item.spiceLevel } : {}),
+      ...(item.selectedSize ? { selectedSize: item.selectedSize } : {}),
+      ...(item.selectedAddOns?.length ? { selectedAddOns: item.selectedAddOns } : {}),
+      ...(item.specialInstructions ? { specialInstructions: item.specialInstructions } : {}),
+      id: `reorder_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`, addedAt: new Date()
     }));
     router.push('/customer/cart');
     toast.success('Items added to cart!');

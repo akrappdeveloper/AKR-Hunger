@@ -331,7 +331,7 @@ public class RegisterActivity extends AppCompatActivity {
         data.put("rating", 5.0);
         data.put("password", password);
         data.put("servicePincodes", TextUtils.isEmpty(pincode) ? Collections.emptyList() : Collections.singletonList(pincode));
-        data.put("pincodeFilterActive", !TextUtils.isEmpty(pincode));
+        data.put("pincodeFilterActive", false);
         data.put("emergencyContact", emergency);
         data.put("todayEarnings", 0.0);
         data.put("totalEarnings", 0.0);

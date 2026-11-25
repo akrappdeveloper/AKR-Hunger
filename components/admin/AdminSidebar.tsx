@@ -43,7 +43,19 @@ import {
   Percent,
   ShieldCheck,
   Headset,
-  MessageSquare
+  MessageSquare,
+  Film,
+  Zap,
+  Brain,
+  AlertOctagon,
+  GraduationCap,
+  Calculator,
+  Sparkles,
+  Leaf,
+  CalendarDays,
+  Salad,
+  Sliders,
+  LayoutGrid
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -88,17 +100,21 @@ const AdminSidebar = ({ isMobile = false, onClose }: AdminSidebarProps) => {
       title: 'Main',
       items: [
         { href: '/admin', label: 'Dashboard', icon: BarChart3 },
+        { href: '/admin/more', label: 'All Tools Hub', icon: LayoutGrid },
       ],
     },
     {
       title: 'Management',
       items: [
         { href: '/admin/customers', label: 'Customers', icon: Users, allowedRoles: ['super_admin', 'operations_admin', 'support_admin'] },
+        { href: '/admin/students', label: 'Student Verifications', icon: GraduationCap, allowedRoles: ['super_admin', 'operations_admin'] },
         { href: '/admin/restaurants', label: 'Restaurants', icon: Store, allowedRoles: ['super_admin', 'operations_admin'] },
         { href: '/admin/delivery', label: 'Delivery Partners', icon: Truck, allowedRoles: ['super_admin', 'operations_admin'] },
         { href: '/admin/drivers', label: 'Driver Fleet', icon: Activity, allowedRoles: ['super_admin', 'operations_admin'] },
+        { href: '/admin/fraud-detection', label: 'Fraud & Sybil Shield', icon: AlertOctagon, allowedRoles: ['super_admin', 'operations_admin'] },
         { href: '/admin/kyc', label: 'KYC Verification', icon: ShieldCheck, allowedRoles: ['super_admin', 'operations_admin'] },
         { href: '/admin/orders', label: 'Orders', icon: ShoppingBag, allowedRoles: ['super_admin', 'operations_admin', 'support_admin'] },
+        { href: '/admin/split-bills', label: 'Split Bills & Group Orders', icon: Calculator, allowedRoles: ['super_admin', 'operations_admin'] },
       ],
     },
     {
@@ -109,25 +125,35 @@ const AdminSidebar = ({ isMobile = false, onClose }: AdminSidebarProps) => {
         { href: '/admin/customer-wallet', label: 'Customer Wallet', icon: Wallet, allowedRoles: ['super_admin', 'finance_admin', 'support_admin'] },
         { href: '/admin/refunds', label: 'Refund Dashboard', icon: RotateCcw, allowedRoles: ['super_admin', 'finance_admin'] },
         { href: '/admin/points', label: 'Points / Wallet', icon: Wallet, allowedRoles: ['super_admin', 'finance_admin', 'operations_admin'] },
+        { href: '/admin/delivery-policies', label: 'Delivery Policies & SLA', icon: Sliders, allowedRoles: ['super_admin', 'operations_admin', 'finance_admin'] },
       ],
     },
     {
-      title: 'Content',
+      title: 'Content & Food',
       items: [
         { href: '/admin/banners', label: 'Banners & Carousels', icon: ImageIcon, allowedRoles: ['super_admin', 'content_manager'] },
         { href: '/admin/menus', label: 'Menu Management', icon: BookOpen, allowedRoles: ['super_admin', 'content_manager', 'operations_admin'] },
         { href: '/admin/menu-approvals', label: 'Menu Approvals', icon: UtensilsCrossed, allowedRoles: ['super_admin', 'content_manager', 'operations_admin'] },
+        { href: '/admin/diet-planner', label: 'Nutrition & Diet Catalog', icon: Salad, allowedRoles: ['super_admin', 'content_manager', 'operations_admin'] },
+        { href: '/admin/meal-plans', label: 'Tiffin & Meal Plans', icon: CalendarDays, allowedRoles: ['super_admin', 'content_manager', 'operations_admin'] },
         { href: '/admin/campaigns', label: 'Campaigns', icon: Megaphone, allowedRoles: ['super_admin', 'content_manager'] },
         { href: '/admin/deals', label: 'Deals & Offers', icon: Tag, allowedRoles: ['super_admin', 'content_manager'] },
+        { href: '/admin/videos', label: 'Video Moderation', icon: Film, allowedRoles: ['super_admin', 'content_manager', 'operations_admin'] },
         { href: '/admin/redeem-codes', label: 'Redeem Codes', icon: Gift, allowedRoles: ['super_admin', 'content_manager', 'finance_admin'] },
         { href: '/admin/promotions', label: 'Promotions', icon: Percent, allowedRoles: ['super_admin', 'content_manager'] },
+        { href: '/admin/gamification', label: 'Mystery Box & Vault', icon: Sparkles, allowedRoles: ['super_admin', 'content_manager'] },
       ],
     },
     {
-      title: 'Monitoring',
+      title: 'Monitoring & AI',
       items: [
         { href: '/admin/analytics', label: 'Analytics', icon: TrendingUp, allowedRoles: ['super_admin', 'operations_admin', 'finance_admin'] },
+        { href: '/admin/ai-pricing', label: 'AI Demand & Pricing', icon: Brain, allowedRoles: ['super_admin', 'operations_admin', 'finance_admin'] },
+        { href: '/admin/ai-config', label: 'AI Control Panel', icon: Brain, allowedRoles: ['super_admin', 'operations_admin'] },
+        { href: '/admin/eco', label: 'Green EV & Eco Dashboard', icon: Leaf, allowedRoles: ['super_admin', 'operations_admin'] },
         { href: '/admin/quality', label: 'Quality Control', icon: Shield, allowedRoles: ['super_admin', 'operations_admin'] },
+        { href: '/admin/surge', label: 'Surge & Peak Hours', icon: Zap, allowedRoles: ['super_admin', 'operations_admin'] },
+        { href: '/admin/system-health', label: 'System Health', icon: Activity, allowedRoles: ['super_admin', 'operations_admin'] },
         { href: '/admin/tracking', label: 'Live Tracking', icon: Navigation, allowedRoles: ['super_admin', 'operations_admin', 'support_admin'] },
         { href: '/admin/zones', label: 'Delivery Zones', icon: Map, allowedRoles: ['super_admin', 'operations_admin'] },
       ],
@@ -148,6 +174,7 @@ const AdminSidebar = ({ isMobile = false, onClose }: AdminSidebarProps) => {
         { href: '/admin/reports', label: 'Reports', icon: FileText, allowedRoles: ['super_admin', 'finance_admin', 'operations_admin'] },
         { href: '/admin/support', label: 'Support Desk', icon: LifeBuoy, allowedRoles: ['super_admin', 'support_admin'] },
         { href: '/admin/support/delivery', label: 'Delivery Support', icon: Headset, allowedRoles: ['super_admin', 'support_admin', 'operations_admin'] },
+        { href: '/admin/audit-logs', label: 'Security Audit Logs', icon: ShieldCheck, allowedRoles: ['super_admin'] },
         { href: '/admin/settings', label: 'Settings', icon: Settings, allowedRoles: ['super_admin'] },
       ],
     },

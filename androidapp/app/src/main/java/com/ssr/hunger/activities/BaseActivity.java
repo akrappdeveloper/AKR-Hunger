@@ -203,6 +203,12 @@ public abstract class BaseActivity extends AppCompatActivity {
                 .show();
     }
 
+    protected void showToast(String message) {
+        if (message != null && !isFinishing()) {
+            android.widget.Toast.makeText(this, message, android.widget.Toast.LENGTH_SHORT).show();
+        }
+    }
+
     // ──────────────────────────────────────────────────────────────────
     // Analytics & Crashlytics helpers
     // ──────────────────────────────────────────────────────────────────

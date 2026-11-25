@@ -5,7 +5,7 @@
     android:layout_height="match_parent"
     android:background="@color/black">
 
-    <!-- Admin/Remote Video View Simulation -->
+    <!-- Admin/Remote Video View -->
     <ImageView
         android:id="@+id/remote_video_view"
         android:layout_width="match_parent"
@@ -15,34 +15,32 @@
         app:tint="@color/text_secondary"
         android:background="@color/black" />
 
-    <!-- Gradient Overlay at Top for Status Bar & Header Visibility -->
+    <!-- Gradient Overlay at Top for Header Visibility -->
     <View
         android:layout_width="match_parent"
         android:layout_height="120dp"
         android:layout_alignParentTop="true"
-        android:background="#66000000" /> <!-- Fallback simple overlay since gradient might not exist -->
+        android:background="#80000000" />
 
-    <!-- Admin Badge & Connection Status -->
+    <!-- Admin Badge & Live Status -->
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
         android:layout_alignParentStart="true"
         android:layout_marginTop="48dp"
-        android:layout_marginStart="24dp"
+        android:layout_marginStart="20dp"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:background="@drawable/bg_pill_primary"
-        android:backgroundTint="#80000000"
+        android:background="@drawable/bg_pill_dark_glass"
         android:paddingHorizontal="16dp"
-        android:paddingVertical="10dp">
-        
+        android:paddingVertical="8dp">
+
         <View
             android:layout_width="8dp"
             android:layout_height="8dp"
-            android:background="@drawable/bg_pill_primary"
-            android:backgroundTint="@color/success" />
-            
+            android:background="@drawable/bg_online_dot" />
+
         <TextView
             android:id="@+id/tv_admin_name"
             android:layout_width="wrap_content"
@@ -51,7 +49,7 @@
             android:text="Hunger Admin (Connecting...)"
             android:textColor="@color/white"
             android:textStyle="bold"
-            android:textSize="14sp" />
+            android:textSize="13.5sp" />
     </LinearLayout>
 
     <!-- Gradient Overlay at Bottom for Controls Visibility -->
@@ -59,19 +57,19 @@
         android:layout_width="match_parent"
         android:layout_height="200dp"
         android:layout_alignParentBottom="true"
-        android:background="#88000000" /> <!-- Subtle dark overlay -->
+        android:background="#99000000" />
 
-    <!-- Self/Local Video View Simulation -->
+    <!-- Self/Local Video View PiP -->
     <com.google.android.material.card.MaterialCardView
-        android:layout_width="110dp"
+        android:layout_width="112dp"
         android:layout_height="160dp"
         android:layout_above="@+id/layout_controls"
         android:layout_alignParentEnd="true"
-        android:layout_marginEnd="24dp"
+        android:layout_marginEnd="20dp"
         android:layout_marginBottom="24dp"
-        app:cardCornerRadius="16dp"
+        app:cardCornerRadius="18dp"
         app:cardElevation="12dp"
-        app:strokeColor="#4DFFFFFF"
+        app:strokeColor="#66FFFFFF"
         app:strokeWidth="1.5dp">
 
         <ImageView
@@ -82,7 +80,7 @@
             android:scaleType="centerCrop"
             android:src="@drawable/ic_user"
             app:tint="@color/text_hint" />
-            
+
         <com.google.android.material.card.MaterialCardView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -91,30 +89,32 @@
             app:cardCornerRadius="8dp"
             app:cardBackgroundColor="#80000000"
             app:strokeWidth="0dp">
+
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="You"
                 android:textColor="@color/white"
                 android:textSize="11sp"
+                android:textStyle="bold"
                 android:paddingHorizontal="6dp"
-                android:paddingVertical="3dp"/>
+                android:paddingVertical="3dp" />
         </com.google.android.material.card.MaterialCardView>
     </com.google.android.material.card.MaterialCardView>
 
-    <!-- Call Controls Floating Panel -->
+    <!-- Call Controls Floating Glass Panel -->
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/layout_controls"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
-        android:layout_marginBottom="40dp"
+        android:layout_marginBottom="36dp"
         app:cardCornerRadius="40dp"
-        app:cardBackgroundColor="#4D000000"
-        app:strokeColor="#33FFFFFF"
+        app:cardBackgroundColor="#66000000"
+        app:strokeColor="#40FFFFFF"
         app:strokeWidth="1dp"
-        app:cardElevation="0dp">
+        app:cardElevation="6dp">
 
         <LinearLayout
             android:layout_width="wrap_content"
@@ -122,39 +122,42 @@
             android:gravity="center"
             android:orientation="horizontal"
             android:paddingHorizontal="24dp"
-            android:paddingVertical="16dp">
+            android:paddingVertical="14dp">
 
             <!-- Mic Mute Button -->
             <ImageButton
                 android:id="@+id/btn_mute"
-                android:layout_width="56dp"
-                android:layout_height="56dp"
-                android:layout_marginEnd="20dp"
+                android:layout_width="54dp"
+                android:layout_height="54dp"
+                android:layout_marginEnd="18dp"
                 android:background="@drawable/bg_pill_primary"
                 android:backgroundTint="#40FFFFFF"
                 android:src="@drawable/ic_mic"
-                app:tint="@color/white" />
+                app:tint="@color/white"
+                android:contentDescription="Mute" />
 
             <!-- End Call Button -->
             <ImageButton
                 android:id="@+id/btn_end_call"
-                android:layout_width="68dp"
-                android:layout_height="68dp"
-                android:layout_marginEnd="20dp"
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:layout_marginEnd="18dp"
                 android:background="@drawable/bg_pill_primary"
                 android:backgroundTint="@color/error"
                 android:src="@drawable/ic_phone"
-                app:tint="@color/white" />
+                app:tint="@color/white"
+                android:contentDescription="End Call" />
 
             <!-- Video Toggle Button -->
             <ImageButton
                 android:id="@+id/btn_video"
-                android:layout_width="56dp"
-                android:layout_height="56dp"
+                android:layout_width="54dp"
+                android:layout_height="54dp"
                 android:background="@drawable/bg_pill_primary"
                 android:backgroundTint="#40FFFFFF"
                 android:src="@drawable/ic_video"
-                app:tint="@color/white" />
+                app:tint="@color/white"
+                android:contentDescription="Toggle Video" />
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 

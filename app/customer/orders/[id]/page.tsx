@@ -45,6 +45,11 @@ import { useTrackDriver } from '@/hooks/useTrackDriver';
 import type { MapMarker } from '@/components/tracking/LiveTrackingMap';
 import ChatModal from '@/components/chat/ChatModal';
 import { getDeterministicChatId, ChatType, initializeOrderChat } from '@/lib/chat-service';
+import { buildCleanItemPayload } from '@/lib/customization-utils';
+import {
+  ItemCustomizationBadges,
+  BillCustomizationBreakdownRows,
+} from '@/components/orders/ItemCustomizationBadges';
 
 // Dynamic import for LiveTrackingMap (no SSR)
 const LiveTrackingMap = dynamic(
@@ -398,17 +403,22 @@ export default function OrderTrackingPage() {
   const handleReorder = () => {
     if (!order?.items) return;
     order.items.forEach(item => {
-      addItem({
+      addItem(buildCleanItemPayload({
         menuItemId: item.menuItemId,
         restaurantId: order.restaurantId || '',
         name: item.name,
         price: item.price,
+        ...(item.basePrice !== undefined ? { basePrice: item.basePrice } : {}),
         image: item.image,
         quantity: item.quantity,
         restaurantName: order.restaurantName || restaurant?.name || 'Restaurant',
+        ...(item.spiceLevel ? { spiceLevel: item.spiceLevel } : {}),
+        ...(item.selectedSize ? { selectedSize: item.selectedSize } : {}),
+        ...(item.selectedAddOns?.length ? { selectedAddOns: item.selectedAddOns } : {}),
+        ...(item.specialInstructions ? { specialInstructions: item.specialInstructions } : {}),
         id: `reorder_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         addedAt: new Date()
-      });
+      }));
     });
     router.push('/customer/cart');
   };
@@ -779,11 +789,7 @@ export default function OrderTrackingPage() {
                       <p className="text-xs text-muted-foreground mt-0.5">
                         Qty: <span className="font-bold text-foreground">{item.quantity}</span> × ₹{item.price}
                       </p>
-                      {item.specialInstructions && (
-                        <p className="text-[11px] text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded mt-1 line-clamp-1 border border-amber-500/20">
-                          Note: {item.specialInstructions}
-                        </p>
-                      )}
+                      <ItemCustomizationBadges item={item} compact />
                     </div>
                   </div>
                 ))}
@@ -914,6 +920,8 @@ export default function OrderTrackingPage() {
               </div>
 
               <div className="space-y-2.5 text-xs sm:text-sm">
+                <BillCustomizationBreakdownRows items={order.items || []} />
+
                 <div className="flex justify-between text-muted-foreground">
                   <span>Item Subtotal</span>
                   <span className="text-foreground font-semibold">₹{(order.subtotal || 0).toFixed(2)}</span>

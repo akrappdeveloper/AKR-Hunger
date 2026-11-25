@@ -448,14 +448,15 @@
                     android:layout_marginTop="16dp"
                     android:background="@color/divider" />
 
-                <!-- Portion Size Selection Card Container -->
+                <!-- Portion Size Selection Card Container (Optional) -->
                 <TextView
+                    android:id="@+id/tv_portion_header"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
                     android:fontFamily="sans-serif-bold"
                     android:letterSpacing="0.06"
-                    android:text="CHOOSE PORTION"
+                    android:text="CHOOSE SIZE (OPTIONAL)"
                     android:textColor="@color/text_hint"
                     android:textSize="11sp" />
 
@@ -474,7 +475,6 @@
                         android:layout_weight="1"
                         android:background="@drawable/sel_option_card"
                         android:button="@null"
-                        android:checked="true"
                         android:fontFamily="sans-serif-bold"
                         android:gravity="center"
                         android:text="Regular"
@@ -516,14 +516,15 @@
                     android:layout_marginTop="16dp"
                     android:background="@color/divider" />
 
-                <!-- Spice Level Preference Card Container -->
+                <!-- Spice Level Preference Card Container (Optional) -->
                 <TextView
+                    android:id="@+id/tv_spice_header"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
                     android:fontFamily="sans-serif-bold"
                     android:letterSpacing="0.06"
-                    android:text="SPICE LEVEL PREFERENCE"
+                    android:text="SPICE LEVEL (OPTIONAL)"
                     android:textColor="@color/text_hint"
                     android:textSize="11sp" />
 
@@ -556,7 +557,6 @@
                         android:layout_weight="1"
                         android:background="@drawable/sel_option_card"
                         android:button="@null"
-                        android:checked="true"
                         android:fontFamily="sans-serif-bold"
                         android:gravity="center"
                         android:text="Medium 🔥"
@@ -591,6 +591,30 @@
                         android:textColor="@color/sel_option_text"
                         android:textSize="11sp" />
                 </RadioGroup>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginTop="16dp"
+                    android:background="@color/divider" />
+
+                <!-- Add-ons & Extras (Optional) -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:fontFamily="sans-serif-bold"
+                    android:letterSpacing="0.06"
+                    android:text="ADD-ONS &amp; EXTRAS (OPTIONAL)"
+                    android:textColor="@color/text_hint"
+                    android:textSize="11sp" />
+
+                <LinearLayout
+                    android:id="@+id/ll_addons_container"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:orientation="vertical" />
 
                 <View
                     android:layout_width="match_parent"

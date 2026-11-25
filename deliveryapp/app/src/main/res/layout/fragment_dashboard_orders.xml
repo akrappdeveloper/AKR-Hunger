@@ -87,30 +87,78 @@
                     android:orientation="horizontal"
                     android:gravity="center_vertical">
 
-                    <!-- SOS Emergency Icon -->
+                    <!-- SOS Emergency Icon Button -->
                     <ImageButton
                         android:id="@+id/btn_header_sos"
                         android:layout_width="42dp"
                         android:layout_height="42dp"
-                        android:background="@drawable/bg_pill_primary"
-                        android:backgroundTint="@color/error_light"
+                        android:background="@drawable/bg_pill_error_soft"
+                        android:padding="10dp"
+                        android:scaleType="fitCenter"
                         android:src="@drawable/ic_phone"
                         app:tint="@color/error"
                         android:contentDescription="SOS Emergency" />
 
-                    <!-- Notification Bell Icon -->
+                    <!-- Notification Bell Icon Button -->
                     <ImageButton
                         android:id="@+id/btn_header_notifications"
                         android:layout_width="42dp"
                         android:layout_height="42dp"
-                        android:layout_marginStart="8dp"
-                        android:background="@drawable/bg_pill_primary"
-                        android:backgroundTint="@color/surface_variant"
+                        android:layout_marginStart="10dp"
+                        android:background="@drawable/bg_icon_circle_orange"
+                        android:padding="10dp"
+                        android:scaleType="fitCenter"
                         android:src="@drawable/ic_bell"
-                        app:tint="@color/text_primary"
+                        app:tint="@color/primary"
                         android:contentDescription="Notifications" />
                 </LinearLayout>
             </RelativeLayout>
+
+            <!-- Active Deliveries Section (Prominently displayed at the top when active orders exist) -->
+            <LinearLayout
+                android:id="@+id/layout_active_section"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginTop="12dp"
+                android:layout_marginBottom="12dp"
+                android:visibility="gone">
+
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="10dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Active Deliveries"
+                        android:textColor="@color/text_primary"
+                        android:textSize="16.5sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tv_active_count"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentEnd="true"
+                        android:layout_centerVertical="true"
+                        android:background="@drawable/bg_pill_primary"
+                        android:backgroundTint="@color/primary"
+                        android:paddingHorizontal="11dp"
+                        android:paddingVertical="4dp"
+                        android:text="1 active"
+                        android:textColor="@color/on_primary"
+                        android:textSize="11.5sp"
+                        android:textStyle="bold" />
+                </RelativeLayout>
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rv_active_orders"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:nestedScrollingEnabled="false" />
+            </LinearLayout>
 
             <!-- Location & Map Section (Shown when ONLINE) -->
             <com.google.android.material.card.MaterialCardView
@@ -133,7 +181,7 @@
                     <RelativeLayout
                         android:id="@+id/layout_map_viewport"
                         android:layout_width="match_parent"
-                        android:layout_height="480dp">
+                        android:layout_height="330dp">
 
                         <org.osmdroid.views.MapView
                             android:id="@+id/map_fragment"
@@ -329,7 +377,177 @@
                                 app:elevation="6dp"
                                 android:contentDescription="Re-center on current position" />
                         </LinearLayout>
+
+                        <!-- Scan Animation Overlay: Top Center of Map -->
+                        <LinearLayout
+                            android:id="@+id/layout_scan_animation"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_centerHorizontal="true"
+                            android:layout_alignParentTop="true"
+                            android:layout_marginTop="14dp"
+                            android:orientation="vertical"
+                            android:gravity="center"
+                            android:visibility="gone">
+
+                            <com.google.android.material.card.MaterialCardView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                app:cardCornerRadius="20dp"
+                                app:cardElevation="6dp"
+                                app:strokeWidth="0dp"
+                                app:cardBackgroundColor="#CC000000">
+
+                                <LinearLayout
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="horizontal"
+                                    android:gravity="center_vertical"
+                                    android:paddingHorizontal="14dp"
+                                    android:paddingVertical="9dp">
+
+                                    <View
+                                        android:id="@+id/view_scan_dot"
+                                        android:layout_width="8dp"
+                                        android:layout_height="8dp"
+                                        android:background="@drawable/bg_pill_primary"
+                                        android:backgroundTint="#FF6B00" />
+
+                                    <TextView
+                                        android:id="@+id/tv_scan_label"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginStart="7dp"
+                                        android:text="📡 Locating Restaurant..."
+                                        android:textColor="#FFFFFFFF"
+                                        android:textSize="12.5sp"
+                                        android:textStyle="bold" />
+                                </LinearLayout>
+                            </com.google.android.material.card.MaterialCardView>
+
+                            <!-- Radar Pulse Ring 1 -->
+                            <View
+                                android:id="@+id/view_scan_ring1"
+                                android:layout_width="60dp"
+                                android:layout_height="60dp"
+                                android:layout_marginTop="-30dp"
+                                android:layout_gravity="center"
+                                android:background="@drawable/bg_pill_primary"
+                                android:backgroundTint="#40FF6B00"
+                                android:visibility="gone" />
+                        </LinearLayout>
+
                     </RelativeLayout>
+
+                    <!-- Bottom Swipe Action Panel: Pickup / Deliver (Positioned right below Map Viewport) -->
+                    <LinearLayout
+                        android:id="@+id/layout_swipe_action_panel"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:visibility="gone">
+
+                        <!-- Pickup Swipe Button -->
+                        <FrameLayout
+                            android:id="@+id/layout_swipe_pickup"
+                            android:layout_width="match_parent"
+                            android:layout_height="72dp"
+                            android:background="#F0121212"
+                            android:visibility="gone">
+
+                            <!-- Track Background -->
+                            <FrameLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="56dp"
+                                android:layout_gravity="center"
+                                android:layout_marginHorizontal="16dp"
+                                android:background="@drawable/bg_pill_primary"
+                                android:backgroundTint="#2BFF6B00"
+                                android:paddingEnd="16dp">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_gravity="center"
+                                    android:text="Swipe to Confirm Pickup →"
+                                    android:textColor="#CCFF6B00"
+                                    android:textSize="14sp"
+                                    android:textStyle="bold" />
+                            </FrameLayout>
+
+                            <!-- Draggable Thumb -->
+                            <com.google.android.material.card.MaterialCardView
+                                android:id="@+id/view_pickup_thumb"
+                                android:layout_width="56dp"
+                                android:layout_height="56dp"
+                                android:layout_gravity="center_vertical|start"
+                                android:layout_marginStart="18dp"
+                                app:cardCornerRadius="16dp"
+                                app:cardElevation="8dp"
+                                app:strokeWidth="0dp"
+                                app:cardBackgroundColor="#FF6B00">
+
+                                <ImageView
+                                    android:layout_width="28dp"
+                                    android:layout_height="28dp"
+                                    android:layout_gravity="center"
+                                    android:src="@drawable/ic_restaurant_pin"
+                                    app:tint="@color/white"
+                                    android:contentDescription="Pickup" />
+                            </com.google.android.material.card.MaterialCardView>
+                        </FrameLayout>
+
+                        <!-- Deliver Swipe Button -->
+                        <FrameLayout
+                            android:id="@+id/layout_swipe_deliver"
+                            android:layout_width="match_parent"
+                            android:layout_height="72dp"
+                            android:background="#F0121212"
+                            android:visibility="gone">
+
+                            <!-- Track Background -->
+                            <FrameLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="56dp"
+                                android:layout_gravity="center"
+                                android:layout_marginHorizontal="16dp"
+                                android:background="@drawable/bg_pill_primary"
+                                android:backgroundTint="#2B00C853"
+                                android:paddingEnd="16dp">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_gravity="center"
+                                    android:text="Swipe to Deliver →"
+                                    android:textColor="#CC00C853"
+                                    android:textSize="14sp"
+                                    android:textStyle="bold" />
+                            </FrameLayout>
+
+                            <!-- Draggable Thumb -->
+                            <com.google.android.material.card.MaterialCardView
+                                android:id="@+id/view_deliver_thumb"
+                                android:layout_width="56dp"
+                                android:layout_height="56dp"
+                                android:layout_gravity="center_vertical|start"
+                                android:layout_marginStart="18dp"
+                                app:cardCornerRadius="16dp"
+                                app:cardElevation="8dp"
+                                app:strokeWidth="0dp"
+                                app:cardBackgroundColor="#00C853">
+
+                                <ImageView
+                                    android:layout_width="28dp"
+                                    android:layout_height="28dp"
+                                    android:layout_gravity="center"
+                                    android:src="@drawable/ic_check_circle_filled"
+                                    app:tint="@color/white"
+                                    android:contentDescription="Deliver" />
+                            </com.google.android.material.card.MaterialCardView>
+                        </FrameLayout>
+
+                    </LinearLayout>
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -523,97 +741,77 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- KYC Verification Banner -->
+            <!-- KYC Identity Verification Banner (Optional - Orders NOT blocked) -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/card_kyc_warning"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
                 android:visibility="gone"
-                app:cardCornerRadius="16dp"
+                app:cardCornerRadius="18dp"
                 app:cardElevation="0dp"
-                app:strokeColor="@color/warning"
+                app:strokeColor="@color/card_border"
                 app:strokeWidth="1dp"
-                app:cardBackgroundColor="@color/warning_light">
+                app:cardBackgroundColor="@color/surface">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="16dp">
+                    android:orientation="horizontal"
+                    android:padding="16dp"
+                    android:gravity="top">
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Action Required: Complete V-KYC"
-                        android:textColor="@color/warning"
-                        android:textSize="15sp"
-                        android:textStyle="bold" />
+                    <FrameLayout
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:background="@drawable/bg_icon_circle_orange"
+                        android:padding="9dp">
 
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="6dp"
-                        android:text="You must complete Video KYC to activate your account and start receiving orders."
-                        android:textColor="@color/text_secondary"
-                        android:textSize="13sp" />
+                        <ImageView
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:src="@drawable/ic_shield_check"
+                            app:tint="@color/primary"
+                            android:contentDescription="Identity Verification" />
+                    </FrameLayout>
 
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btn_book_vkyc"
-                        android:layout_width="wrap_content"
+                    <LinearLayout
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
-                        android:text="Book V-KYC Slot"
-                        app:backgroundTint="@color/warning"
-                        android:textColor="@color/white"
-                        app:cornerRadius="8dp" />
+                        android:layout_weight="1"
+                        android:layout_marginStart="14dp"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Identity Verification (V-KYC)"
+                            android:textColor="@color/text_primary"
+                            android:textSize="14.5sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="3dp"
+                            android:text="Complete Video KYC anytime for your verified identity badge. You can go online and deliver orders immediately!"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="12.5sp"
+                            android:lineSpacingExtra="2dp" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btn_book_vkyc"
+                            android:layout_width="wrap_content"
+                            android:layout_height="38dp"
+                            android:layout_marginTop="10dp"
+                            android:text="Verify Identity (V-KYC)"
+                            android:textSize="12sp"
+                            app:backgroundTint="@color/primary"
+                            android:textColor="@color/white"
+                            app:cornerRadius="10dp" />
+                    </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
-
-            <!-- Active Deliveries Section -->
-            <LinearLayout
-                android:id="@+id/layout_active_section"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:layout_marginTop="22dp"
-                android:visibility="gone">
-
-                <RelativeLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="12dp">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Active Deliveries"
-                        android:textColor="@color/text_primary"
-                        android:textSize="16.5sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:id="@+id/tv_active_count"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_alignParentEnd="true"
-                        android:layout_centerVertical="true"
-                        android:background="@drawable/bg_pill_primary"
-                        android:backgroundTint="@color/primary"
-                        android:paddingHorizontal="11dp"
-                        android:paddingVertical="4dp"
-                        android:text="1 active"
-                        android:textColor="@color/on_primary"
-                        android:textSize="11.5sp"
-                        android:textStyle="bold" />
-                </RelativeLayout>
-
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/rv_active_orders"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:nestedScrollingEnabled="false" />
-            </LinearLayout>
 
             <!-- Available Orders Section -->
             <RelativeLayout

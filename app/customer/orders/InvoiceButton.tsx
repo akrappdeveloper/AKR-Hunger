@@ -20,6 +20,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Dialog, DialogContent, DialogTitle, DialogHeader } from '@/components/ui/dialog';
 import { calculateInvoice, InvoiceCalculatedBreakdown } from '@/lib/invoice-calculator';
+import { getItemCustomizations, formatSelectedOptionPrice } from '@/lib/customization-utils';
 import { generateInvoiceQRDataURL } from '@/lib/qr-generator';
 import { toast } from 'sonner';
 import { copyToClipboard } from '@/lib/utils';
@@ -578,17 +579,33 @@ function generateEnterpriseInvoiceHTML(
       ? order.items
         .map((item, i) => {
           const itemTotal = (item.price * item.quantity).toFixed(2);
-          const customizations =
+          const { basePrice, extrasTotal, badges } = getItemCustomizations(item);
+          const legacyCustomizations =
             (item as any).customizations || (item as any).addons || [];
-          const custNotes =
-            Array.isArray(customizations) && customizations.length > 0
-              ? customizations
+          const legacyNotes =
+            Array.isArray(legacyCustomizations) && legacyCustomizations.length > 0
+              ? legacyCustomizations
                 .map((c: any) =>
                   typeof c === 'string' ? c : c.name || c.title || ''
                 )
                 .filter(Boolean)
                 .join(' • ')
               : '';
+          const structuredHtml = badges
+            .map((b) => {
+              if (b.kind === 'spice') {
+                return `<span style="display: inline-block; font-size: 9px; font-weight: 600; color: #c2410c; background: #fff7ed; border: 1px solid #fed7aa; padding: 1px 5px; border-radius: 4px; margin-right: 4px; margin-top: 2px;">Spice: ${b.label.replace(/^Spice:\s*/, '')}</span>`;
+              }
+              if (b.kind === 'size') {
+                return `<span style="display: inline-block; font-size: 9px; font-weight: 600; color: #1d4ed8; background: #eff6ff; border: 1px solid #bfdbfe; padding: 1px 5px; border-radius: 4px; margin-right: 4px; margin-top: 2px;">${b.label} (${formatSelectedOptionPrice(b.price)})</span>`;
+              }
+              if (b.kind === 'addon') {
+                const pStr = Number(b.price || 0) > 0 ? `+₹${Number(b.price)}` : 'Free';
+                return `<span style="display: inline-block; font-size: 9px; font-weight: 600; color: #ea580c; background: #fff7ed; border: 1px solid #fdba74; padding: 1px 5px; border-radius: 4px; margin-right: 4px; margin-top: 2px;">+ ${b.label} (${pStr})</span>`;
+              }
+              return `<div style="font-size: 9.5px; color: #71717a; font-style: italic; margin-top: 2px;">Note: ${b.label}</div>`;
+            })
+            .join('');
 
           return `
                         <tr style="border-bottom: 1px solid #f4f4f5; background: ${i % 2 === 0 ? '#ffffff' : '#fcfcfd'
@@ -598,14 +615,15 @@ function generateEnterpriseInvoiceHTML(
                           <td style="padding: 11px 14px;">
                             <div style="font-size: 12px; font-weight: 700; color: #09090b;">${item.name
             }</div>
-                            ${custNotes
-              ? `<div style="font-size: 9.5px; color: #64748b; margin-top: 1px;">+ ${custNotes}</div>`
+                            ${extrasTotal > 0
+              ? `<div style="font-size: 9.5px; color: #52525b; margin-top: 1px;">Base Price: ₹${basePrice.toFixed(basePrice % 1 === 0 ? 0 : 2)}</div>`
               : ''
             }
-                            ${item.specialInstructions
-              ? `<div style="font-size: 9.5px; color: #71717a; font-style: italic; margin-top: 1px;">Note: ${item.specialInstructions}</div>`
+                            ${legacyNotes
+              ? `<div style="font-size: 9.5px; color: #64748b; margin-top: 1px;">+ ${legacyNotes}</div>`
               : ''
             }
+                            ${structuredHtml ? `<div style="margin-top: 2px;">${structuredHtml}</div>` : ''}
                           </td>
                           <td style="padding: 11px 12px; font-size: 10px; font-family: monospace; color: #71717a; text-align: center;">996331</td>
                           <td style="padding: 11px 12px; text-align: center;">
@@ -673,6 +691,30 @@ function generateEnterpriseInvoiceHTML(
         <!-- Right: Unbundled Charges & Authoritative Tax Breakdown -->
         <div style="flex: 1; max-width: 320px; background: #fafafa; border: 1px solid #f4f4f5; border-radius: 12px; padding: 14px 16px;">
           
+          ${inv.customizationExtrasTotal > 0
+      ? `
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+            <span style="font-size: 10.5px; color: #71717a;">Base Dishes Price</span>
+            <span style="font-size: 10.5px; font-weight: 600; color: #3f3f46;">₹${inv.baseItemsSubtotal.toFixed(2)}</span>
+          </div>
+          ${inv.sizeExtrasTotal > 0
+        ? `<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+            <span style="font-size: 10.5px; color: #1d4ed8;">Size Upgrades</span>
+            <span style="font-size: 10.5px; font-weight: 600; color: #1d4ed8;">+₹${inv.sizeExtrasTotal.toFixed(2)}</span>
+          </div>`
+        : ''
+      }
+          ${inv.addOnsExtrasTotal > 0
+        ? `<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+            <span style="font-size: 10.5px; color: #ea580c;">Add-ons &amp; Extras</span>
+            <span style="font-size: 10.5px; font-weight: 600; color: #ea580c;">+₹${inv.addOnsExtrasTotal.toFixed(2)}</span>
+          </div>`
+        : ''
+      }
+          `
+      : ''
+    }
+
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
             <span style="font-size: 11px; color: #71717a;">Item Subtotal</span>
             <span style="font-size: 11px; font-weight: 700; color: #09090b;">₹${inv.itemSubtotal.toFixed(2)}</span>

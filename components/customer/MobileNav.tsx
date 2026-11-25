@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Search, ShoppingCart, User, Package, Wallet, Sparkles } from 'lucide-react';
+import { Home, Search, ShoppingCart, User, Package, Video } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 
 export default function MobileNav() {
@@ -16,9 +16,9 @@ export default function MobileNav() {
     const links = [
         { href: '/customer', icon: Home, label: 'Home' },
         { href: '/customer/search', icon: Search, label: 'Search' },
+        { href: '/customer/stories', icon: Video, label: 'Reels' },
         { href: '/customer/cart', icon: ShoppingCart, label: 'Cart', badge: itemCount },
         { href: '/customer/orders', icon: Package, label: 'Orders' },
-        { href: '/customer/more', icon: Sparkles, label: 'More' },
         { href: '/customer/profile', icon: User, label: 'Me' },
     ];
 

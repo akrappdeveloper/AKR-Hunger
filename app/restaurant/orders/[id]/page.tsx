@@ -17,13 +17,17 @@ import {
   addDoc
 } from 'firebase/firestore';
 import { Order, formatOrderId } from '@/lib/types';
+import { getDeterministicChatId } from '@/lib/chat-service';
 import InvoiceButton from '@/app/customer/orders/InvoiceButton';
+import {
+  ItemCustomizationBadges,
+  BillCustomizationBreakdownRows,
+} from '@/components/orders/ItemCustomizationBadges';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Spinner } from '@/components/ui/spinner';
 import { toast } from 'sonner';
-import { motion } from 'framer-motion';
 import {
   ArrowLeft,
   Clock,
@@ -40,12 +44,12 @@ import {
   DollarSign,
   Radio,
   Ban,
-  RotateCcw,
   Bike,
-  Sparkles,
-  ExternalLink,
   ShieldCheck,
-  Utensils
+  Utensils,
+  MessageSquare,
+  Mail,
+  KeyRound,
 } from 'lucide-react';
 import {
   Dialog,
@@ -135,80 +139,150 @@ export default function RestaurantOrderDetailPage() {
     return () => unsub();
   }, [order?.deliveryPersonId, order?.driverId]);
 
-  // Subscribe to Order Document in Real-Time
+  // Subscribe to Order Document in Real-Time (supports docId, orderId, orderNumber, #orderNumber, and restaurant fallback)
   useEffect(() => {
-    if (!rawId) return;
+    if (!rawId || authLoading) return;
 
+    let isMounted = true;
     let unsubscribeDoc: (() => void) | null = null;
+    const decodedRaw = decodeURIComponent(rawId).trim();
+    const normalizedUpper = decodedRaw.replace(/^#/, '').toUpperCase();
+
+    const attachDocListener = (docId: string) => {
+      if (!isMounted) return;
+      setActualDocId(docId);
+      if (unsubscribeDoc) unsubscribeDoc();
+      unsubscribeDoc = onSnapshot(doc(db, 'orders', docId), (subSnap) => {
+        if (!isMounted) return;
+        if (subSnap.exists()) {
+          setOrder({ ...subSnap.data(), id: subSnap.id } as RestaurantOrder);
+        }
+        setLoading(false);
+      });
+    };
 
     const resolveAndListen = async () => {
       try {
         setLoading(true);
 
-        // 1. First attempt: Direct doc reference by rawId
-        const directRef = doc(db, 'orders', rawId);
-        unsubscribeDoc = onSnapshot(directRef, async (snap) => {
-          if (snap.exists()) {
-            setOrder({ ...snap.data(), id: snap.id } as Order);
-            setActualDocId(snap.id);
-            setLoading(false);
-          } else {
-            // 2. Fallback: Query by 'orderId' or 'id' field if rawId was a generated short ID (e.g. SALRAXCT5509)
+        // 1. Direct doc reference by rawId or uppercase normalized ID
+        const directSnap = await onSnapshotPromiseOnce(doc(db, 'orders', decodedRaw));
+        if (directSnap) {
+          attachDocListener(directSnap.id);
+          return;
+        }
+
+        if (normalizedUpper && normalizedUpper !== decodedRaw) {
+          const upperSnap = await onSnapshotPromiseOnce(doc(db, 'orders', normalizedUpper));
+          if (upperSnap) {
+            attachDocListener(upperSnap.id);
+            return;
+          }
+        }
+
+        // 2. Query by orderId, orderNumber, #orderNumber, or id field (requires auth)
+        if (user) {
+          const fieldCandidates: Array<[string, string]> = [
+            ['orderId', decodedRaw],
+            ['orderId', normalizedUpper],
+            ['orderNumber', decodedRaw],
+            ['orderNumber', normalizedUpper],
+            ['orderNumber', `#${normalizedUpper}`],
+            ['id', decodedRaw],
+            ['id', normalizedUpper],
+          ];
+
+          for (const [field, val] of fieldCandidates) {
+            if (!val) continue;
             try {
-              const q1 = query(collection(db, 'orders'), where('orderId', '==', rawId));
-              const snap1 = await getDocs(q1);
-              if (!snap1.empty) {
-                const docFound = snap1.docs[0];
-                setActualDocId(docFound.id);
-                setOrder({ ...docFound.data(), id: docFound.id } as Order);
-                // Listen to this found doc
-                if (unsubscribeDoc) unsubscribeDoc();
-                unsubscribeDoc = onSnapshot(doc(db, 'orders', docFound.id), (subSnap) => {
-                  if (subSnap.exists()) {
-                    setOrder({ ...subSnap.data(), id: subSnap.id } as Order);
-                  }
-                });
-                setLoading(false);
+              const snap = await getDocs(query(collection(db, 'orders'), where(field, '==', val)));
+              if (!snap.empty) {
+                attachDocListener(snap.docs[0].id);
                 return;
               }
-
-              // Also check lowercase or formatted variants
-              const q2 = query(collection(db, 'orders'), where('id', '==', rawId));
-              const snap2 = await getDocs(q2);
-              if (!snap2.empty) {
-                const docFound = snap2.docs[0];
-                setActualDocId(docFound.id);
-                setOrder({ ...docFound.data(), id: docFound.id } as Order);
-                if (unsubscribeDoc) unsubscribeDoc();
-                unsubscribeDoc = onSnapshot(doc(db, 'orders', docFound.id), (subSnap) => {
-                  if (subSnap.exists()) {
-                    setOrder({ ...subSnap.data(), id: subSnap.id } as Order);
-                  }
-                });
-                setLoading(false);
-                return;
-              }
-
-              setOrder(null);
-            } catch (queryErr) {
-              console.error('Order query notice:', queryErr);
-            } finally {
-              setLoading(false);
+            } catch {
+              // continue checking other fields
             }
           }
-        });
+
+          // 3. Fallback: scan restaurant's own orders for suffix or formatted ID match
+          const restIds = Array.from(
+            new Set([restaurant?.id, user.restaurantId, user.uid].filter(Boolean))
+          ) as string[];
+
+          for (const rId of restIds) {
+            try {
+              const restSnap = await getDocs(
+                query(collection(db, 'orders'), where('restaurantId', '==', rId))
+              );
+              const matched = restSnap.docs.find((d) => {
+                const data = d.data();
+                const candidates = [
+                  d.id,
+                  data.orderId,
+                  data.orderNumber,
+                  data.id,
+                  formatOrderId(d.id),
+                  formatOrderId(data.orderId),
+                  formatOrderId(data.orderNumber),
+                ]
+                  .filter(Boolean)
+                  .map((v: any) => String(v).replace(/^#/, '').toUpperCase());
+
+                return candidates.some(
+                  (c) => c === normalizedUpper || c.endsWith(normalizedUpper)
+                );
+              });
+
+              if (matched) {
+                attachDocListener(matched.id);
+                return;
+              }
+            } catch {
+              // continue
+            }
+          }
+        }
+
+        if (isMounted) {
+          setOrder(null);
+          setLoading(false);
+        }
       } catch (err) {
         console.error('Error fetching order:', err);
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     };
+
+    const onSnapshotPromiseOnce = (docRef: any): Promise<{ id: string } | null> =>
+      new Promise((resolve) => {
+        let settled = false;
+        const unsub = onSnapshot(
+          docRef,
+          (snap: any) => {
+            if (!settled) {
+              settled = true;
+              unsub();
+              resolve(snap.exists() ? { id: snap.id } : null);
+            }
+          },
+          () => {
+            if (!settled) {
+              settled = true;
+              unsub();
+              resolve(null);
+            }
+          }
+        );
+      });
 
     resolveAndListen();
 
     return () => {
+      isMounted = false;
       if (unsubscribeDoc) unsubscribeDoc();
     };
-  }, [rawId]);
+  }, [rawId, authLoading, user?.uid, user?.restaurantId, restaurant?.id]);
 
   // Update Status Handler
   const handleUpdateStatus = async (newStatus: OrderStatus) => {
@@ -258,7 +332,7 @@ export default function RestaurantOrderDetailPage() {
       await addDoc(collection(db, 'orderCancellations'), {
         orderId: actualDocId,
         userId: order.customerId || '',
-        restaurantId: user.uid,
+        restaurantId: restaurant?.id || user.restaurantId || user.uid,
         cancelledBy: 'RESTAURANT',
         reason: finalReason,
         cancelledAt: serverTimestamp(),
@@ -284,9 +358,14 @@ export default function RestaurantOrderDetailPage() {
     setBroadcastOpen(true);
     setLoadingDrivers(true);
     try {
-      const qDrivers = query(collection(db, 'deliveryPartners'), where('isActive', '==', true));
-      const snap = await getDocs(qDrivers);
-      const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      const snap = await getDocs(collection(db, 'deliveryPersons'));
+      let list = snap.docs
+        .map((d) => ({ id: d.id, ...d.data() }))
+        .filter((d: any) => d.status !== 'offline');
+      if (list.length === 0) {
+        const snapFallback = await getDocs(query(collection(db, 'deliveryPartners'), where('isActive', '==', true)));
+        list = snapFallback.docs.map((d) => ({ id: d.id, ...d.data() }));
+      }
       setAvailableDrivers(list);
       setSelectedDriverIds(list.map((d) => d.id));
     } catch (e) {
@@ -300,23 +379,50 @@ export default function RestaurantOrderDetailPage() {
     if (!order || !actualDocId) return;
     setIsBroadcasting(true);
     try {
-      // Create broadcast notification / request
+      // 1. Update order status to ready and mark broadcastVerified in Firestore
+      await updateDoc(doc(db, 'orders', actualDocId), {
+        status: 'ready',
+        targetDeliveryIds: selectedDriverIds,
+        broadcastVerified: true,
+        broadcastAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+
+      setOrder((prev) => prev ? {
+        ...prev,
+        status: 'ready',
+        targetDeliveryIds: selectedDriverIds,
+        broadcastVerified: true,
+      } : null);
+
+      // 2. Create in-app broadcast notifications for target drivers
       for (const dId of selectedDriverIds) {
-        await addDoc(collection(db, 'notifications'), {
+        addDoc(collection(db, 'notifications'), {
           userId: dId,
           userType: 'delivery',
-          type: 'order_request',
+          type: 'delivery_request',
           title: 'New Delivery Order Available! 🛵',
-          message: `Order #${formatOrderId(order.orderId || actualDocId)} ready at ${
+          message: `Order #${formatOrderId(order.orderId || actualDocId)} is ready for pickup at ${
             order.restaurantName || restaurant?.name || 'Restaurant'
-          }`,
+          }! Tap to accept.`,
           orderId: actualDocId,
           isRead: false,
-          createdAt: new Date().toISOString(),
+          createdAt: serverTimestamp(),
           actionUrl: `/delivery/available`,
-        });
+        }).catch(() => {});
       }
-      toast.success(`Broadcast sent to ${selectedDriverIds.length} delivery partners!`);
+
+      // 3. Trigger FCM Push Notifications
+      fetch('/api/notifications/delivery-request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderId: actualDocId,
+          partnerIds: selectedDriverIds,
+        }),
+      }).catch((err) => console.error('Failed to trigger delivery notification:', err));
+
+      toast.success(`Broadcast sent to ${selectedDriverIds.length} delivery partners! 🛵`);
       setBroadcastOpen(false);
     } catch (e: any) {
       toast.error('Broadcast failed: ' + e?.message);
@@ -422,8 +528,32 @@ export default function RestaurantOrderDetailPage() {
             </div>
           </div>
 
-          {/* Quick Action Print & Tracking Buttons */}
-          <div className="flex items-center gap-2 self-start sm:self-auto print:hidden">
+          {/* Quick Action Print, Chat & Tracking Buttons */}
+          <div className="flex items-center gap-2 flex-wrap self-start sm:self-auto print:hidden">
+            <Button
+              asChild
+              variant="outline"
+              size="sm"
+              className="h-9 px-3 rounded-xl border-border text-xs font-bold gap-1.5"
+            >
+              <Link href={`/restaurant/chat/${getDeterministicChatId(actualDocId, 'customer_restaurant')}`}>
+                <MessageSquare className="w-3.5 h-3.5 text-primary" />
+                <span>Customer Chat</span>
+              </Link>
+            </Button>
+            {(order.deliveryPersonId || order.driverId) && (
+              <Button
+                asChild
+                variant="outline"
+                size="sm"
+                className="h-9 px-3 rounded-xl border-border text-xs font-bold gap-1.5"
+              >
+                <Link href={`/restaurant/chat/${getDeterministicChatId(actualDocId, 'restaurant_delivery')}`}>
+                  <MessageSquare className="w-3.5 h-3.5 text-blue-500" />
+                  <span>Rider Chat</span>
+                </Link>
+              </Button>
+            )}
             <Button
               variant="outline"
               size="sm"
@@ -746,21 +876,29 @@ export default function RestaurantOrderDetailPage() {
                   const itemPrice = Number(item.price || item.unitPrice || 0);
                   const qty = Number(item.quantity || 1);
                   const itemTotal = itemPrice * qty;
+                  const note = item.specialInstructions || item.instructions;
 
                   return (
                     <div key={idx} className="py-3.5 flex items-start justify-between gap-3">
                       <div className="flex items-start gap-3 min-w-0">
+                        {item.image && (
+                          <img
+                            src={item.image}
+                            alt={item.name || 'Dish'}
+                            className="w-12 h-12 rounded-xl object-cover border border-border shrink-0"
+                          />
+                        )}
                         {/* Veg / Non-Veg Indicator */}
                         <div
                           className={`w-4 h-4 mt-0.5 rounded-sm border flex items-center justify-center shrink-0 ${
-                            item.isVeg !== false
+                            item.isVeg !== false && item.vegetarian !== false
                               ? 'border-emerald-600'
                               : 'border-red-600'
                           }`}
                         >
                           <div
                             className={`w-2 h-2 rounded-full ${
-                              item.isVeg !== false ? 'bg-emerald-600' : 'bg-red-600'
+                              item.isVeg !== false && item.vegetarian !== false ? 'bg-emerald-600' : 'bg-red-600'
                             }`}
                           />
                         </div>
@@ -776,12 +914,8 @@ export default function RestaurantOrderDetailPage() {
                                 : Object.values(item.customizations).join(', ')}
                             </p>
                           )}
-                          {item.instructions && (
-                            <p className="text-[11px] text-amber-600 dark:text-amber-400 mt-0.5 font-medium">
-                              Note: {item.instructions}
-                            </p>
-                          )}
-                          <span className="text-xs text-muted-foreground font-mono">
+                          <ItemCustomizationBadges item={item} compact />
+                          <span className="text-xs text-muted-foreground font-mono block mt-0.5">
                             ₹{itemPrice} × {qty}
                           </span>
                         </div>
@@ -798,12 +932,12 @@ export default function RestaurantOrderDetailPage() {
               </div>
 
               {/* Special Cooking Note if Any */}
-              {order.instructions && (
+              {(order.specialInstructions || order.instructions) && (
                 <div className="mt-4 p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-xs">
                   <span className="font-bold text-amber-600 dark:text-amber-400 block mb-0.5">
                     Chef Cooking Instructions:
                   </span>
-                  <p className="text-foreground">{order.instructions}</p>
+                  <p className="text-foreground">{order.specialInstructions || order.instructions}</p>
                 </div>
               )}
             </Card>
@@ -815,38 +949,71 @@ export default function RestaurantOrderDetailPage() {
               </h3>
 
               <div className="space-y-2.5 text-sm">
+                <BillCustomizationBreakdownRows items={items} monoValues />
+
                 <div className="flex justify-between text-muted-foreground">
                   <span>Items Subtotal</span>
                   <span className="font-mono text-foreground">
-                    ₹{(order.subtotal || order.total || 0).toFixed(2)}
+                    ₹{(order.subtotal ?? order.total ?? 0).toFixed(2)}
                   </span>
                 </div>
 
-                {Boolean(order.tax) && (
+                {Boolean(order.taxes || order.tax) && (
                   <div className="flex justify-between text-muted-foreground">
-                    <span>GST & Restaurant Taxes</span>
-                    <span className="font-mono text-foreground">₹{Number(order.tax).toFixed(2)}</span>
+                    <span>
+                      GST & Restaurant Taxes
+                      {order.cgst || order.sgst
+                        ? ` (CGST ₹${Number(order.cgst || 0).toFixed(2)} + SGST ₹${Number(order.sgst || 0).toFixed(2)})`
+                        : ''}
+                    </span>
+                    <span className="font-mono text-foreground">
+                      ₹{Number(order.taxes || order.tax).toFixed(2)}
+                    </span>
                   </div>
                 )}
 
-                {Boolean(order.deliveryFee) && (
+                {Boolean(order.deliveryCharge || order.deliveryFee) && (
                   <div className="flex justify-between text-muted-foreground">
                     <span>Delivery Charge</span>
-                    <span className="font-mono text-foreground">₹{Number(order.deliveryFee).toFixed(2)}</span>
+                    <span className="font-mono text-foreground">
+                      ₹{Number(order.deliveryCharge || order.deliveryFee).toFixed(2)}
+                    </span>
                   </div>
                 )}
 
-                {Boolean(order.packagingFee) && (
+                {Boolean(order.packagingCharges || order.packagingFee) && (
                   <div className="flex justify-between text-muted-foreground">
                     <span>Packaging & Container Fee</span>
-                    <span className="font-mono text-foreground">₹{Number(order.packagingFee).toFixed(2)}</span>
+                    <span className="font-mono text-foreground">
+                      ₹{Number(order.packagingCharges || order.packagingFee).toFixed(2)}
+                    </span>
                   </div>
                 )}
 
-                {Boolean(order.discount) && (
+                {Boolean(order.platformFee) && (
+                  <div className="flex justify-between text-muted-foreground">
+                    <span>Platform Fee</span>
+                    <span className="font-mono text-foreground">
+                      ₹{Number(order.platformFee).toFixed(2)}
+                    </span>
+                  </div>
+                )}
+
+                {Boolean(order.tipAmount || order.tip) && (
+                  <div className="flex justify-between text-muted-foreground">
+                    <span>Rider Tip</span>
+                    <span className="font-mono text-foreground">
+                      ₹{Number(order.tipAmount || order.tip).toFixed(2)}
+                    </span>
+                  </div>
+                )}
+
+                {Boolean(order.discountAmount || order.discount) && (
                   <div className="flex justify-between text-emerald-600 dark:text-emerald-400 font-medium">
                     <span>Discounts / Promo Code</span>
-                    <span className="font-mono">-₹{Number(order.discount).toFixed(2)}</span>
+                    <span className="font-mono">
+                      -₹{Number(order.discountAmount || order.discount).toFixed(2)}
+                    </span>
                   </div>
                 )}
 
@@ -856,6 +1023,13 @@ export default function RestaurantOrderDetailPage() {
                     ₹{(order.total || 0).toFixed(2)}
                   </span>
                 </div>
+
+                {(order.amountPaid !== undefined || order.balanceDue !== undefined) && (
+                  <div className="pt-2 flex justify-between text-xs text-muted-foreground">
+                    <span>Paid: <strong className="font-mono text-foreground">₹{Number(order.amountPaid || 0).toFixed(2)}</strong></span>
+                    <span>Balance Due: <strong className="font-mono text-foreground">₹{Number(order.balanceDue || 0).toFixed(2)}</strong></span>
+                  </div>
+                )}
               </div>
 
               {/* Payment Status Pill */}
@@ -903,6 +1077,11 @@ export default function RestaurantOrderDetailPage() {
                   <p className="font-bold text-sm text-foreground mt-0.5">
                     {order.customerName || order.userName || 'Diner Customer'}
                   </p>
+                  {order.customerEmail && (
+                    <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                      <Mail className="w-3 h-3" /> {order.customerEmail}
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -911,7 +1090,7 @@ export default function RestaurantOrderDetailPage() {
                   </label>
                   <div className="flex items-center justify-between mt-1 p-2.5 rounded-xl bg-muted/30 border border-border/50">
                     <span className="text-sm font-mono font-semibold text-foreground">
-                      {order.customerPhone || (order as any).userPhone || (order as any).phone || 'Customer Phone'}
+                      {order.customerPhone || (order as any).userPhone || (order as any).phone || 'Not provided'}
                     </span>
                     {(order.customerPhone || (order as any).userPhone || (order as any).phone) && (
                       <Button
@@ -937,12 +1116,34 @@ export default function RestaurantOrderDetailPage() {
                     <p className="text-xs text-foreground leading-relaxed">
                       {typeof order.deliveryAddress === 'string'
                         ? order.deliveryAddress
-                        : (order.deliveryAddress as any)?.formattedAddress ||
-                          (order.deliveryAddress as any)?.street ||
+                        : (order.deliveryAddress as any)?.fullAddress ||
+                          (order.deliveryAddress as any)?.formattedAddress ||
+                          [
+                            (order.deliveryAddress as any)?.flatNo,
+                            (order.deliveryAddress as any)?.street,
+                            (order.deliveryAddress as any)?.landmark,
+                            (order.deliveryAddress as any)?.city,
+                            (order.deliveryAddress as any)?.state,
+                            (order.deliveryAddress as any)?.pincode,
+                          ]
+                            .filter(Boolean)
+                            .join(', ') ||
                           (typeof order.address === 'string' ? order.address : 'Address not specified')}
                     </p>
                   </div>
                 </div>
+
+                {(order.deliveryOtp || order.returnOtp) && !isDelivered && !isCancelled && (
+                  <div className="p-3 rounded-xl bg-primary/10 border border-primary/25 flex items-center justify-between">
+                    <span className="text-xs font-bold text-primary flex items-center gap-1.5">
+                      <KeyRound className="w-3.5 h-3.5" />
+                      {order.returnOtp ? 'Return Handover OTP' : 'Customer Delivery OTP'}
+                    </span>
+                    <span className="font-mono font-black text-sm tracking-widest text-primary">
+                      {order.returnOtp || order.deliveryOtp}
+                    </span>
+                  </div>
+                )}
 
                 {/* Tax Invoice Download & Print Button (Exact same invoice as Customer Panel) */}
                 <div className="pt-3 border-t border-border/60">

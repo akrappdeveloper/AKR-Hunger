@@ -162,6 +162,27 @@ export function getDeterministicChatId(orderId: string, chatType: ChatType): str
 }
 
 /**
+ * Parses a deterministic chatId (e.g. `chat_jocu9il55TY7KRiIEFDi_customer_delivery`)
+ * back into its orderId and chatType components when available.
+ */
+export function parseDeterministicChatId(chatId: string): {
+  orderId: string;
+  chatType?: ChatType;
+} {
+  if (!chatId) return { orderId: '' };
+  const match = chatId.match(
+    /^chat_(.+)_(customer_restaurant|customer_delivery|restaurant_delivery|support)$/
+  );
+  if (match) {
+    return {
+      orderId: match[1],
+      chatType: match[2] as ChatType,
+    };
+  }
+  return { orderId: '' };
+}
+
+/**
  * Returns human-readable label for a chat type
  */
 export function getChatTypeLabel(chatType: ChatType): string {
@@ -479,27 +500,37 @@ export async function markChatAsRead(chatId: string, currentUserId: string): Pro
   if (!realtimeDb || !chatId || !currentUserId) return;
 
   const now = Date.now();
-  const updates: Record<string, any> = {
+  const baseUpdates: Record<string, any> = {
     [`userChats/${currentUserId}/${chatId}/unreadCount`]: 0,
     [`chats/${chatId}/participants/${currentUserId}/lastReadAt`]: now,
   };
 
   try {
-    // Optionally update last messages to READ status
+    await update(ref(realtimeDb), sanitizeForRtdb(baseUpdates));
+  } catch (err) {
+    console.warn('[ChatService] Error updating read receipt summary:', err);
+  }
+
+  // Update individual message READ statuses separately so RTDB rules on other senders'
+  // messages never block clearing unreadCount above.
+  try {
     const messagesQuery = query(ref(realtimeDb, `chats/${chatId}/messages`), limitToLast(20));
     const snap = await get(messagesQuery);
     if (snap.exists()) {
       const messages = snap.val() as Record<string, ChatMessage>;
+      const msgUpdates: Record<string, any> = {};
       for (const [msgKey, msg] of Object.entries(messages)) {
         if (msg.senderId !== currentUserId && msg.status !== 'READ') {
-          updates[`chats/${chatId}/messages/${msgKey}/status`] = 'READ';
+          msgUpdates[`chats/${chatId}/messages/${msgKey}/status`] = 'READ';
         }
       }
+      if (Object.keys(msgUpdates).length > 0) {
+        await update(ref(realtimeDb), sanitizeForRtdb(msgUpdates));
+      }
     }
-
-    await update(ref(realtimeDb), sanitizeForRtdb(updates));
   } catch (err) {
-    console.warn('[ChatService] Error marking as read:', err);
+    // Expected if RTDB rules restrict modifying another sender's message node
+    console.debug('[ChatService] Skipped message status READ update:', err);
   }
 }
 
@@ -520,10 +551,10 @@ export function setTypingStatus(
       isTyping: true,
       userName: userName || 'User',
       updatedAt: Date.now(),
-    });
-    onDisconnect(typingRef).remove();
+    }).catch(() => {});
+    onDisconnect(typingRef).remove().catch(() => {});
   } else {
-    set(typingRef, null);
+    set(typingRef, null).catch(() => {});
   }
 }
 
@@ -543,14 +574,16 @@ export function registerUserPresence(userId: string, userName: string, role: Use
         lastSeen: Date.now(),
         name: userName || 'User',
         role: role || 'customer',
-      });
+      }).catch(() => {});
 
-      onDisconnect(presenceRef).set({
-        online: false,
-        lastSeen: Date.now(),
-        name: userName || 'User',
-        role: role || 'customer',
-      });
+      onDisconnect(presenceRef)
+        .set({
+          online: false,
+          lastSeen: Date.now(),
+          name: userName || 'User',
+          role: role || 'customer',
+        })
+        .catch(() => {});
     }
   });
 
@@ -561,7 +594,7 @@ export function registerUserPresence(userId: string, userName: string, role: Use
       lastSeen: Date.now(),
       name: userName || 'User',
       role: role || 'customer',
-    });
+    }).catch(() => {});
   };
 }
 

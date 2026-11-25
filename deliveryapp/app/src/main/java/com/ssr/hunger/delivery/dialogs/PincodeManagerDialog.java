@@ -108,8 +108,11 @@ public class PincodeManagerDialog extends Dialog {
                     if (partner != null) {
                         currentPincodes = partner.getServicePincodes();
                         if (currentPincodes == null) currentPincodes = new ArrayList<>();
+                        if (currentPincodes.isEmpty() && partner.getPincode() != null && partner.getPincode().trim().matches("\\d{6}")) {
+                            currentPincodes.add(partner.getPincode().trim());
+                        }
                         
-                        filterActive = partner.isPincodeFilterActive();
+                        filterActive = partner.isPincodeFilterActive() || !currentPincodes.isEmpty();
                         
                         switchFilter.setOnCheckedChangeListener(null);
                         switchFilter.setChecked(filterActive);

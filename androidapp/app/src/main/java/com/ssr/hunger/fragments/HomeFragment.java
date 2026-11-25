@@ -18,6 +18,15 @@ import com.ssr.hunger.activities.NotificationsActivity;
 import com.ssr.hunger.activities.ProductDetailActivity;
 import com.ssr.hunger.activities.RestaurantDetailActivity;
 import com.ssr.hunger.activities.SearchActivity;
+import com.ssr.hunger.activities.StoriesActivity;
+import com.ssr.hunger.activities.CuisineExplorerActivity;
+import com.ssr.hunger.activities.RouletteActivity;
+import com.ssr.hunger.activities.MoodFoodActivity;
+import com.ssr.hunger.activities.DietPlannerActivity;
+import com.ssr.hunger.activities.ReorderActivity;
+import com.ssr.hunger.activities.LeaderboardActivity;
+import com.ssr.hunger.activities.SecretMenuActivity;
+import com.ssr.hunger.activities.MysteryBoxActivity;
 import com.ssr.hunger.adapters.CategoryAdapter;
 import com.ssr.hunger.adapters.FeaturedRestaurantAdapter;
 import com.ssr.hunger.adapters.MenuItemAdapter;
@@ -289,6 +298,22 @@ public class HomeFragment extends Fragment {
                 filterItems();
             });
         }
+
+        // Discovery & Interactive Pills
+        safeClick(rootView, R.id.pill_stories, () -> startActivity(new Intent(getContext(), StoriesActivity.class)));
+        safeClick(rootView, R.id.pill_cuisines, () -> startActivity(new Intent(getContext(), CuisineExplorerActivity.class)));
+        safeClick(rootView, R.id.pill_roulette, () -> startActivity(new Intent(getContext(), RouletteActivity.class)));
+        safeClick(rootView, R.id.pill_mood, () -> startActivity(new Intent(getContext(), MoodFoodActivity.class)));
+        safeClick(rootView, R.id.pill_diet, () -> startActivity(new Intent(getContext(), DietPlannerActivity.class)));
+        safeClick(rootView, R.id.pill_reorder, () -> startActivity(new Intent(getContext(), ReorderActivity.class)));
+        safeClick(rootView, R.id.pill_leaderboard, () -> startActivity(new Intent(getContext(), LeaderboardActivity.class)));
+        safeClick(rootView, R.id.pill_secret_menu, () -> startActivity(new Intent(getContext(), SecretMenuActivity.class)));
+        safeClick(rootView, R.id.pill_mystery_box, () -> startActivity(new Intent(getContext(), MysteryBoxActivity.class)));
+    }
+
+    private void safeClick(View root, int viewId, Runnable action) {
+        View v = root.findViewById(viewId);
+        if (v != null) v.setOnClickListener(x -> action.run());
     }
 
     private void loadData() {

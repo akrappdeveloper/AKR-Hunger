@@ -5,8 +5,15 @@ export async function POST(request: Request) {
     try {
         const { orderId, partnerIds } = await request.json();
 
-        if (!orderId || !partnerIds || !Array.isArray(partnerIds) || partnerIds.length === 0) {
-            return NextResponse.json({ error: 'Order ID and partner IDs array are required' }, { status: 400 });
+        let targetPartnerIds = partnerIds;
+        if (!targetPartnerIds || !Array.isArray(targetPartnerIds) || targetPartnerIds.length === 0) {
+            // Broadcast to all delivery persons if no specific partners specified
+            const allDriversSnap = await admin.firestore().collection('deliveryPersons').get();
+            targetPartnerIds = allDriversSnap.docs.map(d => d.id);
+        }
+
+        if (!orderId) {
+            return NextResponse.json({ error: 'Order ID is required' }, { status: 400 });
         }
 
         if (!admin || !messaging) {
@@ -15,24 +22,13 @@ export async function POST(request: Request) {
 
         const tokens: string[] = [];
 
-        // Fetch tokens for all partners
-        // Optimization: Could use Promise.all but handle failures
-        for (const partnerId of partnerIds) {
+        // Fetch tokens for all target partners
+        for (const partnerId of targetPartnerIds) {
             const docSnap = await admin.firestore().collection('deliveryPersons').doc(partnerId).get();
-            // Fallback to checking users collection if deliveryPersons don't store token directly (depending on auth structure)
-            // Usually delivered partners are in 'deliveryPersons' collection? Or 'users'?
-            // Let's assume 'deliveryPersons' or 'users'.
-
-            // Detailed check:
-            // If delivery persons login via same mechanism, maybe they are in 'users' or 'deliveryPersons'.
-            // Assuming they utilize the same useFcmToken hook, it writes to 'users' if user exists, else 'restaurants'.
-            // Delivery partners might be in 'users' or a separate 'deliveryPersons' collection.
-
             let token = docSnap.data()?.fcmToken;
             if (token) {
                 tokens.push(token);
             } else {
-                // Try 'users' collection if not found in deliveryPersons (if IDs are shared UIDs)
                 const userSnap = await admin.firestore().collection('users').doc(partnerId).get();
                 token = userSnap.data()?.fcmToken;
                 if (token) tokens.push(token);
@@ -77,6 +73,8 @@ export async function POST(request: Request) {
             data: {
                 orderId: orderId,
                 type: 'delivery_request',
+                title: notifTitle,
+                body: notifBody,
                 actionUrl: actionUrl,
                 click_action: actionUrl,
             },

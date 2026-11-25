@@ -18,8 +18,10 @@
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             app:navigationIcon="@drawable/ic_back"
-            app:title="Delivery Task"
-            app:titleTextColor="@color/text_primary" />
+            app:title="Live Delivery Task"
+            app:titleTextColor="@color/text_primary"
+            app:subtitle="Follow step-by-step route"
+            app:subtitleTextColor="@color/text_secondary" />
     </com.google.android.material.appbar.AppBarLayout>
 
     <androidx.core.widget.NestedScrollView
@@ -32,13 +34,15 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="16dp">
+            android:paddingHorizontal="16dp"
+            android:paddingTop="16dp"
+            android:paddingBottom="48dp">
 
-            <!-- Order Header Card -->
+            <!-- Order Header Card (Earnings & Status) -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardCornerRadius="18dp"
+                app:cardCornerRadius="20dp"
                 app:cardElevation="2dp"
                 app:strokeColor="@color/card_border"
                 app:strokeWidth="1dp"
@@ -48,7 +52,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="18dp">
+                    android:padding="20dp">
 
                     <RelativeLayout
                         android:layout_width="match_parent"
@@ -60,9 +64,9 @@
                             android:layout_height="wrap_content"
                             android:text="#ORD-8921"
                             android:textColor="@color/text_primary"
-                            android:textSize="18sp"
+                            android:textSize="19sp"
                             android:textStyle="bold"
-                            android:letterSpacing="-0.01" />
+                            android:letterSpacing="-0.02" />
 
                         <TextView
                             android:id="@+id/tv_detail_stage"
@@ -83,31 +87,33 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
-                        android:layout_marginTop="12dp"
+                        android:layout_marginTop="14dp"
                         android:gravity="center_vertical">
 
                         <TextView
                             android:id="@+id/tv_detail_earning"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:background="@drawable/bg_pill_emerald_soft"
+                            android:paddingHorizontal="10dp"
+                            android:paddingVertical="3dp"
                             android:text="Earn: ₹65.00"
                             android:textColor="@color/veg_green"
-                            android:textSize="14.5sp"
+                            android:textSize="13sp"
                             android:textStyle="bold" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text=" • "
-                            android:textColor="@color/text_hint" />
 
                         <TextView
                             android:id="@+id/tv_detail_payment_info"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:layout_marginStart="8dp"
+                            android:background="@drawable/bg_pill_primary"
+                            android:backgroundTint="@color/surface_variant"
+                            android:paddingHorizontal="10dp"
+                            android:paddingVertical="3dp"
                             android:text="Paid Online"
-                            android:textColor="@color/info"
-                            android:textSize="14sp"
+                            android:textColor="@color/text_primary"
+                            android:textSize="13sp"
                             android:textStyle="bold" />
                     </LinearLayout>
                 </LinearLayout>
@@ -118,7 +124,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                app:cardCornerRadius="18dp"
+                app:cardCornerRadius="20dp"
                 app:cardElevation="2dp"
                 app:strokeColor="@color/card_border"
                 app:strokeWidth="1dp"
@@ -128,31 +134,52 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="18dp">
+                    android:padding="20dp">
 
-                    <TextView
-                        android:layout_width="wrap_content"
+                    <LinearLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="1. Pickup Location"
-                        android:textColor="@color/text_primary"
-                        android:textSize="15sp"
-                        android:textStyle="bold" />
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+
+                        <FrameLayout
+                            android:layout_width="34dp"
+                            android:layout_height="34dp"
+                            android:background="@drawable/bg_icon_circle_orange">
+
+                            <ImageView
+                                android:layout_width="16dp"
+                                android:layout_height="16dp"
+                                android:layout_gravity="center"
+                                android:src="@drawable/ic_chef"
+                                app:tint="@color/primary" />
+                        </FrameLayout>
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="10dp"
+                            android:text="Step 1: Restaurant Pickup"
+                            android:textColor="@color/text_primary"
+                            android:textSize="15.5sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
 
                     <TextView
                         android:id="@+id/tv_detail_restaurant_name"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
+                        android:layout_marginTop="10dp"
                         android:text="The Spice Bistro"
                         android:textColor="@color/text_primary"
-                        android:textSize="14.5sp"
+                        android:textSize="15sp"
                         android:textStyle="bold" />
 
                     <TextView
                         android:id="@+id/tv_detail_restaurant_address"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
+                        android:layout_marginTop="3dp"
                         android:text="FC Road, Deccan Gymkhana, Pune - 411004"
                         android:textColor="@color/text_secondary"
                         android:textSize="13sp" />
@@ -162,7 +189,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
-                        android:layout_marginTop="14dp">
+                        android:layout_marginTop="16dp">
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btn_call_pickup"
@@ -213,7 +240,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                app:cardCornerRadius="18dp"
+                app:cardCornerRadius="20dp"
                 app:cardElevation="2dp"
                 app:strokeColor="@color/card_border"
                 app:strokeWidth="1dp"
@@ -223,31 +250,52 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="18dp">
+                    android:padding="20dp">
 
-                    <TextView
-                        android:layout_width="wrap_content"
+                    <LinearLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="2. Delivery Drop Location"
-                        android:textColor="@color/text_primary"
-                        android:textSize="15sp"
-                        android:textStyle="bold" />
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+
+                        <FrameLayout
+                            android:layout_width="34dp"
+                            android:layout_height="34dp"
+                            android:background="@drawable/bg_icon_circle_emerald">
+
+                            <ImageView
+                                android:layout_width="16dp"
+                                android:layout_height="16dp"
+                                android:layout_gravity="center"
+                                android:src="@drawable/ic_location"
+                                app:tint="@color/veg_green" />
+                        </FrameLayout>
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="10dp"
+                            android:text="Step 2: Customer Drop-off"
+                            android:textColor="@color/text_primary"
+                            android:textSize="15.5sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
 
                     <TextView
                         android:id="@+id/tv_detail_customer_name"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
+                        android:layout_marginTop="10dp"
                         android:text="Rahul Sharma"
                         android:textColor="@color/text_primary"
-                        android:textSize="14.5sp"
+                        android:textSize="15sp"
                         android:textStyle="bold" />
 
                     <TextView
                         android:id="@+id/tv_detail_customer_address"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
+                        android:layout_marginTop="3dp"
                         android:text="Flat 402, Green Avenue, Kothrud, Pune - 411038"
                         android:textColor="@color/text_secondary"
                         android:textSize="13sp" />
@@ -257,9 +305,13 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
+                        android:background="@drawable/bg_pill_amber_soft"
+                        android:paddingHorizontal="10dp"
+                        android:paddingVertical="4dp"
                         android:text="Note: Please do not ring bell, baby is sleeping."
                         android:textColor="@color/warning"
                         android:textSize="12.5sp"
+                        android:textStyle="bold"
                         android:visibility="gone" />
 
                     <!-- Customer Contact & Maps Row -->
@@ -267,7 +319,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
-                        android:layout_marginTop="14dp">
+                        android:layout_marginTop="16dp">
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btn_call_drop"
@@ -318,7 +370,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                app:cardCornerRadius="18dp"
+                app:cardCornerRadius="20dp"
                 app:cardElevation="2dp"
                 app:strokeColor="@color/card_border"
                 app:strokeWidth="1dp"
@@ -328,14 +380,14 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="18dp">
+                    android:padding="20dp">
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Order Items"
+                        android:text="Order Items Checklist"
                         android:textColor="@color/text_primary"
-                        android:textSize="15sp"
+                        android:textSize="15.5sp"
                         android:textStyle="bold" />
 
                     <TextView
@@ -368,6 +420,9 @@
                     android:textColor="@color/on_primary"
                     android:textSize="15sp"
                     android:textStyle="bold"
+                    app:icon="@drawable/ic_check_circle"
+                    app:iconGravity="textStart"
+                    app:iconPadding="8dp"
                     app:backgroundTint="@color/primary"
                     app:cornerRadius="26dp" />
 
@@ -392,10 +447,13 @@
                     style="@style/Widget.Material3.Button"
                     android:layout_width="match_parent"
                     android:layout_height="52dp"
-                    android:text="Verify Customer OTP &amp; Deliver"
-                    android:textColor="@color/on_primary"
+                    android:text="Verify Customer OTP &amp; Complete"
+                    android:textColor="@color/white"
                     android:textSize="15sp"
                     android:textStyle="bold"
+                    app:icon="@drawable/ic_check_circle"
+                    app:iconGravity="textStart"
+                    app:iconPadding="8dp"
                     app:backgroundTint="@color/veg_green"
                     app:cornerRadius="26dp"
                     android:visibility="gone" />

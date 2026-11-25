@@ -45,27 +45,38 @@ public class CartItemAdapter extends RecyclerView.Adapter<CartItemAdapter.ViewHo
         CartItem item = items.get(position);
 
         holder.tvName.setText(item.getName());
-        holder.tvPrice.setText(String.format(Locale.getDefault(), "₹%.0f", item.getPrice()));
+        holder.tvPrice.setText(String.format(Locale.getDefault(), "₹%.0f × %d", item.getPrice(), item.getQuantity()));
         holder.tvQuantity.setText(String.valueOf(item.getQuantity()));
         holder.tvTotalPrice.setText(String.format(Locale.getDefault(), "₹%.0f", item.getTotalPrice()));
+
+        if (holder.tvCustomizations != null) {
+            if (item.hasCustomizations()) {
+                holder.tvCustomizations.setVisibility(View.VISIBLE);
+                holder.tvCustomizations.setText(item.getCustomizationSummary());
+            } else {
+                holder.tvCustomizations.setVisibility(View.GONE);
+            }
+        }
 
         Glide.with(holder.itemView.getContext())
                 .load(item.getImage())
                 .placeholder(R.drawable.bg_card_rounded)
                 .into(holder.ivImage);
 
+        String itemKey = item.getId() != null ? item.getId() : item.getMenuItemId();
+
         holder.btnMinus.setOnClickListener(v -> {
             if (item.getQuantity() > 1) {
-                quantityListener.onQuantityChange(item.getMenuItemId(), item.getQuantity() - 1);
+                quantityListener.onQuantityChange(itemKey, item.getQuantity() - 1);
             } else {
-                removeListener.onRemove(item.getMenuItemId());
+                removeListener.onRemove(itemKey);
             }
         });
 
         holder.btnPlus.setOnClickListener(v ->
-                quantityListener.onQuantityChange(item.getMenuItemId(), item.getQuantity() + 1));
+                quantityListener.onQuantityChange(itemKey, item.getQuantity() + 1));
 
-        holder.btnRemove.setOnClickListener(v -> removeListener.onRemove(item.getMenuItemId()));
+        holder.btnRemove.setOnClickListener(v -> removeListener.onRemove(itemKey));
     }
 
     @Override
@@ -73,7 +84,7 @@ public class CartItemAdapter extends RecyclerView.Adapter<CartItemAdapter.ViewHo
 
     static class ViewHolder extends RecyclerView.ViewHolder {
         ImageView ivImage;
-        TextView tvName, tvPrice, tvQuantity, tvTotalPrice;
+        TextView tvName, tvPrice, tvCustomizations, tvQuantity, tvTotalPrice;
         View btnMinus, btnPlus, btnRemove;
 
         ViewHolder(@NonNull View itemView) {
@@ -81,6 +92,7 @@ public class CartItemAdapter extends RecyclerView.Adapter<CartItemAdapter.ViewHo
             ivImage = itemView.findViewById(R.id.iv_cart_item_image);
             tvName = itemView.findViewById(R.id.tv_cart_item_name);
             tvPrice = itemView.findViewById(R.id.tv_cart_item_price);
+            tvCustomizations = itemView.findViewById(R.id.tv_cart_item_customizations);
             tvQuantity = itemView.findViewById(R.id.tv_cart_item_quantity);
             tvTotalPrice = itemView.findViewById(R.id.tv_cart_item_total);
             btnMinus = itemView.findViewById(R.id.btn_minus);

@@ -28,7 +28,7 @@ public class NotificationsActivity extends AppCompatActivity {
     private FirebaseFirestore db;
 
     private RecyclerView rvNotifications;
-    private TextView tvEmpty;
+    private View layoutEmpty;
     private NotificationAdapter adapter;
     private final List<Map<String, Object>> notifList = new ArrayList<>();
 
@@ -46,7 +46,7 @@ public class NotificationsActivity extends AppCompatActivity {
         toolbar.setNavigationOnClickListener(v -> finish());
 
         rvNotifications = findViewById(R.id.rv_notifications_list);
-        tvEmpty = findViewById(R.id.tv_empty_notifications);
+        layoutEmpty = findViewById(R.id.layout_empty_notifications);
 
         rvNotifications.setLayoutManager(new LinearLayoutManager(this));
         adapter = new NotificationAdapter();
@@ -70,11 +70,11 @@ public class NotificationsActivity extends AppCompatActivity {
                     }
 
                     if (notifList.isEmpty()) {
-                        tvEmpty.setVisibility(View.VISIBLE);
-                        rvNotifications.setVisibility(View.GONE);
+                        if (layoutEmpty != null) layoutEmpty.setVisibility(View.VISIBLE);
+                        if (rvNotifications != null) rvNotifications.setVisibility(View.GONE);
                     } else {
-                        tvEmpty.setVisibility(View.GONE);
-                        rvNotifications.setVisibility(View.VISIBLE);
+                        if (layoutEmpty != null) layoutEmpty.setVisibility(View.GONE);
+                        if (rvNotifications != null) rvNotifications.setVisibility(View.VISIBLE);
                         adapter.notifyDataSetChanged();
                     }
                 });

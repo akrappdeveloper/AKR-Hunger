@@ -542,14 +542,31 @@ export default function CustomerLiveTrackingPage() {
 
           <div className="space-y-2.5">
             {order.items?.map((item, idx) => (
-              <div key={idx} className="flex items-center justify-between text-xs sm:text-sm py-1">
-                <div className="flex items-center gap-2.5">
-                  <span className="w-5 h-5 rounded-md bg-muted flex items-center justify-center font-bold text-[11px] text-foreground border border-border/60">
+              <div key={idx} className="flex items-start justify-between text-xs sm:text-sm py-1">
+                <div className="flex items-start gap-2.5 min-w-0">
+                  <span className="w-5 h-5 rounded-md bg-muted flex items-center justify-center font-bold text-[11px] text-foreground border border-border/60 shrink-0 mt-0.5">
                     {item.quantity}x
                   </span>
-                  <span className="font-semibold text-foreground">{item.name}</span>
+                  <div className="min-w-0">
+                    <span className="font-semibold text-foreground block">{item.name}</span>
+                    {(item.spiceLevel || item.selectedSize?.name || (item.selectedAddOns && item.selectedAddOns.length > 0) || item.specialInstructions) && (
+                      <div className="text-[11px] text-muted-foreground mt-0.5 flex flex-wrap gap-x-2 gap-y-0.5">
+                        {item.spiceLevel && <span>🌶️ {item.spiceLevel}</span>}
+                        {item.selectedSize?.name && (
+                          <span>
+                            📏 {item.selectedSize.name}
+                            {Number(item.selectedSize.price || 0) > 0 ? ` (+₹${item.selectedSize.price})` : ''}
+                          </span>
+                        )}
+                        {item.selectedAddOns?.map((a, aIdx) => (
+                          <span key={aIdx}>+ {a.name}{Number(a.price || 0) > 0 ? ` (+₹${a.price})` : ''}</span>
+                        ))}
+                        {item.specialInstructions && <span>📝 {item.specialInstructions}</span>}
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <span className="font-bold text-foreground">₹{item.price * item.quantity}</span>
+                <span className="font-bold text-foreground shrink-0">₹{item.price * item.quantity}</span>
               </div>
             ))}
           </div>

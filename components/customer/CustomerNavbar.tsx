@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import {
   Search, Bell, ShoppingCart, User, Menu, X, LogOut,
   Heart, Package, MapPin, LifeBuoy, Settings, ChevronDown, ChevronRight, Home, Briefcase, Wallet,
-  Tag, Gift, Crown, Star, HelpCircle, Sparkles
+  Tag, Gift, Crown, Star, HelpCircle, Sparkles, Film, UtensilsCrossed, Dices, Calculator, Salad, RotateCcw, Leaf, Smile
 } from 'lucide-react';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
@@ -41,21 +41,15 @@ export default function CustomerNavbar() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isAddressDialogOpen, setIsAddressDialogOpen] = useState(false);
 
-  // Auto-select default address or prompt dialog for new users without address
+  // Auto-select default address if available (do not auto-open Select Delivery Location dialog)
   useEffect(() => {
     if (pathname?.includes('/login') || pathname?.includes('/signup')) return;
     if (!deliveryAddress && customer?.addresses && customer.addresses.length > 0) {
       const defaultAddr = customer.addresses.find(a => a.isDefault) || customer.addresses[0];
       setDeliveryAddress(defaultAddr);
       localStorage.setItem('deliveryAddress', JSON.stringify(defaultAddr));
-    } else if (user && !deliveryAddress && (!customer?.addresses || customer.addresses.length === 0)) {
-      // First time user or newly created account: prompt to select/enter address immediately
-      const timer = setTimeout(() => {
-        setIsAddressDialogOpen(true);
-      }, 700);
-      return () => clearTimeout(timer);
     }
-  }, [user, customer, deliveryAddress, setDeliveryAddress, pathname]);
+  }, [customer, deliveryAddress, setDeliveryAddress, pathname]);
 
   // Handle scroll effect
   useEffect(() => {
@@ -141,8 +135,35 @@ export default function CustomerNavbar() {
           </div>
 
           {/* Search Bar - Desktop & Tablet */}
-          <div className="hidden md:flex flex-1 max-w-xs lg:max-w-lg xl:max-w-2xl mx-3 lg:mx-6">
+          <div className="hidden md:flex flex-1 max-w-xs lg:max-w-md xl:max-w-lg mx-2 lg:mx-4">
             <CustomerSearchBar size="md" />
+          </div>
+
+          {/* Quick Feature Navigation Pills - Desktop only */}
+          <div className="hidden xl:flex items-center gap-1.5 flex-shrink-0">
+            <Link
+              href="/customer/stories"
+              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-bold text-foreground/80 hover:text-primary hover:bg-primary/10 transition-colors"
+            >
+              <Film className="w-3.5 h-3.5 text-primary" />
+              <span>Reels</span>
+            </Link>
+
+            <Link
+              href="/customer/cuisines"
+              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-bold text-foreground/80 hover:text-primary hover:bg-primary/10 transition-colors"
+            >
+              <UtensilsCrossed className="w-3.5 h-3.5 text-amber-500" />
+              <span>Cuisines</span>
+            </Link>
+
+            <Link
+              href="/customer/reorder"
+              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-bold text-foreground/80 hover:text-primary hover:bg-primary/10 transition-colors"
+            >
+              <RotateCcw className="w-3.5 h-3.5 text-cyan-500" />
+              <span>Reorder</span>
+            </Link>
           </div>
 
           {/* Right Actions */}
@@ -242,6 +263,14 @@ export default function CustomerNavbar() {
                   <DropdownMenuItem onClick={() => router.push('/customer/rewards')} className="cursor-pointer rounded-xl my-0.5 hover:bg-muted/60 group">
                     <Gift className="w-4 h-4 mr-2.5 text-muted-foreground group-hover:text-foreground transition-colors shrink-0" />
                     <span>Rewards & Points</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => router.push('/customer/roulette')} className="cursor-pointer rounded-xl my-0.5 hover:bg-muted/60 group">
+                    <Dices className="w-4 h-4 mr-2.5 text-muted-foreground group-hover:text-foreground transition-colors shrink-0" />
+                    <span>Food Roulette Wheel</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => router.push('/customer/mood')} className="cursor-pointer rounded-xl my-0.5 hover:bg-muted/60 group">
+                    <Smile className="w-4 h-4 mr-2.5 text-muted-foreground group-hover:text-foreground transition-colors shrink-0" />
+                    <span>Mood Food Matcher</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => router.push('/customer/membership')} className="cursor-pointer rounded-xl my-0.5 hover:bg-muted/60 group">
                     <Crown className="w-4 h-4 mr-2.5 text-muted-foreground group-hover:text-foreground transition-colors shrink-0" />
@@ -361,6 +390,42 @@ export default function CustomerNavbar() {
                         <span className="font-bold text-sm block">More Features Hub</span>
                         <span className="text-[10px] text-muted-foreground block">Student, Group, Meal Plans, Circle</span>
                       </div>
+                    </Link>
+                    <Link href="/customer/stories" className="flex items-center gap-3 p-3 rounded-2xl hover:bg-muted/60 text-foreground transition-colors">
+                      <div className="w-8 h-8 rounded-xl bg-red-500/10 text-red-500 flex items-center justify-center shrink-0"><Film className="w-4 h-4" /></div>
+                      <span className="font-semibold text-sm">Food Stories &amp; Reels</span>
+                    </Link>
+                    <Link href="/customer/cuisines" className="flex items-center gap-3 p-3 rounded-2xl hover:bg-muted/60 text-foreground transition-colors">
+                      <div className="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center shrink-0"><UtensilsCrossed className="w-4 h-4" /></div>
+                      <span className="font-semibold text-sm">16+ Cuisines Explorer</span>
+                    </Link>
+                    <Link href="/customer/roulette" className="flex items-center gap-3 p-3 rounded-2xl hover:bg-muted/60 text-foreground transition-colors">
+                      <div className="w-8 h-8 rounded-xl bg-purple-500/10 text-purple-500 flex items-center justify-center shrink-0"><Dices className="w-4 h-4" /></div>
+                      <span className="font-semibold text-sm">Hunger Roulette Wheel</span>
+                    </Link>
+                    <Link href="/customer/mood" className="flex items-center gap-3 p-3 rounded-2xl hover:bg-muted/60 text-foreground transition-colors">
+                      <div className="w-8 h-8 rounded-xl bg-pink-500/10 text-pink-500 flex items-center justify-center shrink-0"><Sparkles className="w-4 h-4" /></div>
+                      <span className="font-semibold text-sm">Mood Food Matcher</span>
+                    </Link>
+                    <Link href="/customer/diet-planner" className="flex items-center gap-3 p-3 rounded-2xl hover:bg-muted/60 text-foreground transition-colors">
+                      <div className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center shrink-0"><Salad className="w-4 h-4" /></div>
+                      <span className="font-semibold text-sm">Diet &amp; Calorie Planner</span>
+                    </Link>
+                    <Link href="/customer/split-bill" className="flex items-center gap-3 p-3 rounded-2xl hover:bg-muted/60 text-foreground transition-colors">
+                      <div className="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center shrink-0"><Calculator className="w-4 h-4" /></div>
+                      <span className="font-semibold text-sm">Split Bill Calculator</span>
+                    </Link>
+                    <Link href="/customer/reorder" className="flex items-center gap-3 p-3 rounded-2xl hover:bg-muted/60 text-foreground transition-colors">
+                      <div className="w-8 h-8 rounded-xl bg-cyan-500/10 text-cyan-500 flex items-center justify-center shrink-0"><RotateCcw className="w-4 h-4" /></div>
+                      <span className="font-semibold text-sm">1-Click Fast Reorder</span>
+                    </Link>
+                    <Link href="/customer/secret-menu" className="flex items-center gap-3 p-3 rounded-2xl bg-purple-950/20 hover:bg-purple-900/30 text-purple-400 transition-colors border border-purple-800/30">
+                      <div className="w-8 h-8 rounded-xl bg-purple-900/40 text-purple-300 flex items-center justify-center shrink-0"><Sparkles className="w-4 h-4" /></div>
+                      <span className="font-bold text-sm">Secret Vault Menu 🔒</span>
+                    </Link>
+                    <Link href="/customer/mystery-box" className="flex items-center gap-3 p-3 rounded-2xl hover:bg-muted/60 text-foreground transition-colors">
+                      <div className="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center shrink-0"><Gift className="w-4 h-4" /></div>
+                      <span className="font-semibold text-sm">Mystery Gourmet Box 🎁</span>
                     </Link>
                     <Link href="/customer/orders" className="flex items-center gap-3 p-3 rounded-2xl hover:bg-muted/60 text-foreground transition-colors">
                       <div className="w-8 h-8 rounded-xl bg-muted text-muted-foreground flex items-center justify-center shrink-0"><Package className="w-4 h-4" /></div>

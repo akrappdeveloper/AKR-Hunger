@@ -20,7 +20,11 @@ import {
   ChevronRight,
   Wallet,
   User,
-  MessageSquare
+  MessageSquare,
+  Activity,
+  Trophy,
+  Flame,
+  Shield
 } from 'lucide-react';
 import NotificationBell from '@/components/notifications/NotificationBell';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
@@ -52,6 +56,10 @@ export default function DeliverySidebar({ isMobile = false, onClose }: DeliveryS
     { href: '/delivery/available', label: 'Marketplace', icon: ShoppingBag },
     { href: '/delivery/history', label: 'History', icon: Clock },
     { href: '/delivery/earnings', label: 'Earnings', icon: TrendingUp },
+    { href: '/delivery/performance', label: 'Performance', icon: Activity },
+    { href: '/delivery/leaderboard', label: 'Leaderboard', icon: Trophy },
+    { href: '/delivery/hotspots', label: 'Hotspots & Surge', icon: Flame },
+    { href: '/delivery/safety', label: 'Safety & SOS', icon: Shield },
     { href: '/delivery/wallet', label: 'Wallet', icon: Wallet },
     { href: '/delivery/profile', label: 'Rider Profile & KYC', icon: User },
     { href: '/delivery/settings', label: 'Settings', icon: Settings },

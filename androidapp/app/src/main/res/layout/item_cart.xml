@@ -80,6 +80,20 @@
                 android:textColor="@color/text_secondary"
                 android:textSize="13sp" />
 
+            <TextView
+                android:id="@+id/tv_cart_item_customizations"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:background="@drawable/bg_pill_soft"
+                android:fontFamily="sans-serif-medium"
+                android:lineSpacingExtra="2dp"
+                android:paddingHorizontal="8dp"
+                android:paddingVertical="4dp"
+                android:textColor="@color/primary_dark"
+                android:textSize="11.5sp"
+                android:visibility="gone" />
+
             <!-- Stepper & Item Total Row -->
             <LinearLayout
                 android:layout_width="match_parent"

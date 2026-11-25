@@ -158,9 +158,8 @@ public class OrderActiveDetailActivity extends AppCompatActivity {
                 .addSnapshotListener((snap, e) -> {
                     if (e != null || snap == null || !snap.exists()) return;
 
-                    order = snap.toObject(DeliveryOrder.class);
+                    order = DeliveryOrder.parseSnapshot(snap);
                     if (order == null) return;
-                    order.setId(snap.getId());
 
                     bindOrderData(order);
                 });

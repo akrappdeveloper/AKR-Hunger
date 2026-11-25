@@ -52,10 +52,13 @@ public class ProductDetailActivity extends BaseActivity {
     private Runnable autoSlideRunnable;
     private int currentImagePage = 0;
 
-    // Customization state matching web app
-    private String selectedPortion = "Regular";
+    // Customization state matching web app (all optional)
+    private String selectedPortion = null;
     private double portionExtraPrice = 0.0;
-    private String selectedSpice = "Medium";
+    private String selectedSpice = null;
+    private final List<MenuItem.CustomizationOption> selectedAddOns = new ArrayList<>();
+    private int lastCheckedPortionId = -1;
+    private int lastCheckedSpiceId = -1;
     private TextInputEditText etCookingInstructions;
 
     @Override
@@ -258,40 +261,70 @@ public class ProductDetailActivity extends BaseActivity {
             updatePriceDisplays();
         });
 
-        // Portion Selector
+        // Optional Portion/Size Selector (tap again to deselect)
         RadioGroup rgPortion = findViewById(R.id.rg_portion);
         if (rgPortion != null) {
-            rgPortion.setOnCheckedChangeListener((group, checkedId) -> {
-                if (checkedId == R.id.rb_portion_medium) {
-                    selectedPortion = "Medium";
-                    portionExtraPrice = 40.0;
-                } else if (checkedId == R.id.rb_portion_large) {
-                    selectedPortion = "Large";
-                    portionExtraPrice = 80.0;
-                } else {
-                    selectedPortion = "Regular";
+            rgPortion.clearCheck();
+            View.OnClickListener portionToggle = v -> {
+                int id = v.getId();
+                if (lastCheckedPortionId == id) {
+                    rgPortion.clearCheck();
+                    lastCheckedPortionId = -1;
+                    selectedPortion = null;
                     portionExtraPrice = 0.0;
+                } else {
+                    lastCheckedPortionId = id;
+                    if (id == R.id.rb_portion_medium) {
+                        selectedPortion = "Medium";
+                        portionExtraPrice = 40.0;
+                    } else if (id == R.id.rb_portion_large) {
+                        selectedPortion = "Large";
+                        portionExtraPrice = 80.0;
+                    } else {
+                        selectedPortion = "Regular";
+                        portionExtraPrice = 0.0;
+                    }
                 }
                 updatePriceDisplays();
-            });
+                updateSpiceSummaryDisplay();
+            };
+            findViewById(R.id.rb_portion_regular).setOnClickListener(portionToggle);
+            findViewById(R.id.rb_portion_medium).setOnClickListener(portionToggle);
+            findViewById(R.id.rb_portion_large).setOnClickListener(portionToggle);
         }
 
-        // Spice Level Selector
+        // Optional Spice Level Selector (tap again to deselect)
         RadioGroup rgSpice = findViewById(R.id.rg_spice);
         if (rgSpice != null) {
-            rgSpice.setOnCheckedChangeListener((group, checkedId) -> {
-                if (checkedId == R.id.rb_spice_mild) {
-                    selectedSpice = "Mild";
-                } else if (checkedId == R.id.rb_spice_hot) {
-                    selectedSpice = "Hot";
-                } else if (checkedId == R.id.rb_spice_extra) {
-                    selectedSpice = "Extra Spicy";
+            rgSpice.clearCheck();
+            View.OnClickListener spiceToggle = v -> {
+                int id = v.getId();
+                if (lastCheckedSpiceId == id) {
+                    rgSpice.clearCheck();
+                    lastCheckedSpiceId = -1;
+                    selectedSpice = null;
                 } else {
-                    selectedSpice = "Medium";
+                    lastCheckedSpiceId = id;
+                    if (id == R.id.rb_spice_mild) {
+                        selectedSpice = "Mild";
+                    } else if (id == R.id.rb_spice_hot) {
+                        selectedSpice = "Hot";
+                    } else if (id == R.id.rb_spice_extra) {
+                        selectedSpice = "Extra Hot";
+                    } else {
+                        selectedSpice = "Medium";
+                    }
                 }
                 updateSpiceSummaryDisplay();
-            });
+            };
+            findViewById(R.id.rb_spice_mild).setOnClickListener(spiceToggle);
+            findViewById(R.id.rb_spice_medium).setOnClickListener(spiceToggle);
+            findViewById(R.id.rb_spice_hot).setOnClickListener(spiceToggle);
+            findViewById(R.id.rb_spice_extra).setOnClickListener(spiceToggle);
         }
+
+        // Optional Add-ons & Extras Selector
+        setupAddOnsSection();
 
         // Add to Cart button
         findViewById(R.id.btn_add_to_cart).setOnClickListener(v -> performAddToCart(false));
@@ -419,9 +452,57 @@ public class ProductDetailActivity extends BaseActivity {
         return Math.round(dp * density);
     }
 
+    private void setupAddOnsSection() {
+        LinearLayout container = findViewById(R.id.ll_addons_container);
+        if (container == null) return;
+        container.removeAllViews();
+        selectedAddOns.clear();
+
+        List<MenuItem.CustomizationOption> options = new ArrayList<>();
+        if (menuItem != null && menuItem.getAddOns() != null && !menuItem.getAddOns().isEmpty()) {
+            options.addAll(menuItem.getAddOns());
+        } else {
+            options.add(new MenuItem.CustomizationOption("extra-cheese", "Extra Melted Cheese Slice", 25, ""));
+            options.add(new MenuItem.CustomizationOption("peri-peri-fries", "Crispy Peri-Peri Fries", 49, ""));
+            options.add(new MenuItem.CustomizationOption("onion-rings", "Crispy Fried Onion Rings", 35, ""));
+            options.add(new MenuItem.CustomizationOption("jalapeno-dip", "Spicy Jalapeño Mayo Dip", 20, ""));
+            options.add(new MenuItem.CustomizationOption("double-patty", "Extra Patty Upgrade", 59, ""));
+            options.add(new MenuItem.CustomizationOption("beverage", "Chilled Soft Drink Can (330ml)", 39, ""));
+        }
+
+        for (MenuItem.CustomizationOption opt : options) {
+            android.widget.CheckBox cb = new android.widget.CheckBox(this);
+            String priceLabel = opt.getPrice() > 0
+                    ? String.format(Locale.getDefault(), " (+₹%.0f)", opt.getPrice())
+                    : " (Free)";
+            cb.setText(opt.getName() + priceLabel);
+            cb.setTextSize(13f);
+            cb.setTextColor(getColor(R.color.text_primary));
+            cb.setPadding(dpToPx(8), dpToPx(8), dpToPx(8), dpToPx(8));
+            cb.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                if (isChecked) {
+                    if (!selectedAddOns.contains(opt)) selectedAddOns.add(opt);
+                } else {
+                    selectedAddOns.remove(opt);
+                }
+                updatePriceDisplays();
+                updateSpiceSummaryDisplay();
+            });
+            container.addView(cb);
+        }
+    }
+
+    private double getSelectedAddOnsTotal() {
+        double sum = 0.0;
+        for (MenuItem.CustomizationOption opt : selectedAddOns) {
+            if (opt != null) sum += opt.getPrice();
+        }
+        return sum;
+    }
+
     private void updatePriceDisplays() {
         if (menuItem == null) return;
-        double currentUnitPrice = menuItem.getPrice() + portionExtraPrice;
+        double currentUnitPrice = menuItem.getPrice() + portionExtraPrice + getSelectedAddOnsTotal();
         double totalPrice = currentUnitPrice * quantity;
 
         // Header Base Price
@@ -446,8 +527,17 @@ public class ProductDetailActivity extends BaseActivity {
     private void updateSpiceSummaryDisplay() {
         TextView tvSpiceSummary = findViewById(R.id.tv_bottom_spice_summary);
         if (tvSpiceSummary != null) {
-            String portionText = "Regular".equals(selectedPortion) ? "" : " • " + selectedPortion;
-            tvSpiceSummary.setText(String.format("%s Spice%s", selectedSpice, portionText));
+            List<String> parts = new ArrayList<>();
+            if (selectedSpice != null) parts.add("🌶️ " + selectedSpice);
+            if (selectedPortion != null) {
+                parts.add(portionExtraPrice > 0
+                        ? String.format(Locale.getDefault(), "%s (+₹%.0f)", selectedPortion, portionExtraPrice)
+                        : selectedPortion);
+            }
+            if (!selectedAddOns.isEmpty()) {
+                parts.add(String.format(Locale.getDefault(), "+%d Extras (+₹%.0f)", selectedAddOns.size(), getSelectedAddOnsTotal()));
+            }
+            tvSpiceSummary.setText(parts.isEmpty() ? "Standard Serving (Optional Extras)" : android.text.TextUtils.join(" • ", parts));
         }
     }
 
@@ -459,48 +549,54 @@ public class ProductDetailActivity extends BaseActivity {
             return;
         }
 
-        double currentUnitPrice = menuItem.getPrice() + portionExtraPrice;
-
-        // Assemble special instructions matching Web App ProductClient.tsx lines 326-343
-        StringBuilder instructions = new StringBuilder();
-        instructions.append("Spice Preference: ").append(selectedSpice);
-        if (!"Regular".equals(selectedPortion)) {
-            instructions.append(" | Portion: ").append(selectedPortion)
-                    .append(portionExtraPrice > 0 ? String.format(Locale.getDefault(), " (+₹%.0f)", portionExtraPrice) : "");
-        }
-        if (etCookingInstructions != null && etCookingInstructions.getText() != null) {
-            String note = etCookingInstructions.getText().toString().trim();
-            if (!note.isEmpty()) {
-                instructions.append(" | Note: ").append(note);
-            }
-        }
-
-        String itemName = !"Regular".equals(selectedPortion)
-                ? String.format("%s (%s)", menuItem.getName(), selectedPortion)
-                : menuItem.getName();
+        double basePrice = menuItem.getPrice();
+        double addOnsTotal = getSelectedAddOnsTotal();
+        double currentUnitPrice = basePrice + portionExtraPrice + addOnsTotal;
 
         CartItem cartItem = new CartItem(
                 menuItem.getId(),
                 menuItem.getRestaurantId(),
-                itemName,
+                menuItem.getName(),
                 currentUnitPrice,
                 quantity,
                 menuItem.getImage(),
                 menuItem.getRestaurantName() != null ? menuItem.getRestaurantName() : "AKR Hunger"
         );
         cartItem.setCategory(menuItem.getCategory());
-        cartItem.setSpecialInstructions(instructions.toString());
+        if (portionExtraPrice > 0 || !selectedAddOns.isEmpty()) {
+            cartItem.setBasePrice(basePrice);
+        }
+        if (selectedSpice != null) {
+            cartItem.setSpiceLevel(selectedSpice);
+        }
+        if (selectedPortion != null) {
+            cartItem.setSelectedSize(new MenuItem.CustomizationOption(
+                    selectedPortion.toLowerCase(Locale.ROOT),
+                    selectedPortion,
+                    portionExtraPrice,
+                    ""
+            ));
+        }
+        if (!selectedAddOns.isEmpty()) {
+            cartItem.setSelectedAddOns(new ArrayList<>(selectedAddOns));
+        }
+        if (etCookingInstructions != null && etCookingInstructions.getText() != null) {
+            String note = etCookingInstructions.getText().toString().trim();
+            if (!note.isEmpty()) {
+                cartItem.setSpecialInstructions(note);
+            }
+        }
 
         CartManager.getInstance(this).addItem(cartItem);
         analyticsHelper.logAddToCart(cartItem);
-        logBreadcrumb("Added to cart: " + itemName + " qty=" + quantity + " buyNow=" + isBuyNow);
+        logBreadcrumb("Added to cart: " + menuItem.getName() + " qty=" + quantity + " buyNow=" + isBuyNow);
 
         if (isBuyNow) {
             // Direct instant checkout navigation like website!
             Intent checkoutIntent = new Intent(this, CartActivity.class);
             startActivity(checkoutIntent);
         } else {
-            Toast.makeText(this, String.format("Added %dx %s to cart! 🛒", quantity, itemName), Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, String.format("Added %dx %s to cart! 🛒", quantity, menuItem.getName()), Toast.LENGTH_SHORT).show();
         }
     }
 

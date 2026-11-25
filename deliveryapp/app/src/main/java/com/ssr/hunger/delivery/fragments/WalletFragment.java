@@ -361,8 +361,20 @@ public class WalletFragment extends Fragment {
                 item.description = doc.getString("description") != null ? doc.getString("description") : "Withdrawal request";
                 item.isPositive = false;
             } else if ("cod_deposit".equalsIgnoreCase(type) || "deposit".equalsIgnoreCase(type) || "cod_settlement".equalsIgnoreCase(type)) {
-                item.title = "COD Cash Deposit";
-                item.description = doc.getString("description") != null ? doc.getString("description") : "Settled to platform";
+                String tracking = doc.getString("trackingId");
+                if (tracking == null || tracking.isEmpty()) tracking = doc.getString("reference");
+                String rzpId = doc.getString("razorpayPaymentId");
+                item.title = "COD Settlement Deposit";
+                StringBuilder desc = new StringBuilder();
+                if (rzpId != null && !rzpId.isEmpty()) {
+                    desc.append("Razorpay: ").append(rzpId);
+                } else {
+                    desc.append("Platform Settle");
+                }
+                if (tracking != null && !tracking.isEmpty()) {
+                    desc.append(" • Ref: ").append(tracking);
+                }
+                item.description = desc.toString();
                 item.isPositive = false;
             } else {
                 item.title = "Delivery Payout";

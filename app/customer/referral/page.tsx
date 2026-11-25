@@ -37,6 +37,7 @@ import {
   Loader2,
   Zap,
 } from 'lucide-react';
+import FullscreenToggle from '@/components/customer/FullscreenToggle';
 import { toast } from 'sonner';
 import { copyToClipboard } from '@/lib/utils';
 
@@ -254,7 +255,7 @@ export default function CustomerReferralPage() {
     <div className="min-h-screen bg-slate-50/70 dark:bg-slate-950 text-slate-900 dark:text-slate-100 pb-20">
       {/* Top Header */}
       <div className="sticky top-0 z-30 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
-        <div className="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
+        <div className="w-full max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-10 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Link
               href="/customer"
@@ -266,20 +267,23 @@ export default function CustomerReferralPage() {
               <div className="w-8 h-8 rounded-lg bg-orange-500/10 flex items-center justify-center text-orange-500">
                 <Gift className="w-4 h-4" />
               </div>
-              <h1 className="text-lg font-bold text-slate-900 dark:text-white">Refer & Earn</h1>
+              <h1 className="text-lg font-bold text-slate-900 dark:text-white">Refer &amp; Earn</h1>
             </div>
           </div>
 
-          <Link href="/customer/wallet">
-            <Button variant="outline" size="sm" className="gap-2 border-orange-200 dark:border-orange-900/40 text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-950/30">
-              <Wallet className="w-4 h-4" />
-              <span className="font-bold">₹{currentWallet.toFixed(0)}</span>
-            </Button>
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link href="/customer/wallet">
+              <Button variant="outline" size="sm" className="gap-2 border-orange-200 dark:border-orange-900/40 text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-950/30">
+                <Wallet className="w-4 h-4" />
+                <span className="font-bold">₹{currentWallet.toFixed(0)}</span>
+              </Button>
+            </Link>
+            <FullscreenToggle className="border border-border/80 rounded-xl" showText={false} />
+          </div>
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 pt-6 space-y-6">
+      <div className="w-full max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-10 pt-6 space-y-6">
         {/* Hero Card */}
         <motion.div
           initial={{ opacity: 0, y: 15 }}

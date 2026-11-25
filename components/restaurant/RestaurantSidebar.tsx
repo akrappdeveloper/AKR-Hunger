@@ -21,7 +21,10 @@ import {
   Calendar,
   Users,
   User,
-  MessageSquare
+  MessageSquare,
+  Video,
+  Boxes,
+  ChefHat
 } from 'lucide-react';
 import NotificationBell from '@/components/notifications/NotificationBell';
 import ThemeToggle from '@/components/ThemeToggle';
@@ -108,6 +111,12 @@ export default function RestaurantSidebar({ isMobile = false, onClose }: Restaur
       permission: 'orders',
     },
     {
+      href: '/restaurant/kds',
+      label: 'Kitchen Display (KDS)',
+      icon: ChefHat,
+      permission: 'orders',
+    },
+    {
       href: '/restaurant/chat',
       label: 'Order Chat Hub',
       icon: MessageSquare,
@@ -120,6 +129,18 @@ export default function RestaurantSidebar({ isMobile = false, onClose }: Restaur
       badge: pendingCount > 0 ? pendingCount : undefined,
       badgeVariant: 'secondary' as const,
       permission: 'menu',
+    },
+    {
+      href: '/restaurant/videos',
+      label: 'Videos',
+      icon: Video,
+      permission: null,
+    },
+    {
+      href: '/restaurant/inventory',
+      label: 'Inventory',
+      icon: Boxes,
+      permission: null,
     },
     {
       href: '/restaurant/schedule',

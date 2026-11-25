@@ -98,6 +98,12 @@
 
 
 
+        <!-- Edit Profile & Document Upload Activity -->
+        <activity
+            android:name=".activities.EditProfileActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+
         <!-- Customer Reviews & Rating Activity -->
         <activity
             android:name=".activities.ReviewsActivity"

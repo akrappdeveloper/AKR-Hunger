@@ -66,10 +66,11 @@ public class CartManager {
         }
         restaurantId = item.getRestaurantId();
 
-        // Check if item already exists
+        // Check if item with identical customizations already exists
         boolean found = false;
+        String incomingSig = item.getCustomizationSignature();
         for (CartItem existing : items) {
-            if (existing.getMenuItemId().equals(item.getMenuItemId())) {
+            if (existing.getCustomizationSignature().equals(incomingSig)) {
                 existing.setQuantity(existing.getQuantity() + item.getQuantity());
                 found = true;
                 break;
@@ -82,8 +83,10 @@ public class CartManager {
         notifyListeners();
     }
 
-    public void removeItem(String menuItemId) {
-        items.removeIf(item -> item.getMenuItemId().equals(menuItemId));
+    public void removeItem(String itemKey) {
+        items.removeIf(item ->
+                (item.getId() != null && item.getId().equals(itemKey))
+                        || (item.getMenuItemId() != null && item.getMenuItemId().equals(itemKey)));
         if (items.isEmpty()) {
             restaurantId = null;
         }
@@ -91,11 +94,13 @@ public class CartManager {
         notifyListeners();
     }
 
-    public void updateQuantity(String menuItemId, int quantity) {
+    public void updateQuantity(String itemKey, int quantity) {
         for (CartItem item : items) {
-            if (item.getMenuItemId().equals(menuItemId)) {
+            boolean matches = (item.getId() != null && item.getId().equals(itemKey))
+                    || (item.getMenuItemId() != null && item.getMenuItemId().equals(itemKey));
+            if (matches) {
                 if (quantity <= 0) {
-                    removeItem(menuItemId);
+                    removeItem(itemKey);
                     return;
                 }
                 item.setQuantity(quantity);

@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:padding="22dp"
+    android:padding="28dp"
     android:background="@drawable/bg_dialog_rounded">
 
     <!-- Header with Icon Badge -->
@@ -16,11 +16,11 @@
         android:gravity="center_vertical">
 
         <ImageView
-            android:layout_width="46dp"
-            android:layout_height="46dp"
+            android:layout_width="52dp"
+            android:layout_height="52dp"
             android:background="@drawable/bg_pill_primary"
             android:backgroundTint="@color/primary_tint"
-            android:padding="11dp"
+            android:padding="13dp"
             android:src="@drawable/ic_wallet"
             app:tint="@color/primary"
             android:contentDescription="Deposit COD" />
@@ -29,7 +29,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:layout_marginStart="14dp"
+            android:layout_marginStart="16dp"
             android:orientation="vertical">
 
             <TextView
@@ -37,52 +37,52 @@
                 android:layout_height="wrap_content"
                 android:text="Deposit COD to Platform"
                 android:textColor="@color/text_primary"
-                android:textSize="18sp"
+                android:textSize="20sp"
                 android:textStyle="bold"
                 android:letterSpacing="-0.01" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:text="Settle cash collected to keep your COD limit active"
+                android:layout_marginTop="3dp"
+                android:text="Secure Razorpay settlement to unlock your full COD limit"
                 android:textColor="@color/text_secondary"
-                android:textSize="12.5sp" />
+                android:textSize="13sp" />
         </LinearLayout>
     </LinearLayout>
 
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginBottom="16dp"
+        android:layout_marginTop="18dp"
+        android:layout_marginBottom="18dp"
         android:background="@color/divider" />
 
     <!-- Summary Box -->
     <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:cardCornerRadius="14dp"
+        app:cardCornerRadius="16dp"
         app:cardElevation="0dp"
         app:strokeColor="@color/warning"
-        app:strokeWidth="1dp"
+        app:strokeWidth="1.2dp"
         app:cardBackgroundColor="@color/warning_light">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:paddingHorizontal="14dp"
-            android:paddingVertical="12dp"
+            android:paddingHorizontal="18dp"
+            android:paddingVertical="16dp"
             android:gravity="center_vertical">
 
             <TextView
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Current COD In Hand:"
+                android:text="Current COD Cash In Hand:"
                 android:textColor="@color/text_primary"
-                android:textSize="13.5sp"
+                android:textSize="14.5sp"
                 android:textStyle="bold" />
 
             <TextView
@@ -91,7 +91,7 @@
                 android:layout_height="wrap_content"
                 android:text="₹0.00"
                 android:textColor="@color/warning"
-                android:textSize="16sp"
+                android:textSize="20sp"
                 android:textStyle="bold" />
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
@@ -101,47 +101,47 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:layout_marginTop="14dp">
+        android:layout_marginTop="18dp">
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_chip_full"
             style="@style/Widget.Material3.Button.TonalButton"
             android:layout_width="0dp"
-            android:layout_height="38dp"
+            android:layout_height="44dp"
             android:layout_weight="1"
-            android:layout_marginEnd="6dp"
+            android:layout_marginEnd="8dp"
             android:text="Full Due"
             android:textColor="@color/primary"
-            android:textSize="11.5sp"
+            android:textSize="13sp"
             android:textStyle="bold"
-            app:cornerRadius="19dp"
+            app:cornerRadius="22dp"
             app:backgroundTint="@color/primary_tint" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_chip_500"
             style="@style/Widget.Material3.Button.TonalButton"
             android:layout_width="0dp"
-            android:layout_height="38dp"
+            android:layout_height="44dp"
             android:layout_weight="1"
-            android:layout_marginEnd="6dp"
+            android:layout_marginEnd="8dp"
             android:text="₹500"
             android:textColor="@color/text_primary"
-            android:textSize="11.5sp"
+            android:textSize="13sp"
             android:textStyle="bold"
-            app:cornerRadius="19dp"
+            app:cornerRadius="22dp"
             app:backgroundTint="@color/surface_variant" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_chip_1000"
             style="@style/Widget.Material3.Button.TonalButton"
             android:layout_width="0dp"
-            android:layout_height="38dp"
+            android:layout_height="44dp"
             android:layout_weight="1"
             android:text="₹1,000"
             android:textColor="@color/text_primary"
-            android:textSize="11.5sp"
+            android:textSize="13sp"
             android:textStyle="bold"
-            app:cornerRadius="19dp"
+            app:cornerRadius="22dp"
             app:backgroundTint="@color/surface_variant" />
     </LinearLayout>
 
@@ -149,15 +149,17 @@
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="14dp"
+        android:layout_marginTop="18dp"
         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-        app:boxCornerRadiusTopStart="14dp"
-        app:boxCornerRadiusTopEnd="14dp"
-        app:boxCornerRadiusBottomStart="14dp"
-        app:boxCornerRadiusBottomEnd="14dp"
+        app:boxCornerRadiusTopStart="16dp"
+        app:boxCornerRadiusTopEnd="16dp"
+        app:boxCornerRadiusBottomStart="16dp"
+        app:boxCornerRadiusBottomEnd="16dp"
         app:boxStrokeColor="@color/primary"
         app:prefixText="₹ "
-        app:prefixTextColor="@color/text_primary">
+        app:prefixTextColor="@color/text_primary"
+        app:helperText="Enter exact cash amount you are depositing"
+        app:helperTextTextColor="@color/text_secondary">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/et_deposit_amount"
@@ -166,7 +168,8 @@
             android:hint="Amount to deposit"
             android:inputType="numberDecimal"
             android:textColor="@color/text_primary"
-            android:textSize="16sp"
+            android:textSize="18sp"
+            android:paddingVertical="14dp"
             android:textStyle="bold" />
     </com.google.android.material.textfield.TextInputLayout>
 
@@ -174,10 +177,10 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="14dp"
-        android:text="Payment Method"
+        android:layout_marginTop="16dp"
+        android:text="Select Payment Option"
         android:textColor="@color/text_secondary"
-        android:textSize="12sp"
+        android:textSize="13sp"
         android:textStyle="bold"
         android:letterSpacing="0.02" />
 
@@ -190,53 +193,83 @@
         <RadioButton
             android:id="@+id/rb_deposit_upi"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="UPI App (GPay / PhonePe / Paytm)"
+            android:layout_height="44dp"
+            android:text="Razorpay UPI (Google Pay / PhonePe / Paytm)"
             android:textColor="@color/text_primary"
-            android:textSize="13.5sp"
+            android:textSize="14sp"
             android:checked="true" />
 
         <RadioButton
             android:id="@+id/rb_deposit_gateway"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Net Banking / Debit Card"
+            android:layout_height="44dp"
+            android:text="Razorpay Net Banking / Debit Card"
             android:textColor="@color/text_primary"
-            android:textSize="13.5sp" />
+            android:textSize="14sp" />
     </RadioGroup>
+
+    <!-- Security & Tracking Trust Banner -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginTop="12dp"
+        android:paddingHorizontal="14dp"
+        android:paddingVertical="10dp"
+        android:background="@drawable/bg_pill_primary"
+        android:backgroundTint="@color/surface_variant">
+
+        <ImageView
+            android:layout_width="18dp"
+            android:layout_height="18dp"
+            android:src="@drawable/ic_shield_check"
+            app:tint="@color/veg_green"
+            android:contentDescription="Security" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="8dp"
+            android:text="🔒 256-Bit SSL Razorpay Protected • Verified Audit Tracking"
+            android:textColor="@color/text_secondary"
+            android:textSize="11.5sp"
+            android:textStyle="bold" />
+    </LinearLayout>
 
     <!-- Dialog Actions -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:layout_marginTop="22dp">
+        android:layout_marginTop="24dp">
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_cancel_deposit"
             style="@style/Widget.Material3.Button.OutlinedButton"
             android:layout_width="0dp"
-            android:layout_height="50dp"
+            android:layout_height="54dp"
             android:layout_weight="1"
-            android:layout_marginEnd="8dp"
+            android:layout_marginEnd="10dp"
             android:text="Cancel"
             android:textColor="@color/text_secondary"
-            android:textSize="14sp"
+            android:textSize="14.5sp"
             app:strokeColor="@color/card_border"
-            app:cornerRadius="25dp" />
+            app:cornerRadius="27dp" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_confirm_deposit"
             style="@style/Widget.Material3.Button"
             android:layout_width="0dp"
-            android:layout_height="50dp"
-            android:layout_weight="1.4"
-            android:text="Pay &amp; Settle COD"
+            android:layout_height="54dp"
+            android:layout_weight="1.6"
+            android:text="Pay via Razorpay"
             android:textColor="@color/on_primary"
-            android:textSize="14sp"
+            android:textSize="15sp"
             android:textStyle="bold"
             app:backgroundTint="@color/primary"
-            app:cornerRadius="25dp"
-            app:elevation="2dp" />
+            app:cornerRadius="27dp"
+            app:elevation="3dp" />
     </LinearLayout>
 </LinearLayout>

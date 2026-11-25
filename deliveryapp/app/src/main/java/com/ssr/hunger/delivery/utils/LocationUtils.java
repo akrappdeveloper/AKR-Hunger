@@ -39,4 +39,10 @@ public class LocationUtils {
         SimpleDateFormat sdf = new SimpleDateFormat("dd MMM, hh:mm a", Locale.getDefault());
         return sdf.format(date);
     }
+
+    public static String formatTime(Date date) {
+        if (date == null) return "";
+        SimpleDateFormat sdf = new SimpleDateFormat("hh:mm a", Locale.getDefault());
+        return sdf.format(date);
+    }
 }

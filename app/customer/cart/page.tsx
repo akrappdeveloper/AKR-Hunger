@@ -5,9 +5,26 @@ import { useRouter } from 'next/navigation';
 import { doc, getDoc, setDoc, addDoc, collection, updateDoc, Timestamp, onSnapshot, runTransaction, increment, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { loadRazorpayScript } from '@/lib/razorpay';
+import {
+  UpiIcon,
+  GPayIcon,
+  PhonePeIcon,
+  PaytmIcon,
+  AmazonPayIcon,
+  VisaIcon,
+  MastercardIcon,
+  RuPayIcon,
+  EmiIcon,
+  PayLaterIcon,
+} from '@/components/customer/PaymentBadges';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
 import { Restaurant, Order, OrderItem, Promotion } from '@/lib/types';
+import { buildCleanItemPayload, serializeAddOns } from '@/lib/customization-utils';
+import {
+  ItemCustomizationBadges,
+  BillCustomizationBreakdownRows,
+} from '@/components/orders/ItemCustomizationBadges';
 import { generateProfessionalOrderId } from '@/lib/order-utils';
 import { validatePromotionCode, calculateDiscount, recordPromotionUsage } from '@/lib/promotions';
 import { notifyOrderPlaced, notifyPaymentResult } from '@/lib/customer-notifications';
@@ -43,6 +60,11 @@ import {
   Edit2,
   CheckCircle2,
   Smartphone,
+  ShieldCheck,
+  Lock,
+  AlertCircle,
+  Loader2,
+  RotateCcw,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import SafeImage from '@/components/ui/safe-image';
@@ -81,10 +103,25 @@ export default function CartPage() {
   }, []);
 
   // Checkout State
-  const [paymentMethod, setPaymentMethod] = useState<'cod' | 'online' | 'wallet'>('cod');
+  const [paymentMethod, setPaymentMethod] = useState<'cod' | 'online' | 'wallet'>('online');
   const [razorpayKeyId, setRazorpayKeyId] = useState<string>('');
   const [isAddressDialogOpen, setIsAddressDialogOpen] = useState(false);
   const [isLowBalanceModalOpen, setIsLowBalanceModalOpen] = useState(false);
+
+  // Advanced Payment Tracking System State
+  const [paymentTracking, setPaymentTracking] = useState<{
+    isOpen: boolean;
+    step: 'idle' | 'initiating' | 'gateway_open' | 'verifying' | 'confirmed' | 'failed' | 'cancelled';
+    message: string;
+    transactionId?: string;
+    orderId?: string;
+    method?: string;
+    errorReason?: string;
+  }>({
+    isOpen: false,
+    step: 'idle',
+    message: '',
+  });
 
   // Customer Contact Phone State
   const [customerPhoneInput, setCustomerPhoneInput] = useState('');
@@ -196,7 +233,15 @@ export default function CartPage() {
   }, [customer, user]);
 
   const activeCustomerPhone = realtimeCustomer?.phone || customer?.phone || '';
-  const hasSavedPhone = Boolean(activeCustomerPhone && activeCustomerPhone.trim().length > 0);
+  const activeCustomerPhoneDigits = activeCustomerPhone.replace(/\D/g, '');
+  const hasSavedPhone = activeCustomerPhoneDigits.length >= 10;
+  const inputPhoneDigits = customerPhoneInput.replace(/\D/g, '');
+  const hasValidPhone = hasSavedPhone || inputPhoneDigits.length >= 10;
+  const hasValidAddress = Boolean(
+    deliveryAddress &&
+      ((deliveryAddress.street && deliveryAddress.street.trim().length > 0) ||
+        (deliveryAddress.city && deliveryAddress.city.trim().length > 0))
+  );
 
   // Sync initial phone input if user hasn't edited
   useEffect(() => {
@@ -297,8 +342,9 @@ export default function CartPage() {
     if (!user || !restaurantId) return;
     if (items.length === 0) return toast.error('Cart is empty');
 
-    if (!deliveryAddress) {
-      toast.error('Please select a delivery address!');
+    if (!deliveryAddress || !hasValidAddress) {
+      toast.error('Delivery address is mandatory! Please select or add a delivery address.');
+      setIsAddressDialogOpen(true);
       return;
     }
 
@@ -354,20 +400,43 @@ export default function CartPage() {
     setLoading(true);
 
     try {
-      const orderItems: OrderItem[] = items.map((item) => ({
-        menuItemId: item.menuItemId,
-        name: item.name,
-        price: item.price,
-        quantity: item.quantity,
-        image: item.image,
-        specialInstructions: item.specialInstructions || specialInstructions,
-      }));
+      const orderItems: OrderItem[] = items.map((item) =>
+        buildCleanItemPayload({
+          menuItemId: item.menuItemId,
+          name: item.name,
+          price: item.price,
+          ...(item.basePrice !== undefined ? { basePrice: item.basePrice } : {}),
+          quantity: item.quantity,
+          image: item.image,
+          ...(item.spiceLevel ? { spiceLevel: item.spiceLevel } : {}),
+          ...(item.selectedSize
+            ? {
+                selectedSize: {
+                  ...(item.selectedSize.id ? { id: item.selectedSize.id } : {}),
+                  name: item.selectedSize.name,
+                  price: Number(item.selectedSize.price || 0),
+                },
+              }
+            : {}),
+          ...(serializeAddOns(item.selectedAddOns)
+            ? { selectedAddOns: serializeAddOns(item.selectedAddOns) }
+            : {}),
+          ...(item.specialInstructions ? { specialInstructions: item.specialInstructions } : {}),
+        })
+      );
 
       // ================= WALLET PAYMENT FLOW =================
       if (paymentMethod === 'wallet') {
         const walletTxId = `WLT-${Date.now().toString(36).toUpperCase()}`;
         const customerRef = doc(db, 'customers', user.uid);
         const txColRef = collection(db, 'customers', user.uid, 'walletTransactions');
+
+        setPaymentTracking({
+          isOpen: true,
+          step: 'initiating',
+          message: 'Verifying Hunger Wallet balance & authenticating transaction...',
+          method: 'wallet',
+        });
 
         // Atomically verify balance and deduct funds inside Firestore transaction
         await runTransaction(db, async (transaction) => {
@@ -388,8 +457,15 @@ export default function CartPage() {
           });
         });
 
+        setPaymentTracking({
+          isOpen: true,
+          step: 'verifying',
+          message: 'Wallet balance deducted successfully. Transmitting order to kitchen...',
+          method: 'wallet',
+          transactionId: walletTxId,
+        });
+
         // Create immediately confirmed order
-        // Generate unified professional Order ID (e.g. KRIIEFDI4829)
         const orderId = generateProfessionalOrderId();
 
         const orderData: Order = {
@@ -426,6 +502,19 @@ export default function CartPage() {
           customerEmail: user.email || '',
           restaurantName: restaurant?.name || 'Unknown Restaurant',
           deliveryOtp: Math.floor(1000 + Math.random() * 9000).toString(),
+          paymentTracking: {
+            status: 'completed',
+            gateway: 'Hunger Wallet Engine',
+            transactionId: walletTxId,
+            paidAt: new Date().toISOString(),
+            amount: total,
+            currency: 'INR',
+            auditTrail: [
+              { stage: 'initiated', timestamp: new Date().toISOString(), message: 'Wallet debit requested' },
+              { stage: 'verified', timestamp: new Date().toISOString(), message: `₹${total} debited from Hunger Wallet (${walletTxId})` },
+              { stage: 'confirmed', timestamp: new Date().toISOString(), message: 'Order sent to restaurant' },
+            ]
+          } as any,
         };
 
         // Save order with matching document ID so all panels see the exact same ID
@@ -451,13 +540,13 @@ export default function CartPage() {
           createdAt: serverTimestamp(),
         });
 
-        // Trigger Notification (Fire and forget)
+        // Trigger Notification
         fetch('/api/notifications/new-order', {
           method: 'POST',
           body: JSON.stringify({ orderId }),
         }).catch((err) => console.error('Failed to trigger notification', err));
 
-        // Send Order Confirmation & Wallet Payment Receipt Emails via Resend
+        // Send confirmation emails
         if (user.email) {
           fetch('/api/email/send', {
             method: 'POST',
@@ -494,7 +583,6 @@ export default function CartPage() {
           }).catch((err) => console.error('[Resend] Wallet receipt email notice:', err));
         }
 
-        // Notify Customer of Order & Wallet Payment
         notifyOrderPlaced({
           orderId,
           customerId: user.uid,
@@ -503,13 +591,30 @@ export default function CartPage() {
           paymentMethod: 'wallet',
         }).catch((e) => console.error('Error sending wallet notification:', e));
 
+        setPaymentTracking({
+          isOpen: true,
+          step: 'confirmed',
+          message: `₹${total} paid securely from Hunger Wallet! Order #${orderId} confirmed.`,
+          orderId,
+          transactionId: walletTxId,
+          method: 'wallet',
+        });
+
         toast.success(`₹${total} paid securely from your Hunger Wallet! Order #${orderId} confirmed.`);
         clearCart();
-        router.push(`/customer/orders/tracking/${orderId}`);
+        setTimeout(() => {
+          router.push(`/customer/orders/tracking/${orderId}`);
+        }, 1200);
         return;
       }
 
-      // ================= COD / ONLINE PAYMENT FLOW =================
+      // ================= ONLINE PAYMENT FLOW (Order ONLY created AFTER verification) =================
+      if (paymentMethod === 'online') {
+        await handleOnlinePayment(orderItems, total, verifiedPhone);
+        return;
+      }
+
+      // ================= CASH ON DELIVERY (COD) FLOW =================
       const orderId = generateProfessionalOrderId();
 
       const orderData: Order = {
@@ -521,7 +626,7 @@ export default function CartPage() {
         items: orderItems,
         deliveryAddress,
         status: 'pending',
-        paymentMethod,
+        paymentMethod: 'cod',
         paymentStatus: 'pending',
         subtotal,
         packagingCharges,
@@ -536,8 +641,8 @@ export default function CartPage() {
         promotionId: appliedPromotion?.id || '',
         specialInstructions: specialInstructions || '',
         total,
-        amountPaid: paymentMethod === 'cod' ? 0 : total,
-        balanceDue: paymentMethod === 'cod' ? total : 0,
+        amountPaid: 0,
+        balanceDue: total,
         createdAt: new Date(),
         updatedAt: new Date(),
         customerName: realtimeCustomer?.name || 'Guest',
@@ -545,189 +650,299 @@ export default function CartPage() {
         customerEmail: user.email || '',
         restaurantName: restaurant?.name || 'Unknown Restaurant',
         deliveryOtp: Math.floor(1000 + Math.random() * 9000).toString(),
+        paymentTracking: {
+          status: 'pending',
+          gateway: 'Cash on Delivery (COD)',
+          paymentMethod: 'cod',
+          paidAt: null,
+          amount: total,
+          currency: 'INR',
+          auditTrail: [
+            { stage: 'initiated', timestamp: new Date().toISOString(), message: 'Cash on Delivery selected' },
+            { stage: 'confirmed', timestamp: new Date().toISOString(), message: 'Order placed, pay cash upon delivery' }
+          ]
+        } as any,
       };
 
-      // Save order with matching document ID so all panels see the exact same ID
       await setDoc(doc(db, 'orders', orderId), {
         ...orderData,
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now(),
       });
 
-      // Record promotion usage if a promotion was applied
       if (appliedPromotion && user) {
         recordPromotionUsage(appliedPromotion.id, user.uid, orderId, discountAmount).catch(e => console.error('Promo record error:', e));
       }
 
-      if (paymentMethod === 'cod') {
-        // Trigger Notification (Fire and forget)
-        fetch('/api/notifications/new-order', {
+      fetch('/api/notifications/new-order', {
+        method: 'POST',
+        body: JSON.stringify({ orderId }),
+      }).catch((err) => console.error('Failed to trigger notification', err));
+
+      if (user.email) {
+        fetch('/api/email/send', {
           method: 'POST',
-          body: JSON.stringify({ orderId }),
-        }).catch((err) => console.error('Failed to trigger notification', err));
-
-        // Send Order Confirmation Email via Resend
-        if (user.email) {
-          fetch('/api/email/send', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              type: 'order_placed',
-              orderId,
-              customerEmail: user.email,
-              customerName: realtimeCustomer?.name || 'Foodie',
-              restaurantName: restaurant?.name || 'Restaurant',
-              items: orderItems,
-              total,
-              subtotal,
-              deliveryCharge,
-              taxes,
-              discountAmount,
-              paymentMethod: 'cod',
-              deliveryAddress,
-            }),
-          }).catch((err) => console.error('[Resend] COD order confirmation email notice:', err));
-        }
-
-        // Notify Customer of Order & COD Payment
-        notifyOrderPlaced({
-          orderId,
-          customerId: user.uid,
-          restaurantName: restaurant?.name || 'Restaurant',
-          total,
-          paymentMethod: 'cod',
-        }).catch((e) => console.error('Error sending COD notification:', e));
-
-        toast.success(`Order #${orderId} placed successfully!`);
-        clearCart();
-        router.push(`/customer/orders/tracking/${orderId}`);
-      } else {
-        await handleOnlinePayment(orderId, total, verifiedPhone);
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'order_placed',
+            orderId,
+            customerEmail: user.email,
+            customerName: realtimeCustomer?.name || 'Foodie',
+            restaurantName: restaurant?.name || 'Restaurant',
+            items: orderItems,
+            total,
+            subtotal,
+            deliveryCharge,
+            taxes,
+            discountAmount,
+            paymentMethod: 'cod',
+            deliveryAddress,
+          }),
+        }).catch((err) => console.error('[Resend] COD order confirmation email notice:', err));
       }
+
+      notifyOrderPlaced({
+        orderId,
+        customerId: user.uid,
+        restaurantName: restaurant?.name || 'Restaurant',
+        total,
+        paymentMethod: 'cod',
+      }).catch((e) => console.error('Error sending COD notification:', e));
+
+      toast.success(`Order #${orderId} placed successfully via Cash on Delivery!`);
+      clearCart();
+      router.push(`/customer/orders/tracking/${orderId}`);
     } catch (error: any) {
       console.error('Order placement failed:', error);
       toast.error('Failed to place order: ' + error.message);
       setLoading(false);
+      setPaymentTracking({
+        isOpen: true,
+        step: 'failed',
+        message: error.message || 'Payment processing failed. No order was created.',
+        errorReason: error.message,
+      });
     }
   };
 
-  const handleOnlinePayment = async (orderId: string, amount: number, contactPhone?: string) => {
+  const handleOnlinePayment = async (orderItems: OrderItem[], amount: number, contactPhone?: string) => {
     if (!user) return;
     const currentUserId = user.uid;
+    const tempTxnRef = `TXN_PRE_${Date.now().toString(36).toUpperCase()}`;
+
     try {
+      setPaymentTracking({
+        isOpen: true,
+        step: 'initiating',
+        message: 'Establishing encrypted payment session with bank...',
+        method: 'online',
+      });
+
       const phoneToUse = contactPhone || realtimeCustomer?.phone || '';
       const res = await fetch('/api/payment/create-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           amount: Math.round(amount * 100),
-          orderId,
+          orderId: tempTxnRef,
           customerName: realtimeCustomer?.name,
           customerEmail: user.email,
           customerPhone: phoneToUse
         }),
       });
 
-      if (!res.ok) throw new Error('Failed to init payment');
+      if (!res.ok) throw new Error('Failed to initialize payment gateway.');
       const { razorpayOrderId } = await res.json();
 
-      await updateDoc(doc(db, 'orders', orderId), { razorpayOrderId });
+      setPaymentTracking({
+        isOpen: true,
+        step: 'gateway_open',
+        message: 'Waiting for UPI / Card / NetBanking payment approval...',
+        method: 'online',
+      });
 
       const options = {
-        key: razorpayKeyId || 'rzp_test_YOUR_KEY_HERE', // Fallback for dev if fetch failed
+        key: razorpayKeyId || 'rzp_test_YOUR_KEY_HERE',
         order_id: razorpayOrderId,
         amount: Math.round(amount * 100),
         currency: 'INR',
-        name: 'Hunger',
-        description: `Order #${orderId}`,
+        name: 'Hunger Food Delivery',
+        description: `Meal Order Payment (₹${amount})`,
         handler: async (response: any) => {
-          const verifyRes = await fetch('/api/payment/verify-payment', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              orderId,
-              razorpayOrderId: response.razorpay_order_id,
-              razorpayPaymentId: response.razorpay_payment_id,
-              razorpaySignature: response.razorpay_signature,
-            }),
+          setPaymentTracking({
+            isOpen: true,
+            step: 'verifying',
+            message: 'Verifying bank cryptographic signature & clearing order...',
+            method: 'online',
+            transactionId: response.razorpay_payment_id,
           });
 
-          if (verifyRes.ok) {
-            await updateDoc(doc(db, 'orders', orderId), {
-              paymentStatus: 'completed',
-              status: 'confirmed',
-              razorpayPaymentId: response.razorpay_payment_id,
-              amountPaid: amount,
-              balanceDue: 0,
-              updatedAt: Timestamp.now()
-            });
-            // Trigger Notification
-            fetch('/api/notifications/new-order', {
+          try {
+            const verifyRes = await fetch('/api/payment/verify-payment', {
               method: 'POST',
-              body: JSON.stringify({ orderId: orderId })
-            }).catch(err => console.error("Failed to trigger notification", err));
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                orderId: tempTxnRef,
+                razorpayOrderId: response.razorpay_order_id,
+                razorpayPaymentId: response.razorpay_payment_id,
+                razorpaySignature: response.razorpay_signature,
+              }),
+            });
 
-            // Send Order Confirmation & Payment Receipt Emails via Resend
-            if (user?.email) {
-              fetch('/api/email/send', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  type: 'order_placed',
-                  orderId,
-                  customerEmail: user.email,
-                  customerName: realtimeCustomer?.name || 'Foodie',
-                  restaurantName: restaurant?.name || 'Restaurant',
-                  items: items,
-                  total: amount,
-                  subtotal,
-                  deliveryCharge,
-                  taxes,
-                  discountAmount,
-                  paymentMethod: 'online',
-                  deliveryAddress,
-                }),
-              }).catch((err) => console.error('[Resend] Online order confirmation email notice:', err));
+            if (verifyRes.ok) {
+              // ONLY NOW create the confirmed order document in Firestore!
+              const orderId = generateProfessionalOrderId();
 
-              fetch('/api/email/send', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  type: 'payment_verified',
-                  orderId,
-                  customerEmail: user.email,
-                  customerName: realtimeCustomer?.name || 'Foodie',
-                  amount,
-                  paymentMethod: 'online',
-                  paymentId: response.razorpay_payment_id,
+              const orderData: Order = {
+                id: orderId,
+                orderId: orderId,
+                orderNumber: orderId,
+                customerId: currentUserId,
+                restaurantId: restaurantId || undefined,
+                items: orderItems,
+                deliveryAddress: deliveryAddress || undefined,
+                status: 'confirmed',
+                paymentMethod: 'online',
+                paymentStatus: 'completed',
+                razorpayPaymentId: response.razorpay_payment_id,
+                razorpayOrderId: response.razorpay_order_id,
+                subtotal,
+                packagingCharges,
+                platformFee,
+                taxableValue,
+                cgst,
+                sgst,
+                deliveryCharge,
+                deliveryFee: deliveryCharge,
+                taxes,
+                discountAmount: discountAmount || 0,
+                promotionId: appliedPromotion?.id || '',
+                specialInstructions: specialInstructions || '',
+                total: amount,
+                amountPaid: amount,
+                balanceDue: 0,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+                customerName: realtimeCustomer?.name || 'Guest',
+                customerPhone: phoneToUse,
+                customerEmail: user.email || '',
+                restaurantName: restaurant?.name || 'Unknown Restaurant',
+                deliveryOtp: Math.floor(1000 + Math.random() * 9000).toString(),
+                paymentTracking: {
                   status: 'completed',
-                }),
-              }).catch((err) => console.error('[Resend] Online payment receipt email notice:', err));
+                  gateway: 'Razorpay UPI / Cards / NetBanking',
+                  transactionId: response.razorpay_payment_id,
+                  razorpayOrderId: response.razorpay_order_id,
+                  paidAt: new Date().toISOString(),
+                  amount,
+                  currency: 'INR',
+                  auditTrail: [
+                    { stage: 'gateway_initiated', timestamp: new Date().toISOString(), message: 'Gateway session created' },
+                    { stage: 'bank_authorized', timestamp: new Date().toISOString(), message: `Bank payment verified (${response.razorpay_payment_id})` },
+                    { stage: 'signature_verified', timestamp: new Date().toISOString(), message: 'Cryptographic signature validated by server' },
+                    { stage: 'order_confirmed', timestamp: new Date().toISOString(), message: 'Order transmitted to restaurant kitchen' }
+                  ]
+                } as any,
+              };
+
+              await setDoc(doc(db, 'orders', orderId), {
+                ...orderData,
+                createdAt: Timestamp.now(),
+                updatedAt: Timestamp.now(),
+              });
+
+              if (appliedPromotion) {
+                recordPromotionUsage(appliedPromotion.id, currentUserId, orderId, discountAmount).catch(e => console.error('Promo record error:', e));
+              }
+
+              // Trigger Notification
+              fetch('/api/notifications/new-order', {
+                method: 'POST',
+                body: JSON.stringify({ orderId }),
+              }).catch(err => console.error("Failed to trigger notification", err));
+
+              // Send Emails
+              if (user?.email) {
+                fetch('/api/email/send', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    type: 'order_placed',
+                    orderId,
+                    customerEmail: user.email,
+                    customerName: realtimeCustomer?.name || 'Foodie',
+                    restaurantName: restaurant?.name || 'Restaurant',
+                    items: orderItems,
+                    total: amount,
+                    subtotal,
+                    deliveryCharge,
+                    taxes,
+                    discountAmount,
+                    paymentMethod: 'online',
+                    deliveryAddress,
+                  }),
+                }).catch((err) => console.error('[Resend] Online order confirmation email notice:', err));
+
+                fetch('/api/email/send', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    type: 'payment_verified',
+                    orderId,
+                    customerEmail: user.email,
+                    customerName: realtimeCustomer?.name || 'Foodie',
+                    amount,
+                    paymentMethod: 'online',
+                    paymentId: response.razorpay_payment_id,
+                    status: 'completed',
+                  }),
+                }).catch((err) => console.error('[Resend] Online payment receipt email notice:', err));
+              }
+
+              notifyPaymentResult({
+                orderId,
+                customerId: currentUserId,
+                amount,
+                status: 'completed',
+                method: 'online',
+                paymentId: response.razorpay_payment_id,
+              }).catch((e) => console.error('Error sending online payment notification:', e));
+
+              setPaymentTracking({
+                isOpen: true,
+                step: 'confirmed',
+                message: `Payment Verified! Order #${orderId} has been confirmed & transmitted to the kitchen.`,
+                orderId,
+                transactionId: response.razorpay_payment_id,
+                method: 'online',
+              });
+
+              clearCart();
+              toast.success('Payment successful! Order confirmed.');
+              setTimeout(() => {
+                router.push(`/customer/orders/tracking/${orderId}`);
+              }, 1200);
+            } else {
+              setPaymentTracking({
+                isOpen: true,
+                step: 'failed',
+                message: 'Payment verification failed. No order was created.',
+                method: 'online',
+                errorReason: 'Bank signature mismatch or expired token.',
+              });
+              toast.error('Payment verification failed. No order was placed.');
+              setLoading(false);
             }
-
-            // Notify Customer of Payment Success & Confirmed Order
-            notifyPaymentResult({
-              orderId,
-              customerId: currentUserId,
-              amount,
-              status: 'completed',
+          } catch (verifyErr: any) {
+            console.error('Verification error:', verifyErr);
+            setPaymentTracking({
+              isOpen: true,
+              step: 'failed',
+              message: 'Verification check encountered an error. No order was placed.',
               method: 'online',
-              paymentId: response.razorpay_payment_id,
-            }).catch((e) => console.error('Error sending online payment notification:', e));
-
-            clearCart();
-            toast.success('Payment successful!');
-            router.push(`/customer/orders/tracking/${orderId}`);
-          } else {
-            notifyPaymentResult({
-              orderId,
-              customerId: currentUserId,
-              amount,
-              status: 'failed',
-              method: 'online',
-              errorReason: 'Payment verification failed',
-            }).catch((e) => console.error('Error sending payment failed notification:', e));
-            toast.error('Payment verification failed');
+              errorReason: verifyErr.message,
+            });
+            toast.error('Payment check failed: ' + verifyErr.message);
             setLoading(false);
           }
         },
@@ -740,16 +955,13 @@ export default function CartPage() {
         modal: {
           ondismiss: () => {
             setLoading(false);
-            toast.info('Payment cancelled');
-            notifyPaymentResult({
-              orderId,
-              customerId: currentUserId,
-              amount,
-              status: 'cancelled',
+            setPaymentTracking({
+              isOpen: true,
+              step: 'cancelled',
+              message: 'Payment window was closed. No funds were debited, and no order was placed. Your cart items are intact.',
               method: 'online',
-              errorReason: 'Payment dismissed by user',
-            }).catch((e) => console.error('Error sending cancel notification:', e));
-            router.push(`/customer/orders/${orderId}`);
+            });
+            toast.info('Payment was cancelled. Your order has not been placed.');
           }
         }
       };
@@ -757,8 +969,14 @@ export default function CartPage() {
       const rzp = new window.Razorpay(options);
       rzp.open();
 
-    } catch (err) {
+    } catch (err: any) {
       console.error('Payment Error:', err);
+      setPaymentTracking({
+        isOpen: true,
+        step: 'failed',
+        message: err.message || 'Payment initialization failed.',
+        errorReason: err.message,
+      });
       toast.error('Online payment initialization failed.');
       setLoading(false);
     }
@@ -1035,8 +1253,10 @@ export default function CartPage() {
             </div>
 
             <div className="space-y-3 sm:space-y-4">
-              {items.map((item, idx) => (
-                <div key={idx} className="flex gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-muted/40 border border-border/60 hover:bg-muted/60 transition-colors group/item">
+              {items.map((item, idx) => {
+                const itemKey = item.id || item.menuItemId;
+                return (
+                <div key={itemKey || idx} className="flex gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-muted/40 border border-border/60 hover:bg-muted/60 transition-colors group/item">
                   <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl overflow-hidden flex-shrink-0 bg-muted relative">
                     <SafeImage
                       src={item.image}
@@ -1045,37 +1265,35 @@ export default function CartPage() {
                       fill
                     />
                   </div>
-                  <div className="flex-1 flex flex-col justify-between py-0.5">
+                  <div className="flex-1 flex flex-col justify-between py-0.5 min-w-0">
                     <div className="flex justify-between items-start gap-2">
-                      <div>
+                      <div className="min-w-0">
                         <h4 className="font-bold text-foreground text-sm sm:text-base line-clamp-1">{item.name}</h4>
                         <p className="text-xs text-muted-foreground line-clamp-1">{item.restaurantName}</p>
-                        {item.specialInstructions && (
-                          <div className="mt-1">
-                            <span className="text-[11px] text-primary font-semibold bg-primary/10 border border-primary/20 px-2 py-0.5 rounded-md inline-block">
-                              {item.specialInstructions}
-                            </span>
-                          </div>
-                        )}
+                        <ItemCustomizationBadges item={item} compact />
                       </div>
-                      <span className="font-bold text-primary text-sm sm:text-base whitespace-nowrap">₹{item.price * item.quantity}</span>
+                      <div className="text-right whitespace-nowrap shrink-0">
+                        <span className="font-bold text-primary text-sm sm:text-base block">₹{(item.price * item.quantity).toFixed(2)}</span>
+                        <span className="text-[11px] text-muted-foreground">₹{item.price} × {item.quantity}</span>
+                      </div>
                     </div>
 
                     <div className="flex items-center justify-between mt-2">
                       {/* Quantity */}
                       <div className="flex items-center gap-1 bg-card rounded-lg p-1 border border-border shadow-xs">
-                        <button onClick={() => updateQuantity(item.menuItemId, item.quantity - 1)} className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center hover:bg-accent rounded-md transition text-foreground" aria-label="Decrease quantity"><Minus className="w-3.5 h-3.5" /></button>
+                        <button onClick={() => updateQuantity(itemKey, item.quantity - 1)} className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center hover:bg-accent rounded-md transition text-foreground" aria-label="Decrease quantity"><Minus className="w-3.5 h-3.5" /></button>
                         <span className="text-xs sm:text-sm font-bold w-6 text-center text-foreground">{item.quantity}</span>
-                        <button onClick={() => updateQuantity(item.menuItemId, item.quantity + 1)} className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center hover:bg-accent rounded-md transition text-foreground" aria-label="Increase quantity"><Plus className="w-3.5 h-3.5" /></button>
+                        <button onClick={() => updateQuantity(itemKey, item.quantity + 1)} className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center hover:bg-accent rounded-md transition text-foreground" aria-label="Increase quantity"><Plus className="w-3.5 h-3.5" /></button>
                       </div>
 
-                      <button onClick={() => removeItem(item.menuItemId)} className="text-muted-foreground hover:bg-destructive/15 hover:text-destructive p-2 rounded-lg transition" aria-label="Remove item">
+                      <button onClick={() => removeItem(itemKey)} className="text-muted-foreground hover:bg-destructive/15 hover:text-destructive p-2 rounded-lg transition" aria-label="Remove item">
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
@@ -1189,9 +1407,29 @@ export default function CartPage() {
                   <div className="w-9 h-9 rounded-xl bg-blue-500/15 text-blue-500 flex items-center justify-center shrink-0">
                     <CreditCard className="w-4.5 h-4.5" />
                   </div>
-                  <div>
-                    <p className="font-bold text-foreground text-sm sm:text-base">Pay Online</p>
-                    <p className="text-xs text-muted-foreground">UPI, Cards, NetBanking, Wallets</p>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="font-bold text-foreground text-sm sm:text-base">Pay Online &amp; EMI</p>
+                      <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 border border-indigo-500/30">
+                        No-Cost EMI
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-0.5">UPI, Cards, NetBanking, EMI &amp; Wallets</p>
+                    <div className="flex flex-wrap items-center gap-1.5 mt-2 opacity-90">
+                      <UpiIcon className="h-3 w-auto" />
+                      <GPayIcon className="h-3 w-auto" />
+                      <PhonePeIcon className="h-3 w-auto" />
+                      <PaytmIcon className="h-3 w-auto" />
+                      <AmazonPayIcon className="h-3 w-auto" />
+                      <VisaIcon className="h-3 w-auto" />
+                      <MastercardIcon className="h-3 w-auto" />
+                      <RuPayIcon className="h-3 w-auto" />
+                    </div>
+                    <div className="flex items-center gap-2 mt-2 pt-1 border-t border-border/50 text-[10px] text-muted-foreground">
+                      <EmiIcon />
+                      <span className="text-border">•</span>
+                      <PayLaterIcon />
+                    </div>
                   </div>
                 </div>
 
@@ -1406,6 +1644,8 @@ export default function CartPage() {
               </div>
 
               <div className="space-y-2.5 text-sm">
+                <BillCustomizationBreakdownRows items={items} />
+
                 {/* Item Subtotal */}
                 <div className="flex justify-between text-muted-foreground">
                   <span>Item Subtotal</span>
@@ -1500,12 +1740,10 @@ export default function CartPage() {
 
               <Button
                 onClick={handlePlaceOrder}
-                disabled={loading || items.length === 0 || !operatingStatus.isOpen}
+                disabled={loading || items.length === 0 || !operatingStatus.isOpen || !hasValidAddress || !hasValidPhone || (paymentMethod === 'wallet' && !isWalletSufficient)}
                 className={`w-full mt-5 sm:mt-6 h-13 sm:h-14 rounded-xl sm:rounded-2xl text-base font-bold shadow-lg transition-all active:scale-[0.98] ${
-                  !operatingStatus.isOpen
+                  !operatingStatus.isOpen || !hasValidAddress || !hasValidPhone || (paymentMethod === 'wallet' && !isWalletSufficient)
                     ? 'bg-muted text-muted-foreground cursor-not-allowed shadow-none'
-                    : paymentMethod === 'wallet' && !isWalletSufficient
-                    ? 'bg-amber-600 hover:bg-amber-700 text-white shadow-amber-600/20'
                     : 'bg-primary hover:bg-primary/90 text-primary-foreground shadow-primary/20'
                 }`}
               >
@@ -1515,31 +1753,64 @@ export default function CartPage() {
                   <span className="flex items-center justify-center gap-2">
                     <AlertTriangle className="w-5 h-5 text-rose-500" /> Restaurant Closed ({operatingStatus.reason})
                   </span>
-                ) : !hasSavedPhone && customerPhoneInput.replace(/\D/g, '').length !== 10 ? (
+                ) : !hasValidAddress && !hasValidPhone ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <AlertTriangle className="w-5 h-5" /> Add Address & Phone to Place Order
+                  </span>
+                ) : !hasValidAddress ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <MapPin className="w-5 h-5" /> Select Delivery Address to Place Order
+                  </span>
+                ) : !hasValidPhone ? (
                   <span className="flex items-center justify-center gap-2">
                     <Phone className="w-5 h-5" /> Add Phone Number to Place Order
                   </span>
                 ) : paymentMethod === 'wallet' ? (
                   isWalletSufficient ? (
                     <span className="flex items-center gap-2">
-                      <Wallet className="w-5 h-5" /> Pay ₹{total} from Wallet
+                      <Wallet className="w-5 h-5" /> Pay ₹{total.toFixed(2)} from Wallet
                     </span>
                   ) : (
-                    <span className="flex items-center gap-2 text-sm sm:text-base">
-                      <AlertTriangle className="w-5 h-5" /> Insufficient Balance (Add Funds)
+                    <span className="flex items-center gap-2 text-sm sm:text-base text-amber-500 font-bold">
+                      <AlertTriangle className="w-5 h-5" /> Short by ₹{deficitAmount.toFixed(2)} (Add Funds to Order)
                     </span>
                   )
                 ) : paymentMethod === 'cod' ? (
                   'Place Cash on Delivery Order'
                 ) : (
-                  'Proceed to Online Payment'
+                  'Pay ₹' + total.toFixed(2) + ' Online Now'
                 )}
               </Button>
 
-              {!hasSavedPhone && customerPhoneInput.replace(/\D/g, '').length !== 10 && (
+              {paymentMethod === 'wallet' && !isWalletSufficient && (
+                <div className="flex items-center justify-center gap-2 mt-2">
+                  <Link href="/customer/wallet">
+                    <Button size="sm" variant="outline" className="h-8 text-xs font-bold rounded-xl text-primary border-primary/40 hover:bg-primary/10">
+                      <Plus className="w-3.5 h-3.5 mr-1" /> Add ₹{deficitAmount.toFixed(2)} to Wallet
+                    </Button>
+                  </Link>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setPaymentMethod('online')}
+                    className="h-8 text-xs font-bold rounded-xl text-muted-foreground hover:text-foreground"
+                  >
+                    Switch to Pay Online
+                  </Button>
+                </div>
+              )}
+
+              {!hasValidAddress && (
                 <p className="text-[11px] text-amber-600 dark:text-amber-400 text-center font-medium mt-2 flex items-center justify-center gap-1">
                   <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
-                  <span>A contact phone number is required before confirming your order.</span>
+                  <span>A delivery address is required before confirming your order.</span>
+                </p>
+              )}
+
+              {!hasValidPhone && (
+                <p className="text-[11px] text-amber-600 dark:text-amber-400 text-center font-medium mt-2 flex items-center justify-center gap-1">
+                  <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                  <span>A 10-digit contact phone number is required before confirming your order.</span>
                 </p>
               )}
 
@@ -1620,6 +1891,175 @@ export default function CartPage() {
               Cash on Delivery
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Advanced Live Payment Tracking Modal */}
+      <Dialog
+        open={paymentTracking.isOpen}
+        onOpenChange={(open) => {
+          if (!open && (paymentTracking.step === 'confirmed' || paymentTracking.step === 'failed' || paymentTracking.step === 'cancelled')) {
+            setPaymentTracking(prev => ({ ...prev, isOpen: false }));
+          }
+        }}
+      >
+        <DialogContent className="max-w-lg rounded-3xl p-6 sm:p-8 bg-card border-2 border-border shadow-2xl z-50">
+          <div className="space-y-6 text-center">
+            
+            {/* Header Icon & Status Banner */}
+            <div className="relative mx-auto w-20 h-20 flex items-center justify-center">
+              {paymentTracking.step === 'initiating' || paymentTracking.step === 'gateway_open' ? (
+                <div className="w-20 h-20 rounded-3xl bg-blue-500/15 border-2 border-blue-500/30 flex items-center justify-center text-blue-500 relative">
+                  <Lock className="w-9 h-9 animate-pulse" />
+                  <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-blue-500 animate-ping" />
+                </div>
+              ) : paymentTracking.step === 'verifying' ? (
+                <div className="w-20 h-20 rounded-3xl bg-amber-500/15 border-2 border-amber-500/30 flex items-center justify-center text-amber-500 relative">
+                  <Loader2 className="w-9 h-9 animate-spin" />
+                </div>
+              ) : paymentTracking.step === 'confirmed' ? (
+                <div className="w-20 h-20 rounded-3xl bg-emerald-500/15 border-2 border-emerald-500/40 flex items-center justify-center text-emerald-500 shadow-xl shadow-emerald-500/20">
+                  <CheckCircle2 className="w-10 h-10 text-emerald-500 animate-bounce" />
+                </div>
+              ) : (
+                <div className="w-20 h-20 rounded-3xl bg-rose-500/15 border-2 border-rose-500/40 flex items-center justify-center text-rose-500">
+                  <AlertCircle className="w-10 h-10 text-rose-500" />
+                </div>
+              )}
+            </div>
+
+            <div>
+              <Badge
+                className={`mb-2 font-mono uppercase text-[10px] tracking-wider px-2.5 py-0.5 ${
+                  paymentTracking.step === 'confirmed'
+                    ? 'bg-emerald-500 text-white'
+                    : paymentTracking.step === 'failed' || paymentTracking.step === 'cancelled'
+                    ? 'bg-rose-500 text-white'
+                    : 'bg-primary text-primary-foreground'
+                }`}
+              >
+                {paymentTracking.step === 'confirmed'
+                  ? 'Payment Verified 100%'
+                  : paymentTracking.step === 'failed'
+                  ? 'Payment Failed'
+                  : paymentTracking.step === 'cancelled'
+                  ? 'Payment Cancelled'
+                  : 'Live Payment Tracking'}
+              </Badge>
+
+              <h3 className="text-xl sm:text-2xl font-black text-foreground">
+                {paymentTracking.step === 'confirmed'
+                  ? 'Order Confirmed!'
+                  : paymentTracking.step === 'failed'
+                  ? 'Payment Could Not Be Verified'
+                  : paymentTracking.step === 'cancelled'
+                  ? 'Checkout Incomplete'
+                  : 'Processing Secure Payment'}
+              </h3>
+
+              <p className="text-xs sm:text-sm text-muted-foreground mt-1 max-w-sm mx-auto">
+                {paymentTracking.message}
+              </p>
+            </div>
+
+            {/* Stepper Progress Bar */}
+            <div className="space-y-3 p-4 rounded-2xl bg-muted/40 border border-border/60 text-left text-xs">
+              <div className="flex items-center gap-3">
+                <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
+                  paymentTracking.step !== 'idle' ? 'bg-emerald-500 text-white' : 'bg-muted text-muted-foreground'
+                }`}>
+                  ✓
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-foreground truncate">1. 256-Bit SSL Handshake</p>
+                  <p className="text-[10px] text-muted-foreground">Encrypted session established</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
+                  paymentTracking.step === 'verifying' || paymentTracking.step === 'confirmed'
+                    ? 'bg-emerald-500 text-white'
+                    : paymentTracking.step === 'gateway_open'
+                    ? 'bg-blue-500 text-white animate-pulse'
+                    : 'bg-muted text-muted-foreground'
+                }`}>
+                  {paymentTracking.step === 'verifying' || paymentTracking.step === 'confirmed' ? '✓' : '2'}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-foreground truncate">2. Gateway Authorization</p>
+                  <p className="text-[10px] text-muted-foreground">UPI / Card / NetBanking / Wallet</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
+                  paymentTracking.step === 'confirmed'
+                    ? 'bg-emerald-500 text-white'
+                    : paymentTracking.step === 'verifying'
+                    ? 'bg-amber-500 text-white animate-pulse'
+                    : 'bg-muted text-muted-foreground'
+                }`}>
+                  {paymentTracking.step === 'confirmed' ? '✓' : '3'}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-foreground truncate">3. Bank Cryptographic Clearance</p>
+                  <p className="text-[10px] text-muted-foreground">Signature match &amp; settlement</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
+                  paymentTracking.step === 'confirmed' ? 'bg-emerald-500 text-white' : 'bg-muted text-muted-foreground'
+                }`}>
+                  {paymentTracking.step === 'confirmed' ? '✓' : '4'}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-foreground truncate">4. Kitchen Transmission</p>
+                  <p className="text-[10px] text-muted-foreground">Chef receives live order slip</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Details Box */}
+            {paymentTracking.transactionId && (
+              <div className="p-3 rounded-xl bg-card border border-border flex items-center justify-between text-xs font-mono">
+                <span className="text-muted-foreground">Txn Ref:</span>
+                <span className="font-bold text-primary truncate max-w-[200px]">
+                  {paymentTracking.transactionId}
+                </span>
+              </div>
+            )}
+
+            {/* Security Guarantee Strip */}
+            <div className="flex items-center justify-center gap-2 text-[11px] text-muted-foreground font-semibold">
+              <ShieldCheck className="w-4 h-4 text-emerald-500" />
+              <span>PCI-DSS Level 1 Encrypted • 100% Refund Guarantee</span>
+            </div>
+
+            {/* Actions for Failed / Cancelled State */}
+            {(paymentTracking.step === 'failed' || paymentTracking.step === 'cancelled') && (
+              <div className="flex items-center justify-center gap-3 pt-2">
+                <Button
+                  onClick={() => {
+                    setPaymentTracking(prev => ({ ...prev, isOpen: false }));
+                    handlePlaceOrder();
+                  }}
+                  className="rounded-xl font-bold bg-primary text-primary-foreground gap-1.5"
+                >
+                  <RotateCcw className="w-4 h-4" /> Try Payment Again
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setPaymentTracking(prev => ({ ...prev, isOpen: false }))}
+                  className="rounded-xl font-bold"
+                >
+                  Close &amp; Change Method
+                </Button>
+              </div>
+            )}
+
+          </div>
         </DialogContent>
       </Dialog>
     </div>

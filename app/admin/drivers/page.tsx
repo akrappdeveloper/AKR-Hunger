@@ -148,7 +148,7 @@ export default function AdminDriversPage() {
               <DropdownMenuItem onClick={(e) => { e.stopPropagation(); updateDriverStatus(row.id, 'online'); }} disabled={row.status === 'online'} className="hover:bg-secondary hover:text-foreground cursor-pointer">
                 <Check className="w-4 h-4 mr-2 text-blue-400" /> Set Active
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); updateDriverStatus(row.id, 'offline'); }} disabled={row.status === 'offline' || row.status === 'suspended'} className="hover:bg-secondary hover:text-foreground cursor-pointer">
+              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); updateDriverStatus(row.id, 'offline'); }} disabled={row.status === 'offline' || (row.status as string) === 'suspended'} className="hover:bg-secondary hover:text-foreground cursor-pointer">
                 <Ban className="w-4 h-4 mr-2 text-amber-400" /> Suspend
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -165,7 +165,7 @@ export default function AdminDriversPage() {
 
   const stats = {
     total: drivers.length,
-    active: drivers.filter(d => d.status === 'active' || d.status === 'online').length,
+    active: drivers.filter(d => (d.status as string) === 'active' || d.status === 'online').length,
     verified: drivers.filter(d => d.isVerified).length,
     pendingKyc: drivers.filter(d => d.kycStatus === 'pending' || !d.isVerified).length,
   };

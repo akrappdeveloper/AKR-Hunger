@@ -41,8 +41,10 @@ import org.osmdroid.views.overlay.Marker;
 import org.osmdroid.views.overlay.Polyline;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 /**
  * Live Tracking Radar Activity with custom open-source OpenStreetMap (OSMDroid).
@@ -78,6 +80,12 @@ public class LiveTrackingRadarActivity extends AppCompatActivity {
     private float currentBearing = 0f;
     private double currentSpeedKmh = 0.0;
 
+    // Nearby markers
+    private final List<Marker> nearbyRestaurantMarkers = new ArrayList<>();
+    private final List<Marker> nearbyPartnerMarkers = new ArrayList<>();
+    private ListenerRegistration restaurantListener;
+    private ListenerRegistration partnerLocationsListener;
+
     private boolean isSimulating = false;
     private Handler simHandler;
     private int simIndex = 0;
@@ -109,6 +117,8 @@ public class LiveTrackingRadarActivity extends AppCompatActivity {
         updateNetworkAndIpTelemetry();
 
         startLiveGpsTracking();
+        loadNearbyRestaurants();
+        loadNearbyDeliveryPartners();
     }
 
     private void readIntentData() {
@@ -408,6 +418,112 @@ public class LiveTrackingRadarActivity extends AppCompatActivity {
         simWaypoints.add(targetDestGeoPoint);
     }
 
+    /**
+     * Loads nearby restaurants from Firestore and places markers on map.
+     */
+    private void loadNearbyRestaurants() {
+        if (restaurantListener != null) restaurantListener.remove();
+        restaurantListener = db.collection(Constants.COLLECTION_RESTAURANTS)
+                .limit(30)
+                .addSnapshotListener((snapshots, e) -> {
+                    if (e != null || snapshots == null) return;
+
+                    // Clear old restaurant markers
+                    for (Marker m : nearbyRestaurantMarkers) {
+                        mapView.getOverlays().remove(m);
+                    }
+                    nearbyRestaurantMarkers.clear();
+
+                    for (com.google.firebase.firestore.DocumentSnapshot doc : snapshots.getDocuments()) {
+                        Double lat = doc.getDouble("latitude");
+                        Double lng = doc.getDouble("longitude");
+                        if (lat == null) lat = doc.getDouble("lat");
+                        if (lng == null) lng = doc.getDouble("lng");
+                        if (lat == null || lng == null || (lat == 0.0 && lng == 0.0)) continue;
+
+                        String name = doc.getString("name");
+                        if (name == null) name = doc.getString("restaurantName");
+                        if (name == null) name = "Restaurant";
+
+                        String address = doc.getString("address");
+
+                        Marker marker = new Marker(mapView);
+                        marker.setPosition(new GeoPoint(lat, lng));
+                        marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
+                        marker.setTitle("🏪 " + name);
+                        if (address != null) marker.setSnippet(address);
+
+                        // Use restaurant pin icon
+                        android.graphics.drawable.Drawable icon = ContextCompat.getDrawable(this, R.drawable.ic_restaurant_pin);
+                        if (icon != null) {
+                            android.graphics.drawable.Drawable tinted = icon.mutate();
+                            tinted.setColorFilter(new android.graphics.PorterDuffColorFilter(
+                                    Color.parseColor("#FF6B00"), android.graphics.PorterDuff.Mode.SRC_IN));
+                            marker.setIcon(tinted);
+                        }
+
+                        mapView.getOverlays().add(marker);
+                        nearbyRestaurantMarkers.add(marker);
+                    }
+                    mapView.invalidate();
+                });
+    }
+
+    /**
+     * Loads nearby active delivery partners from Firestore and places bike markers on map.
+     */
+    private void loadNearbyDeliveryPartners() {
+        if (partnerLocationsListener != null) partnerLocationsListener.remove();
+        partnerLocationsListener = db.collection(Constants.COLLECTION_DRIVER_LOCATIONS)
+                .limit(20)
+                .addSnapshotListener((snapshots, e) -> {
+                    if (e != null || snapshots == null) return;
+
+                    // Clear old partner markers
+                    for (Marker m : nearbyPartnerMarkers) {
+                        mapView.getOverlays().remove(m);
+                    }
+                    nearbyPartnerMarkers.clear();
+
+                    String myUid = auth.getCurrentUser() != null ? auth.getCurrentUser().getUid() : "";
+
+                    for (com.google.firebase.firestore.DocumentSnapshot doc : snapshots.getDocuments()) {
+                        // Skip self
+                        if (doc.getId().equals(myUid)) continue;
+
+                        Double lat = doc.getDouble("latitude");
+                        Double lng = doc.getDouble("longitude");
+                        if (lat == null || lng == null || (lat == 0.0 && lng == 0.0)) continue;
+
+                        String partnerName = doc.getString("partnerName");
+                        if (partnerName == null) partnerName = doc.getString("name");
+                        if (partnerName == null) partnerName = "Delivery Partner";
+
+                        Marker marker = new Marker(mapView);
+                        marker.setPosition(new GeoPoint(lat, lng));
+                        marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER);
+                        marker.setTitle("🛵 " + partnerName);
+                        marker.setFlat(true);
+
+                        Double heading = doc.getDouble("heading");
+                        if (heading != null) marker.setRotation(heading.floatValue());
+
+                        // Use bike delivery icon (tinted blue to distinguish from self)
+                        android.graphics.drawable.Drawable icon = ContextCompat.getDrawable(this, R.drawable.ic_delivery_bike_pin);
+                        if (icon != null) {
+                            android.graphics.drawable.Drawable tinted = icon.mutate();
+                            tinted.setColorFilter(new android.graphics.PorterDuffColorFilter(
+                                    Color.parseColor("#2979FF"), android.graphics.PorterDuff.Mode.SRC_IN));
+                            marker.setIcon(tinted);
+                        }
+
+                        mapView.getOverlays().add(marker);
+                        nearbyPartnerMarkers.add(marker);
+                    }
+                    mapView.invalidate();
+                });
+    }
+
     private void toggleSimulationMode() {
         if (!isSimulating) {
             isSimulating = true;
@@ -476,6 +592,8 @@ public class LiveTrackingRadarActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         if (locationListener != null) locationListener.remove();
+        if (restaurantListener != null) restaurantListener.remove();
+        if (partnerLocationsListener != null) partnerLocationsListener.remove();
         if (locationCallback != null && fusedLocationClient != null) {
             fusedLocationClient.removeLocationUpdates(locationCallback);
         }

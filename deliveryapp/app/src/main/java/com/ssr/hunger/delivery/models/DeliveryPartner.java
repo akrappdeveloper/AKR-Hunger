@@ -1,9 +1,11 @@
 package com.ssr.hunger.delivery.models;
 
+import com.google.firebase.firestore.IgnoreExtraProperties;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
+@IgnoreExtraProperties
 public class DeliveryPartner implements Serializable {
     private String uid;
     private String name;
@@ -35,6 +37,16 @@ public class DeliveryPartner implements Serializable {
     private String verificationStatus; // "pending", "approved", "rejected"
     private String rejectionReason;
     private String password;
+
+    private String profileImage;
+    private String username;
+    private String address;
+    private String city;
+    private String pincode;
+    private String alternatePhone;
+    private String aadhaarNumber;
+    private String aadhaarDocument;
+    private String insuranceDocument;
 
     public DeliveryPartner() {
         this.servicePincodes = new ArrayList<>();
@@ -76,10 +88,13 @@ public class DeliveryPartner implements Serializable {
     public String getStatus() { return status != null ? status : "offline"; }
     public void setStatus(String status) { this.status = status; }
 
-    public String getKycStatus() { return kycStatus != null ? kycStatus : "pending"; }
+    public String getKycStatus() {
+        if ("approved".equalsIgnoreCase(verificationStatus) || isVerified) return "approved";
+        return kycStatus != null ? kycStatus : "pending";
+    }
     public void setKycStatus(String kycStatus) { this.kycStatus = kycStatus; }
 
-    public boolean isVerified() { return isVerified || "approved".equalsIgnoreCase(kycStatus); }
+    public boolean isVerified() { return isVerified || "approved".equalsIgnoreCase(kycStatus) || "approved".equalsIgnoreCase(verificationStatus); }
     public void setVerified(boolean verified) { isVerified = verified; }
 
     public List<String> getServicePincodes() {
@@ -136,10 +151,37 @@ public class DeliveryPartner implements Serializable {
     public void setPassword(String password) { this.password = password; }
 
     public boolean isApproved() {
-        return "approved".equalsIgnoreCase(getVerificationStatus()) || isVerified;
+        return "approved".equalsIgnoreCase(getVerificationStatus()) || "approved".equalsIgnoreCase(kycStatus) || isVerified;
     }
 
     public boolean isOnline() {
         return isAvailable || "online".equalsIgnoreCase(status);
     }
+
+    public String getProfileImage() { return profileImage; }
+    public void setProfileImage(String profileImage) { this.profileImage = profileImage; }
+
+    public String getUsername() { return username != null ? username : ""; }
+    public void setUsername(String username) { this.username = username; }
+
+    public String getAddress() { return address != null ? address : ""; }
+    public void setAddress(String address) { this.address = address; }
+
+    public String getCity() { return city != null ? city : ""; }
+    public void setCity(String city) { this.city = city; }
+
+    public String getPincode() { return pincode != null ? pincode : ""; }
+    public void setPincode(String pincode) { this.pincode = pincode; }
+
+    public String getAlternatePhone() { return alternatePhone != null ? alternatePhone : ""; }
+    public void setAlternatePhone(String alternatePhone) { this.alternatePhone = alternatePhone; }
+
+    public String getAadhaarNumber() { return aadhaarNumber != null ? aadhaarNumber : ""; }
+    public void setAadhaarNumber(String aadhaarNumber) { this.aadhaarNumber = aadhaarNumber; }
+
+    public String getAadhaarDocument() { return aadhaarDocument; }
+    public void setAadhaarDocument(String aadhaarDocument) { this.aadhaarDocument = aadhaarDocument; }
+
+    public String getInsuranceDocument() { return insuranceDocument; }
+    public void setInsuranceDocument(String insuranceDocument) { this.insuranceDocument = insuranceDocument; }
 }

@@ -23,6 +23,9 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
+import com.razorpay.Checkout;
+import com.razorpay.PaymentData;
+import com.razorpay.PaymentResultWithDataListener;
 import com.ssr.hunger.delivery.R;
 import com.ssr.hunger.delivery.dialogs.PermissionRationaleDialog;
 import com.ssr.hunger.delivery.fragments.DashboardOrdersFragment;
@@ -34,7 +37,32 @@ import com.ssr.hunger.delivery.utils.PermissionManager;
 
 import java.util.Arrays;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements PaymentResultWithDataListener {
+
+    public interface OnRazorpayPaymentCallback {
+        void onPaymentSuccess(String razorpayPaymentId, PaymentData paymentData);
+        void onPaymentError(int code, String response, PaymentData paymentData);
+    }
+
+    private OnRazorpayPaymentCallback razorpayPaymentCallback;
+
+    public void setRazorpayPaymentCallback(OnRazorpayPaymentCallback callback) {
+        this.razorpayPaymentCallback = callback;
+    }
+
+    @Override
+    public void onPaymentSuccess(String razorpayPaymentId, PaymentData paymentData) {
+        if (razorpayPaymentCallback != null) {
+            razorpayPaymentCallback.onPaymentSuccess(razorpayPaymentId, paymentData);
+        }
+    }
+
+    @Override
+    public void onPaymentError(int code, String response, PaymentData paymentData) {
+        if (razorpayPaymentCallback != null) {
+            razorpayPaymentCallback.onPaymentError(code, response, paymentData);
+        }
+    }
 
     private static final String STATE_CURRENT_TAB = "state_current_tab";
     private static final String TAG_HOME = "tag_nav_home";
@@ -54,6 +82,8 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        Checkout.preload(getApplicationContext());
 
         bottomNav = findViewById(R.id.bottom_navigation);
         cardBottomNav = findViewById(R.id.card_bottom_nav);
@@ -216,17 +246,20 @@ public class MainActivity extends AppCompatActivity {
         activeOrdersBadgeListener = FirebaseFirestore.getInstance()
                 .collection(Constants.COLLECTION_ORDERS)
                 .whereEqualTo("deliveryPersonId", uid)
-                .whereIn("status", Arrays.asList(
-                        Constants.STATUS_OUT_FOR_DELIVERY,
-                        Constants.STATUS_READY,
-                        Constants.STATUS_CONFIRMED,
-                        Constants.STATUS_PREPARING
-                ))
                 .addSnapshotListener((snapshot, error) -> {
                     if (error != null || snapshot == null) {
                         return;
                     }
-                    int activeCount = snapshot.size();
+                    int activeCount = 0;
+                    for (com.google.firebase.firestore.DocumentSnapshot doc : snapshot.getDocuments()) {
+                        String st = doc.getString("status");
+                        if (st != null) {
+                            String s = st.trim().toLowerCase();
+                            if (!"delivered".equals(s) && !"cancelled".equals(s) && !"completed".equals(s) && !"refunded".equals(s) && !"returned_to_restaurant".equals(s)) {
+                                activeCount++;
+                            }
+                        }
+                    }
                     updateOrdersBadge(activeCount);
                 });
     }
@@ -264,9 +297,18 @@ public class MainActivity extends AppCompatActivity {
         if (intent != null && intent.hasExtra(Constants.EXTRA_ORDER_ID)) {
             String orderId = intent.getStringExtra(Constants.EXTRA_ORDER_ID);
             if (orderId != null && !orderId.isEmpty()) {
-                Intent activeDetail = new Intent(this, OrderActiveDetailActivity.class);
-                activeDetail.putExtra(Constants.EXTRA_ORDER_ID, orderId);
-                startActivity(activeDetail);
+                Fragment currentFragment = getSupportFragmentManager().findFragmentByTag(TAG_HOME);
+                if (currentFragment instanceof DashboardOrdersFragment) {
+                    ((DashboardOrdersFragment) currentFragment).highlightOrAcceptIncomingOrder(orderId);
+                } else {
+                    DashboardOrdersFragment homeFrag = new DashboardOrdersFragment();
+                    Bundle args = new Bundle();
+                    args.putString(Constants.EXTRA_ORDER_ID, orderId);
+                    homeFrag.setArguments(args);
+                    currentTabId = R.id.nav_home;
+                    syncNavigationSelection();
+                    loadFragment(homeFrag, TAG_HOME);
+                }
             }
         }
     }

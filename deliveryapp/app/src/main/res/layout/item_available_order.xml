@@ -4,10 +4,10 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginBottom="12dp"
-    app:cardCornerRadius="16dp"
-    app:cardElevation="0dp"
-    app:strokeWidth="1dp"
+    android:layout_marginBottom="14dp"
+    app:cardCornerRadius="20dp"
+    app:cardElevation="6dp"
+    app:strokeWidth="1.5dp"
     app:strokeColor="@color/card_border"
     app:cardBackgroundColor="@color/white">
 
@@ -17,113 +17,347 @@
         android:orientation="vertical"
         android:padding="16dp">
 
+        <!-- Header: Restaurant → Customer + Earning Badge -->
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
             <LinearLayout
-                android:layout_width="wrap_content"
+                android:id="@+id/layout_order_header"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_alignParentStart="true"
                 android:layout_toStartOf="@+id/tv_earnings_estimate"
                 android:orientation="vertical">
 
+                <!-- Restaurant → Customer Name Row -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
                     android:gravity="center_vertical">
-                    
+
+                    <!-- Restaurant Icon -->
+                    <ImageView
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:src="@drawable/ic_restaurant_pin"
+                        android:layout_marginEnd="4dp"
+                        app:tint="@color/primary" />
+
                     <TextView
                         android:id="@+id/tv_restaurant_name"
-                        android:layout_width="wrap_content"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
+                        android:layout_weight="1"
                         android:text="The Spice Bistro"
                         android:textColor="@color/black"
-                        android:textSize="16sp"
+                        android:textSize="15sp"
                         android:textStyle="bold"
                         android:maxLines="1"
                         android:ellipsize="end" />
 
                     <ImageView
-                        android:layout_width="16dp"
-                        android:layout_height="16dp"
-                        android:layout_marginHorizontal="6dp"
+                        android:layout_width="14dp"
+                        android:layout_height="14dp"
+                        android:layout_marginHorizontal="4dp"
                         android:src="@drawable/ic_arrow_back"
                         android:rotation="180"
-                        app:tint="@color/black" />
+                        app:tint="@color/text_secondary" />
+
+                    <!-- Drop Icon -->
+                    <ImageView
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:src="@drawable/ic_drop_pin"
+                        android:layout_marginEnd="4dp"
+                        app:tint="@color/primary" />
 
                     <TextView
                         android:id="@+id/tv_customer_name"
-                        android:layout_width="wrap_content"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:text="Drop"
+                        android:layout_weight="1"
+                        android:text="Customer"
                         android:textColor="@color/black"
-                        android:textSize="16sp"
+                        android:textSize="15sp"
                         android:textStyle="bold"
                         android:maxLines="1"
                         android:ellipsize="end" />
                 </LinearLayout>
 
+                <!-- Order ID -->
                 <TextView
                     android:id="@+id/tv_order_id"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
-                    android:text="Order ID #8921"
+                    android:layout_marginTop="3dp"
+                    android:text="#ORD123"
                     android:textColor="@color/text_secondary"
                     android:textSize="12sp" />
             </LinearLayout>
 
-            <TextView
+            <!-- Earning Badge -->
+            <LinearLayout
                 android:id="@+id/tv_earnings_estimate"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignParentEnd="true"
                 android:layout_centerVertical="true"
                 android:background="@drawable/bg_pill_primary"
-                android:backgroundTint="@color/soft_lavender"
-                android:paddingHorizontal="10dp"
-                android:paddingVertical="6dp"
-                android:text="₹65"
-                android:textColor="@color/soft_lavender_text"
-                android:textSize="12sp"
-                android:textStyle="bold" />
+                android:backgroundTint="#E8F5E9"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="8dp"
+                android:orientation="vertical"
+                android:gravity="center">
+
+                <TextView
+                    android:id="@+id/tv_earning_amount"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="₹65"
+                    android:textColor="#1B5E20"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="earn"
+                    android:textColor="#388E3C"
+                    android:textSize="10sp" />
+            </LinearLayout>
         </RelativeLayout>
 
+        <!-- Divider -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginVertical="12dp"
+            android:background="@color/card_border" />
+
+        <!-- Order Details Row: Distance, Payment, ETA -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <!-- Distance -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center_horizontal">
+
+                <TextView
+                    android:id="@+id/tv_distance"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="3.2 km"
+                    android:textColor="@color/black"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Distance"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="11sp" />
+            </LinearLayout>
+
+            <!-- Vertical Divider -->
+            <View
+                android:layout_width="1dp"
+                android:layout_height="match_parent"
+                android:background="@color/card_border" />
+
+            <!-- Payment -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center_horizontal">
+
+                <TextView
+                    android:id="@+id/tv_payment_method"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Online"
+                    android:textColor="@color/black"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Payment"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="11sp" />
+            </LinearLayout>
+
+            <!-- Vertical Divider -->
+            <View
+                android:layout_width="1dp"
+                android:layout_height="match_parent"
+                android:background="@color/card_border" />
+
+            <!-- ETA/Total -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center_horizontal">
+
+                <TextView
+                    android:id="@+id/tv_order_total"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="₹320"
+                    android:textColor="@color/black"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Order Total"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="11sp" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Restaurant Address Row -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:layout_marginTop="16dp">
+            android:gravity="center_vertical"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/bg_pill_primary"
+            android:backgroundTint="#FFF3E0"
+            android:paddingHorizontal="10dp"
+            android:paddingVertical="7dp">
 
+            <ImageView
+                android:layout_width="14dp"
+                android:layout_height="14dp"
+                android:src="@drawable/ic_restaurant_pin"
+                android:layout_marginEnd="6dp"
+                app:tint="#E65100" />
+
+            <TextView
+                android:id="@+id/tv_restaurant_address"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Restaurant Address, Area, City"
+                android:textColor="#E65100"
+                android:textSize="11.5sp"
+                android:maxLines="1"
+                android:ellipsize="end" />
+        </LinearLayout>
+
+        <!-- Customer Drop Address Row -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginTop="5dp"
+            android:background="@drawable/bg_pill_primary"
+            android:backgroundTint="#E8F5E9"
+            android:paddingHorizontal="10dp"
+            android:paddingVertical="7dp">
+
+            <ImageView
+                android:layout_width="14dp"
+                android:layout_height="14dp"
+                android:src="@drawable/ic_drop_pin"
+                android:layout_marginEnd="6dp"
+                app:tint="#1B5E20" />
+
+            <TextView
+                android:id="@+id/tv_delivery_address"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Customer Drop Address, Locality"
+                android:textColor="#1B5E20"
+                android:textSize="11.5sp"
+                android:maxLines="1"
+                android:ellipsize="end" />
+        </LinearLayout>
+
+        <!-- Action Buttons: Decline, Map, Call, Accept -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="14dp"
+            android:weightSum="4">
+
+            <!-- Decline -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_decline"
                 style="@style/Widget.Material3.Button.OutlinedButton"
                 android:layout_width="0dp"
-                android:layout_height="40dp"
+                android:layout_height="44dp"
                 android:layout_weight="1"
-                android:layout_marginEnd="8dp"
-                android:text="Decline"
+                android:layout_marginEnd="4dp"
+                android:text="✕"
                 android:textColor="@color/text_secondary"
+                android:textSize="14sp"
+                android:textStyle="bold"
                 app:strokeColor="@color/card_border"
                 app:strokeWidth="1dp"
-                android:textSize="12sp"
-                android:textStyle="bold"
-                app:cornerRadius="12dp" />
+                app:cornerRadius="22dp" />
 
+            <!-- Map (Restaurant Location) -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_map_restaurant"
+                style="@style/Widget.Material3.Button"
+                android:layout_width="0dp"
+                android:layout_height="44dp"
+                android:layout_weight="1"
+                android:layout_marginEnd="4dp"
+                android:text="🗺️"
+                android:textColor="@color/white"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                app:backgroundTint="#2563EB"
+                app:cornerRadius="22dp" />
+
+            <!-- Call Restaurant -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_call_restaurant"
+                style="@style/Widget.Material3.Button"
+                android:layout_width="0dp"
+                android:layout_height="44dp"
+                android:layout_weight="1"
+                android:layout_marginEnd="4dp"
+                android:text="📞"
+                android:textColor="@color/white"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                app:backgroundTint="#10B981"
+                app:cornerRadius="22dp" />
+
+            <!-- Accept -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_accept"
                 style="@style/Widget.Material3.Button"
                 android:layout_width="0dp"
-                android:layout_height="40dp"
-                android:layout_weight="1.5"
+                android:layout_height="44dp"
+                android:layout_weight="1"
                 android:text="Accept"
                 android:textColor="@color/black"
                 android:textSize="12sp"
                 android:textStyle="bold"
                 app:backgroundTint="@color/neon_green"
-                app:cornerRadius="12dp" />
+                app:cornerRadius="22dp" />
         </LinearLayout>
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

@@ -57,9 +57,35 @@ public class OrderHistoryAdapter extends RecyclerView.Adapter<OrderHistoryAdapte
         holder.tvDate.setText(LocationUtils.formatDateTime(displayDate));
         holder.tvRestaurant.setText(order.getRestaurantName());
 
+        if (holder.tvCustomerName != null) {
+            String cName = order.getCustomerName();
+            holder.tvCustomerName.setText(cName != null && !cName.isEmpty() ? cName : "Customer");
+        }
+
         boolean isDelivered = Constants.STATUS_DELIVERED.equalsIgnoreCase(order.getStatus());
         holder.tvAddress.setText((isDelivered ? "Delivered to: " : "Drop: ") + order.getFullDeliveryAddress());
         holder.tvEarning.setText("+" + LocationUtils.formatCurrency(order.getEstimatedEarning()));
+
+        if (holder.tvItems != null) {
+            holder.tvItems.setText(order.getItemsSummary());
+        }
+
+        if (holder.tvTimestamps != null) {
+            StringBuilder ts = new StringBuilder();
+            if (order.getPickedUpAt() != null) {
+                ts.append("🛵 Picked: ").append(LocationUtils.formatTime(order.getPickedUpAt()));
+            }
+            if (order.getDeliveredAt() != null) {
+                if (ts.length() > 0) ts.append(" • ");
+                ts.append("Delivered: ").append(LocationUtils.formatTime(order.getDeliveredAt()));
+            }
+            if (ts.length() > 0) {
+                holder.tvTimestamps.setVisibility(View.VISIBLE);
+                holder.tvTimestamps.setText(ts.toString());
+            } else {
+                holder.tvTimestamps.setVisibility(View.GONE);
+            }
+        }
 
         String status = order.getStatus();
         if (Constants.STATUS_DELIVERED.equalsIgnoreCase(status)) {
@@ -102,14 +128,17 @@ public class OrderHistoryAdapter extends RecyclerView.Adapter<OrderHistoryAdapte
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
-        TextView tvOrderId, tvDate, tvRestaurant, tvAddress, tvEarning, tvStatus, tvPayment;
+        TextView tvOrderId, tvDate, tvRestaurant, tvCustomerName, tvAddress, tvItems, tvTimestamps, tvEarning, tvStatus, tvPayment;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
             tvOrderId = itemView.findViewById(R.id.tv_history_order_id);
             tvDate = itemView.findViewById(R.id.tv_history_date);
             tvRestaurant = itemView.findViewById(R.id.tv_history_restaurant);
+            tvCustomerName = itemView.findViewById(R.id.tv_history_customer_name);
             tvAddress = itemView.findViewById(R.id.tv_history_customer_address);
+            tvItems = itemView.findViewById(R.id.tv_history_items);
+            tvTimestamps = itemView.findViewById(R.id.tv_history_timestamps);
             tvEarning = itemView.findViewById(R.id.tv_history_earning);
             tvStatus = itemView.findViewById(R.id.tv_history_status);
             tvPayment = itemView.findViewById(R.id.tv_history_payment);

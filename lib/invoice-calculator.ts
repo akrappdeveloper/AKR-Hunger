@@ -1,5 +1,6 @@
 import { Order, Restaurant, Customer, Address } from './types';
 import { resolveStateCode, formatPlaceOfSupply, numberToWordsINR, generateInvoiceVerificationHash } from './tax-utils';
+import { calculateCustomizationTotals } from './customization-utils';
 
 export interface InvoiceTaxItem {
   name: string;
@@ -48,6 +49,10 @@ export interface InvoiceCalculatedBreakdown {
 
   // Financials
   itemSubtotal: number;
+  baseItemsSubtotal: number;
+  sizeExtrasTotal: number;
+  addOnsExtrasTotal: number;
+  customizationExtrasTotal: number;
   itemCount: number;
   packagingFee: number;
   deliveryFee: number;
@@ -177,6 +182,12 @@ export function calculateInvoice(
   const items = order.items || [];
   const itemCount = items.reduce((sum, item) => sum + (item.quantity || 1), 0);
   const itemSubtotal = order.subtotal || items.reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0);
+  const {
+    baseItemsSubtotal,
+    sizeExtrasTotal,
+    addOnsExtrasTotal,
+    customizationExtrasTotal,
+  } = calculateCustomizationTotals(items);
 
   // Discounts
   const discountTotal = order.discountAmount || 0;
@@ -371,6 +382,10 @@ export function calculateInvoice(
     operatorAddress,
 
     itemSubtotal,
+    baseItemsSubtotal,
+    sizeExtrasTotal,
+    addOnsExtrasTotal,
+    customizationExtrasTotal,
     itemCount,
     packagingFee,
     deliveryFee,

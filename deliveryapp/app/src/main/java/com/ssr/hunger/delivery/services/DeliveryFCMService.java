@@ -78,6 +78,7 @@ public class DeliveryFCMService extends FirebaseMessagingService {
         if (data.containsKey("body")) body = data.get("body");
         if (data.containsKey("type")) type = data.get("type");
         if (data.containsKey("orderId")) orderId = data.get("orderId");
+        if (orderId == null && data.containsKey("id")) orderId = data.get("id");
         String callId = null;
         String adminName = "Hunger Admin Desk";
         if (data.containsKey("callId")) callId = data.get("callId");
@@ -86,9 +87,19 @@ public class DeliveryFCMService extends FirebaseMessagingService {
         int notificationId = (int) (System.currentTimeMillis() % 100000);
 
         // 3. Handle by notification type
-        if ("new_order".equalsIgnoreCase(type) || "order".equalsIgnoreCase(type)) {
+        if ("new_order".equalsIgnoreCase(type) || "order".equalsIgnoreCase(type)
+                || "delivery_request".equalsIgnoreCase(type) || "order_request".equalsIgnoreCase(type)
+                || "broadcast".equalsIgnoreCase(type) || "order_ready".equalsIgnoreCase(type)
+                || "ready".equalsIgnoreCase(type)) {
             SoundHelper.playNewOrderAlert(this);
             showNewOrderNotification(notificationId, title, body, orderId);
+
+            // Send local broadcast to update DashboardOrdersFragment in real-time if foreground
+            try {
+                Intent refreshIntent = new Intent("com.ssr.hunger.delivery.ACTION_NEW_AVAILABLE_ORDER");
+                if (orderId != null) refreshIntent.putExtra(Constants.EXTRA_ORDER_ID, orderId);
+                sendBroadcast(refreshIntent);
+            } catch (Exception ignored) {}
         } else if ("vkyc_call".equalsIgnoreCase(type) || "vkyc".equalsIgnoreCase(type)) {
             SoundHelper.playEmergencyAlert(this);
             showVkycCallNotification(notificationId, title, body, callId, adminName);
@@ -106,7 +117,7 @@ public class DeliveryFCMService extends FirebaseMessagingService {
             showStatusNotification(notificationId, title, body, orderId);
         } else {
             SoundHelper.playStatusAlert(this);
-            showGeneralNotification(notificationId, title, body);
+            showGeneralNotification(notificationId, title, body, orderId);
         }
     }
 
@@ -117,7 +128,10 @@ public class DeliveryFCMService extends FirebaseMessagingService {
         // Intent to accept or view dashboard
         Intent mainIntent = new Intent(this, MainActivity.class);
         mainIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        if (orderId != null) mainIntent.putExtra(Constants.EXTRA_ORDER_ID, orderId);
+        if (orderId != null) {
+            mainIntent.putExtra(Constants.EXTRA_ORDER_ID, orderId);
+            mainIntent.putExtra("is_broadcast_request", true);
+        }
 
         PendingIntent pIntent = PendingIntent.getActivity(
                 this, id, mainIntent,
@@ -226,12 +240,15 @@ public class DeliveryFCMService extends FirebaseMessagingService {
         manager.notify(id, builder.build());
     }
 
-    private void showGeneralNotification(int id, String title, String body) {
+    private void showGeneralNotification(int id, String title, String body, String orderId) {
         NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         if (manager == null) return;
 
         Intent intent = new Intent(this, MainActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        if (orderId != null) {
+            intent.putExtra(Constants.EXTRA_ORDER_ID, orderId);
+        }
 
         PendingIntent pIntent = PendingIntent.getActivity(
                 this, id, intent,

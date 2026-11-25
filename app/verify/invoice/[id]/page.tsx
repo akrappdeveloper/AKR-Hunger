@@ -394,6 +394,26 @@ export default function InvoiceVerificationPage() {
                   </div>
 
                   <div className="space-y-1.5 pt-1 text-muted-foreground">
+                    {invoiceData.customizationExtrasTotal > 0 && (
+                      <>
+                        <div className="flex justify-between">
+                          <span>Base Dishes Price:</span>
+                          <span className="font-medium text-foreground">₹{invoiceData.baseItemsSubtotal.toFixed(2)}</span>
+                        </div>
+                        {invoiceData.sizeExtrasTotal > 0 && (
+                          <div className="flex justify-between text-blue-600 dark:text-blue-400">
+                            <span>Size Upgrades:</span>
+                            <span className="font-medium">+₹{invoiceData.sizeExtrasTotal.toFixed(2)}</span>
+                          </div>
+                        )}
+                        {invoiceData.addOnsExtrasTotal > 0 && (
+                          <div className="flex justify-between text-primary">
+                            <span>Add-ons &amp; Extras:</span>
+                            <span className="font-medium">+₹{invoiceData.addOnsExtrasTotal.toFixed(2)}</span>
+                          </div>
+                        )}
+                      </>
+                    )}
                     <div className="flex justify-between">
                       <span>Packaging Fee:</span>
                       <span className="font-medium text-foreground">

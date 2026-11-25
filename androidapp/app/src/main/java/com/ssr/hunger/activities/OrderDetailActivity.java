@@ -234,13 +234,41 @@ public class OrderDetailActivity extends BaseActivity {
 
         // Items
         StringBuilder itemsText = new StringBuilder();
+        double baseSubtotal = 0.0;
+        double sizeExtrasTotal = 0.0;
+        double addOnsExtrasTotal = 0.0;
         if (order.getItems() != null) {
             for (OrderItem item : order.getItems()) {
-                itemsText.append(item.getQuantity()).append("x ").append(item.getName())
-                        .append(" - ₹").append(String.format(Locale.getDefault(), "%.2f", item.getPrice() * item.getQuantity())).append("\n");
+                int qty = Math.max(1, item.getQuantity());
+                baseSubtotal += item.getEffectiveBasePrice() * qty;
+                sizeExtrasTotal += item.getSizeExtra() * qty;
+                addOnsExtrasTotal += item.getAddOnsTotal() * qty;
+
+                itemsText.append(qty).append("x ").append(item.getName())
+                        .append(" - ₹").append(String.format(Locale.getDefault(), "%.2f", item.getPrice() * qty));
+                String cust = item.getCustomizationSummary();
+                if (cust != null && !cust.isEmpty()) {
+                    itemsText.append("\n   ").append(cust);
+                }
+                itemsText.append("\n");
             }
         }
         ((TextView) findViewById(R.id.tv_items)).setText(itemsText.toString().trim());
+
+        boolean hasPricedExtras = (sizeExtrasTotal + addOnsExtrasTotal) > 0;
+        View rowBaseSub = findViewById(R.id.row_order_base_subtotal);
+        TextView tvBaseSub = findViewById(R.id.tv_order_base_subtotal);
+        View rowSizeExt = findViewById(R.id.row_order_size_extras);
+        TextView tvSizeExt = findViewById(R.id.tv_order_size_extras);
+        View rowAddOnsExt = findViewById(R.id.row_order_addons_extras);
+        TextView tvAddOnsExt = findViewById(R.id.tv_order_addons_extras);
+
+        if (rowBaseSub != null) rowBaseSub.setVisibility(hasPricedExtras ? View.VISIBLE : View.GONE);
+        if (tvBaseSub != null && hasPricedExtras) tvBaseSub.setText(String.format(Locale.getDefault(), "₹%.2f", baseSubtotal));
+        if (rowSizeExt != null) rowSizeExt.setVisibility(sizeExtrasTotal > 0 ? View.VISIBLE : View.GONE);
+        if (tvSizeExt != null && sizeExtrasTotal > 0) tvSizeExt.setText(String.format(Locale.getDefault(), "+₹%.2f", sizeExtrasTotal));
+        if (rowAddOnsExt != null) rowAddOnsExt.setVisibility(addOnsExtrasTotal > 0 ? View.VISIBLE : View.GONE);
+        if (tvAddOnsExt != null && addOnsExtrasTotal > 0) tvAddOnsExt.setText(String.format(Locale.getDefault(), "+₹%.2f", addOnsExtrasTotal));
 
         // Full GST Bill Summary
         double subtotal = order.getSubtotal();

@@ -149,6 +149,8 @@ public class DriverLocationService extends Service {
         locationCallback = new LocationCallback() {
             @Override
             public void onLocationResult(LocationResult result) {
+                // Guard: service may be stopping, locationCallback set to null
+                if (locationCallback == null) return;
                 if (result == null) return;
                 Location loc = result.getLastLocation();
                 if (loc == null) return;
@@ -196,12 +198,18 @@ public class DriverLocationService extends Service {
         if (interval == currentInterval) return;
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) return;
+        // Guard: locationCallback may have been set to null by stopLocationUpdates()
+        if (locationCallback == null || fusedLocationClient == null) return;
 
-        fusedLocationClient.removeLocationUpdates(locationCallback);
-        buildLocationRequest(interval);
-        fusedLocationClient.requestLocationUpdates(
-                currentLocationRequest, locationCallback, Looper.getMainLooper()
-        );
+        try {
+            fusedLocationClient.removeLocationUpdates(locationCallback);
+            buildLocationRequest(interval);
+            fusedLocationClient.requestLocationUpdates(
+                    currentLocationRequest, locationCallback, Looper.getMainLooper()
+            );
+        } catch (Exception e) {
+            Log.e(TAG, "rebuildIfDifferent failed: " + e.getMessage());
+        }
     }
 
     private void stopLocationUpdates() {

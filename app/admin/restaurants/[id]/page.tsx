@@ -99,7 +99,7 @@ export default function RestaurantDetailsPage() {
 
       await updateDoc(doc(db, 'restaurants', restaurantId), updates);
       toast.success('Restaurant profile updated successfully');
-      setRestaurant(prev => prev ? { ...prev, ...updates } : null);
+      setRestaurant(prev => prev ? ({ ...prev, ...updates } as any) : null);
       setIsEditing(false);
     } catch (error: any) {
       toast.error('Failed to update profile: ' + error.message);

@@ -57,4 +57,7 @@ public class Constants {
     // Default Commission / Delivery Pay
     public static final double DEFAULT_BASE_PAY = 40.0;
     public static final double PER_KM_PAY = 12.0;
+
+    // Payment Gateway
+    public static final String RAZORPAY_KEY_ID = "rzp_live_RbvSxxE0Qca3fp";
 }

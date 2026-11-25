@@ -55,12 +55,14 @@ public class CartActivity extends BaseActivity implements CartManager.CartChange
 
     private RecyclerView rvCartItems;
     private View emptyCart, cartContent;
-    private TextView tvSubtotal, tvPackagingCharges, tvDeliveryFee, tvPlatformFee, tvTaxableValue, tvCgst, tvSgst, tvTotal, tvAmountPaid, tvBalanceDue;
+    private TextView tvSubtotal, tvBaseSubtotal, tvSizeExtras, tvAddOnsExtras, tvPackagingCharges, tvDeliveryFee, tvPlatformFee, tvTaxableValue, tvCgst, tvSgst, tvTotal, tvAmountPaid, tvBalanceDue;
+    private View rowBaseSubtotal, rowSizeExtras, rowAddOnsExtras;
     private EditText etSpecialInstructions, etCoupon;
     private CartItemAdapter adapter;
     private CartManager cartManager;
     private FirebaseFirestore db;
     private String paymentMethod = "cod";
+    private String cachedCustomerPhone = "";
     private static final int REQ_BIOMETRIC_CHECKOUT = 5001;
     private boolean isBiometricUnlockedForSession = false;
 
@@ -82,6 +84,7 @@ public class CartActivity extends BaseActivity implements CartManager.CartChange
         setupRecyclerView();
         setupClickListeners();
         checkAndLoadDeliveryAddress();
+        loadCustomerPhone();
         updateUI();
 
         // Log begin checkout if cart has items
@@ -132,6 +135,72 @@ public class CartActivity extends BaseActivity implements CartManager.CartChange
     protected void onResume() {
         super.onResume();
         checkAndLoadDeliveryAddress();
+        loadCustomerPhone();
+    }
+
+    private String resolveValidPhone(String... candidates) {
+        if (candidates == null) return "";
+        for (String candidate : candidates) {
+            if (TextUtils.isEmpty(candidate)) continue;
+            String digits = candidate.replaceAll("\\D", "");
+            if (digits.length() >= 10) {
+                return candidate.trim();
+            }
+        }
+        return "";
+    }
+
+    private void loadCustomerPhone() {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) return;
+        String authPhone = resolveValidPhone(user.getPhoneNumber());
+        if (!TextUtils.isEmpty(authPhone)) {
+            cachedCustomerPhone = authPhone;
+        }
+        db.collection(Constants.COLLECTION_CUSTOMERS).document(user.getUid()).get()
+                .addOnSuccessListener(doc -> {
+                    if (doc != null && doc.exists()) {
+                        String dbPhone = resolveValidPhone(doc.getString("phone"));
+                        if (!TextUtils.isEmpty(dbPhone)) {
+                            cachedCustomerPhone = dbPhone;
+                        }
+                    }
+                });
+    }
+
+    private void promptForPhoneAndPlaceOrder(Address deliveryAddress) {
+        android.widget.EditText input = new android.widget.EditText(this);
+        input.setInputType(android.text.InputType.TYPE_CLASS_PHONE);
+        input.setHint("Enter 10-digit mobile number");
+        int pad = (int) (20 * getResources().getDisplayMetrics().density);
+        android.widget.FrameLayout container = new android.widget.FrameLayout(this);
+        container.setPadding(pad, pad / 2, pad, 0);
+        container.addView(input);
+
+        new MaterialAlertDialogBuilder(this)
+                .setTitle("📱 Phone Number Required")
+                .setMessage("Contact phone number is mandatory to place your order.")
+                .setView(container)
+                .setPositiveButton("Save & Continue", (dialog, which) -> {
+                    String rawDigits = input.getText() != null ? input.getText().toString().replaceAll("\\D", "") : "";
+                    if (rawDigits.length() < 10) {
+                        Toast.makeText(this, "⚠️ Please enter a valid 10-digit mobile number.", Toast.LENGTH_LONG).show();
+                        return;
+                    }
+                    String last10 = rawDigits.substring(rawDigits.length() - 10);
+                    String formatted = "+91 " + last10.substring(0, 5) + " " + last10.substring(5);
+                    cachedCustomerPhone = formatted;
+                    FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+                    if (user != null) {
+                        Map<String, Object> updates = new HashMap<>();
+                        updates.put("phone", formatted);
+                        db.collection(Constants.COLLECTION_CUSTOMERS).document(user.getUid())
+                                .set(updates, com.google.firebase.firestore.SetOptions.merge());
+                    }
+                    continuePlaceOrderAfterPhoneCheck(deliveryAddress);
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
     }
 
     private void initViews() {
@@ -139,6 +208,12 @@ public class CartActivity extends BaseActivity implements CartManager.CartChange
         emptyCart = findViewById(R.id.empty_cart);
         cartContent = findViewById(R.id.cart_content);
         tvSubtotal = findViewById(R.id.tv_subtotal);
+        rowBaseSubtotal = findViewById(R.id.row_base_subtotal);
+        rowSizeExtras = findViewById(R.id.row_size_extras);
+        rowAddOnsExtras = findViewById(R.id.row_addons_extras);
+        tvBaseSubtotal = findViewById(R.id.tv_base_subtotal);
+        tvSizeExtras = findViewById(R.id.tv_size_extras);
+        tvAddOnsExtras = findViewById(R.id.tv_addons_extras);
         tvPackagingCharges = findViewById(R.id.tv_packaging_charges);
         tvDeliveryFee = findViewById(R.id.tv_delivery_fee);
         tvPlatformFee = findViewById(R.id.tv_platform_fee);
@@ -184,9 +259,12 @@ public class CartActivity extends BaseActivity implements CartManager.CartChange
         rvCartItems.setAdapter(adapter);
     }
 
-    private CartItem findCartItem(String menuItemId) {
+    private CartItem findCartItem(String itemKey) {
         for (CartItem item : cartManager.getItems()) {
-            if (item.getMenuItemId().equals(menuItemId)) return item;
+            if ((item.getId() != null && item.getId().equals(itemKey))
+                    || (item.getMenuItemId() != null && item.getMenuItemId().equals(itemKey))) {
+                return item;
+            }
         }
         return null;
     }
@@ -250,10 +328,24 @@ public class CartActivity extends BaseActivity implements CartManager.CartChange
             cartContent.setVisibility(View.VISIBLE);
 
             double subtotal = cartManager.getSubtotal();
+            double baseSubtotal = 0.0;
+            double sizeExtrasTotal = 0.0;
+            double addOnsExtrasTotal = 0.0;
             int totalQty = 0;
             for (CartItem ci : items) {
-                totalQty += ci.getQuantity();
+                int qty = ci.getQuantity();
+                totalQty += qty;
+                baseSubtotal += ci.getEffectiveBasePrice() * qty;
+                sizeExtrasTotal += ci.getSizeExtra() * qty;
+                addOnsExtrasTotal += ci.getAddOnsTotal() * qty;
             }
+            boolean hasExtras = (sizeExtrasTotal + addOnsExtrasTotal) > 0;
+            if (rowBaseSubtotal != null) rowBaseSubtotal.setVisibility(hasExtras ? View.VISIBLE : View.GONE);
+            if (tvBaseSubtotal != null && hasExtras) tvBaseSubtotal.setText(String.format(Locale.getDefault(), "₹%.2f", baseSubtotal));
+            if (rowSizeExtras != null) rowSizeExtras.setVisibility(sizeExtrasTotal > 0 ? View.VISIBLE : View.GONE);
+            if (tvSizeExtras != null && sizeExtrasTotal > 0) tvSizeExtras.setText(String.format(Locale.getDefault(), "+₹%.2f", sizeExtrasTotal));
+            if (rowAddOnsExtras != null) rowAddOnsExtras.setVisibility(addOnsExtrasTotal > 0 ? View.VISIBLE : View.GONE);
+            if (tvAddOnsExtras != null && addOnsExtrasTotal > 0) tvAddOnsExtras.setText(String.format(Locale.getDefault(), "+₹%.2f", addOnsExtrasTotal));
             double deliveryFee = totalQty > 1 ? 60.0 : 40.0;
             double packagingCharges = 0.0;
             double platformFee = 0.0;
@@ -416,6 +508,35 @@ public class CartActivity extends BaseActivity implements CartManager.CartChange
             return;
         }
 
+        // Strict Phone Number Validation: Order CANNOT be placed without a 10-digit phone number!
+        String verifiedPhone = resolveValidPhone(cachedCustomerPhone, user.getPhoneNumber());
+        if (TextUtils.isEmpty(verifiedPhone)) {
+            findViewById(R.id.btn_place_order).setEnabled(false);
+            db.collection(Constants.COLLECTION_CUSTOMERS).document(user.getUid()).get()
+                    .addOnSuccessListener(custDoc -> runOnUiThread(() -> {
+                        findViewById(R.id.btn_place_order).setEnabled(true);
+                        String dbPhone = custDoc != null && custDoc.exists() ? resolveValidPhone(custDoc.getString("phone")) : "";
+                        if (!TextUtils.isEmpty(dbPhone)) {
+                            cachedCustomerPhone = dbPhone;
+                            continuePlaceOrderAfterPhoneCheck(deliveryAddress);
+                        } else {
+                            Toast.makeText(this, "⚠️ Phone number is required! Please add your mobile number.", Toast.LENGTH_LONG).show();
+                            promptForPhoneAndPlaceOrder(deliveryAddress);
+                        }
+                    }))
+                    .addOnFailureListener(e -> runOnUiThread(() -> {
+                        findViewById(R.id.btn_place_order).setEnabled(true);
+                        Toast.makeText(this, "⚠️ Phone number is required! Please add your mobile number.", Toast.LENGTH_LONG).show();
+                        promptForPhoneAndPlaceOrder(deliveryAddress);
+                    }));
+            return;
+        }
+
+        continuePlaceOrderAfterPhoneCheck(deliveryAddress);
+    } // end placeOrder()
+
+    private void continuePlaceOrderAfterPhoneCheck(Address deliveryAddress) {
+
         // GPS Pincode Validation: Check if restaurant delivers to this pincode
         String deliveryPincode = deliveryAddress.getPincode();
         String restaurantId = cartManager.getRestaurantId();
@@ -554,7 +675,7 @@ public class CartActivity extends BaseActivity implements CartManager.CartChange
 
         // No pincode restriction or pincode unavailable, proceed directly
         proceedToPlaceOrder(deliveryAddress);
-    } // end placeOrder()
+    } // end continuePlaceOrderAfterPhoneCheck()
 
     /**
      * Reverse-geocode GPS coords to get pincode and auto-fill it in the delivery address
@@ -653,8 +774,41 @@ public class CartActivity extends BaseActivity implements CartManager.CartChange
             oi.put("menuItemId", cartItem.getMenuItemId());
             oi.put("name", cartItem.getName());
             oi.put("price", cartItem.getPrice());
+            if (cartItem.getSizeExtra() + cartItem.getAddOnsTotal() > 0) {
+                oi.put("basePrice", cartItem.getEffectiveBasePrice());
+            }
             oi.put("quantity", cartItem.getQuantity());
             oi.put("image", cartItem.getImage());
+            if (cartItem.getSpiceLevel() != null && !cartItem.getSpiceLevel().trim().isEmpty()) {
+                oi.put("spiceLevel", cartItem.getSpiceLevel().trim());
+            }
+            if (cartItem.getSelectedSize() != null && cartItem.getSelectedSize().getName() != null) {
+                Map<String, Object> sizeMap = new HashMap<>();
+                if (cartItem.getSelectedSize().getId() != null) {
+                    sizeMap.put("id", cartItem.getSelectedSize().getId());
+                }
+                sizeMap.put("name", cartItem.getSelectedSize().getName());
+                sizeMap.put("price", cartItem.getSelectedSize().getPrice());
+                oi.put("selectedSize", sizeMap);
+            }
+            if (cartItem.getSelectedAddOns() != null && !cartItem.getSelectedAddOns().isEmpty()) {
+                List<Map<String, Object>> addOnMaps = new ArrayList<>();
+                for (com.ssr.hunger.models.MenuItem.CustomizationOption opt : cartItem.getSelectedAddOns()) {
+                    if (opt != null && opt.getName() != null) {
+                        Map<String, Object> am = new HashMap<>();
+                        if (opt.getId() != null) am.put("id", opt.getId());
+                        am.put("name", opt.getName());
+                        am.put("price", opt.getPrice());
+                        addOnMaps.add(am);
+                    }
+                }
+                if (!addOnMaps.isEmpty()) {
+                    oi.put("selectedAddOns", addOnMaps);
+                }
+            }
+            if (cartItem.getSpecialInstructions() != null && !cartItem.getSpecialInstructions().trim().isEmpty()) {
+                oi.put("specialInstructions", cartItem.getSpecialInstructions().trim());
+            }
             orderItems.add(oi);
         }
 
@@ -687,7 +841,7 @@ public class CartActivity extends BaseActivity implements CartManager.CartChange
                 (deliveryAddress.getLatitude() != 0 ? com.ssr.hunger.utils.GeohashHelper.encode(deliveryAddress.getLatitude(), deliveryAddress.getLongitude(), 7) : "");
         addrMap.put("geohash", custGeohash);
 
-        String customerPhone = user.getPhoneNumber() != null ? user.getPhoneNumber() : "";
+        String customerPhone = resolveValidPhone(cachedCustomerPhone, user.getPhoneNumber());
 
         // Build base order document
         Map<String, Object> orderData = new HashMap<>();

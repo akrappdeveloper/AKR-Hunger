@@ -503,6 +503,87 @@
                     android:orientation="vertical"
                     android:padding="18dp">
 
+                    <!-- Base Dishes Price (Shown only when customizations exist) -->
+                    <LinearLayout
+                        android:id="@+id/row_base_subtotal"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:paddingVertical="4dp"
+                        android:visibility="gone">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:fontFamily="sans-serif"
+                            android:text="Base Dishes Price"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="13.5sp" />
+
+                        <TextView
+                            android:id="@+id/tv_base_subtotal"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="sans-serif-bold"
+                            android:textColor="@color/text_primary"
+                            android:textSize="14sp" />
+                    </LinearLayout>
+
+                    <!-- Size Upgrades (Shown only when selected) -->
+                    <LinearLayout
+                        android:id="@+id/row_size_extras"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:paddingVertical="4dp"
+                        android:visibility="gone">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:fontFamily="sans-serif"
+                            android:text="Size Upgrades"
+                            android:textColor="@color/primary"
+                            android:textSize="13.5sp" />
+
+                        <TextView
+                            android:id="@+id/tv_size_extras"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="sans-serif-bold"
+                            android:textColor="@color/primary"
+                            android:textSize="14sp" />
+                    </LinearLayout>
+
+                    <!-- Add-ons & Extras (Shown only when selected) -->
+                    <LinearLayout
+                        android:id="@+id/row_addons_extras"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:paddingVertical="4dp"
+                        android:visibility="gone">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:fontFamily="sans-serif"
+                            android:text="Add-ons &amp; Extras"
+                            android:textColor="@color/primary"
+                            android:textSize="13.5sp" />
+
+                        <TextView
+                            android:id="@+id/tv_addons_extras"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="sans-serif-bold"
+                            android:textColor="@color/primary"
+                            android:textSize="14sp" />
+                    </LinearLayout>
+
                     <!-- Item Subtotal -->
                     <LinearLayout
                         android:layout_width="match_parent"

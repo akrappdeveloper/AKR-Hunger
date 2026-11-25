@@ -31,7 +31,7 @@
             android:textStyle="bold"
             android:letterSpacing="0.05" />
 
-        <!-- Origin -> Destination -->
+        <!-- Origin → Destination -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -44,7 +44,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Norra Nynäshamn"
+                android:text="Restaurant Name"
                 android:textColor="@color/white"
                 android:textSize="17sp"
                 android:textStyle="bold"
@@ -64,7 +64,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Stockholm"
+                android:text="Customer"
                 android:textColor="@color/white"
                 android:textSize="17sp"
                 android:textStyle="bold"
@@ -97,6 +97,7 @@
             android:layout_marginStart="280dp"
             android:background="#404040" />
 
+        <!-- Earnings & Payment Row -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -143,6 +144,181 @@
                     android:textSize="13sp"
                     android:textStyle="bold" />
             </LinearLayout>
+        </LinearLayout>
+
+        <!-- ═══════════════════════════════════════════════════ -->
+        <!-- PICKUP AT RESTAURANT SECTION (shown before pickup) -->
+        <!-- ═══════════════════════════════════════════════════ -->
+        <LinearLayout
+            android:id="@+id/layout_pickup_section"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginTop="14dp"
+            android:background="@drawable/bg_pill_primary"
+            android:backgroundTint="#1A00E676"
+            android:padding="14dp">
+
+            <!-- Section Header -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:src="@drawable/ic_restaurant_pin"
+                    android:layout_marginEnd="8dp"
+                    app:tint="@color/neon_green" />
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Pickup Location"
+                    android:textColor="@color/neon_green"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <!-- Restaurant Address Detail -->
+            <TextView
+                android:id="@+id/tv_pickup_restaurant_address"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:text="Restaurant Address, Area, City"
+                android:textColor="#C8FFFFFF"
+                android:textSize="12sp"
+                android:maxLines="2"
+                android:ellipsize="end" />
+
+            <!-- Pickup at Restaurant Button → opens Google Maps -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_pickup_restaurant_map"
+                style="@style/Widget.Material3.Button"
+                android:layout_width="match_parent"
+                android:layout_height="46dp"
+                android:layout_marginTop="10dp"
+                android:text="🗺️ Navigate to Restaurant"
+                android:textColor="@color/black"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                app:backgroundTint="@color/neon_green"
+                app:cornerRadius="23dp" />
+        </LinearLayout>
+
+        <!-- ══════════════════════════════════════════════════ -->
+        <!-- CUSTOMER DELIVERY SECTION (shown after pickup)    -->
+        <!-- ══════════════════════════════════════════════════ -->
+        <LinearLayout
+            android:id="@+id/layout_customer_section"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginTop="14dp"
+            android:background="@drawable/bg_pill_primary"
+            android:backgroundTint="#1A2196F3"
+            android:padding="14dp"
+            android:visibility="gone">
+
+            <!-- Section Header -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:src="@drawable/ic_drop_pin"
+                    android:layout_marginEnd="8dp"
+                    app:tint="#64B5F6" />
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Delivery Details"
+                    android:textColor="#64B5F6"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <!-- Customer Name & Phone -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginTop="8dp">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/tv_customer_detail_name"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Customer Name"
+                        android:textColor="@color/white"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tv_customer_detail_phone"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="+91 9876543210"
+                        android:textColor="#A0A0A0"
+                        android:textSize="12sp"
+                        android:layout_marginTop="2dp" />
+
+                    <TextView
+                        android:id="@+id/tv_customer_detail_address"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Customer Address"
+                        android:textColor="#C8FFFFFF"
+                        android:textSize="11.5sp"
+                        android:layout_marginTop="4dp"
+                        android:maxLines="2"
+                        android:ellipsize="end" />
+                </LinearLayout>
+
+                <!-- Quick Call Customer Button -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_call_customer_quick"
+                    style="@style/Widget.Material3.Button"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:padding="0dp"
+                    android:text="📞"
+                    android:textSize="18sp"
+                    app:backgroundTint="#10B981"
+                    app:cornerRadius="24dp" />
+            </LinearLayout>
+
+            <!-- Open Customer Location in Maps -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_customer_map"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="match_parent"
+                android:layout_height="46dp"
+                android:layout_marginTop="10dp"
+                android:text="🗺️ Navigate to Customer"
+                android:textColor="#64B5F6"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                app:strokeColor="#64B5F6"
+                app:strokeWidth="1.5dp"
+                app:cornerRadius="23dp" />
         </LinearLayout>
 
         <!-- Actions: Google Maps, In-App Route, Call & Manage -->

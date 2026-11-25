@@ -86,9 +86,9 @@ public class BankDetailsDialog extends Dialog {
                 .document(uid)
                 .set(update, SetOptions.merge())
                 .addOnSuccessListener(v -> {
-                    Toast.makeText(getContext(), "✅ Bank details saved successfully!", Toast.LENGTH_SHORT).show();
+                    com.ssr.hunger.delivery.utils.ToastUtils.showToast(getContext(), "✅ Bank details saved successfully!", Toast.LENGTH_SHORT);
                     dismiss();
                 })
-                .addOnFailureListener(e -> Toast.makeText(getContext(), "Failed: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+                .addOnFailureListener(e -> com.ssr.hunger.delivery.utils.ToastUtils.showToast(getContext(), "Failed: " + e.getMessage(), Toast.LENGTH_SHORT));
     }
 }

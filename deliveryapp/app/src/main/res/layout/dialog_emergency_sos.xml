@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:padding="22dp"
+    android:padding="24dp"
     android:background="@drawable/bg_dialog_rounded">
 
     <!-- Header with Red Alert Icon -->
@@ -15,14 +15,19 @@
         android:orientation="horizontal"
         android:gravity="center_vertical">
 
-        <ImageView
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:background="@drawable/bg_pill_error_soft"
-            android:padding="12dp"
-            android:src="@drawable/ic_shield_check"
-            app:tint="@color/error"
-            android:contentDescription="Emergency SOS" />
+        <FrameLayout
+            android:layout_width="52dp"
+            android:layout_height="52dp"
+            android:background="@drawable/bg_pill_error_soft">
+
+            <ImageView
+                android:layout_width="26dp"
+                android:layout_height="26dp"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_shield_check"
+                app:tint="@color/error"
+                android:contentDescription="Emergency SOS" />
+        </FrameLayout>
 
         <LinearLayout
             android:layout_width="0dp"
@@ -36,7 +41,7 @@
                 android:layout_height="wrap_content"
                 android:text="Rider Emergency SOS"
                 android:textColor="@color/error"
-                android:textSize="18sp"
+                android:textSize="19sp"
                 android:textStyle="bold"
                 android:letterSpacing="-0.01" />
 
@@ -44,7 +49,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
-                android:text="Direct 1-tap emergency hotlines on duty"
+                android:text="Instant 1-tap emergency dispatch hotlines"
                 android:textColor="@color/text_secondary"
                 android:textSize="12.5sp" />
         </LinearLayout>
@@ -54,7 +59,7 @@
         android:layout_width="match_parent"
         android:layout_height="1dp"
         android:layout_marginTop="16dp"
-        android:layout_marginBottom="16dp"
+        android:layout_marginBottom="18dp"
         android:background="@color/divider" />
 
     <!-- Police 112 -->
@@ -63,7 +68,7 @@
         style="@style/Widget.Material3.Button"
         android:layout_width="match_parent"
         android:layout_height="52dp"
-        android:text="Call Police (112)"
+        android:text="Call Police Helpline (112)"
         android:textColor="@color/white"
         android:textSize="14.5sp"
         android:textStyle="bold"
@@ -71,6 +76,7 @@
         app:iconTint="@color/white"
         app:iconSize="18dp"
         app:iconGravity="textStart"
+        app:iconPadding="10dp"
         app:backgroundTint="@color/error"
         app:cornerRadius="26dp"
         app:elevation="3dp" />
@@ -82,7 +88,7 @@
         android:layout_width="match_parent"
         android:layout_height="52dp"
         android:layout_marginTop="12dp"
-        android:text="Call Ambulance (108)"
+        android:text="Call Medical Ambulance (108)"
         android:textColor="@color/white"
         android:textSize="14.5sp"
         android:textStyle="bold"
@@ -90,6 +96,7 @@
         app:iconTint="@color/white"
         app:iconSize="18dp"
         app:iconGravity="textStart"
+        app:iconPadding="10dp"
         app:backgroundTint="@color/secondary"
         app:cornerRadius="26dp"
         app:elevation="2dp" />
@@ -101,14 +108,15 @@
         android:layout_width="match_parent"
         android:layout_height="52dp"
         android:layout_marginTop="12dp"
-        android:text="Hunger 24x7 Safety Desk"
+        android:text="Hunger 24x7 Safety Response Desk"
         android:textColor="@color/primary"
-        android:textSize="14.5sp"
+        android:textSize="14sp"
         android:textStyle="bold"
         app:icon="@drawable/ic_headset"
         app:iconTint="@color/primary"
         app:iconSize="18dp"
         app:iconGravity="textStart"
+        app:iconPadding="10dp"
         app:strokeColor="@color/primary"
         app:strokeWidth="1.5dp"
         app:cornerRadius="26dp" />
@@ -119,7 +127,7 @@
         android:layout_width="match_parent"
         android:layout_height="44dp"
         android:layout_marginTop="12dp"
-        android:text="Dismiss SOS"
+        android:text="Dismiss SOS Window"
         android:textColor="@color/text_secondary"
         android:textSize="13.5sp"
         android:textStyle="bold" />

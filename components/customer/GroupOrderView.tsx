@@ -19,6 +19,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { GroupOrder, GroupMember } from '@/lib/hunger-types-client';
+import { copyToClipboard } from '@/lib/utils';
 import SafeImage from '@/components/ui/safe-image';
 import { useToast } from '@/components/ui/use-toast';
 
@@ -47,9 +48,9 @@ export default function GroupOrderView({
   const isHost = currentMember?.isHost;
   const allPaid = groupOrder?.members.every(m => m.paymentStatus === 'paid');
 
-  const copyInviteLink = useCallback(() => {
+  const copyInviteLink = useCallback(async () => {
     if (groupOrder?.inviteLink) {
-      navigator.clipboard.writeText(groupOrder.inviteLink);
+      await copyToClipboard(groupOrder.inviteLink);
       toast({ title: 'Link copied!', description: 'Share with friends to join your group order.' });
     }
   }, [groupOrder, toast]);

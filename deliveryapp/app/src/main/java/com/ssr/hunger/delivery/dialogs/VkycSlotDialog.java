@@ -76,7 +76,15 @@ public class VkycSlotDialog extends Dialog {
         btnConfirmBooking.setOnClickListener(v -> confirmBooking());
         
         btnJoinCall.setOnClickListener(v -> {
-            getContext().startActivity(new android.content.Intent(getContext(), com.ssr.hunger.delivery.activities.VkycVideoCallActivity.class));
+            try {
+                android.content.Intent intent = new android.content.Intent(
+                        getContext(), com.ssr.hunger.delivery.activities.VkycVideoCallActivity.class);
+                intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
+                getContext().startActivity(intent);
+            } catch (Exception e) {
+                android.widget.Toast.makeText(getContext(),
+                        "Unable to open Video KYC. Please try again.", android.widget.Toast.LENGTH_SHORT).show();
+            }
             dismiss();
         });
 
@@ -187,11 +195,11 @@ public class VkycSlotDialog extends Dialog {
         FirebaseFirestore.getInstance().collection("vkyc_requests").document(uid)
             .set(request)
             .addOnSuccessListener(aVoid -> {
-                Toast.makeText(getContext(), "V-KYC Slot Booked successfully. Our admin will connect with you.", Toast.LENGTH_LONG).show();
+                com.ssr.hunger.delivery.utils.ToastUtils.showToast(getContext(), "V-KYC Slot Booked successfully. Our admin will connect with you.", Toast.LENGTH_LONG);
                 dismiss();
             })
             .addOnFailureListener(e -> {
-                Toast.makeText(getContext(), "Failed to book slot: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                com.ssr.hunger.delivery.utils.ToastUtils.showToast(getContext(), "Failed to book slot: " + e.getMessage(), Toast.LENGTH_SHORT);
                 btnConfirmBooking.setEnabled(true);
                 btnConfirmBooking.setText("Confirm Booking");
             });

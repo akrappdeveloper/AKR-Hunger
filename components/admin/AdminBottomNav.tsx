@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { LayoutDashboard, ShoppingBag, TrendingUp, Truck, MoreVertical } from 'lucide-react';
+import { LayoutDashboard, ShoppingBag, TrendingUp, Truck, MoreVertical, LayoutGrid } from 'lucide-react';
 import AdminSidebar from './AdminSidebar';
 
 export default function AdminBottomNav() {
@@ -15,8 +15,8 @@ export default function AdminBottomNav() {
     const mainLinks = [
         { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
         { href: '/admin/orders', label: 'Orders', icon: ShoppingBag },
+        { href: '/admin/more', label: 'All Tools', icon: LayoutGrid },
         { href: '/admin/analytics', label: 'Analytics', icon: TrendingUp },
-        { href: '/admin/delivery', label: 'Delivery', icon: Truck },
     ];
 
     return (

@@ -21,6 +21,7 @@ import SafeImage from '@/components/ui/safe-image';
 import { toast } from 'sonner';
 import { copyToClipboard } from '@/lib/utils';
 import ThemeToggle from '@/components/customer/ThemeToggle';
+import { buildCleanItemPayload } from '@/lib/customization-utils';
 
 interface ProductClientProps {
     productId: string;
@@ -387,9 +388,9 @@ export default function ProductClient({
     const [loadingReviews, setLoadingReviews] = useState(true);
     const [restaurantOffers, setRestaurantOffers] = useState<RestaurantOffer[]>([]);
     const [loadingOffers, setLoadingOffers] = useState(true);
-    const [selectedSize, setSelectedSize] = useState(DEFAULT_SIZES[0]);
+    const [selectedSize, setSelectedSize] = useState<{ id: string; name: string; desc?: string; price: number } | null>(null);
     const [selectedAddOns, setSelectedAddOns] = useState<Record<string, { name: string; price: number }>>({});
-    const [selectedSpice, setSelectedSpice] = useState<string>('Medium');
+    const [selectedSpice, setSelectedSpice] = useState<string | null>(null);
     const [cookingNote, setCookingNote] = useState<string>('');
     const [activeTab, setActiveTab] = useState<'customize' | 'nutrition' | 'info'>('customize');
     const [shareOpen, setShareOpen] = useState(false);
@@ -485,7 +486,10 @@ export default function ProductClient({
         : DEFAULT_ADDONS;
 
     useEffect(() => {
-        if (configuredSizes.length > 0) setSelectedSize(configuredSizes[0]);
+        setSelectedSize(null);
+        setSelectedSpice(null);
+        setSelectedAddOns({});
+        setCookingNote('');
     }, [product?.id]);
 
     const loadProductData = async () => {
@@ -535,7 +539,7 @@ export default function ProductClient({
     const realAverageRating = realReviewCount > 0 ? reviews.reduce((s, r) => s + (Number(r.rating) || 0), 0) / realReviewCount : (product?.averageRating || 0);
 
     const basePrice = product?.price || 0;
-    const sizePrice = selectedSize.price || 0;
+    const sizePrice = selectedSize?.price || 0;
     const addOnsTotal = Object.values(selectedAddOns).reduce((s, a) => s + a.price, 0);
     const unitPrice = basePrice + sizePrice + addOnsTotal;
     const totalPrice = unitPrice * quantity;
@@ -546,25 +550,42 @@ export default function ProductClient({
             toast.error(`Restaurant is currently closed (${operatingStatus.reason}). Ordering is paused, but you can save this dish to your wishlist!`);
             return;
         }
-        const parts: string[] = [`Spice: ${selectedSpice}`];
-        if (selectedSize.name !== 'Regular') parts.push(`Size: ${selectedSize.name}${selectedSize.price > 0 ? ` (+₹${selectedSize.price})` : ''}`);
-        const addonList = Object.values(selectedAddOns);
-        if (addonList.length > 0) parts.push(`Extras: ${addonList.map(a => `${a.name} (+₹${a.price})`).join(', ')}`);
-        if (cookingNote.trim()) parts.push(`Note: ${cookingNote.trim()}`);
 
-        addItem({
-            menuItemId: product.id!,
-            restaurantId: product.restaurantId,
-            name: selectedSize.name !== 'Regular' ? `${product.name} (${selectedSize.name})` : product.name,
-            price: unitPrice,
-            image: product.image,
-            quantity,
-            restaurantName: restaurant.name,
-            category: product.category,
-            specialInstructions: parts.join(' | '),
-            id: `cart_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-            addedAt: new Date(),
-        });
+        const addonList = Object.entries(selectedAddOns).map(([id, a]) => ({
+            id,
+            name: a.name,
+            price: a.price,
+        }));
+        const trimmedNote = cookingNote.trim();
+        const hasPricedExtras = sizePrice > 0 || addonList.length > 0;
+
+        addItem(
+            buildCleanItemPayload({
+                id: `cart_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                menuItemId: product.id!,
+                restaurantId: product.restaurantId,
+                name: product.name,
+                price: unitPrice,
+                ...(hasPricedExtras ? { basePrice } : {}),
+                image: product.image,
+                quantity,
+                restaurantName: restaurant.name,
+                category: product.category,
+                ...(selectedSpice ? { spiceLevel: selectedSpice } : {}),
+                ...(selectedSize
+                    ? {
+                          selectedSize: {
+                              id: selectedSize.id,
+                              name: selectedSize.name,
+                              price: selectedSize.price,
+                          },
+                      }
+                    : {}),
+                ...(addonList.length > 0 ? { selectedAddOns: addonList } : {}),
+                ...(trimmedNote ? { specialInstructions: trimmedNote } : {}),
+                addedAt: new Date(),
+            })
+        );
 
         if (isBuyNow) router.push('/customer/checkout');
         else toast.success(`${product.name} added to cart!`);
@@ -876,13 +897,24 @@ export default function ProductClient({
                                     <div className="flex items-center justify-between">
                                         <label className="text-sm font-bold text-foreground flex items-center gap-1.5">
                                             <Flame className="w-4 h-4 text-orange-500" /> Spice Level
-                                            <span className="text-[10px] bg-rose-500/15 text-rose-500 px-1.5 py-0.5 rounded-full font-bold">Required</span>
+                                            <span className="text-[10px] bg-muted text-muted-foreground px-1.5 py-0.5 rounded-full font-semibold">Optional</span>
                                         </label>
-                                        <span className="text-xs font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full">{selectedSpice}</span>
+                                        {selectedSpice ? (
+                                            <button
+                                                type="button"
+                                                onClick={() => setSelectedSpice(null)}
+                                                className="text-xs font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full hover:bg-primary/20 cursor-pointer"
+                                                title="Click to clear spice level"
+                                            >
+                                                {selectedSpice} ✕
+                                            </button>
+                                        ) : (
+                                            <span className="text-xs text-muted-foreground font-medium">Optional</span>
+                                        )}
                                     </div>
                                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                                         {SPICE_LEVELS.map(level => (
-                                            <button key={level.id} type="button" onClick={() => setSelectedSpice(level.id)}
+                                            <button key={level.id} type="button" onClick={() => setSelectedSpice(prev => prev === level.id ? null : level.id)}
                                                 className={`py-2.5 px-3 rounded-xl border text-xs font-bold transition-all text-center cursor-pointer flex flex-col items-center gap-0.5 ${selectedSpice === level.id ? 'border-primary bg-primary/15 text-foreground ring-2 ring-primary/25 shadow-xs' : 'border-border/70 bg-card/60 text-muted-foreground hover:text-foreground hover:bg-card'}`}
                                             >
                                                 <span className="font-extrabold">{level.label}</span>
@@ -895,20 +927,37 @@ export default function ProductClient({
                                 {/* Size */}
                                 <div className="space-y-2.5">
                                     <div className="flex items-center justify-between">
-                                        <label className="text-sm font-bold text-foreground">Choose Size</label>
-                                        {selectedSize.price > 0 && <span className="text-xs font-bold text-primary">+₹{selectedSize.price}</span>}
+                                        <label className="text-sm font-bold text-foreground flex items-center gap-1.5">
+                                            Choose Size
+                                            <span className="text-[10px] bg-muted text-muted-foreground px-1.5 py-0.5 rounded-full font-semibold">Optional</span>
+                                        </label>
+                                        {selectedSize ? (
+                                            <button
+                                                type="button"
+                                                onClick={() => setSelectedSize(null)}
+                                                className="text-xs font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full hover:bg-primary/20 cursor-pointer"
+                                                title="Click to clear size"
+                                            >
+                                                {selectedSize.name}{selectedSize.price > 0 ? ` (+₹${selectedSize.price})` : ''} ✕
+                                            </button>
+                                        ) : (
+                                            <span className="text-xs text-muted-foreground font-medium">Optional</span>
+                                        )}
                                     </div>
                                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                                        {configuredSizes.map(sizeOpt => (
-                                            <button key={sizeOpt.id} type="button" onClick={() => setSelectedSize(sizeOpt)}
-                                                className={`p-3 rounded-2xl text-left border transition-all cursor-pointer relative ${selectedSize.id === sizeOpt.id ? 'border-primary bg-primary/10 shadow-sm ring-1 ring-primary/20' : 'border-border/70 bg-card/60 hover:border-border hover:bg-card'}`}
-                                            >
-                                                {selectedSize.id === sizeOpt.id && <div className="absolute top-2.5 right-2.5 w-4 h-4 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-[10px]">✓</div>}
-                                                <div className="font-bold text-sm text-foreground">{sizeOpt.name}</div>
-                                                {(sizeOpt as any).desc && <div className="text-[11px] text-muted-foreground leading-tight mt-0.5">{(sizeOpt as any).desc}</div>}
-                                                <div className="text-xs font-black text-primary mt-2">{sizeOpt.price === 0 ? 'Standard Price' : `+₹${sizeOpt.price}`}</div>
-                                            </button>
-                                        ))}
+                                        {configuredSizes.map(sizeOpt => {
+                                            const isSizeSelected = selectedSize?.id === sizeOpt.id;
+                                            return (
+                                                <button key={sizeOpt.id} type="button" onClick={() => setSelectedSize(prev => prev?.id === sizeOpt.id ? null : sizeOpt)}
+                                                    className={`p-3 rounded-2xl text-left border transition-all cursor-pointer relative ${isSizeSelected ? 'border-primary bg-primary/10 shadow-sm ring-1 ring-primary/20' : 'border-border/70 bg-card/60 hover:border-border hover:bg-card'}`}
+                                                >
+                                                    {isSizeSelected && <div className="absolute top-2.5 right-2.5 w-4 h-4 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-[10px]">✓</div>}
+                                                    <div className="font-bold text-sm text-foreground">{sizeOpt.name}</div>
+                                                    {(sizeOpt as any).desc && <div className="text-[11px] text-muted-foreground leading-tight mt-0.5">{(sizeOpt as any).desc}</div>}
+                                                    <div className="text-xs font-black text-primary mt-2">{sizeOpt.price === 0 ? 'Standard Price' : `+₹${sizeOpt.price}`}</div>
+                                                </button>
+                                            );
+                                        })}
                                     </div>
                                 </div>
 
@@ -1098,9 +1147,9 @@ export default function ProductClient({
                             </div>
                             <div className="text-[11px] text-muted-foreground pt-2 border-t border-border/50 flex flex-wrap gap-x-2 gap-y-1">
                                 <span>Base: ₹{basePrice}</span>
-                                {sizePrice > 0 && <span>• Size (+₹{sizePrice})</span>}
+                                {selectedSize && <span>• Size: {selectedSize.name}{sizePrice > 0 ? ` (+₹${sizePrice})` : ''}</span>}
                                 {addOnsTotal > 0 && <span>• Add-ons (+₹{addOnsTotal})</span>}
-                                <span className="font-semibold text-primary">• Spice: {selectedSpice}</span>
+                                {selectedSpice && <span className="font-semibold text-primary">• Spice: {selectedSpice}</span>}
                             </div>
                         </div>
 
@@ -1180,7 +1229,11 @@ export default function ProductClient({
                 <div>
                     <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Total Price</div>
                     <div className="text-xl font-black text-foreground">₹{totalPrice}</div>
-                    <div className="text-[10px] text-primary font-semibold truncate max-w-[120px]">{selectedSpice}</div>
+                    {(selectedSpice || selectedSize || addOnsTotal > 0) && (
+                        <div className="text-[10px] text-primary font-semibold truncate max-w-[140px]">
+                            {[selectedSpice, selectedSize?.name, addOnsTotal > 0 ? `+₹${addOnsTotal} extras` : ''].filter(Boolean).join(' • ')}
+                        </div>
+                    )}
                 </div>
                 {!operatingStatus.isOpen ? (
                     <div className="flex items-center gap-2 flex-1 justify-end">

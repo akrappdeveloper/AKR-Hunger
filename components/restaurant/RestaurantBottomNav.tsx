@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { LayoutDashboard, ShoppingBag, UtensilsCrossed, MoreVertical } from 'lucide-react';
+import { LayoutDashboard, ShoppingBag, UtensilsCrossed, MoreVertical, MonitorPlay, Film } from 'lucide-react';
 import RestaurantSidebar from './RestaurantSidebar';
 
 import { useRestaurantAuth } from '@/context/RestaurantAuthContext';
@@ -25,9 +25,11 @@ export default function RestaurantBottomNav() {
     }
 
     const allLinks = [
-        { href: isStaff ? '/restaurant/staff/dashboard' : '/restaurant', label: isStaff ? 'Staff Hub' : 'Dashboard', icon: LayoutDashboard, perm: null },
+        { href: isStaff ? '/restaurant/staff/dashboard' : '/restaurant', label: isStaff ? 'Staff' : 'Home', icon: LayoutDashboard, perm: null },
         { href: '/restaurant/orders', label: 'Orders', icon: ShoppingBag, perm: 'orders' },
+        { href: '/restaurant/kds', label: 'KDS', icon: MonitorPlay, perm: 'orders' },
         { href: '/restaurant/menu', label: 'Menu', icon: UtensilsCrossed, perm: 'menu' },
+        { href: '/restaurant/videos', label: 'Videos', icon: Film, perm: 'menu' },
     ];
 
     const mainLinks = allLinks.filter((link) => {

@@ -25,14 +25,25 @@
             android:gravity="center_horizontal"
             android:layout_marginBottom="24dp">
 
-            <!-- Official Hunger Delivery Partner Logo (Clean, Frameless, No Background Color) -->
-            <ImageView
-                android:id="@+id/iv_reg_logo"
-                android:layout_width="84dp"
-                android:layout_height="84dp"
-                android:scaleType="fitCenter"
-                android:src="@drawable/ic_hunger_delivery_partner"
-                android:contentDescription="Hunger Delivery Partner Logo" />
+            <!-- Official Hunger Delivery Partner Logo in Premium Card Container -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="92dp"
+                android:layout_height="92dp"
+                app:cardCornerRadius="26dp"
+                app:cardElevation="3dp"
+                app:strokeWidth="1.5dp"
+                app:strokeColor="@color/primary_tint_border"
+                app:cardBackgroundColor="@color/surface">
+
+                <ImageView
+                    android:id="@+id/iv_reg_logo"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scaleType="fitCenter"
+                    android:padding="12dp"
+                    android:src="@drawable/ic_hunger_delivery_partner"
+                    android:contentDescription="Hunger Delivery Partner Logo" />
+            </com.google.android.material.card.MaterialCardView>
 
             <TextView
                 android:layout_width="wrap_content"

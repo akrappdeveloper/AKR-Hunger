@@ -2,10 +2,39 @@ package com.ssr.hunger.models;
 
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.IgnoreExtraProperties;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @IgnoreExtraProperties
 public class MenuItem {
+    public static class CustomizationOption {
+        private String id;
+        private String name;
+        private double price;
+        private String desc;
+
+        public CustomizationOption() {}
+
+        public CustomizationOption(String id, String name, double price, String desc) {
+            this.id = id;
+            this.name = name;
+            this.price = price;
+            this.desc = desc;
+        }
+
+        public String getId() { return id; }
+        public void setId(String id) { this.id = id; }
+
+        public String getName() { return name; }
+        public void setName(String name) { this.name = name; }
+
+        public double getPrice() { return price; }
+        public void setPrice(double price) { this.price = price; }
+
+        public String getDesc() { return desc; }
+        public void setDesc(String desc) { this.desc = desc; }
+    }
     private String id;
     private String restaurantId;
     private String name;
@@ -37,6 +66,8 @@ public class MenuItem {
     private boolean isGlutenFree;
     private boolean isJain;
     private boolean isHalal;
+    private List<CustomizationOption> addOns;
+    private List<CustomizationOption> sizes;
 
     public MenuItem() {}
 
@@ -130,6 +161,12 @@ public class MenuItem {
 
     public boolean isHalal() { return isHalal; }
     public void setHalal(boolean halal) { isHalal = halal; }
+
+    public List<CustomizationOption> getAddOns() { return addOns; }
+    public void setAddOns(List<CustomizationOption> addOns) { this.addOns = addOns; }
+
+    public List<CustomizationOption> getSizes() { return sizes; }
+    public void setSizes(List<CustomizationOption> sizes) { this.sizes = sizes; }
 
     /**
      * Check if this item should be shown to customers.
@@ -289,6 +326,41 @@ public class MenuItem {
         Boolean halal = doc.getBoolean("isHalal");
         if (halal != null) item.setHalal(halal);
 
+        List<CustomizationOption> parsedSizes = parseOptionsList(doc.get("sizes"));
+        if (!parsedSizes.isEmpty()) item.setSizes(parsedSizes);
+
+        Object addOnsObj = doc.get("addOns");
+        if (addOnsObj == null) addOnsObj = doc.get("addons");
+        List<CustomizationOption> parsedAddOns = parseOptionsList(addOnsObj);
+        if (!parsedAddOns.isEmpty()) item.setAddOns(parsedAddOns);
+
         return item;
+    }
+
+    private static List<CustomizationOption> parseOptionsList(Object raw) {
+        List<CustomizationOption> result = new ArrayList<>();
+        if (!(raw instanceof List<?>)) return result;
+        int idx = 0;
+        for (Object obj : (List<?>) raw) {
+            if (obj instanceof Map<?, ?>) {
+                Map<?, ?> m = (Map<?, ?>) obj;
+                Object nameObj = m.get("name");
+                if (nameObj == null) continue;
+                String name = String.valueOf(nameObj);
+                String id = m.get("id") != null ? String.valueOf(m.get("id")) : "opt_" + idx;
+                String desc = m.get("desc") != null ? String.valueOf(m.get("desc")) :
+                        (m.get("description") != null ? String.valueOf(m.get("description")) : "");
+                double price = 0.0;
+                Object pObj = m.get("price");
+                if (pObj instanceof Number) {
+                    price = ((Number) pObj).doubleValue();
+                } else if (pObj instanceof String) {
+                    try { price = Double.parseDouble((String) pObj); } catch (Exception ignored) {}
+                }
+                result.add(new CustomizationOption(id, name, price, desc));
+            }
+            idx++;
+        }
+        return result;
     }
 }

@@ -35,10 +35,20 @@ import com.ssr.hunger.delivery.utils.ReleaseMonitoringHelper;
 public class AKRDeliveryApp extends Application {
 
     private static final String TAG = "AKRDeliveryApp";
+    private static AKRDeliveryApp instance;
+
+    public static AKRDeliveryApp getInstance() {
+        return instance;
+    }
+
+    public static android.content.Context getAppContext() {
+        return instance != null ? instance.getApplicationContext() : null;
+    }
 
     @Override
     public void onCreate() {
         super.onCreate();
+        instance = this;
 
         // 1. Initialize Firebase Core
         FirebaseApp.initializeApp(this);

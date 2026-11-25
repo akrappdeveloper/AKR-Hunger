@@ -258,6 +258,58 @@
             android:windowSoftInputMode="adjustResize" />
 
 
+        <!-- Video Player Activity -->
+        <activity
+            android:name=".activities.VideoPlayerActivity"
+            android:exported="false"
+            android:theme="@style/Theme.AKRHunger.Splash" />
+
+        <!-- Stories Viewer Activity -->
+        <activity
+            android:name=".activities.StoriesActivity"
+            android:exported="false"
+            android:theme="@style/Theme.AKRHunger.Splash" />
+
+        <!-- Cuisine Explorer Activity -->
+        <activity
+            android:name=".activities.CuisineExplorerActivity"
+            android:exported="false" />
+
+        <!-- Diet Planner Activity -->
+        <activity
+            android:name=".activities.DietPlannerActivity"
+            android:exported="false" />
+
+        <!-- Quick Reorder Activity -->
+        <activity
+            android:name=".activities.ReorderActivity"
+            android:exported="false" />
+
+        <!-- Delivery Leaderboard Activity -->
+        <activity
+            android:name=".activities.LeaderboardActivity"
+            android:exported="false" />
+
+        <!-- Mood & Vibe Food Matcher Activity -->
+        <activity
+            android:name=".activities.MoodFoodActivity"
+            android:exported="false" />
+
+        <!-- Hunger Food Roulette Activity -->
+        <activity
+            android:name=".activities.RouletteActivity"
+            android:exported="false" />
+
+        <!-- Secret Vault Menu Activity -->
+        <activity
+            android:name=".activities.SecretMenuActivity"
+            android:exported="false" />
+
+        <!-- Mystery Box Activity -->
+        <activity
+            android:name=".activities.MysteryBoxActivity"
+            android:exported="false" />
+
         <!-- FCM Service -->
         <service
             android:name=".services.FCMService"

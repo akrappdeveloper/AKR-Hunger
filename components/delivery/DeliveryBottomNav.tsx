@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { Package, MapPin, TrendingUp, MoreVertical, LayoutGrid, DollarSign } from 'lucide-react';
+import { Package, MapPin, TrendingUp, MoreVertical, LayoutGrid, DollarSign, Flame, ShieldAlert } from 'lucide-react';
 import DeliverySidebar from './DeliverySidebar';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -18,7 +18,9 @@ export default function DeliveryBottomNav() {
     const mainLinks = [
         { href: '/delivery', label: 'Active', icon: Package },
         { href: '/delivery/available', label: 'Market', icon: MapPin },
+        { href: '/delivery/hotspots', label: 'Surge', icon: Flame },
         { href: '/delivery/earnings', label: 'Earn', icon: DollarSign },
+        { href: '/delivery/safety', label: 'SOS', icon: ShieldAlert },
     ];
 
     return (

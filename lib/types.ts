@@ -84,8 +84,13 @@ export interface Restaurant {
   phone: string;
   email: string;
   password?: string;
-  createdAt?: Date;
-  updatedAt?: Date;
+  createdAt?: Date | any;
+  updatedAt?: Date | any;
+  deliveryRadius?: number;
+  packagingFee?: number;
+  deliveryFee?: number;
+  gstNumber?: string;
+  category?: string;
   // Delivery eligibility & geospatial fields
   approvalStatus?: 'pending' | 'approved' | 'rejected' | 'suspended';
   acceptsOrders?: boolean;
@@ -154,6 +159,8 @@ export interface MenuItem {
   description: string;
   image: string;
   images?: string[]; // Multiple images support
+  videoUrl?: string; // Dish preparation / showcase video
+  videos?: string[]; // Multiple dish videos support
   price: number;
   category: string;
   vegetarian: boolean;
@@ -167,6 +174,8 @@ export interface MenuItem {
   calories?: number;
   allergens?: string[];
   tags?: string[];
+  foodType?: string;
+  originalPrice?: number;
   isBestSeller?: boolean;
   isNew?: boolean;
   isChefSpecial?: boolean;
@@ -215,16 +224,26 @@ export interface CustomizationGroup {
   options: CustomizationOption[];
 }
 
+export interface SelectedCustomizationOption {
+  id?: string;
+  name: string;
+  price: number;
+}
+
 export interface CartItem {
   id: string;
   menuItemId: string;
   restaurantId: string;
   name: string;
   price: number;
+  basePrice?: number;
   quantity: number;
   image: string;
   restaurantName: string;
   category?: string;
+  spiceLevel?: string;
+  selectedSize?: SelectedCustomizationOption;
+  selectedAddOns?: SelectedCustomizationOption[];
   specialInstructions?: string;
   addedAt: Date;
 }
@@ -379,6 +398,7 @@ export interface Order {
   tipAmount?: number;
   cancellationCompensation?: number; // ₹20 travel compensation on customer cancelled return
   cancellationReason?: string;
+  paymentTracking?: any;
   // Professional delivery flow (stage-based)
   delivery?: DeliveryFlow;
   // Extended fields
@@ -398,8 +418,12 @@ export interface OrderItem {
   menuItemId: string;
   name: string;
   price: number;
+  basePrice?: number;
   quantity: number;
   image: string;
+  spiceLevel?: string;
+  selectedSize?: SelectedCustomizationOption;
+  selectedAddOns?: SelectedCustomizationOption[];
   specialInstructions?: string;
 }
 
@@ -970,6 +994,191 @@ export interface PlatformDeliverySettings {
 export interface RestaurantDiscoveryResult {
   restaurant: Restaurant;
   eligibility: DeliveryEligibilityResult;
+}
+
+// ==========================================
+// Video & Stories Types
+// ==========================================
+
+export interface VideoContent {
+  id: string;
+  uploaderId: string;
+  uploaderType: 'restaurant' | 'customer';
+  uploaderName: string;
+  type: 'kitchen_tour' | 'food_prep' | 'review' | 'story' | 'live_kitchen';
+  title: string;
+  description?: string;
+  videoUrl: string;
+  thumbnailUrl?: string;
+  duration?: number; // seconds
+  views: number;
+  likes: number;
+  likedBy?: string[];
+  restaurantId?: string;
+  menuItemId?: string;
+  tags?: string[];
+  isActive: boolean;
+  isPinned?: boolean;
+  expiresAt?: Date | any; // For stories (24h expiry)
+  createdAt: Date | any;
+  updatedAt?: Date | any;
+}
+
+export interface FoodStory {
+  id: string;
+  restaurantId: string;
+  restaurantName: string;
+  restaurantImage?: string;
+  stories: VideoContent[];
+  hasUnviewed?: boolean;
+  lastStoryAt?: Date | any;
+}
+
+export interface VideoReview {
+  id: string;
+  customerId: string;
+  customerName: string;
+  customerAvatar?: string;
+  restaurantId: string;
+  menuItemId?: string;
+  orderId?: string;
+  rating: number;
+  comment?: string;
+  videoUrl: string;
+  thumbnailUrl?: string;
+  duration?: number;
+  likes: number;
+  likedBy?: string[];
+  isVerified?: boolean;
+  createdAt: Date | any;
+}
+
+// ==========================================
+// Cuisine Explorer Types
+// ==========================================
+
+export interface CuisineCategory {
+  id: string;
+  name: string;
+  description: string;
+  image: string;
+  icon: string;
+  restaurantCount: number;
+  popularDishes: string[];
+  gradient: string;
+}
+
+// ==========================================
+// Diet Planner Types
+// ==========================================
+
+export interface DietPlan {
+  id: string;
+  customerId: string;
+  name: string;
+  goal: 'weight_loss' | 'muscle_gain' | 'maintenance' | 'healthy_eating';
+  dailyCalorieTarget: number;
+  preferences: {
+    vegetarian?: boolean;
+    vegan?: boolean;
+    glutenFree?: boolean;
+    dairyFree?: boolean;
+    lowCarb?: boolean;
+    highProtein?: boolean;
+  };
+  meals: DietMeal[];
+  createdAt: Date | any;
+  updatedAt?: Date | any;
+}
+
+export interface DietMeal {
+  id: string;
+  type: 'breakfast' | 'lunch' | 'dinner' | 'snack';
+  menuItemId?: string;
+  name: string;
+  calories: number;
+  protein?: number;
+  carbs?: number;
+  fat?: number;
+  image?: string;
+  restaurantId?: string;
+  restaurantName?: string;
+}
+
+// ==========================================
+// Delivery Performance & Leaderboard Types
+// ==========================================
+
+export interface DeliveryPerformance {
+  id: string;
+  driverId: string;
+  period: 'daily' | 'weekly' | 'monthly';
+  date: string;
+  totalDeliveries: number;
+  onTimeDeliveries: number;
+  averageDeliveryTime: number; // minutes
+  customerRating: number;
+  totalEarnings: number;
+  totalTips: number;
+  totalDistance: number; // km
+  rank?: number;
+}
+
+export interface LeaderboardEntry {
+  driverId: string;
+  driverName: string;
+  driverAvatar?: string;
+  rank: number;
+  totalDeliveries: number;
+  averageRating: number;
+  totalEarnings: number;
+  badge?: 'gold' | 'silver' | 'bronze' | 'rising_star';
+  streak?: number;
+}
+
+// ==========================================
+// Blog / Article Types
+// ==========================================
+
+export interface BlogArticle {
+  id: string;
+  title: string;
+  slug: string;
+  excerpt: string;
+  content: string;
+  coverImage: string;
+  author: string;
+  authorAvatar?: string;
+  category: 'recipe' | 'nutrition' | 'tips' | 'restaurant_spotlight' | 'food_trends';
+  tags: string[];
+  readTime: number; // minutes
+  views: number;
+  likes: number;
+  isPublished: boolean;
+  publishedAt?: Date | any;
+  createdAt: Date | any;
+  updatedAt?: Date | any;
+}
+
+// ==========================================
+// Restaurant Inventory Types
+// ==========================================
+
+export interface InventoryItem {
+  id: string;
+  restaurantId: string;
+  name: string;
+  category: string;
+  unit: 'kg' | 'g' | 'l' | 'ml' | 'pieces' | 'packets';
+  currentStock: number;
+  minStock: number;
+  maxStock: number;
+  costPerUnit: number;
+  supplier?: string;
+  lastRestockedAt?: Date | any;
+  status: 'in_stock' | 'low_stock' | 'out_of_stock';
+  createdAt: Date | any;
+  updatedAt?: Date | any;
 }
 
 export { generateProfessionalOrderId, formatOrderId } from './order-utils';

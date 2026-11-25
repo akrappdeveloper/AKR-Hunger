@@ -36,6 +36,15 @@ export function RestaurantLayoutWrapper({ children }: { children: React.ReactNod
     pathname.includes('/staff/login') ||
     pathname.includes('/staff/dashboard/login');
 
+  const isFullScreenChat =
+    Boolean(pathname?.startsWith('/restaurant/chat/')) && pathname !== '/restaurant/chat';
+
+  const isFullScreenMenuEditor =
+    pathname === '/restaurant/menu/new' ||
+    Boolean(pathname && /^\/restaurant\/menu\/[^/]+\/edit\/?$/.test(pathname));
+
+  const isFullScreenWorkspace = isFullScreenChat || isFullScreenMenuEditor;
+
   // Full screen standalone view for auth pages (login)
   if (isAuthPage) {
     return <div className="w-full min-h-screen bg-background text-foreground">{children}</div>;
@@ -56,37 +65,47 @@ export function RestaurantLayoutWrapper({ children }: { children: React.ReactNod
     }
   }
 
+  const restrictedView = (
+    <div className="min-h-[70vh] flex items-center justify-center p-6">
+      <div className="max-w-md w-full text-center p-8 rounded-3xl bg-card border border-border shadow-xl">
+        <div className="w-16 h-16 rounded-2xl bg-destructive/10 text-destructive flex items-center justify-center mx-auto mb-4">
+          <ShieldAlert className="w-8 h-8" />
+        </div>
+        <h2 className="text-2xl font-black text-foreground">Access Restricted</h2>
+        <p className="text-sm text-muted-foreground mt-2">
+          Your staff role does not have permission to access the <strong>{requiredPermission}</strong> module.
+        </p>
+        <p className="text-xs text-muted-foreground/80 mt-1">
+          Please contact your restaurant owner or manager to grant this permission.
+        </p>
+        <div className="mt-6">
+          <Button asChild className="rounded-xl gap-2 font-bold bg-primary text-primary-foreground">
+            <Link href="/restaurant/staff/dashboard">
+              <ArrowLeft className="w-4 h-4" /> Return to Staff Dashboard
+            </Link>
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Full screen standalone workspace (no sidebar, bottom nav, or floating AI widget)
+  if (isFullScreenWorkspace) {
+    return (
+      <div className="w-full h-[100dvh] overflow-hidden bg-background text-foreground flex flex-col transition-colors duration-300">
+        <FCMInitializer role="restaurant" />
+        {!hasRouteAccess ? <div className="flex-1 overflow-y-auto">{restrictedView}</div> : children}
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-screen bg-background text-foreground transition-colors duration-300">
       <FCMInitializer role="restaurant" />
       {user && <RestaurantSidebar />}
       <main className="flex-1 overflow-y-auto mb-16 md:mb-0 bg-background">
         <div className="max-w-screen-2xl mx-auto min-h-full">
-          {!hasRouteAccess ? (
-            <div className="min-h-[70vh] flex items-center justify-center p-6">
-              <div className="max-w-md w-full text-center p-8 rounded-3xl bg-card border border-border shadow-xl">
-                <div className="w-16 h-16 rounded-2xl bg-destructive/10 text-destructive flex items-center justify-center mx-auto mb-4">
-                  <ShieldAlert className="w-8 h-8" />
-                </div>
-                <h2 className="text-2xl font-black text-foreground">Access Restricted</h2>
-                <p className="text-sm text-muted-foreground mt-2">
-                  Your staff role does not have permission to access the <strong>{requiredPermission}</strong> module.
-                </p>
-                <p className="text-xs text-muted-foreground/80 mt-1">
-                  Please contact your restaurant owner or manager to grant this permission.
-                </p>
-                <div className="mt-6">
-                  <Button asChild className="rounded-xl gap-2 font-bold bg-primary text-primary-foreground">
-                    <Link href="/restaurant/staff/dashboard">
-                      <ArrowLeft className="w-4 h-4" /> Return to Staff Dashboard
-                    </Link>
-                  </Button>
-                </div>
-              </div>
-            </div>
-          ) : (
-            children
-          )}
+          {!hasRouteAccess ? restrictedView : children}
         </div>
       </main>
       {user && <RestaurantBottomNav />}

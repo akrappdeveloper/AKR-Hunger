@@ -12,8 +12,10 @@ import { AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface AdminDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  open?: boolean;
+  isOpen?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  onClose?: () => void;
   title: string;
   description?: string;
   children: React.ReactNode;
@@ -29,7 +31,9 @@ interface AdminDialogProps {
 
 export function AdminDialog({
   open,
+  isOpen,
   onOpenChange,
+  onClose,
   title,
   description,
   children,
@@ -42,6 +46,10 @@ export function AdminDialog({
   cancelText = 'Cancel',
   destructive = false,
 }: AdminDialogProps) {
+  const isDialogOpen = open !== undefined ? open : (isOpen ?? false);
+  const handleOpenChange = onOpenChange || ((val: boolean) => {
+    if (!val && onClose) onClose();
+  });
   const maxWidthClass = {
     sm: 'sm:max-w-[425px]',
     md: 'sm:max-w-[600px]',
@@ -54,7 +62,7 @@ export function AdminDialog({
   }[maxWidth];
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={isDialogOpen} onOpenChange={handleOpenChange}>
       <DialogContent className={`bg-card border-border/50 text-foreground ${maxWidthClass} overflow-hidden max-h-[90vh] flex flex-col p-0 gap-0`}>
         <div className="p-6 border-b border-border/50 bg-background/20">
           <DialogHeader>
@@ -85,7 +93,7 @@ export function AdminDialog({
               <>
                 <Button
                   variant="outline"
-                  onClick={() => onOpenChange(false)}
+                  onClick={() => handleOpenChange(false)}
                   disabled={loading}
                   className="border-border/50 bg-transparent text-muted-foreground hover:bg-secondary hover:text-foreground"
                 >
