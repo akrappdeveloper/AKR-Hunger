@@ -205,8 +205,16 @@ export default function OrdersPage() {
     setSubmittingRating(true);
     try {
       await addDoc(collection(db, 'reviews'), {
-        customerId: user.uid, orderId: ratingOrder.id, restaurantId: ratingOrder.restaurantId,
-        restaurantName: ratingOrder.restaurantName, rating: ratingValue, comment: ratingComment,
+        customerId: user.uid,
+        customerName: customer?.name || customer?.displayName || user.displayName || 'Hunger Customer',
+        customerAvatar: customer?.avatar || user.photoURL || '',
+        orderId: ratingOrder.id,
+        restaurantId: ratingOrder.restaurantId,
+        restaurantName: ratingOrder.restaurantName,
+        menuItemName: ratingOrder.items?.map(i => i.name).filter(Boolean).join(', ') || '',
+        rating: ratingValue,
+        comment: ratingComment,
+        isVerified: true,
         createdAt: serverTimestamp()
       });
       await updateDoc(doc(db, 'users', user.uid), { rewardPoints: increment(20) });

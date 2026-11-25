@@ -114,7 +114,7 @@ function StarRating({
 }
 
 export default function ReviewsPage() {
-  const { user } = useAuth();
+  const { user, customer } = useAuth();
   const router = useRouter();
 
   const [tab, setTab] = useState<'pending' | 'history'>('pending');
@@ -211,14 +211,17 @@ export default function ReviewsPage() {
       // 1. Add review to Firestore 'reviews'
       await addDoc(collection(db, 'reviews'), {
         customerId: user.uid,
-        customerName: user.displayName || 'Hunger Customer',
+        customerName: customer?.name || customer?.displayName || user.displayName || 'Hunger Customer',
+        customerAvatar: customer?.avatar || user.photoURL || '',
         orderId: selectedOrder.id,
         restaurantId: selectedOrder.restaurantId || '',
         restaurantName: selectedOrder.restaurantName || 'Restaurant',
+        menuItemName: selectedOrder.items?.map(i => i.name).filter(Boolean).join(', ') || '',
         rating: foodRating,
         deliveryRating,
         comment: comment.trim(),
         tags: selectedTags,
+        isVerified: true,
         createdAt: serverTimestamp(),
       });
 
