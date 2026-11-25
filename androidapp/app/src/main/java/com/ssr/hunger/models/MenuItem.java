@@ -41,6 +41,8 @@ public class MenuItem {
     private String description;
     private String image;
     private List<String> images;
+    private String videoUrl;
+    private List<String> videos;
     private double price;
     private double originalPrice;
     private int calories;
@@ -89,6 +91,27 @@ public class MenuItem {
 
     public List<String> getImages() { return images; }
     public void setImages(List<String> images) { this.images = images; }
+
+    public String getVideoUrl() { return videoUrl; }
+    public void setVideoUrl(String videoUrl) { this.videoUrl = videoUrl; }
+
+    public List<String> getVideos() { return videos; }
+    public void setVideos(List<String> videos) { this.videos = videos; }
+
+    public List<String> getAllVideoUrls() {
+        List<String> all = new ArrayList<>();
+        if (videos != null) {
+            for (String v : videos) {
+                if (v != null && !v.trim().isEmpty() && !all.contains(v.trim())) {
+                    all.add(v.trim());
+                }
+            }
+        }
+        if (videoUrl != null && !videoUrl.trim().isEmpty() && !all.contains(videoUrl.trim())) {
+            all.add(videoUrl.trim());
+        }
+        return all;
+    }
 
     public double getPrice() { return price; }
     public void setPrice(double price) { this.price = price; }
@@ -222,6 +245,26 @@ public class MenuItem {
             String img = doc.getString("image");
             if (img == null) img = doc.getString("imageUrl");
             item.setImage(img);
+        }
+
+        // Video URL & videos array
+        String vUrl = doc.getString("videoUrl");
+        if (vUrl == null || vUrl.trim().isEmpty()) vUrl = doc.getString("video");
+        if (vUrl != null && !vUrl.trim().isEmpty()) {
+            item.setVideoUrl(vUrl.trim());
+        }
+        Object rawVideos = doc.get("videos");
+        if (rawVideos instanceof List<?>) {
+            List<String> parsedVideos = new ArrayList<>();
+            for (Object vo : (List<?>) rawVideos) {
+                if (vo != null) {
+                    String vs = String.valueOf(vo).trim();
+                    if (!vs.isEmpty() && !parsedVideos.contains(vs)) {
+                        parsedVideos.add(vs);
+                    }
+                }
+            }
+            if (!parsedVideos.isEmpty()) item.setVideos(parsedVideos);
         }
 
         // Safe price conversion

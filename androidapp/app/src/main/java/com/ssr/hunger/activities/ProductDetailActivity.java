@@ -48,6 +48,7 @@ public class ProductDetailActivity extends BaseActivity {
     private LinearLayout llImageDots;
     private TextView tvImageCounter;
     private ProductImageAdapter imageAdapter;
+    private ViewPager2.OnPageChangeCallback mediaPageCallback;
     private final Handler autoSlideHandler = new Handler(Looper.getMainLooper());
     private Runnable autoSlideRunnable;
     private int currentImagePage = 0;
@@ -235,14 +236,16 @@ public class ProductDetailActivity extends BaseActivity {
             vegDot.setBackgroundColor(getColor(menuItem.isVegetarian() ? R.color.veg_green : R.color.non_veg_red));
         }
 
-        // Load images carousel
+        // Load images + showcase videos carousel
         List<String> images = new ArrayList<>();
         if (menuItem.getImages() != null && !menuItem.getImages().isEmpty()) {
             images.addAll(menuItem.getImages());
         } else if (menuItem.getImage() != null && !menuItem.getImage().isEmpty()) {
             images.add(menuItem.getImage());
         }
-        setupImageCarousel(images);
+        List<String> videoUrls = menuItem.getAllVideoUrls();
+        setupImageCarousel(images, videoUrls);
+        fetchLinkedReelVideos(images, videoUrls);
 
         // Quantity controls
         tvQuantity.setText(String.valueOf(quantity));
@@ -348,40 +351,95 @@ public class ProductDetailActivity extends BaseActivity {
         updateSpiceSummaryDisplay();
     }
 
-    /** Sets up the ViewPager2 image carousel with dots and auto-slide. */
-    private void setupImageCarousel(List<String> images) {
+    /** Queries `videos` collection for any active reels linked to this menuItemId and refreshes media carousel. */
+    private void fetchLinkedReelVideos(List<String> images, List<String> initialVideos) {
+        if (productId == null) return;
+        db.collection("videos").whereEqualTo("menuItemId", productId).limit(5).get()
+                .addOnSuccessListener(snap -> {
+                    if (isFinishing() || isDestroyed() || snap == null || snap.isEmpty()) return;
+                    List<String> combinedVideos = new ArrayList<>(initialVideos);
+                    boolean added = false;
+                    for (com.google.firebase.firestore.DocumentSnapshot doc : snap.getDocuments()) {
+                        Boolean active = doc.getBoolean("isActive");
+                        if (active != null && !active) continue;
+                        String vUrl = doc.getString("videoUrl");
+                        if (vUrl != null && !vUrl.trim().isEmpty() && !combinedVideos.contains(vUrl.trim())) {
+                            combinedVideos.add(vUrl.trim());
+                            added = true;
+                        }
+                    }
+                    if (added) {
+                        setupImageCarousel(images, combinedVideos);
+                    }
+                });
+    }
+
+    /** Sets up the ViewPager2 media carousel (images + videos) with dots, Watch Video CTA, and auto-slide. */
+    private void setupImageCarousel(List<String> images, List<String> videos) {
         vpProductImages = findViewById(R.id.vp_product_images);
         llImageDots = findViewById(R.id.ll_image_dots);
         tvImageCounter = findViewById(R.id.tv_image_counter);
         ImageView ivFallback = findViewById(R.id.iv_product_image);
+        View cardWatchVideo = findViewById(R.id.card_watch_video);
+        TextView tvWatchVideo = findViewById(R.id.tv_watch_video);
 
-        if (images.isEmpty()) {
-            // Nothing to show
+        autoSlideHandler.removeCallbacksAndMessages(null);
+
+        List<String> safeImages = images != null ? images : new ArrayList<>();
+        List<String> safeVideos = videos != null ? videos : new ArrayList<>();
+
+        if (cardWatchVideo != null) {
+            if (!safeVideos.isEmpty()) {
+                cardWatchVideo.setVisibility(View.VISIBLE);
+                if (tvWatchVideo != null) {
+                    tvWatchVideo.setText(safeVideos.size() > 1
+                            ? "Watch Video (" + safeVideos.size() + ")"
+                            : "Watch Video");
+                }
+                cardWatchVideo.setOnClickListener(v -> {
+                    Intent vIntent = new Intent(this, VideoPlayerActivity.class);
+                    vIntent.putStringArrayListExtra("videoUrls", new ArrayList<>(safeVideos));
+                    vIntent.putExtra("position", 0);
+                    vIntent.putExtra("title", menuItem != null ? menuItem.getName() : "Dish Video");
+                    startActivity(vIntent);
+                });
+            } else {
+                cardWatchVideo.setVisibility(View.GONE);
+            }
+        }
+
+        List<ProductImageAdapter.MediaSlide> mediaSlides = new ArrayList<>();
+        String defaultPoster = !safeImages.isEmpty() ? safeImages.get(0) : "";
+        for (String img : safeImages) {
+            mediaSlides.add(new ProductImageAdapter.MediaSlide(false, img, img));
+        }
+        for (String vid : safeVideos) {
+            mediaSlides.add(new ProductImageAdapter.MediaSlide(true, vid, defaultPoster));
+        }
+
+        if (mediaSlides.isEmpty()) {
             return;
         }
 
-        if (images.size() == 1) {
-            // Single image — use the simple ImageView for efficiency
+        if (mediaSlides.size() == 1 && !mediaSlides.get(0).isVideo) {
             if (ivFallback != null) {
                 ivFallback.setVisibility(View.VISIBLE);
                 if (vpProductImages != null) vpProductImages.setVisibility(View.GONE);
-                Glide.with(this).load(images.get(0)).placeholder(R.drawable.bg_card_rounded).centerCrop().into(ivFallback);
+                Glide.with(this).load(mediaSlides.get(0).url).placeholder(R.drawable.bg_card_rounded).centerCrop().into(ivFallback);
             }
             return;
         }
 
-        // Multiple images — use ViewPager2
         if (vpProductImages == null) return;
         if (ivFallback != null) ivFallback.setVisibility(View.GONE);
         vpProductImages.setVisibility(View.VISIBLE);
 
-        imageAdapter = new ProductImageAdapter(this, images);
+        imageAdapter = ProductImageAdapter.fromMediaSlides(this, mediaSlides);
         vpProductImages.setAdapter(imageAdapter);
 
-        // Dots indicator
         if (llImageDots != null) {
             llImageDots.removeAllViews();
-            for (int i = 0; i < images.size(); i++) {
+            for (int i = 0; i < mediaSlides.size(); i++) {
                 View dot = new View(this);
                 LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
                         i == 0 ? dpToPx(20) : dpToPx(8), dpToPx(8));
@@ -392,43 +450,53 @@ public class ProductDetailActivity extends BaseActivity {
             }
         }
 
-        // Counter badge
         if (tvImageCounter != null) {
-            tvImageCounter.setVisibility(images.size() > 1 ? View.VISIBLE : View.GONE);
-            tvImageCounter.setText("1/" + images.size());
+            tvImageCounter.setVisibility(mediaSlides.size() > 1 ? View.VISIBLE : View.GONE);
+            tvImageCounter.setText("1/" + mediaSlides.size());
         }
 
-        // Page change listener — sync dots + counter
-        vpProductImages.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
+        if (mediaPageCallback != null) {
+            vpProductImages.unregisterOnPageChangeCallback(mediaPageCallback);
+        }
+        mediaPageCallback = new ViewPager2.OnPageChangeCallback() {
             @Override
             public void onPageSelected(int position) {
                 currentImagePage = position;
-                updateDots(position, images.size());
+                updateDots(position, mediaSlides.size());
                 if (tvImageCounter != null) {
-                    tvImageCounter.setText((position + 1) + "/" + images.size());
+                    tvImageCounter.setText((position + 1) + "/" + mediaSlides.size());
                 }
             }
-        });
-
-        // Full-screen preview on tap
-        imageAdapter.setOnImageClickListener((position, url) -> {
-            // Basic full-screen intent using the built-in image viewer
-            // (can be replaced with a custom ZoomableImageActivity)
-            Intent previewIntent = new Intent(this, FullScreenImageActivity.class);
-            previewIntent.putStringArrayListExtra("images", new ArrayList<>(images));
-            previewIntent.putExtra("position", position);
-            startActivity(previewIntent);
-        });
-
-        // Auto-slide every 4 seconds
-        autoSlideRunnable = () -> {
-            if (!isFinishing() && !isDestroyed() && vpProductImages != null) {
-                int next = (currentImagePage + 1) % images.size();
-                vpProductImages.setCurrentItem(next, true);
-                autoSlideHandler.postDelayed(autoSlideRunnable, 4000);
-            }
         };
-        autoSlideHandler.postDelayed(autoSlideRunnable, 4000);
+        vpProductImages.registerOnPageChangeCallback(mediaPageCallback);
+
+        imageAdapter.setOnSlideClickListener((position, slide) -> {
+            if (slide.isVideo) {
+                int vidIdx = Math.max(0, safeVideos.indexOf(slide.url));
+                Intent vIntent = new Intent(this, VideoPlayerActivity.class);
+                vIntent.putStringArrayListExtra("videoUrls", new ArrayList<>(safeVideos));
+                vIntent.putExtra("position", vidIdx);
+                vIntent.putExtra("title", menuItem != null ? menuItem.getName() : "Dish Video");
+                startActivity(vIntent);
+            } else if (!safeImages.isEmpty()) {
+                int imgIdx = Math.max(0, safeImages.indexOf(slide.url));
+                Intent previewIntent = new Intent(this, FullScreenImageActivity.class);
+                previewIntent.putStringArrayListExtra("images", new ArrayList<>(safeImages));
+                previewIntent.putExtra("position", imgIdx);
+                startActivity(previewIntent);
+            }
+        });
+
+        if (mediaSlides.size() > 1) {
+            autoSlideRunnable = () -> {
+                if (!isFinishing() && !isDestroyed() && vpProductImages != null) {
+                    int next = (currentImagePage + 1) % mediaSlides.size();
+                    vpProductImages.setCurrentItem(next, true);
+                    autoSlideHandler.postDelayed(autoSlideRunnable, 4000);
+                }
+            };
+            autoSlideHandler.postDelayed(autoSlideRunnable, 4000);
+        }
     }
 
     private void updateDots(int selectedPos, int total) {

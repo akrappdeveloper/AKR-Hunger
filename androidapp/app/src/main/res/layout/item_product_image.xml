@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Single slide in the product image carousel ViewPager2 -->
+<!-- Single slide in the product media carousel ViewPager2 (supports both Images and Videos) -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@android:color/black">
 
     <ImageView
         android:id="@+id/iv_slide_image"
@@ -10,6 +11,34 @@
         android:layout_height="match_parent"
         android:scaleType="centerCrop"
         android:contentDescription="@string/product_image_content_desc" />
+
+    <!-- Centered Play Badge overlay for video slides -->
+    <LinearLayout
+        android:id="@+id/ll_video_badge"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:background="@drawable/bg_pill_dark"
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="10dp"
+        android:visibility="gone">
+
+        <ImageView
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:src="@drawable/ic_play_arrow" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:fontFamily="sans-serif-bold"
+            android:text="Play Dish Video"
+            android:textColor="@android:color/white"
+            android:textSize="13sp" />
+    </LinearLayout>
 
     <!-- Shimmer placeholder - shown while loading -->
     <View

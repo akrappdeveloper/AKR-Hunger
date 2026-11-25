@@ -153,12 +153,7 @@ export default function CustomerHomePage() {
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [activeTab, setActiveTab] = useState('delivery'); // 'delivery' or 'pickup'
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [storyRestaurants, setStoryRestaurants] = useState<{
-    restaurantId: string;
-    restaurantName: string;
-    restaurantImage: string;
-    storyCount: number;
-  }[]>([]);
+  const [rawVideoDocs, setRawVideoDocs] = useState<any[]>([]);
 
   // Carousel ref, quick filter state, and dish visibility limit
   const carouselRef = useRef<HTMLDivElement>(null);
@@ -236,30 +231,7 @@ export default function CustomerHomePage() {
       const qVideos = query(videosRef, where('isActive', '==', true), limit(50));
       unsubscribeVideos = onSnapshot(qVideos, (vSnapshot) => {
         const videoDocs = vSnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-        const restStoryMap = new Map<string, {
-          restaurantId: string;
-          restaurantName: string;
-          restaurantImage: string;
-          storyCount: number;
-        }>();
-
-        videoDocs.forEach((v: any) => {
-          if (v.restaurantId) {
-            const existing = restStoryMap.get(v.restaurantId);
-            if (existing) {
-              existing.storyCount += 1;
-            } else {
-              restStoryMap.set(v.restaurantId, {
-                restaurantId: v.restaurantId,
-                restaurantName: v.restaurantName || restaurantMap.get(v.restaurantId) || 'Restaurant Partner',
-                restaurantImage: v.restaurantImage || '/hunger.png',
-                storyCount: 1,
-              });
-            }
-          }
-        });
-
-        setStoryRestaurants(Array.from(restStoryMap.values()));
+        setRawVideoDocs(videoDocs);
       }, (err) => {
         console.warn('[Customer Home] Videos snapshot notice:', err);
       });
@@ -273,6 +245,70 @@ export default function CustomerHomePage() {
       if (unsubscribeVideos) unsubscribeVideos();
     };
   }, []);
+
+  const storyRestaurants = (() => {
+    const restById = new Map(restaurants.map((r) => [r.id, r]));
+    const restStoryMap = new Map<string, {
+      restaurantId: string;
+      restaurantName: string;
+      restaurantImage: string;
+      storyCount: number;
+    }>();
+    const seenUrls = new Set<string>();
+
+    rawVideoDocs.forEach((v: any) => {
+      if (!v.restaurantId) return;
+      const rInfo = restById.get(v.restaurantId);
+      if (typeof v.videoUrl === 'string' && v.videoUrl.trim()) {
+        seenUrls.add(`${v.restaurantId}::${v.videoUrl.trim()}`);
+      }
+      const existing = restStoryMap.get(v.restaurantId);
+      if (existing) {
+        existing.storyCount += 1;
+      } else {
+        restStoryMap.set(v.restaurantId, {
+          restaurantId: v.restaurantId,
+          restaurantName: v.restaurantName || rInfo?.name || 'Restaurant Partner',
+          restaurantImage: v.restaurantImage || rInfo?.image || '/hunger.png',
+          storyCount: 1,
+        });
+      }
+    });
+
+    menuItems.forEach((m: any) => {
+      if (!m.restaurantId) return;
+      if (m.approvalStatus && m.approvalStatus !== 'approved') return;
+      if (m.available === false || m.isAvailable === false || m.deleted === true || m.isDeleted === true) return;
+      const urls = Array.from(
+        new Set(
+          [
+            ...(Array.isArray(m.videos) ? m.videos : []),
+            ...(m.videoUrl ? [m.videoUrl] : []),
+            ...(m.video ? [m.video] : []),
+          ].filter((u): u is string => typeof u === 'string' && u.trim().length > 0)
+        )
+      );
+      const rInfo = restById.get(m.restaurantId);
+      urls.forEach((u) => {
+        const key = `${m.restaurantId}::${u}`;
+        if (seenUrls.has(key)) return;
+        seenUrls.add(key);
+        const existing = restStoryMap.get(m.restaurantId);
+        if (existing) {
+          existing.storyCount += 1;
+        } else {
+          restStoryMap.set(m.restaurantId, {
+            restaurantId: m.restaurantId,
+            restaurantName: rInfo?.name || m.restaurantName || 'Restaurant Partner',
+            restaurantImage: rInfo?.image || m.image || '/hunger.png',
+            storyCount: 1,
+          });
+        }
+      });
+    });
+
+    return Array.from(restStoryMap.values());
+  })();
 
   // Filter Items
   const filteredItems = menuItems.filter(item => {

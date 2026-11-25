@@ -14,7 +14,7 @@ import {
     Star, Flame, Leaf, Clock, ArrowLeft, Plus, Minus, Zap,
     ShoppingCart, Heart, Share2, MapPin, Store, ShieldCheck,
     CheckCircle2, Tag, Truck, Sparkles, AlertCircle, Utensils, MessageSquareText,
-    Percent, ChevronRight, ChevronLeft, ZoomIn, X, ExternalLink, Info
+    Percent, ChevronRight, ChevronLeft, ZoomIn, X, ExternalLink, Info, Play, Video
 } from 'lucide-react';
 import Link from 'next/link';
 import SafeImage from '@/components/ui/safe-image';
@@ -64,8 +64,53 @@ const SPICE_LEVELS = [
     { id: 'Extra Hot', label: 'Extra Hot 🔥', desc: 'Fiery intensity' },
 ];
 
-// ─────────────── Image Carousel ───────────────────────────────────────────────
-function ImageCarousel({ images, productName }: { images: string[]; productName: string }) {
+// ─────────────── Media Carousel (Images + Dish Videos) ──────────────────────────
+function getVideoEmbedUrl(rawUrl: string): string | null {
+    try {
+        const u = new URL(rawUrl);
+        const host = u.hostname.toLowerCase();
+        if (host.includes('youtube.com')) {
+            if (u.pathname.startsWith('/shorts/')) {
+                const id = u.pathname.split('/shorts/')[1]?.split('/')[0];
+                return id ? `https://www.youtube.com/embed/${id}?autoplay=0&rel=0` : null;
+            }
+            const v = u.searchParams.get('v');
+            if (v) return `https://www.youtube.com/embed/${v}?autoplay=0&rel=0`;
+            if (u.pathname.startsWith('/embed/')) return rawUrl;
+        }
+        if (host === 'youtu.be') {
+            const id = u.pathname.replace('/', '').trim();
+            return id ? `https://www.youtube.com/embed/${id}?autoplay=0&rel=0` : null;
+        }
+        if (host.includes('vimeo.com')) {
+            const id = u.pathname.split('/').filter(Boolean)[0];
+            return id ? `https://player.vimeo.com/video/${id}` : null;
+        }
+    } catch {
+        // Not a URL with embed syntax; treat as direct HTML5 video
+    }
+    return null;
+}
+
+function ImageCarousel({
+    images,
+    videos = [],
+    productName,
+}: {
+    images: string[];
+    videos?: string[];
+    productName: string;
+}) {
+    const cleanImages = images.filter(Boolean);
+    const cleanVideos = videos.filter(Boolean);
+    const mediaItems: Array<{ type: 'image' | 'video'; url: string }> = [
+        ...cleanImages.map((url) => ({ type: 'image' as const, url })),
+        ...cleanVideos.map((url) => ({ type: 'video' as const, url })),
+    ];
+    if (mediaItems.length === 0) {
+        mediaItems.push({ type: 'image', url: '/placeholder-food.png' });
+    }
+
     const [current, setCurrent] = useState(0);
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [isZoomed, setIsZoomed] = useState(false);
@@ -73,23 +118,30 @@ function ImageCarousel({ images, productName }: { images: string[]; productName:
     const autoSlideRef = useRef<NodeJS.Timeout | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
-    const goTo = useCallback((idx: number) => {
-        setCurrent((idx + images.length) % images.length);
-        setIsLoading(true);
-    }, [images.length]);
+    const safeIndex = current < mediaItems.length ? current : 0;
+    const currentMedia = mediaItems[safeIndex];
+    const firstVideoIdx = mediaItems.findIndex((m) => m.type === 'video');
 
-    const next = useCallback(() => goTo(current + 1), [current, goTo]);
-    const prev = useCallback(() => goTo(current - 1), [current, goTo]);
+    const goTo = useCallback((idx: number) => {
+        const nextIdx = (idx + mediaItems.length) % mediaItems.length;
+        setCurrent(nextIdx);
+        setIsLoading(mediaItems[nextIdx]?.type === 'image');
+    }, [mediaItems]);
+
+    const next = useCallback(() => goTo(safeIndex + 1), [safeIndex, goTo]);
+    const prev = useCallback(() => goTo(safeIndex - 1), [safeIndex, goTo]);
 
     useEffect(() => {
-        if (images.length <= 1) return;
-        autoSlideRef.current = setInterval(next, 4000);
+        if (mediaItems.length <= 1 || currentMedia?.type === 'video' || isFullscreen) {
+            if (autoSlideRef.current) clearInterval(autoSlideRef.current);
+            return;
+        }
+        autoSlideRef.current = setInterval(next, 4500);
         return () => { if (autoSlideRef.current) clearInterval(autoSlideRef.current); };
-    }, [next, images.length]);
+    }, [next, mediaItems.length, currentMedia?.type, isFullscreen]);
 
     const resetSlide = () => {
         if (autoSlideRef.current) clearInterval(autoSlideRef.current);
-        if (images.length > 1) autoSlideRef.current = setInterval(next, 4000);
     };
 
     const handleTouchStart = (e: React.TouchEvent) => setTouchStart(e.touches[0].clientX);
@@ -100,6 +152,8 @@ function ImageCarousel({ images, productName }: { images: string[]; productName:
         setTouchStart(null);
     };
 
+    const embedUrl = currentMedia.type === 'video' ? getVideoEmbedUrl(currentMedia.url) : null;
+
     return (
         <>
             <div
@@ -107,78 +161,141 @@ function ImageCarousel({ images, productName }: { images: string[]; productName:
                 onTouchStart={handleTouchStart}
                 onTouchEnd={handleTouchEnd}
             >
-                {isLoading && <div className="absolute inset-0 z-10 bg-gradient-to-r from-muted via-muted/60 to-muted animate-pulse" />}
-
-                <div
-                    className={`w-full h-full transition-transform duration-500 ease-out cursor-zoom-in ${isZoomed ? 'scale-150' : 'scale-100'}`}
-                    onDoubleClick={() => setIsZoomed(z => !z)}
-                >
-                    <SafeImage
-                        src={images[current]}
-                        alt={`${productName} - image ${current + 1}`}
-                        className="object-cover transition-opacity duration-300"
-                        fill
-                        priority
-                        onLoad={() => setIsLoading(false)}
+                {currentMedia.type === 'image' ? (
+                    <>
+                        {isLoading && <div className="absolute inset-0 z-10 bg-gradient-to-r from-muted via-muted/60 to-muted animate-pulse" />}
+                        <div
+                            className={`w-full h-full transition-transform duration-500 ease-out cursor-zoom-in ${isZoomed ? 'scale-150' : 'scale-100'}`}
+                            onDoubleClick={() => setIsZoomed(z => !z)}
+                        >
+                            <SafeImage
+                                src={currentMedia.url}
+                                alt={`${productName} - image ${safeIndex + 1}`}
+                                className="object-cover transition-opacity duration-300"
+                                fill
+                                priority
+                                onLoad={() => setIsLoading(false)}
+                            />
+                        </div>
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/10 pointer-events-none" />
+                    </>
+                ) : embedUrl ? (
+                    <iframe
+                        key={currentMedia.url}
+                        src={embedUrl}
+                        title={`${productName} video`}
+                        className="w-full h-full border-0 bg-black"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
                     />
-                </div>
+                ) : (
+                    <video
+                        key={currentMedia.url}
+                        src={currentMedia.url}
+                        poster={cleanImages[0] || undefined}
+                        controls
+                        playsInline
+                        preload="metadata"
+                        onLoadedData={() => setIsLoading(false)}
+                        onCanPlay={() => setIsLoading(false)}
+                        className="w-full h-full object-contain bg-black"
+                    />
+                )}
 
-                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/10 pointer-events-none" />
-
-                {images.length > 1 && (
+                {mediaItems.length > 1 && (
                     <>
                         <button onClick={() => { prev(); resetSlide(); }}
-                            className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/50 backdrop-blur-md text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:bg-black/70 z-20"
-                            aria-label="Previous image"
+                            className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/50 backdrop-blur-md text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:bg-black/70 z-20 cursor-pointer"
+                            aria-label="Previous media"
                         >
                             <ChevronLeft className="w-4 h-4" />
                         </button>
                         <button onClick={() => { next(); resetSlide(); }}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/50 backdrop-blur-md text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:bg-black/70 z-20"
-                            aria-label="Next image"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/50 backdrop-blur-md text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:bg-black/70 z-20 cursor-pointer"
+                            aria-label="Next media"
                         >
                             <ChevronRight className="w-4 h-4" />
                         </button>
-                        <div className="absolute bottom-12 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-20">
-                            {images.map((_, i) => (
-                                <button key={i} onClick={() => { goTo(i); resetSlide(); }}
-                                    className={`rounded-full transition-all ${i === current ? 'w-6 h-2 bg-white' : 'w-2 h-2 bg-white/50'}`}
-                                    aria-label={`Image ${i + 1}`}
-                                />
-                            ))}
-                        </div>
-                        <div className="absolute top-3 left-3 bg-black/50 backdrop-blur-md text-white text-xs font-bold px-2 py-1 rounded-lg z-20">
-                            {current + 1}/{images.length}
+                        {currentMedia.type === 'image' && (
+                            <div className="absolute bottom-14 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-20">
+                                {mediaItems.map((m, i) => (
+                                    <button key={i} onClick={() => { goTo(i); resetSlide(); }}
+                                        className={`rounded-full transition-all cursor-pointer ${i === safeIndex ? 'w-6 h-2 bg-white' : m.type === 'video' ? 'w-2.5 h-2.5 bg-amber-400' : 'w-2 h-2 bg-white/50'}`}
+                                        aria-label={`${m.type === 'video' ? 'Video' : 'Image'} ${i + 1}`}
+                                    />
+                                ))}
+                            </div>
+                        )}
+                        <div className="absolute top-3 left-3 bg-black/55 backdrop-blur-md text-white text-xs font-bold px-2.5 py-1 rounded-lg z-20 flex items-center gap-1.5">
+                            {currentMedia.type === 'video' && <Video className="w-3.5 h-3.5 text-amber-400" />}
+                            <span>{safeIndex + 1}/{mediaItems.length}</span>
                         </div>
                     </>
                 )}
 
+                {/* Quick Watch Video Pill when viewing images */}
+                {firstVideoIdx !== -1 && currentMedia.type === 'image' && (
+                    <button
+                        type="button"
+                        onClick={() => { goTo(firstVideoIdx); resetSlide(); }}
+                        className="absolute top-3 right-12 px-3 py-1.5 rounded-full bg-black/75 hover:bg-black/90 backdrop-blur-md text-white text-xs font-bold flex items-center gap-1.5 border border-white/20 shadow-lg transition-all z-20 cursor-pointer"
+                    >
+                        <Play className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                        Watch Video {cleanVideos.length > 1 ? `(${cleanVideos.length})` : ''}
+                    </button>
+                )}
+
                 <button onClick={() => setIsFullscreen(true)}
-                    className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/40 backdrop-blur-md text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:bg-black/60 z-20"
+                    className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/45 backdrop-blur-md text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:bg-black/70 z-20 cursor-pointer"
                     aria-label="View fullscreen"
                 >
                     <ZoomIn className="w-3.5 h-3.5" />
                 </button>
 
-                <div className="absolute bottom-3 left-3 right-3 p-2.5 rounded-2xl bg-black/50 backdrop-blur-md border border-white/10 flex items-center justify-between text-white text-xs z-10">
-                    <span className="flex items-center gap-1.5 font-semibold">
-                        <ShieldCheck className="w-4 h-4 text-emerald-400" /> Tamper-Proof Sealed Pack
-                    </span>
-                    <span className="flex items-center gap-1 text-amber-300 font-bold">
-                        <Truck className="w-3.5 h-3.5" /> 30-min Delivery
-                    </span>
-                </div>
+                {currentMedia.type === 'image' && (
+                    <div className="absolute bottom-3 left-3 right-3 p-2.5 rounded-2xl bg-black/50 backdrop-blur-md border border-white/10 flex items-center justify-between text-white text-xs z-10 pointer-events-none">
+                        <span className="flex items-center gap-1.5 font-semibold">
+                            <ShieldCheck className="w-4 h-4 text-emerald-400" /> Tamper-Proof Sealed Pack
+                        </span>
+                        <span className="flex items-center gap-1 text-amber-300 font-bold">
+                            <Truck className="w-3.5 h-3.5" /> 30-min Delivery
+                        </span>
+                    </div>
+                )}
             </div>
 
-            {/* Thumbnail strip */}
-            {images.length > 1 && (
+            {/* Thumbnail strip (Photos + Videos) */}
+            {mediaItems.length > 1 && (
                 <div className="flex gap-2 overflow-x-auto pb-1">
-                    {images.map((img, idx) => (
-                        <button key={idx} onClick={() => { goTo(idx); resetSlide(); }}
-                            className={`flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden border-2 transition-all relative cursor-pointer ${idx === current ? 'border-primary ring-2 ring-primary/25 scale-105 shadow-md' : 'border-border/60 opacity-60 hover:opacity-100'}`}
+                    {mediaItems.map((m, idx) => (
+                        <button key={`${m.type}-${idx}`} onClick={() => { goTo(idx); resetSlide(); }}
+                            className={`flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden border-2 transition-all relative cursor-pointer bg-muted ${idx === safeIndex ? 'border-primary ring-2 ring-primary/25 scale-105 shadow-md' : 'border-border/60 opacity-75 hover:opacity-100'}`}
                         >
-                            <SafeImage src={img} alt={`thumb ${idx + 1}`} className="object-cover" fill />
-                            {idx === 0 && <span className="absolute bottom-0.5 left-0.5 bg-primary/90 text-[8px] text-white font-bold px-1 rounded">Main</span>}
+                            {m.type === 'image' ? (
+                                <>
+                                    <SafeImage src={m.url} alt={`thumb ${idx + 1}`} className="object-cover" fill />
+                                    {idx === 0 && <span className="absolute bottom-0.5 left-0.5 bg-primary/90 text-[8px] text-white font-bold px-1 rounded">Main</span>}
+                                </>
+                            ) : (
+                                <div className="w-full h-full relative bg-zinc-900 flex items-center justify-center">
+                                    {!getVideoEmbedUrl(m.url) && (
+                                        <video
+                                            src={m.url}
+                                            muted
+                                            preload="metadata"
+                                            className="w-full h-full object-cover opacity-75 pointer-events-none"
+                                        />
+                                    )}
+                                    <div className="absolute inset-0 bg-black/35 flex flex-col items-center justify-center gap-0.5">
+                                        <div className="w-7 h-7 rounded-full bg-white/90 text-black flex items-center justify-center shadow">
+                                            <Play className="w-3.5 h-3.5 fill-black ml-0.5" />
+                                        </div>
+                                        <span className="text-[8px] font-black uppercase tracking-wider text-white bg-black/60 px-1.5 rounded">
+                                            Video
+                                        </span>
+                                    </div>
+                                </div>
+                            )}
                         </button>
                     ))}
                 </div>
@@ -191,35 +308,45 @@ function ImageCarousel({ images, productName }: { images: string[]; productName:
                     onTouchEnd={handleTouchEnd}
                 >
                     <button onClick={() => setIsFullscreen(false)}
-                        className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 text-white flex items-center justify-center hover:bg-white/20 transition-all z-10"
+                        className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 text-white flex items-center justify-center hover:bg-white/20 transition-all z-10 cursor-pointer"
                     >
                         <X className="w-5 h-5" />
                     </button>
                     <div className="text-white text-xs font-bold absolute top-5 left-5 bg-white/10 px-3 py-1 rounded-full">
-                        {current + 1} / {images.length}
+                        {safeIndex + 1} / {mediaItems.length}
                     </div>
-                    <div
-                        className={`relative w-full max-w-2xl aspect-square mx-4 transition-transform duration-300 ${isZoomed ? 'scale-150 cursor-zoom-out' : 'cursor-zoom-in'}`}
-                        onDoubleClick={() => setIsZoomed(z => !z)}
-                    >
-                        <SafeImage src={images[current]} alt={productName} className="object-contain" fill />
-                    </div>
-                    {images.length > 1 && (
+                    {currentMedia.type === 'image' ? (
+                        <div
+                            className={`relative w-full max-w-2xl aspect-square mx-4 transition-transform duration-300 ${isZoomed ? 'scale-150 cursor-zoom-out' : 'cursor-zoom-in'}`}
+                            onDoubleClick={() => setIsZoomed(z => !z)}
+                        >
+                            <SafeImage src={currentMedia.url} alt={productName} className="object-contain" fill />
+                        </div>
+                    ) : embedUrl ? (
+                        <div className="w-full max-w-3xl aspect-video mx-4 rounded-2xl overflow-hidden bg-black">
+                            <iframe
+                                src={embedUrl}
+                                title={`${productName} fullscreen video`}
+                                className="w-full h-full border-0"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                allowFullScreen
+                            />
+                        </div>
+                    ) : (
+                        <div className="w-full max-w-3xl aspect-video mx-4 rounded-2xl overflow-hidden bg-black">
+                            <video
+                                src={currentMedia.url}
+                                controls
+                                autoPlay
+                                playsInline
+                                className="w-full h-full object-contain"
+                            />
+                        </div>
+                    )}
+                    {mediaItems.length > 1 && (
                         <>
-                            <button onClick={() => { prev(); }} className="absolute left-4 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-white/10 text-white flex items-center justify-center hover:bg-white/20 transition-all"><ChevronLeft className="w-5 h-5" /></button>
-                            <button onClick={() => { next(); }} className="absolute right-4 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-white/10 text-white flex items-center justify-center hover:bg-white/20 transition-all"><ChevronRight className="w-5 h-5" /></button>
-                            <div className="absolute bottom-6 flex gap-2">
-                                {images.map((_, i) => <button key={i} onClick={() => goTo(i)} className={`rounded-full transition-all ${i === current ? 'w-6 h-2 bg-white' : 'w-2 h-2 bg-white/40'}`} />)}
-                            </div>
-                            <div className="absolute bottom-14 flex gap-2 overflow-x-auto max-w-sm px-4">
-                                {images.map((img, idx) => (
-                                    <button key={idx} onClick={() => goTo(idx)}
-                                        className={`flex-shrink-0 w-12 h-12 rounded-lg overflow-hidden border-2 relative transition-all ${idx === current ? 'border-white' : 'border-white/20 opacity-50'}`}
-                                    >
-                                        <SafeImage src={img} alt="" className="object-cover" fill />
-                                    </button>
-                                ))}
-                            </div>
+                            <button onClick={() => { prev(); }} className="absolute left-4 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-white/10 text-white flex items-center justify-center hover:bg-white/20 transition-all cursor-pointer"><ChevronLeft className="w-5 h-5" /></button>
+                            <button onClick={() => { next(); }} className="absolute right-4 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-white/10 text-white flex items-center justify-center hover:bg-white/20 transition-all cursor-pointer"><ChevronRight className="w-5 h-5" /></button>
                         </>
                     )}
                 </div>
@@ -396,8 +523,34 @@ export default function ProductClient({
     const [activeTab, setActiveTab] = useState<'customize' | 'nutrition' | 'info'>('customize');
     const [shareOpen, setShareOpen] = useState(false);
     const [currentTime, setCurrentTime] = useState(new Date());
+    const [reelVideos, setReelVideos] = useState<string[]>([]);
 
     const totalCartCount = items.reduce((sum, item) => sum + item.quantity, 0);
+
+    // Real-time menuItem listener so newly uploaded videos & updates appear immediately
+    useEffect(() => {
+        if (!productId) return;
+        const unsub = onSnapshot(doc(db, 'menuItems', productId), (snap) => {
+            if (snap.exists()) {
+                setProduct({ id: snap.id, ...snap.data() } as MenuItem);
+            }
+        });
+        return () => unsub();
+    }, [productId]);
+
+    // Fetch any linked reel videos matching this menu item
+    useEffect(() => {
+        if (!productId) return;
+        getDocs(query(collection(db, 'videos'), where('menuItemId', '==', productId), limit(5)))
+            .then((snap) => {
+                const urls = snap.docs
+                    .map((d) => d.data())
+                    .filter((d: any) => d?.isActive !== false && typeof d?.videoUrl === 'string' && d.videoUrl.trim())
+                    .map((d: any) => String(d.videoUrl).trim());
+                setReelVideos(Array.from(new Set(urls)));
+            })
+            .catch(() => {});
+    }, [productId]);
 
     // Keep clock tick every 30s so time-based schedule changes evaluate live
     useEffect(() => {
@@ -601,7 +754,18 @@ export default function ProductClient({
         );
     }
 
-    const images = (product.images && product.images.length > 0) ? product.images : [product.image];
+    const images = (product.images && product.images.length > 0) ? product.images : (product.image ? [product.image] : []);
+    const productAny = product as any;
+    const videos = Array.from(
+        new Set(
+            [
+                ...(Array.isArray(productAny?.videos) ? productAny.videos : []),
+                ...(productAny?.videoUrl ? [productAny.videoUrl] : []),
+                ...(productAny?.video ? [productAny.video] : []),
+                ...reelVideos,
+            ].filter((v): v is string => typeof v === 'string' && v.trim().length > 0)
+        )
+    );
     const foodType = (product as any)?.foodType || (product.vegetarian ? 'veg' : 'non-veg');
     const spiceLevel = (product as any)?.spiceLevel || 'medium';
     const originalPrice = (product as any)?.originalPrice;
@@ -717,7 +881,7 @@ export default function ProductClient({
 
                 {/* ── LEFT COLUMN ────────────────────────────────────── */}
                 <div className="lg:col-span-6 space-y-5">
-                    <ImageCarousel images={images} productName={product.name} />
+                    <ImageCarousel images={images} videos={videos} productName={product.name} />
 
                     {/* Offers */}
                     {!loadingOffers && restaurantOffers.length > 0 && (

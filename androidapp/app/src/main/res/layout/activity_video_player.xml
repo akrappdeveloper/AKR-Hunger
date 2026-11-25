@@ -1,14 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/rootVideoContainer"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@android:color/black">
 
     <VideoView
         android:id="@+id/videoView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center" />
+
+    <WebView
+        android:id="@+id/webView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_gravity="center" />
+        android:visibility="gone" />
 
     <ProgressBar
         android:id="@+id/progressBar"
@@ -32,10 +39,10 @@
             android:layout_width="40dp"
             android:layout_height="40dp"
             android:background="@drawable/bg_icon_circle_gray"
-            android:src="@android:drawable/ic_menu_close_clear_cancel"
+            android:src="@drawable/ic_close"
             android:contentDescription="Close"
             android:scaleType="centerInside"
-            android:padding="8dp" />
+            android:padding="10dp" />
 
         <TextView
             android:id="@+id/tvTitle"
@@ -48,6 +55,40 @@
             android:textStyle="bold"
             android:maxLines="1"
             android:ellipsize="end" />
+
+        <TextView
+            android:id="@+id/tvVideoCount"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:background="@drawable/bg_pill_dark"
+            android:paddingHorizontal="10dp"
+            android:paddingVertical="4dp"
+            android:textColor="@android:color/white"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:visibility="gone" />
+
+        <ImageButton
+            android:id="@+id/btnPrevVideo"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_marginEnd="6dp"
+            android:background="@drawable/bg_icon_circle_gray"
+            android:src="@drawable/ic_arrow_back"
+            android:contentDescription="Previous video"
+            android:padding="8dp"
+            android:visibility="gone" />
+
+        <ImageButton
+            android:id="@+id/btnNextVideo"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:background="@drawable/bg_icon_circle_gray"
+            android:src="@drawable/ic_chevron_right"
+            android:contentDescription="Next video"
+            android:padding="8dp"
+            android:visibility="gone" />
 
     </LinearLayout>
 
